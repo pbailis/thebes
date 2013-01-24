@@ -1,8 +1,8 @@
 #!/usr/local/bin/thrift --gen cpp
 
-namespace cpp thebes
+namespace java edu.berkeley.thebes.common.thrift
 
-service ThebesServer {
+service ThebesReplicaService {
   binary get(1: string key);
   bool put(1: string key, 2: binary value);
 }
