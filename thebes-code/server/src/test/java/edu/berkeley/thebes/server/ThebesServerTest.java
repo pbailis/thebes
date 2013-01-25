@@ -7,32 +7,28 @@ import junit.framework.TestSuite;
 /**
  * Unit test for simple ThebesServer.
  */
-public class ThebesServerTest 
-    extends TestCase
-{
+public class ThebesServerTest
+        extends TestCase {
     /**
      * Create the test case
      *
      * @param testName name of the test case
      */
-    public ThebesServerTest( String testName )
-    {
-        super( testName );
+    public ThebesServerTest(String testName) {
+        super(testName);
     }
 
     /**
      * @return the suite of tests being tested
      */
-    public static Test suite()
-    {
-        return new TestSuite( ThebesServerTest.class );
+    public static Test suite() {
+        return new TestSuite(ThebesServerTest.class);
     }
 
     /**
      * Rigourous Test :-)
      */
-    public void testThebesServer()
-    {
-        assertTrue( true );
+    public void testThebesServer() {
+        assertTrue(true);
     }
 }

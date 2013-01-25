@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.11" level="project" />
+    <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.thrift:libthrift:0.8.0" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.5.8" level="project" />
     <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.5" level="project" />
