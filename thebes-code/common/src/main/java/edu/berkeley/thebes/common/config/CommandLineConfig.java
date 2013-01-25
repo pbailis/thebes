@@ -10,7 +10,7 @@ import org.apache.commons.cli.ParseException;
 public class CommandLineConfig {
     private static CommandLine commandLine;
 
-    public static Options combineOptions(Options first, Options second) {
+    protected static Options combineOptions(Options first, Options second) {
         final Options ret = new Options();
         for (Object option : first.getOptions())
             ret.addOption((Option) option);
@@ -21,7 +21,7 @@ public class CommandLineConfig {
         return ret;
     }
 
-    public static void initialize(Options options, String[] args) {
+    protected static void initialize(Options options, String[] args) {
         try {
             commandLine = (new GnuParser()).parse(options, args);
         } catch (ParseException e) {
@@ -33,7 +33,11 @@ public class CommandLineConfig {
         }
     }
 
-    public static String getOption(String optionName) {
+    protected static String getOption(String optionName) {
         return commandLine.getOptionValue(optionName);
+    }
+
+    protected static boolean hasOption(String optionName) {
+        return commandLine.hasOption(optionName);
     }
 }

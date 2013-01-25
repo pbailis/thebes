@@ -1,1 +1,1 @@
-java -jar client/target/client-1.0-SNAPSHOT.jar
+java -jar client/target/client-1.0-SNAPSHOT.jar -clusterid 1

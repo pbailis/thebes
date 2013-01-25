@@ -1,1 +1,1 @@
-java -jar server/target/server-1.0-SNAPSHOT.jar
+java -jar server/target/server-1.0-SNAPSHOT.jar --clusterid 1 --serverid 0 --standalone

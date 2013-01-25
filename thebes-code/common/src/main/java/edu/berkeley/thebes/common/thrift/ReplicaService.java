@@ -6,30 +6,23 @@
  */
 package edu.berkeley.thebes.common.thrift;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ThebesReplicaService {
+import java.nio.ByteBuffer;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ReplicaService {
 
     public interface Iface {
 
@@ -1637,9 +1630,14 @@ public class ThebesReplicaService {
             Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
                     new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
             tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success",
-                                                                                      org.apache.thrift.TFieldRequirementType.DEFAULT,
-                                                                                      new org.apache.thrift.meta_data.FieldValueMetaData(
-                                                                                              org.apache.thrift.protocol.TType.BOOL)));
+                                                                                      org.apache.thrift
+                                                                                              .TFieldRequirementType
+                                                                                              .DEFAULT,
+                                                                                      new org.apache.thrift.meta_data
+                                                                                              .FieldValueMetaData(
+                                                                                              org.apache.thrift
+                                                                                                      .protocol.TType
+                                                                                                      .BOOL)));
             metaDataMap = Collections.unmodifiableMap(tmpMap);
             org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_result.class, metaDataMap);
         }

@@ -1,12 +1,8 @@
 package edu.berkeley.thebes.client;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.ThebesReplicaService;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
+import edu.berkeley.thebes.common.thrift.ReplicaService;
+import edu.berkeley.thebes.common.thrift.ThriftUtil;
 
 import java.nio.ByteBuffer;
 
@@ -15,19 +11,11 @@ public class ThebesClient {
         try {
             Config.initializeClientConfig(args);
 
-            TTransport transport;
-
-            transport = new TSocket("localhost", 8080);
-            transport.open();
-
-            TProtocol protocol = new TBinaryProtocol(transport);
-            ThebesReplicaService.Client client = new ThebesReplicaService.Client(protocol);
+            ReplicaService.Client client = ThriftUtil.getReplicaServiceClient("127.0.0.1", 8080);
 
             System.out.println(client.put("foo", ByteBuffer.wrap("foobar".getBytes())));
-            ByteBuffer ret = client.get("foo");
+            ByteBuffer ret = client.get("asdfasdf");
             System.out.println(new String(ret.array()));
-
-            transport.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

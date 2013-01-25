@@ -12,7 +12,7 @@ import java.util.Map;
 public class YamlConfig {
     private static Map<String, Object> config;
 
-    public static void initialize(String configFile) throws FileNotFoundException, ConfigurationException {
+    protected static void initialize(String configFile) throws FileNotFoundException, ConfigurationException {
         if (configFile == null)
             configFile = ConfigDefaults.CONFIG_LOCATION;
 
@@ -21,7 +21,7 @@ public class YamlConfig {
             config = new HashMap<String, Object>();
     }
 
-    public static Object getOption(String optionName) {
+    protected static Object getOption(String optionName) {
         return config.get(optionName);
     }
 }
