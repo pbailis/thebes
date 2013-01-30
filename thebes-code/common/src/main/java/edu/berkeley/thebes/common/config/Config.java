@@ -63,7 +63,11 @@ public class Config {
     }
 
     public static int getServerPort() {
-        return (Integer) getOption("port", ConfigDefaults.SERVER_PORT);
+        return (Integer) getOption(ConfigStrings.SERVER_PORT, ConfigDefaults.SERVER_PORT);
+    }
+    
+    public static int getAntiEntropyServerPort() {
+        return (Integer) getOption(ConfigStrings.ANTI_ENTROPY_PORT, ConfigDefaults.ANTI_ENTROPY_PORT);
     }
 
     private static int getClusterID() {
