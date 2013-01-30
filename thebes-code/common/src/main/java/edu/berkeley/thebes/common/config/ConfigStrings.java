@@ -11,6 +11,7 @@ public class ConfigStrings {
     public static final String SOCKET_TIMEOUT = "socket_timeout_ms";
     public static final String SERVER_BIND_IP = "ip";
     public static final String SERVER_PORT = "port";
+    public static final String ANTI_ENTROPY_PORT = "anti_entropy_port";
     public static final String STANDALONE_MODE = "standalone";
 
 }
