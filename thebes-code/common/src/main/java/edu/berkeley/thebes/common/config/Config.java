@@ -16,7 +16,6 @@ public class Config {
     private static List<String> clusterServers;
     private static List<String> neighborServers = null;
 
-
     public static void initializeClientConfig(String[] commandLine) throws FileNotFoundException,
                                                                            ConfigurationException {
         CommandLineConfig.initialize(CommandLineConfig.combineOptions(

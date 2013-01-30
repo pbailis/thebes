@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.client;
 
+import edu.berkeley.thebes.common.ReplicaRouter;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.ReplicaService;
 import edu.berkeley.thebes.common.thrift.ThriftUtil;
@@ -11,10 +12,10 @@ public class ThebesClient {
         try {
             Config.initializeClientConfig(args);
 
-            ReplicaService.Client client = ThriftUtil.getReplicaServiceClient("127.0.0.1", 8080);
+            ReplicaRouter router = new ReplicaRouter();
 
-            System.out.println(client.put("foo", ByteBuffer.wrap("foobar".getBytes())));
-            ByteBuffer ret = client.get("asdfasdf");
+            System.out.println(router.getReplicaByKey("foo").put("foo", ByteBuffer.wrap("foobar".getBytes())));
+            ByteBuffer ret = router.getReplicaByKey("asdfasdf").get("asdfasdf");
             System.out.println(new String(ret.array()));
         } catch (Exception e) {
             e.printStackTrace();
