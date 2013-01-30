@@ -39,7 +39,7 @@ public class AntiEntropyServer implements Runnable {
             AntiEntropyService.Processor<AntiEntropyServiceHandler> processor =
                     new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler);
             
-            TServerTransport serverTransport = new TServerSocket(Config.getServerBindIP());
+            TServerTransport serverTransport = new TServerSocket(Config.getAntiEntropyServerBindIP());
             TServer server = new TThreadPoolServer(
                     new TThreadPoolServer.Args(serverTransport).processor(processor));
     

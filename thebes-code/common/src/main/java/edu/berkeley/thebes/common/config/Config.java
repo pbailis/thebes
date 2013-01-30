@@ -104,6 +104,12 @@ public class Config {
                                      getServerPort());
     }
 
+    public static InetSocketAddress getAntiEntropyServerBindIP() {
+        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
+                                                        ConfigDefaults.SERVER_BIND_IP),
+                                     getAntiEntropyServerPort());
+    }
+
     //todo: should change this to include port numbers as well
     public static List<String> getServersInCluster() {
         return clusterServers;
