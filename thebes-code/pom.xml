@@ -9,8 +9,8 @@
     <url>http://maven.apache.org</url>
     <modules>
         <module>common</module>
-        <module>client</module>
-        <module>server</module>
+        <module>hat-client</module>
+        <module>hat-server</module>
     </modules>
 
     <build>

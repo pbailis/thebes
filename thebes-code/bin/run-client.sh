@@ -1,1 +1,1 @@
-java -jar client/target/client-1.0-SNAPSHOT.jar -clusterid 1
+java -jar hat-client/target/hat-client-1.0-SNAPSHOT.jar -clusterid 1
