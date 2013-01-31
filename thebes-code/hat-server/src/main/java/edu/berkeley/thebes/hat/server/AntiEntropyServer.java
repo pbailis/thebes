@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.server;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 
@@ -78,7 +79,7 @@ public class AntiEntropyServer implements Runnable {
 
     //todo: change interface
     //todo: race condition between serving and when we've connected to neighbors
-    public void sendToNeighbors(String key, ByteBuffer value) throws TException {
+    public void sendToNeighbors(String key, DataItem value) throws TException {
         for (AntiEntropyService.Client neighbor : neighborClients) {
             logger.debug("sending to neighbor");
             neighbor.send_put(key, value);

@@ -31,13 +31,13 @@ public class AntiEntropyService {
 
   public interface Iface {
 
-    public boolean put(String key, ByteBuffer value) throws org.apache.thrift.TException;
+    public boolean put(String key, DataItem value) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void put(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -61,13 +61,13 @@ public class AntiEntropyService {
       super(iprot, oprot);
     }
 
-    public boolean put(String key, ByteBuffer value) throws org.apache.thrift.TException
+    public boolean put(String key, DataItem value) throws org.apache.thrift.TException
     {
       send_put(key, value);
       return recv_put();
     }
 
-    public void send_put(String key, ByteBuffer value) throws org.apache.thrift.TException
+    public void send_put(String key, DataItem value) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
@@ -103,7 +103,7 @@ public class AntiEntropyService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void put(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -112,8 +112,8 @@ public class AntiEntropyService {
 
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
-      private ByteBuffer value;
-      public put_call(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private DataItem value;
+      public put_call(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.value = value;
@@ -178,7 +178,7 @@ public class AntiEntropyService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_args");
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -187,7 +187,7 @@ public class AntiEntropyService {
     }
 
     public String key; // required
-    public ByteBuffer value; // required
+    public DataItem value; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -257,7 +257,7 @@ public class AntiEntropyService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -267,7 +267,7 @@ public class AntiEntropyService {
 
     public put_args(
       String key,
-      ByteBuffer value)
+      DataItem value)
     {
       this();
       this.key = key;
@@ -282,8 +282,7 @@ public class AntiEntropyService {
         this.key = other.key;
       }
       if (other.isSetValue()) {
-        this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
-;
+        this.value = new DataItem(other.value);
       }
     }
 
@@ -321,21 +320,11 @@ public class AntiEntropyService {
       }
     }
 
-    public byte[] getValue() {
-      setValue(org.apache.thrift.TBaseHelper.rightSize(value));
-      return value == null ? null : value.array();
+    public DataItem getValue() {
+      return this.value;
     }
 
-    public ByteBuffer bufferForValue() {
-      return value;
-    }
-
-    public put_args setValue(byte[] value) {
-      setValue(value == null ? (ByteBuffer)null : ByteBuffer.wrap(value));
-      return this;
-    }
-
-    public put_args setValue(ByteBuffer value) {
+    public put_args setValue(DataItem value) {
       this.value = value;
       return this;
     }
@@ -369,7 +358,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((ByteBuffer)value);
+          setValue((DataItem)value);
         }
         break;
 
@@ -502,7 +491,7 @@ public class AntiEntropyService {
       if (this.value == null) {
         sb.append("null");
       } else {
-        org.apache.thrift.TBaseHelper.toString(this.value, sb);
+        sb.append(this.value);
       }
       first = false;
       sb.append(")");
@@ -556,8 +545,9 @@ public class AntiEntropyService {
               }
               break;
             case 2: // VALUE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.value = iprot.readBinary();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.value = new DataItem();
+                struct.value.read(iprot);
                 struct.setValueIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -585,7 +575,7 @@ public class AntiEntropyService {
         }
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
-          oprot.writeBinary(struct.value);
+          struct.value.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -617,7 +607,7 @@ public class AntiEntropyService {
           oprot.writeString(struct.key);
         }
         if (struct.isSetValue()) {
-          oprot.writeBinary(struct.value);
+          struct.value.write(oprot);
         }
       }
 
@@ -630,7 +620,8 @@ public class AntiEntropyService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.value = iprot.readBinary();
+          struct.value = new DataItem();
+          struct.value.read(iprot);
           struct.setValueIsSet(true);
         }
       }
