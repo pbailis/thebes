@@ -3,6 +3,8 @@ package edu.berkeley.thebes.hat.client;
 import edu.berkeley.thebes.common.clustering.ReplicaRouter;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.thrift.DataItem;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -26,12 +28,14 @@ public class ThebesHATClient implements IThebesClient {
 
     @Override
     public boolean put(String key, ByteBuffer value) throws TException {
-        return router.getReplicaByKey(key).put(key, value);
+        long timestamp = System.currentTimeMillis();
+        DataItem dataItem = new DataItem(value, timestamp); 
+        return router.getReplicaByKey(key).put(key, dataItem);
     }
 
     @Override
     public ByteBuffer get(String key) throws TException {
-        return router.getReplicaByKey(key).get(key);
+        return ByteBuffer.wrap(router.getReplicaByKey(key).get(key).getData());
     }
 
     public void close() { return; }
