@@ -11,6 +11,9 @@
         <module>common</module>
         <module>hat-client</module>
         <module>hat-server</module>
+        <module>twopl-client</module>
+        <module>twopl-server</module>
+        <module>twopl-tm</module>
         <module>cli-app</module>
     </modules>
 

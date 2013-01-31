@@ -1,0 +1,1 @@
+java -jar twopl-server/target/twopl-server-1.0-SNAPSHOT.jar --clusterid 1 --serverid 0 --standalone
