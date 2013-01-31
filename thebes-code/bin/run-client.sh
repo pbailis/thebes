@@ -1,1 +1,0 @@
-java -jar hat-client/target/hat-client-1.0-SNAPSHOT.jar -clusterid 1

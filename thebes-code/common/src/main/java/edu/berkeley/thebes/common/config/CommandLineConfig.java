@@ -7,6 +7,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import javax.naming.ConfigurationException;
+
 public class CommandLineConfig {
     private static CommandLine commandLine;
 
@@ -21,7 +23,7 @@ public class CommandLineConfig {
         return ret;
     }
 
-    protected static void initialize(Options options, String[] args) {
+    protected static void initialize(Options options, String[] args) throws ConfigurationException {
         try {
             commandLine = (new GnuParser()).parse(options, args);
         } catch (ParseException e) {
@@ -30,6 +32,7 @@ public class CommandLineConfig {
                     + e.getMessage());
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("thebes (server/client)", options);
+            throw new ConfigurationException(e.getMessage());
         }
     }
 

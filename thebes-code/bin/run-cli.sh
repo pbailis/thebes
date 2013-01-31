@@ -1,0 +1,1 @@
+java -jar cli-app/target/cli-app-1.0-SNAPSHOT.jar -clusterid 1

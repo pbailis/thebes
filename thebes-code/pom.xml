@@ -11,6 +11,7 @@
         <module>common</module>
         <module>hat-client</module>
         <module>hat-server</module>
+        <module>cli-app</module>
     </modules>
 
     <build>

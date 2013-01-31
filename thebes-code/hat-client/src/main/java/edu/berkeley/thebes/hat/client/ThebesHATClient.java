@@ -2,23 +2,38 @@ package edu.berkeley.thebes.hat.client;
 
 import edu.berkeley.thebes.common.clustering.ReplicaRouter;
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.ReplicaService;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 
-public class ThebesHATClient {
-    public static void main(String[] args) {
-        try {
-            Config.initializeClientConfig(args);
+public class ThebesHATClient implements IThebesClient {
+    private ReplicaRouter router;
 
-            ReplicaRouter router = new ReplicaRouter();
-
-            System.out.println(router.getReplicaByKey("foo").put("foo", ByteBuffer.wrap("foobar".getBytes())));
-            ByteBuffer ret = router.getReplicaByKey("asdfasdf").get("asdfasdf");
-            System.out.println(new String(ret.array()));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void open(String [] args) throws TTransportException, ConfigurationException, FileNotFoundException {
+        Config.initializeClientConfig(args);
+        router = new ReplicaRouter();
     }
+
+    @Override
+    public void beginTransaction() throws TTransportException {}
+
+    @Override
+    public boolean endTransaction() throws TTransportException { return true; }
+
+    @Override
+    public boolean put(String key, ByteBuffer value) throws TException {
+        return router.getReplicaByKey(key).put(key, value);
+    }
+
+    @Override
+    public ByteBuffer get(String key) throws TException {
+        return router.getReplicaByKey(key).get(key);
+    }
+
+    public void close() { return; }
 }
