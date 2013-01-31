@@ -3,10 +3,16 @@ package edu.berkeley.thebes.app.cli;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
 
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 
 public class ThebesCLIApp {
+
+    private static Console console;
+    private static String[] inputCommands;
+    private static int currentPosition = 0;
 
     private static void printUsage() {
         System.out.println("Invalid command: s(tart), g(et), p(ut), e(nd), q(uit)");
@@ -17,14 +23,35 @@ public class ThebesCLIApp {
         System.exit(0);
     }
 
+    private static String getNextCommand() {
+        String ret;
+        if(console != null) {
+            ret = console.readLine("> ");
+        }
+        else {
+            if(currentPosition < inputCommands.length)
+                ret = inputCommands[currentPosition];
+            else
+                ret = "q";
+            currentPosition++;
+        }
+
+        return ret;
+    }
+
 
     public static void main(String[] args) {
         try {
             IThebesClient client = new ThebesHATClient();
             client.open(args);
 
+            console = System.console();
+            if(console == null)
+                inputCommands = new BufferedReader(new InputStreamReader(System.in)).readLine().split(";");
+
+
             while(true) {
-                String command = System.console().readLine("> ");
+                String command = getNextCommand();
                 if(command == null)
                     doExit();
 
@@ -41,13 +68,18 @@ public class ThebesCLIApp {
                 }
                 else if(command_args.length == 2) {
                     if(command_args[0].equals("g") || command_args[0].equals("get"))
-                        System.out.println(new String(client.get(command_args[1]).array()));
+                        System.out.printf("GET %s -> '%s'\n", command_args[1],
+                                                              new String(client.get(command_args[1]).array()));
                     else
                         printUsage();
                 }
                 else if(command_args.length == 3) {
                     if(command_args[0].equals("p") || command_args[0].equals("put"))
-                        System.out.println(client.put(command_args[1], ByteBuffer.wrap(command_args[2].getBytes())));
+                        System.out.printf("PUT %s='%s' -> %b\n", command_args[1],
+                                                                 command_args[2],
+                                                                 client.put(command_args[1],
+                                                                            ByteBuffer.wrap(command_args[2]
+                                                                                                    .getBytes())));
                     else
                         printUsage();
                 }

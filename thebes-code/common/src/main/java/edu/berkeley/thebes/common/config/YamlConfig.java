@@ -26,9 +26,6 @@ public class YamlConfig {
     }
 
     protected static Object getOption(String optionName) {
-        if(config.get(optionName) == null)
-            logger.warn("YAML requested option {} is blank; returning null", optionName);
-
         return config.get(optionName);
     }
 }
