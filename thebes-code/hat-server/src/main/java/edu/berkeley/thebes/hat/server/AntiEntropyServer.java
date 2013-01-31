@@ -15,6 +15,8 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +51,7 @@ public class AntiEntropyServer implements Runnable {
     }
 
     public void connectNeighbors() {
-        neighborClients = new ArrayList<AntiEntropyService.Client>();
+        neighborClients = Lists.newArrayList();
 
         try {
             Thread.sleep(5000);
