@@ -31,9 +31,9 @@ public class ReplicaService {
 
   public interface Iface {
 
-    public ByteBuffer get(String key) throws org.apache.thrift.TException;
+    public DataItem get(String key) throws org.apache.thrift.TException;
 
-    public boolean put(String key, ByteBuffer value) throws org.apache.thrift.TException;
+    public boolean put(String key, DataItem value) throws org.apache.thrift.TException;
 
   }
 
@@ -41,7 +41,7 @@ public class ReplicaService {
 
     public void get(String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void put(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -65,7 +65,7 @@ public class ReplicaService {
       super(iprot, oprot);
     }
 
-    public ByteBuffer get(String key) throws org.apache.thrift.TException
+    public DataItem get(String key) throws org.apache.thrift.TException
     {
       send_get(key);
       return recv_get();
@@ -78,7 +78,7 @@ public class ReplicaService {
       sendBase("get", args);
     }
 
-    public ByteBuffer recv_get() throws org.apache.thrift.TException
+    public DataItem recv_get() throws org.apache.thrift.TException
     {
       get_result result = new get_result();
       receiveBase(result, "get");
@@ -88,13 +88,13 @@ public class ReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public boolean put(String key, ByteBuffer value) throws org.apache.thrift.TException
+    public boolean put(String key, DataItem value) throws org.apache.thrift.TException
     {
       send_put(key, value);
       return recv_put();
     }
 
-    public void send_put(String key, ByteBuffer value) throws org.apache.thrift.TException
+    public void send_put(String key, DataItem value) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
@@ -152,7 +152,7 @@ public class ReplicaService {
         prot.writeMessageEnd();
       }
 
-      public ByteBuffer getResult() throws org.apache.thrift.TException {
+      public DataItem getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -162,7 +162,7 @@ public class ReplicaService {
       }
     }
 
-    public void put(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -171,8 +171,8 @@ public class ReplicaService {
 
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
-      private ByteBuffer value;
-      public put_call(String key, ByteBuffer value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private DataItem value;
+      public put_call(String key, DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.value = value;
@@ -606,7 +606,7 @@ public class ReplicaService {
   public static class get_result implements org.apache.thrift.TBase<get_result, get_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -614,7 +614,7 @@ public class ReplicaService {
       schemes.put(TupleScheme.class, new get_resultTupleSchemeFactory());
     }
 
-    public ByteBuffer success; // required
+    public DataItem success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -679,7 +679,7 @@ public class ReplicaService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_result.class, metaDataMap);
     }
@@ -688,7 +688,7 @@ public class ReplicaService {
     }
 
     public get_result(
-      ByteBuffer success)
+      DataItem success)
     {
       this();
       this.success = success;
@@ -699,8 +699,7 @@ public class ReplicaService {
      */
     public get_result(get_result other) {
       if (other.isSetSuccess()) {
-        this.success = org.apache.thrift.TBaseHelper.copyBinary(other.success);
-;
+        this.success = new DataItem(other.success);
       }
     }
 
@@ -713,21 +712,11 @@ public class ReplicaService {
       this.success = null;
     }
 
-    public byte[] getSuccess() {
-      setSuccess(org.apache.thrift.TBaseHelper.rightSize(success));
-      return success == null ? null : success.array();
+    public DataItem getSuccess() {
+      return this.success;
     }
 
-    public ByteBuffer bufferForSuccess() {
-      return success;
-    }
-
-    public get_result setSuccess(byte[] success) {
-      setSuccess(success == null ? (ByteBuffer)null : ByteBuffer.wrap(success));
-      return this;
-    }
-
-    public get_result setSuccess(ByteBuffer success) {
+    public get_result setSuccess(DataItem success) {
       this.success = success;
       return this;
     }
@@ -753,7 +742,7 @@ public class ReplicaService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((ByteBuffer)value);
+          setSuccess((DataItem)value);
         }
         break;
 
@@ -854,7 +843,7 @@ public class ReplicaService {
       if (this.success == null) {
         sb.append("null");
       } else {
-        org.apache.thrift.TBaseHelper.toString(this.success, sb);
+        sb.append(this.success);
       }
       first = false;
       sb.append(")");
@@ -900,8 +889,9 @@ public class ReplicaService {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.success = iprot.readBinary();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new DataItem();
+                struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -924,7 +914,7 @@ public class ReplicaService {
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          oprot.writeBinary(struct.success);
+          struct.success.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -950,7 +940,7 @@ public class ReplicaService {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetSuccess()) {
-          oprot.writeBinary(struct.success);
+          struct.success.write(oprot);
         }
       }
 
@@ -959,7 +949,8 @@ public class ReplicaService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBinary();
+          struct.success = new DataItem();
+          struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
       }
@@ -971,7 +962,7 @@ public class ReplicaService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_args");
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -980,7 +971,7 @@ public class ReplicaService {
     }
 
     public String key; // required
-    public ByteBuffer value; // required
+    public DataItem value; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1050,7 +1041,7 @@ public class ReplicaService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -1060,7 +1051,7 @@ public class ReplicaService {
 
     public put_args(
       String key,
-      ByteBuffer value)
+      DataItem value)
     {
       this();
       this.key = key;
@@ -1075,8 +1066,7 @@ public class ReplicaService {
         this.key = other.key;
       }
       if (other.isSetValue()) {
-        this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
-;
+        this.value = new DataItem(other.value);
       }
     }
 
@@ -1114,21 +1104,11 @@ public class ReplicaService {
       }
     }
 
-    public byte[] getValue() {
-      setValue(org.apache.thrift.TBaseHelper.rightSize(value));
-      return value == null ? null : value.array();
+    public DataItem getValue() {
+      return this.value;
     }
 
-    public ByteBuffer bufferForValue() {
-      return value;
-    }
-
-    public put_args setValue(byte[] value) {
-      setValue(value == null ? (ByteBuffer)null : ByteBuffer.wrap(value));
-      return this;
-    }
-
-    public put_args setValue(ByteBuffer value) {
+    public put_args setValue(DataItem value) {
       this.value = value;
       return this;
     }
@@ -1162,7 +1142,7 @@ public class ReplicaService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((ByteBuffer)value);
+          setValue((DataItem)value);
         }
         break;
 
@@ -1295,7 +1275,7 @@ public class ReplicaService {
       if (this.value == null) {
         sb.append("null");
       } else {
-        org.apache.thrift.TBaseHelper.toString(this.value, sb);
+        sb.append(this.value);
       }
       first = false;
       sb.append(")");
@@ -1349,8 +1329,9 @@ public class ReplicaService {
               }
               break;
             case 2: // VALUE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.value = iprot.readBinary();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.value = new DataItem();
+                struct.value.read(iprot);
                 struct.setValueIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -1378,7 +1359,7 @@ public class ReplicaService {
         }
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
-          oprot.writeBinary(struct.value);
+          struct.value.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1410,7 +1391,7 @@ public class ReplicaService {
           oprot.writeString(struct.key);
         }
         if (struct.isSetValue()) {
-          oprot.writeBinary(struct.value);
+          struct.value.write(oprot);
         }
       }
 
@@ -1423,7 +1404,8 @@ public class ReplicaService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.value = iprot.readBinary();
+          struct.value = new DataItem();
+          struct.value.read(iprot);
           struct.setValueIsSet(true);
         }
       }
