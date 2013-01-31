@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.Console;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class ThebesCLIApp {
 
@@ -38,6 +39,41 @@ public class ThebesCLIApp {
 
         return ret;
     }
+    
+    public enum Command {
+        QUIT (0, "q", "quit"),
+        START (0, "s", "start"),
+        END (0, "e", "end"),
+        GET (1, "g", "get"),
+        PUT (2, "p", "put"),
+        ;
+        
+        private int numArgs;
+        private String[] names;
+
+        private Command(int numArgs, String ... names) {
+            this.numArgs = numArgs;
+            this.names = names;
+        }
+        
+        public static Command getMatchingCommand(String name, String[] args) {
+            for (Command c : Command.values()) {
+                if (c.matchesCommandName(name) && c.numArgs == args.length) {
+                    return c;
+                }
+            }
+            return null;
+        }
+        
+        public boolean matchesCommandName(String command) {
+            for (String name : names) {
+                if (name.equalsIgnoreCase(command)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
 
     public static void main(String[] args) {
@@ -55,36 +91,37 @@ public class ThebesCLIApp {
                 if(command == null)
                     doExit();
 
-                String[] command_args = command.split(" ");
-                if(command_args.length == 1) {
-                    if(command_args[0].equals("q") || command_args[0].equals("quit"))
-                        doExit();
-                    else if(command_args[0].equals("s") || command_args[0].equals("start"))
-                        client.beginTransaction();
-                    else if(command_args[0].equals("e") || command_args[0].equals("end"))
-                        client.endTransaction();
-                    else
-                        printUsage();
-                }
-                else if(command_args.length == 2) {
-                    if(command_args[0].equals("g") || command_args[0].equals("get"))
-                        System.out.printf("GET %s -> '%s'\n", command_args[1],
-                                                              new String(client.get(command_args[1]).array()));
-                    else
-                        printUsage();
-                }
-                else if(command_args.length == 3) {
-                    if(command_args[0].equals("p") || command_args[0].equals("put"))
-                        System.out.printf("PUT %s='%s' -> %b\n", command_args[1],
-                                                                 command_args[2],
-                                                                 client.put(command_args[1],
-                                                                            ByteBuffer.wrap(command_args[2]
-                                                                                                    .getBytes())));
-                    else
-                        printUsage();
-                }
-                else
+                String[] splitCommand = command.split(" ");
+                String commandName = splitCommand[0];
+                String[] commandArgs = Arrays.copyOfRange(splitCommand, 1, splitCommand.length);
+                Command c = Command.getMatchingCommand(commandName, commandArgs);
+                
+                if (c == null) {
                     printUsage();
+                } else {
+                    switch (c) {
+                    case QUIT:
+                        doExit();
+                        break;
+                    case START:
+                        client.beginTransaction();
+                        break;
+                    case END:
+                        client.endTransaction();
+                        break;
+                        
+                    case GET:
+                        System.out.printf("GET %s -> '%s'\n", commandArgs[0],
+                                new String(client.get(commandArgs[0]).array()));
+                        break;
+                    case PUT:
+                        System.out.printf("PUT %s='%s' -> %b\n",
+                                commandArgs[0], commandArgs[1],
+                                client.put(commandArgs[0],
+                                           ByteBuffer.wrap(commandArgs[1].getBytes())));
+                        break;
+                    }
+                }
             }
         }
         catch(Exception e) {
