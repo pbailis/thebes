@@ -2,9 +2,11 @@ package edu.berkeley.thebes.hat.server;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.config.ConfigStrings;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.server.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.hat.server.persistence.memory.MemoryPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
 import org.apache.thrift.server.TServer;

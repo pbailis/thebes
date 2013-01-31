@@ -1,6 +1,4 @@
-package edu.berkeley.thebes.hat.server.persistence;
-
-import java.nio.ByteBuffer;
+package edu.berkeley.thebes.common.persistence;
 
 import edu.berkeley.thebes.common.thrift.DataItem;
 

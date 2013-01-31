@@ -1,1 +1,1 @@
-java -jar twopl-tm/target/twopl-tm-1.0-SNAPSHOT.jar --clusterid 1
+java -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar --clusterid 1

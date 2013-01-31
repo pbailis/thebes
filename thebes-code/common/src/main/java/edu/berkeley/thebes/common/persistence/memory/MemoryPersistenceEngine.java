@@ -1,8 +1,9 @@
-package edu.berkeley.thebes.hat.server.persistence.memory;
+package edu.berkeley.thebes.common.persistence.memory;
 
 import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.hat.server.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import com.google.common.primitives.UnsignedBytes;
 
 public class MemoryPersistenceEngine implements IPersistenceEngine {
     private Map<String, DataItem> map;
+    private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), 0);
 
     public void open() {
         map = Maps.newConcurrentMap();
@@ -44,7 +46,11 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
     }
 
     public DataItem get(String key) {
-        return map.get(key);
+        DataItem ret = map.get(key);
+        if(ret == null)
+            ret = nullItem;
+
+        return ret;
     }
 
     public void close() {

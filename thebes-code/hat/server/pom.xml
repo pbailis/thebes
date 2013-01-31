@@ -9,8 +9,8 @@
     <url>http://maven.apache.org</url>
 
     <parent>
-        <groupId>edu.berkeley.thebes</groupId>
-        <artifactId>thebes</artifactId>
+        <groupId>edu.berkeley.thebes.hat</groupId>
+        <artifactId>hat</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 

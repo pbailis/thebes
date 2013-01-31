@@ -1,1 +1,1 @@
-echo "p foo bar;get bar;put foo qux;get qux;q" | bin/hat/run-hat-cli.sh
+echo "p foo bar;get bar;put foo qux;get foo;get qux;q" | bin/hat/run-hat-cli.sh
