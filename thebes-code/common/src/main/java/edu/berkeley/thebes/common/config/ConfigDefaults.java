@@ -7,4 +7,5 @@ public class ConfigDefaults {
     protected final static String PERSISTENCE_ENGINE = ConfigStrings.PERSISTENCE_MEMORY;
     protected final static int SOCKET_TIMEOUT = 4000;
     protected final static String SERVER_BIND_IP = "127.0.0.1";
+    protected final static String THEBES_TXN_MODE = ConfigStrings.HAT_MODE;
 }

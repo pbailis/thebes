@@ -13,5 +13,7 @@ public class ConfigStrings {
     public static final String SERVER_PORT = "port";
     public static final String ANTI_ENTROPY_PORT = "anti_entropy_port";
     public static final String STANDALONE_MODE = "standalone";
-
+    public static final String TXN_MODE = "txn_mode";
+    public static final String HAT_MODE = "hat";
+    public static final String TWOPL_MODE = "twopl";
 }

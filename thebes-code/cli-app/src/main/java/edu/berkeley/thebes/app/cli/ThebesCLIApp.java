@@ -1,7 +1,7 @@
 package edu.berkeley.thebes.app.cli;
 
+import edu.berkeley.thebes.client.ThebesClient;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.hat.client.ThebesHATClient;
 
 import java.io.BufferedReader;
 import java.io.Console;
@@ -42,7 +42,7 @@ public class ThebesCLIApp {
 
     public static void main(String[] args) {
         try {
-            IThebesClient client = new ThebesHATClient();
+            IThebesClient client = new ThebesClient();
             client.open(args);
 
             console = System.console();

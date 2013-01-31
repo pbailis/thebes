@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>edu.berkeley.thebes.app</groupId>
-    <artifactId>cli-app</artifactId>
+    <groupId>edu.berkeley.thebes.client</groupId>
+    <artifactId>thebes-client</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>cli-app</name>
+    <name>thebes-client</name>
     <url>http://maven.apache.org</url>
 
     <parent>
@@ -13,24 +13,6 @@
         <artifactId>thebes</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>${project.build.directory}/lib/</classpathPrefix>
-                            <mainClass>edu.berkeley.thebes.app.cli.ThebesCLIApp</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <dependency>
@@ -40,8 +22,14 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>edu.berkeley.thebes.client</groupId>
-            <artifactId>thebes-client</artifactId>
+            <groupId>edu.berkeley.thebes.hat.client</groupId>
+            <artifactId>hat-client</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.berkeley.thebes.twopl.client</groupId>
+            <artifactId>twopl-client</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

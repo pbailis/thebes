@@ -1,1 +1,0 @@
-echo "p foo bar;get bar;put foo qux;get qux;q" | bin/run-cli.sh

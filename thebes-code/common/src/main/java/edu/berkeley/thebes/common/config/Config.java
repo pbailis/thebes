@@ -126,4 +126,8 @@ public class Config {
     public static boolean isStandaloneServer() {
         return CommandLineConfig.hasOption(ConfigStrings.STANDALONE_MODE);
     }
+
+    public static String getThebesTxnMode() {
+        return (String) getOption(ConfigStrings.TXN_MODE, ConfigDefaults.THEBES_TXN_MODE);
+    }
 }
