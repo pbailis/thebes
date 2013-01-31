@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.server.replica;
 
+import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.persistence.IPersistenceEngine;
@@ -19,16 +20,14 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     }
 
     @Override
-    public boolean put(String key, ByteBuffer value) throws TException {
+    public boolean put(String key, DataItem value) throws TException {
         antiEntropyServer.sendToNeighbors(key, value);
         return persistenceEngine.put(key, value);
     }
 
     @Override
-    public ByteBuffer get(String key) {
-        ByteBuffer ret = persistenceEngine.get(key);
-        if (ret == null)
-            ret = ByteBuffer.allocate(0);
+    public DataItem get(String key) {
+        DataItem ret = persistenceEngine.get(key);
         return ret;
     }
 }

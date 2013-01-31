@@ -1,4 +1,4 @@
-package edu.berkeley.thebes;
+package edu.berkeley.thebes.server;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
