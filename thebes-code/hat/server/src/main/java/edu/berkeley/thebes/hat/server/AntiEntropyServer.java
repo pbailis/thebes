@@ -1,9 +1,9 @@
 package edu.berkeley.thebes.hat.server;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 
 import org.apache.thrift.TException;
@@ -65,7 +65,7 @@ public class AntiEntropyServer implements Runnable {
                 try {
                     neighborClients.add(
                             ThriftUtil.getAntiEntropyServiceClient(neighbor,
-                                    Config.getAntiEntropyServerPort()));
+                                                                   Config.getAntiEntropyServerPort()));
                     break;
                 } catch (TTransportException e) {
                     System.err.println("Exception while bootstrapping connection with neighbor: " +

@@ -2,9 +2,8 @@ package edu.berkeley.thebes.hat.server.replica;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ReplicaService;
+import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.AntiEntropyServer;
-import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 
 import org.apache.thrift.TException;
 

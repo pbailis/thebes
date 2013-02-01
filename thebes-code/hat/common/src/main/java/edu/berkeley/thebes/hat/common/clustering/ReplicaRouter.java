@@ -1,8 +1,8 @@
-package edu.berkeley.thebes.common.clustering;
+package edu.berkeley.thebes.hat.common.clustering;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.ReplicaService;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;

@@ -79,7 +79,7 @@ public class ThebesCLIApp {
     public static void main(String[] args) {
         try {
             IThebesClient client = new ThebesClient();
-            client.open(args);
+            client.open();
 
             console = System.console();
             if(console == null)

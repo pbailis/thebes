@@ -1,4 +1,4 @@
-package edu.berkeley.thebes.common.thrift;
+package edu.berkeley.thebes.hat.common.thrift;
 
 import edu.berkeley.thebes.common.config.Config;
 import org.apache.thrift.protocol.TBinaryProtocol;

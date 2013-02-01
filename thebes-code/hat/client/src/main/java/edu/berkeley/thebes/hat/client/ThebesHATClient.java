@@ -1,7 +1,6 @@
 package edu.berkeley.thebes.hat.client;
 
-import edu.berkeley.thebes.common.clustering.ReplicaRouter;
-import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 
