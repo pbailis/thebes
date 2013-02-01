@@ -1,9 +1,5 @@
 package edu.berkeley.thebes.common.config;
 
-import edu.berkeley.thebes.common.config.commandline.ClientCommandLineConfigOptions;
-import edu.berkeley.thebes.common.config.commandline.CommonCommandLineConfigOptions;
-import edu.berkeley.thebes.common.config.commandline.ServerCommandLineConfigOptions;
-
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
@@ -16,31 +12,39 @@ public class Config {
     private static List<String> clusterServers;
     private static List<String> neighborServers = null;
 
-    public static void initializeClientConfig(String[] commandLine) throws FileNotFoundException,
-                                                                           ConfigurationException {
-        CommandLineConfig.initialize(CommandLineConfig.combineOptions(
-                ClientCommandLineConfigOptions.constructClientOptions(),
-                CommonCommandLineConfigOptions.constructCommonOptions()),
-                                     commandLine);
-        YamlConfig.initialize(CommandLineConfig.getOption("config"));
+    private static void initialize(List<String> requiredFields) throws FileNotFoundException, ConfigurationException {
+        YamlConfig.initialize(System.getProperty(ConfigStrings.CONFIG_FILE, ConfigDefaults.CONFIG_LOCATION));
+
+        List<String> missingFields = new ArrayList<String>();
+        for(String option : requiredFields) {
+            if(getOption(option) == null)
+                missingFields.add(option);
+        }
+
+        if(missingFields.size() > 0)
+            throw new ConfigurationException("missing required configuration options: "+missingFields);
 
         clusterServers = getServersInCluster(getClusterID());
     }
 
-    public static void initializeServerConfig(String[] commandLine)
-            throws FileNotFoundException, ConfigurationException {
-        CommandLineConfig.initialize(CommandLineConfig.combineOptions(
-                ServerCommandLineConfigOptions.constructServerOptions(),
-                CommonCommandLineConfigOptions.constructCommonOptions()),
-                                     commandLine);
-        YamlConfig.initialize(CommandLineConfig.getOption("config"));
+    public static void initializeClient() throws FileNotFoundException, ConfigurationException {
+        initialize(ConfigStrings.requiredClientConfigOptions);
+    }
 
-        clusterServers = getServersInCluster(getClusterID());
+    public static void initializeServer() throws FileNotFoundException, ConfigurationException {
+        initialize(ConfigStrings.requiredServerConfigOptions);
+
         neighborServers = getSiblingServers(getClusterID(), getServerID());
     }
 
+    public Config() throws FileNotFoundException,
+                                                                           ConfigurationException {
+
+        clusterServers = getServersInCluster(getClusterID());
+    }
+
     private static Object getOption(String optionName) {
-        Object ret = CommandLineConfig.getOption(optionName);
+        Object ret = System.getProperty(optionName);
         if (ret != null)
             return ret;
 
@@ -57,6 +61,15 @@ public class Config {
         return ret;
     }
 
+    private static int getIntegerOption(String optionName) {
+        Object returnOption = getOption(optionName);
+
+        if(String.class.isInstance(returnOption))
+            return Integer.parseInt((String) returnOption);
+        else
+            return (Integer) returnOption;
+    }
+
     public static String getPersistenceType() {
         return (String) getOption(ConfigStrings.PERSISTENCE_ENGINE, ConfigDefaults.PERSISTENCE_ENGINE);
     }
@@ -70,7 +83,7 @@ public class Config {
     }
 
     private static int getClusterID() {
-        return Integer.parseInt(CommandLineConfig.getOption(ConfigStrings.CLUSTER_ID));
+        return getIntegerOption(ConfigStrings.CLUSTER_ID);
     }
 
     private static List<String> getServersInCluster(int clusterID) {
@@ -78,7 +91,7 @@ public class Config {
     }
 
     private static int getServerID() {
-        return Integer.parseInt(CommandLineConfig.getOption(ConfigStrings.SERVER_ID));
+        return getIntegerOption(ConfigStrings.SERVER_ID);
     }
 
     private static List<String> getSiblingServers(int clusterID, int serverID) {
@@ -124,7 +137,7 @@ public class Config {
     }
 
     public static boolean isStandaloneServer() {
-        return CommandLineConfig.hasOption(ConfigStrings.STANDALONE_MODE);
+        return getOption(ConfigStrings.STANDALONE_MODE) != null;
     }
 
     public static String getThebesTxnMode() {

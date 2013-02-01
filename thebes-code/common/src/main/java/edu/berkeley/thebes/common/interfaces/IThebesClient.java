@@ -8,7 +8,7 @@ import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 
 public interface IThebesClient {
-    public void open(String[] args) throws TTransportException, ConfigurationException, FileNotFoundException;
+    public void open() throws TTransportException, ConfigurationException, FileNotFoundException;
 
     public void beginTransaction() throws TTransportException;
     public boolean endTransaction() throws TTransportException;

@@ -1,1 +1,1 @@
-java -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar --clusterid 1 --serverid 0 --standalone
+java -Dclusterid=1 -Dserverid=0 -Dstandalone -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 

@@ -16,7 +16,7 @@ public class ThebesHATClient implements IThebesClient {
     private ReplicaRouter router;
 
     @Override
-    public void open(String [] args) throws TTransportException, ConfigurationException, FileNotFoundException {
+    public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         router = new ReplicaRouter();
     }
 

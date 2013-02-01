@@ -1,2 +1,2 @@
-java -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar --clusterid 1 --serverid 0 --ip 127.0.0.1 &
-java -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar --clusterid 2 --serverid 0 --ip 127.0.0.2 &
+java  -Dclusterid=1 -Dserverid=0 -Dip=127.0.0.1 -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar &
+java -Dclusterid=2 -Dserverid=0 -Dip=127.0.0.2 -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar &

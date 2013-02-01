@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 
 public class ThebesTwoPLClient implements IThebesClient {
     @Override
-    public void open(String [] args) throws TTransportException, ConfigurationException, FileNotFoundException {
+    public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
     }
 
     @Override

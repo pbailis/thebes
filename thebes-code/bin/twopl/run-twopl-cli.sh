@@ -1,1 +1,1 @@
-java -jar cli-app/target/cli-app-1.0-SNAPSHOT.jar -clusterid 1 -txn_mode twopl
+java -Dclusterid 1 -Dtxn_mode twopl -jar cli-app/target/cli-app-1.0-SNAPSHOT.jar

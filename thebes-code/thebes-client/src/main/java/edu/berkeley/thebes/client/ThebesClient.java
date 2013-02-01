@@ -22,8 +22,9 @@ public class ThebesClient implements IThebesClient {
     }
 
     @Override
-    public void open(String [] args) throws TTransportException, ConfigurationException, FileNotFoundException {
-        Config.initializeClientConfig(args);
+    public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
+        Config.initializeClient();
+
         if(Config.getThebesTxnMode().equals(ConfigStrings.HAT_MODE)) {
             internalClient = new ThebesHATClient();
         }
@@ -34,7 +35,7 @@ public class ThebesClient implements IThebesClient {
             throw new ConfigurationException(String.format("invalid transaction mode: %s", Config.getThebesTxnMode()));
         }
 
-        internalClient.open(args);
+        internalClient.open();
     }
 
     @Override

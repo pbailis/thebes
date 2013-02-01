@@ -53,7 +53,7 @@ public class ThebesHATServer {
 
     public static void main(String[] args) {
         try {
-            Config.initializeServerConfig(args);
+            Config.initializeServer();
 
             IPersistenceEngine engine;
 
