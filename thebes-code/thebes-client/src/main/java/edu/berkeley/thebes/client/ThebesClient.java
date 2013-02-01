@@ -24,26 +24,27 @@ public class ThebesClient implements IThebesClient {
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         Config.initializeClient();
 
-        if(Config.getThebesTxnMode().equals(ConfigStrings.HAT_MODE)) {
+        switch (Config.getThebesTxnMode()) {
+        case HAT:
             internalClient = new ThebesHATClient();
-        }
-        else if(Config.getThebesTxnMode().equals(ConfigStrings.TWOPL_MODE)) {
+            break;
+        case TWOPL:
             internalClient = new ThebesTwoPLClient();
-        }
-        else {
-            throw new ConfigurationException(String.format("invalid transaction mode: %s", Config.getThebesTxnMode()));
+            break;
+        default:
+            throw new ConfigurationException("Unrecognized txn mode: " + Config.getThebesTxnMode());
         }
 
         internalClient.open();
     }
 
     @Override
-    public void beginTransaction() throws TTransportException {
+    public void beginTransaction() throws TException {
         internalClient.beginTransaction();
     }
 
     @Override
-    public boolean endTransaction() throws TTransportException {
+    public boolean endTransaction() throws TException {
         return internalClient.endTransaction();
     }
 

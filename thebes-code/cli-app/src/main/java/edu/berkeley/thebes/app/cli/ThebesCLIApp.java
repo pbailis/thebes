@@ -87,7 +87,7 @@ public class ThebesCLIApp {
 
 
             while(true) {
-                String command = getNextCommand();
+                String command = getNextCommand().trim();
                 if(command == null)
                     doExit();
 

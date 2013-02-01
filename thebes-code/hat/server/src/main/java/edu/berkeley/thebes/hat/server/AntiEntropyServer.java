@@ -60,7 +60,7 @@ public class AntiEntropyServer implements Runnable {
 
         logger.debug("Bootstrapping anti-entropy...");
 
-        for (String neighbor : Config.getNeighborServers()) {
+        for (String neighbor : Config.getSiblingServers()) {
             while (true) {
                 try {
                     neighborClients.add(
