@@ -56,6 +56,9 @@ public class TwoPLLocalLockManager {
      * Locks the key for the given session, blocking as necessary.
      * Returns immediately if this session already has the lock.
      */
+    // TODO: Consider using more performant code when logic settles down.
+    // See: http://stackoverflow.com/a/13957003,
+    //      and http://www.day.com/maven/jsr170/javadocs/jcr-2.0/javax/jcr/lock/LockManager.html
     public synchronized boolean lock(String key, long sessionId) {
         try {
             if (lockTable.containsKey(key)) {
