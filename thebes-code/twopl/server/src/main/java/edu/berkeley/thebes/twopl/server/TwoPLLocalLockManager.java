@@ -78,6 +78,7 @@ public class TwoPLLocalLockManager {
     /**
      * Returns true if there is no lock for the key after this action.
      * (i.e., it was removed or no lock existed.)
+     * @throws IllegalArgumentException if we don't own the lock on the key.
      */
     public synchronized boolean unlock(String key, long sessionId) {
         if (lockTable.containsKey(key)) {
@@ -88,8 +89,8 @@ public class TwoPLLocalLockManager {
                 logger.debug("Lock released by [" + sessionId + "] on key '" + key + "'");
                 return true;
             } else {
-                // Lock exists but isn't ours to remove
-                return false;
+                throw new IllegalArgumentException("[" + sessionId + "] cannot unlock key '" + key
+                        + "', which is owned by [" + lock.sessionId + "]");
             }
         }
         return true;

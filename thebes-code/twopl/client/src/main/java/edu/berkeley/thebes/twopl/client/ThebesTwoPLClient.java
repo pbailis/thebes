@@ -37,15 +37,13 @@ public class ThebesTwoPLClient implements IThebesClient {
         lockedKeys = Sets.newHashSet();
     }
 
-    /** TODO: Currently just returns if all locks were unlocked, not if the xact succeeded. */
     @Override
     public boolean endTransaction() throws TException {
-        boolean allUnlocked = true;
         for (String key : lockedKeys) {
-            allUnlocked &= masterRouter.getMasterByKey(key).unlock(sessionId, key);
+            masterRouter.getMasterByKey(key).unlock(sessionId, key);
         }
         inTransaction = false;
-        return allUnlocked;
+        return true;
     }
 
     @Override

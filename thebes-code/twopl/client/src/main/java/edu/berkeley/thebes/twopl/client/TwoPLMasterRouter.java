@@ -4,6 +4,7 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 
 import org.apache.thrift.transport.TTransportException;
 
@@ -20,7 +21,7 @@ public class TwoPLMasterRouter {
         masterReplicas = new ArrayList<TwoPLMasterReplicaService.Client>(serverIPs.size());
 
         for (String server : serverIPs) {
-            masterReplicas.add(ThriftUtil.getTwoPLMasterReplicaServiceClient(
+            masterReplicas.add(TwoPLThriftUtil.getMasterReplicaServiceClient(
                     server,  Config.getTwoPLServerPort()));
         }
     }
