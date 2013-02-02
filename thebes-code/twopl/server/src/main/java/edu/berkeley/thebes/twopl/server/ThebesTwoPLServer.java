@@ -3,6 +3,7 @@ package edu.berkeley.thebes.twopl.server;
 import javax.naming.ConfigurationException;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.thrift.TProcessor;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -20,21 +21,38 @@ import edu.berkeley.thebes.hat.server.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
 
 public class ThebesTwoPLServer {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesTwoPLServer.class);
+
+    private static TwoPLSlaveReplicationService slaveReplicationService;
     
-    public static void startTwoPLServer(TwoPLMasterServiceHandler serviceHandler) {
+    public static void startMasterServer(TwoPLMasterServiceHandler serviceHandler) {
+        logger.debug("Starting master server...");
+
+        // Connect to slaves to replicate to them.
+        new Thread() {
+            @Override
+            public void run() {
+                slaveReplicationService.connectSlaves();
+            }
+        }.start();
+        
+        startServer(
+                new TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler>(serviceHandler));
+    }
+    public static void startSlaveServer(TwoPLSlaveServiceHandler serviceHandler) {
+        logger.debug("Starting slave server...");
+        startServer(
+                new TwoPLSlaveReplicaService.Processor<TwoPLSlaveServiceHandler>(serviceHandler));
+    }
+    
+    private static void startServer(TProcessor processor) {
         try {
-            TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler> processor =
-                    new TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler>(serviceHandler);
-            
             TServerTransport serverTransport = new TServerSocket(Config.getTwoPLServerBindIP());
             TServer server = new TThreadPoolServer(
                     new TThreadPoolServer.Args(serverTransport).processor(processor));
-
-            logger.debug("Starting the server...");
-
             server.serve();
         } catch (TTransportException e) {
             throw new RuntimeException(e);
@@ -55,9 +73,16 @@ public class ThebesTwoPLServer {
                 throw new ConfigurationException("unexpected persistency type: " + engineType);
 
             engine.open();
+            
 
             TwoPLLocalLockManager lockManager = new TwoPLLocalLockManager();
-            startTwoPLServer(new TwoPLMasterServiceHandler(engine, lockManager));
+            slaveReplicationService = new TwoPLSlaveReplicationService();
+            if (Config.isMaster()) {
+                startMasterServer(new TwoPLMasterServiceHandler(engine, lockManager,
+                        slaveReplicationService));
+            } else {
+                startSlaveServer(new TwoPLSlaveServiceHandler(engine)); 
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

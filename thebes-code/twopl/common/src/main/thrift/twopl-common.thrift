@@ -10,3 +10,7 @@ service TwoPLMasterReplicaService {
   dataitem.DataItem get(1: i64 sessionId, 2: string key);
   bool put(1: i64 sessionId, 2: string key, 3: dataitem.DataItem value);
 }
+
+service TwoPLSlaveReplicaService {
+  bool put(1: string key, 2: dataitem.DataItem value);
+}
