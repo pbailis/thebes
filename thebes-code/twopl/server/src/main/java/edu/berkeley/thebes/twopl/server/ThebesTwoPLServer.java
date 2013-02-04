@@ -16,6 +16,7 @@ import edu.berkeley.thebes.common.config.ConfigStrings;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
@@ -39,24 +40,16 @@ public class ThebesTwoPLServer {
             }
         }.start();
         
-        startServer(
-                new TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler>(serviceHandler));
-    }
-    public static void startSlaveServer(TwoPLSlaveServiceHandler serviceHandler) {
-        logger.debug("Starting slave server...");
-        startServer(
-                new TwoPLSlaveReplicaService.Processor<TwoPLSlaveServiceHandler>(serviceHandler));
+        ThriftServer.startInCurrentThread(
+                new TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler>(serviceHandler),
+                Config.getTwoPLServerBindIP());
     }
     
-    private static void startServer(TProcessor processor) {
-        try {
-            TServerTransport serverTransport = new TServerSocket(Config.getTwoPLServerBindIP());
-            TServer server = new TThreadPoolServer(
-                    new TThreadPoolServer.Args(serverTransport).processor(processor));
-            server.serve();
-        } catch (TTransportException e) {
-            throw new RuntimeException(e);
-        }
+    public static void startSlaveServer(TwoPLSlaveServiceHandler serviceHandler) {
+        logger.debug("Starting slave server...");
+        ThriftServer.startInCurrentThread(
+                new TwoPLSlaveReplicaService.Processor<TwoPLSlaveServiceHandler>(serviceHandler),
+                Config.getTwoPLServerBindIP());
     }
 
     public static void main(String[] args) {

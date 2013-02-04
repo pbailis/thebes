@@ -1,16 +1,17 @@
 package edu.berkeley.thebes.client;
 
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.config.ConfigStrings;
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.hat.client.ThebesHATClient;
-import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
+
+import javax.naming.ConfigurationException;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import javax.naming.ConfigurationException;
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.hat.client.ThebesHATClient;
+import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 
 // Wrapper class for various thebes clients
 
@@ -56,6 +57,11 @@ public class ThebesClient implements IThebesClient {
     @Override
     public ByteBuffer get(String key) throws TException {
         return internalClient.get(key);
+    }
+
+    @Override
+    public void sendCommand(String cmd) throws TException {
+        internalClient.sendCommand(cmd);
     }
 
     public void close() {

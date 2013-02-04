@@ -14,3 +14,14 @@ service TwoPLMasterReplicaService {
 service TwoPLSlaveReplicaService {
   bool put(1: string key, 2: dataitem.DataItem value);
 }
+
+struct TwoPLTransactionResult {
+  1: bool success;
+  2: map<string, binary> requestedValues; # <key, value> of final value of GET'd items
+  3: string errorString;
+}
+
+service TwoPLTransactionService {
+  # A transaction is a list of operations. Operations are defined in TODO.
+  TwoPLTransactionResult execute(1: list<string> transaction);
+}

@@ -21,6 +21,8 @@ public class ConfigStrings {
     // TWOPL CONFIG
     public static final String TWOPL_MODE = "twopl";
     public static final String TWOPL_PORT = "twopl_port";
+    public static final String TWOPL_TM_PORT = "twopl_tm_port";
+    public static final String TWOPL_TM_IP = "twopl_tm_ip";
     public static final String TWOPL_CLUSTER_CONFIG = "twopl_cluster_configuration";
 
     public static final List<String> requiredCommonConfigOptions = new ArrayList<String>() {{

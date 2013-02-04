@@ -59,6 +59,13 @@ public class Config {
         initialize(ConfigStrings.requiredServerConfigOptions);
         neighborServers = getSiblingServers(getClusterID(), getServerID());
     }
+    
+    public static void initializeTwoPLTransactionManager()
+            throws FileNotFoundException, ConfigurationException {
+        txnMode = TransactionMode.TWOPL;
+        // TODO: Be aware that the TM depends on common... should probably restructure some time
+        initialize(ConfigStrings.requiredCommonConfigOptions);
+    }
 
     public Config() throws FileNotFoundException, ConfigurationException {
         clusterServers = getServersInCluster(getClusterID());
@@ -104,7 +111,11 @@ public class Config {
     }
     
     public static int getTwoPLServerPort() {
-        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWO_PL_PORT);
+        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWOPL_PORT);
+    }
+
+    private static int getTwoPLTransactionManagerPort() {
+        return (Integer) getOption(ConfigStrings.TWOPL_TM_PORT, ConfigDefaults.TWOPL_TM_PORT);
     }
 
     private static int getClusterID() {
@@ -206,6 +217,12 @@ public class Config {
         return new InetSocketAddress(getServerIP(), getTwoPLServerPort());
     }
 
+    public static InetSocketAddress getTwoPLTransactionManagerBindIP() {
+        return new InetSocketAddress(
+                (String) getOption(ConfigStrings.TWOPL_TM_IP, ConfigDefaults.TWOPL_TM_IP),
+                getTwoPLTransactionManagerPort());
+    }
+
     //todo: should change this to include port numbers as well
     public static List<String> getServersInCluster() {
         return clusterServers;
@@ -243,6 +260,11 @@ public class Config {
     
     /** Returns the IP for this server, based on our clusterid and serverid. */
     private static String getServerIP() {
-        return getClusterMap().get(getClusterID()).get(getServerID());
+        String ip = getClusterMap().get(getClusterID()).get(getServerID());
+        if (ip.endsWith("*")) {
+            return ip.substring(0, ip.length()-1);
+        } else {
+            return ip;
+        }
     }
 }
