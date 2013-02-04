@@ -11,34 +11,22 @@ import javax.naming.ConfigurationException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
+
 public class Config {
-    public enum TransactionMode {
-        HAT (ConfigStrings.CLUSTER_CONFIG),
-        TWOPL (ConfigStrings.TWOPL_CLUSTER_CONFIG);
-        
-        private final String clusterConfigString;
-
-        private TransactionMode(String clusterConfigString) {
-            this.clusterConfigString = clusterConfigString;
-        }
-
-        public String getClusterConfigString() {
-            return clusterConfigString;
-        }
-    }
-    
     private static TransactionMode txnMode;
     private static List<String> clusterServers;
     private static List<String> neighborServers = null;
     private static List<String> masterServers;
 
-    private static void initialize(List<String> requiredFields) throws FileNotFoundException, ConfigurationException {
-        YamlConfig.initialize(System.getProperty(ConfigStrings.CONFIG_FILE, ConfigDefaults.CONFIG_LOCATION));
+    private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+        YamlConfig.initialize((String) getOptionNoYaml(ConfigParameters.CONFIG_FILE));
 
-        List<String> missingFields = new ArrayList<String>();
-        for(String option : requiredFields) {
-            if(getOption(option) == null)
-                missingFields.add(option);
+        List<ConfigParameters> missingFields = Lists.newArrayList();
+        for(ConfigParameters param : requiredParams) {
+            if(getOption(param) == null)
+                missingFields.add(param);
         }
 
         if(missingFields.size() > 0)
@@ -51,12 +39,12 @@ public class Config {
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
-        initialize(ConfigStrings.requiredClientConfigOptions);
+        initialize(RequirementLevel.CLIENT_COMMON.getRequiredParameters());
     }
 
     public static void initializeServer(TransactionMode mode) throws FileNotFoundException, ConfigurationException {
         txnMode = mode;
-        initialize(ConfigStrings.requiredServerConfigOptions);
+        initialize(RequirementLevel.SERVER_COMMON.getRequiredParameters());
         neighborServers = getSiblingServers(getClusterID(), getServerID());
     }
     
@@ -64,68 +52,62 @@ public class Config {
             throws FileNotFoundException, ConfigurationException {
         txnMode = TransactionMode.TWOPL;
         // TODO: Be aware that the TM depends on common... should probably restructure some time
-        initialize(ConfigStrings.requiredCommonConfigOptions);
+        initialize(RequirementLevel.TWOPL_TM.getRequiredParameters());
     }
 
     public Config() throws FileNotFoundException, ConfigurationException {
         clusterServers = getServersInCluster(getClusterID());
     }
-
-    private static Object getOption(String optionName) {
-        Object ret = System.getProperty(optionName);
+    
+    private static Object getOptionNoYaml(ConfigParameters option) {
+        Object ret = System.getProperty(option.getTextName());
         if (ret != null)
-            return ret;
+            return option.castValue(ret);
 
-        return YamlConfig.getOption(optionName);
+        return option.getDefaultValue();
     }
 
-    private static Object getOption(String optionName, Object defaultValue) {
-        Object ret = getOption(optionName);
+    public static <T> T getOption(ConfigParameters option) {
+        Object ret = System.getProperty(option.getTextName());
+        if (ret != null)
+            return (T) option.castValue(ret);
 
-        if (ret == null) {
-            return defaultValue;
-        }
-
-        return ret;
+        ret = YamlConfig.getOption(option.getTextName());
+        
+        if (ret != null)
+            return (T) option.castValue(ret);
+        
+        return (T) option.getDefaultValue();
     }
 
-    private static int getIntegerOption(String optionName) {
-        Object returnOption = getOption(optionName);
-
-        if(String.class.isInstance(returnOption))
-            return Integer.parseInt((String) returnOption);
-        else
-            return (Integer) returnOption;
-    }
-
-    public static String getPersistenceType() {
-        return (String) getOption(ConfigStrings.PERSISTENCE_ENGINE, ConfigDefaults.PERSISTENCE_ENGINE);
+    public static PersistenceEngine getPersistenceType() {
+        return getOption(ConfigParameters.PERSISTENCE_ENGINE);
     }
 
     public static int getServerPort() {
-        return (Integer) getOption(ConfigStrings.SERVER_PORT, ConfigDefaults.SERVER_PORT);
+        return getOption(ConfigParameters.SERVER_PORT);
     }
     
     public static int getAntiEntropyServerPort() {
-        return (Integer) getOption(ConfigStrings.ANTI_ENTROPY_PORT, ConfigDefaults.ANTI_ENTROPY_PORT);
+        return getOption(ConfigParameters.ANTI_ENTROPY_PORT);
     }
     
     public static int getTwoPLServerPort() {
-        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWOPL_PORT);
+        return getOption(ConfigParameters.TWOPL_PORT);
     }
 
     private static int getTwoPLTransactionManagerPort() {
-        return (Integer) getOption(ConfigStrings.TWOPL_TM_PORT, ConfigDefaults.TWOPL_TM_PORT);
+        return getOption(ConfigParameters.TWOPL_TM_PORT);
     }
 
     private static int getClusterID() {
-        return getIntegerOption(ConfigStrings.CLUSTER_ID);
+        return getOption(ConfigParameters.CLUSTERID);
     }
     
     /** Returns the cluster map (based on the current transaction mode). */
     @SuppressWarnings("unchecked")
     private static Map<Integer, List<String>> getClusterMap() {
-        return (Map<Integer, List<String>>) YamlConfig.getOption(txnMode.getClusterConfigString());
+        return getOption(txnMode.getClusterConfigParam());
     }
 
     private static List<String> getServersInCluster(int clusterID) {
@@ -148,7 +130,7 @@ public class Config {
     }
 
     private static int getServerID() {
-        return getIntegerOption(ConfigStrings.SERVER_ID);
+        return getOption(ConfigParameters.SERVERID);
     }
 
     private static List<String> getSiblingServers(int clusterID, int serverID) {
@@ -202,7 +184,7 @@ public class Config {
     }
 
     public static int getSocketTimeout() {
-        return (Integer) getOption(ConfigStrings.SOCKET_TIMEOUT, ConfigDefaults.SOCKET_TIMEOUT);
+        return getOption(ConfigParameters.SOCKET_TIMEOUT);
     }
 
     public static InetSocketAddress getServerBindIP() {
@@ -219,13 +201,12 @@ public class Config {
 
     public static InetSocketAddress getTwoPLTransactionManagerBindIP() {
         return new InetSocketAddress(
-                (String) getOption(ConfigStrings.TWOPL_TM_IP, ConfigDefaults.TWOPL_TM_IP),
+                (String) getOption(ConfigParameters.TWOPL_TM_IP),
                 getTwoPLTransactionManagerPort());
     }
     
     public static boolean shouldReplicateToTwoPLSlaves() {
-        return (boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
-                ConfigDefaults.TWOPL_REPLICATE_TO_SLAVES);
+        return getOption(ConfigParameters.TWOPL_REPLICATE_TO_SLAVES);
     }
 
     //todo: should change this to include port numbers as well
@@ -243,18 +224,11 @@ public class Config {
     }
 
     public static boolean isStandaloneServer() {
-        return getOption(ConfigStrings.STANDALONE_MODE) != null;
+        return getOption(ConfigParameters.STANDALONE);
     }
 
     public static TransactionMode getThebesTxnMode() {
-        String opt = (String) getOption(ConfigStrings.TXN_MODE, ConfigDefaults.THEBES_TXN_MODE);
-        if (ConfigStrings.HAT_MODE.equals(opt)) {
-            return TransactionMode.HAT;
-        } else if (ConfigStrings.TWOPL_MODE.equals(opt)) {
-            return TransactionMode.TWOPL;
-        } else {
-            throw new IllegalStateException("Incorrect configuration for txn_mode: " + opt);
-        }
+        return getOption(ConfigParameters.TXN_MODE);
     }
     
     /** Returns true if this server is the Master of a 2PL replica set. */

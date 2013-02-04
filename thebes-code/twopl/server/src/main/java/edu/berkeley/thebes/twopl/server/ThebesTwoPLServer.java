@@ -5,7 +5,8 @@ import javax.naming.ConfigurationException;
 import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.config.ConfigStrings;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
@@ -46,16 +47,18 @@ public class ThebesTwoPLServer {
     public static void main(String[] args) {
         try {
             Log4JConfig.configureLog4J();
-            Config.initializeServer(Config.TransactionMode.TWOPL);
+            Config.initializeServer(TransactionMode.TWOPL);
 
             IPersistenceEngine engine;
 
-            String engineType = Config.getPersistenceType();
-            if (engineType.equals(ConfigStrings.PERSISTENCE_MEMORY))
+            PersistenceEngine engineType = Config.getPersistenceType();
+            switch (engineType) {
+            case MEMORY:
                 engine = new MemoryPersistenceEngine();
-            else
+                break;
+            default:
                 throw new ConfigurationException("unexpected persistency type: " + engineType);
-
+            }
             engine.open();
             
 
