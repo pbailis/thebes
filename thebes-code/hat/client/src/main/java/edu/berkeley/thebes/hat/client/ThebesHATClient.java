@@ -20,10 +20,10 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     @Override
-    public void beginTransaction() throws TTransportException {}
+    public void beginTransaction() throws TException {}
 
     @Override
-    public boolean endTransaction() throws TTransportException { return true; }
+    public boolean endTransaction() throws TException { return true; }
 
     @Override
     public boolean put(String key, ByteBuffer value) throws TException {
