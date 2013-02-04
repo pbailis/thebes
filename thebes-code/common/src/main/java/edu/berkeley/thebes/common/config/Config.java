@@ -222,6 +222,11 @@ public class Config {
                 (String) getOption(ConfigStrings.TWOPL_TM_IP, ConfigDefaults.TWOPL_TM_IP),
                 getTwoPLTransactionManagerPort());
     }
+    
+    public static boolean shouldReplicateToTwoPLSlaves() {
+        return (boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
+                ConfigDefaults.TWOPL_REPLICATE_TO_SLAVES);
+    }
 
     //todo: should change this to include port numbers as well
     public static List<String> getServersInCluster() {

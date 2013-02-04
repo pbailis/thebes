@@ -16,9 +16,7 @@ service TwoPLSlaveReplicaService {
 }
 
 struct TwoPLTransactionResult {
-  1: bool success;
   2: map<string, binary> requestedValues; # <key, value> of final value of GET'd items
-  3: string errorString;
 }
 
 service TwoPLTransactionService {

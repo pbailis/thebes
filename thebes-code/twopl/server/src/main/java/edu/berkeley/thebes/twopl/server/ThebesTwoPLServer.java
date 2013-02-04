@@ -2,13 +2,6 @@ package edu.berkeley.thebes.twopl.server;
 
 import javax.naming.ConfigurationException;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.Config;
@@ -17,10 +10,6 @@ import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
-import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.server.AntiEntropyServer;
-import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
-import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
 
@@ -33,12 +22,14 @@ public class ThebesTwoPLServer {
         logger.debug("Starting master server...");
 
         // Connect to slaves to replicate to them.
-        new Thread() {
-            @Override
-            public void run() {
-                slaveReplicationService.connectSlaves();
-            }
-        }.start();
+        if (Config.shouldReplicateToTwoPLSlaves()) {
+            new Thread() {
+                @Override
+                public void run() {
+                    slaveReplicationService.connectSlaves();
+                }
+            }.start();
+        }
         
         ThriftServer.startInCurrentThread(
                 new TwoPLMasterReplicaService.Processor<TwoPLMasterServiceHandler>(serviceHandler),

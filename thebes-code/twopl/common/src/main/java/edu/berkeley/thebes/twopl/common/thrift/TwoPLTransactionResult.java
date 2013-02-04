@@ -30,9 +30,7 @@ import org.slf4j.LoggerFactory;
 public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTransactionResult, TwoPLTransactionResult._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TwoPLTransactionResult");
 
-  private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)1);
   private static final org.apache.thrift.protocol.TField REQUESTED_VALUES_FIELD_DESC = new org.apache.thrift.protocol.TField("requestedValues", org.apache.thrift.protocol.TType.MAP, (short)2);
-  private static final org.apache.thrift.protocol.TField ERROR_STRING_FIELD_DESC = new org.apache.thrift.protocol.TField("errorString", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -40,15 +38,11 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     schemes.put(TupleScheme.class, new TwoPLTransactionResultTupleSchemeFactory());
   }
 
-  public boolean success; // required
   public Map<String,ByteBuffer> requestedValues; // required
-  public String errorString; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    SUCCESS((short)1, "success"),
-    REQUESTED_VALUES((short)2, "requestedValues"),
-    ERROR_STRING((short)3, "errorString");
+    REQUESTED_VALUES((short)2, "requestedValues");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,12 +57,8 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // SUCCESS
-          return SUCCESS;
         case 2: // REQUESTED_VALUES
           return REQUESTED_VALUES;
-        case 3: // ERROR_STRING
-          return ERROR_STRING;
         default:
           return null;
       }
@@ -109,19 +99,13 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
   }
 
   // isset id assignments
-  private static final int __SUCCESS_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     tmpMap.put(_Fields.REQUESTED_VALUES, new org.apache.thrift.meta_data.FieldMetaData("requestedValues", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true))));
-    tmpMap.put(_Fields.ERROR_STRING, new org.apache.thrift.meta_data.FieldMetaData("errorString", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TwoPLTransactionResult.class, metaDataMap);
   }
@@ -130,24 +114,16 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
   }
 
   public TwoPLTransactionResult(
-    boolean success,
-    Map<String,ByteBuffer> requestedValues,
-    String errorString)
+    Map<String,ByteBuffer> requestedValues)
   {
     this();
-    this.success = success;
-    setSuccessIsSet(true);
     this.requestedValues = requestedValues;
-    this.errorString = errorString;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TwoPLTransactionResult(TwoPLTransactionResult other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
-    this.success = other.success;
     if (other.isSetRequestedValues()) {
       Map<String,ByteBuffer> __this__requestedValues = new HashMap<String,ByteBuffer>();
       for (Map.Entry<String, ByteBuffer> other_element : other.requestedValues.entrySet()) {
@@ -164,9 +140,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
       }
       this.requestedValues = __this__requestedValues;
     }
-    if (other.isSetErrorString()) {
-      this.errorString = other.errorString;
-    }
   }
 
   public TwoPLTransactionResult deepCopy() {
@@ -175,33 +148,7 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
 
   @Override
   public void clear() {
-    setSuccessIsSet(false);
-    this.success = false;
     this.requestedValues = null;
-    this.errorString = null;
-  }
-
-  public boolean isSuccess() {
-    return this.success;
-  }
-
-  public TwoPLTransactionResult setSuccess(boolean success) {
-    this.success = success;
-    setSuccessIsSet(true);
-    return this;
-  }
-
-  public void unsetSuccess() {
-    __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
-  }
-
-  /** Returns true if field success is set (has been assigned a value) and false otherwise */
-  public boolean isSetSuccess() {
-    return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
-  }
-
-  public void setSuccessIsSet(boolean value) {
-    __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
   }
 
   public int getRequestedValuesSize() {
@@ -239,40 +186,8 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     }
   }
 
-  public String getErrorString() {
-    return this.errorString;
-  }
-
-  public TwoPLTransactionResult setErrorString(String errorString) {
-    this.errorString = errorString;
-    return this;
-  }
-
-  public void unsetErrorString() {
-    this.errorString = null;
-  }
-
-  /** Returns true if field errorString is set (has been assigned a value) and false otherwise */
-  public boolean isSetErrorString() {
-    return this.errorString != null;
-  }
-
-  public void setErrorStringIsSet(boolean value) {
-    if (!value) {
-      this.errorString = null;
-    }
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case SUCCESS:
-      if (value == null) {
-        unsetSuccess();
-      } else {
-        setSuccess((Boolean)value);
-      }
-      break;
-
     case REQUESTED_VALUES:
       if (value == null) {
         unsetRequestedValues();
@@ -281,27 +196,13 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
       }
       break;
 
-    case ERROR_STRING:
-      if (value == null) {
-        unsetErrorString();
-      } else {
-        setErrorString((String)value);
-      }
-      break;
-
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case SUCCESS:
-      return Boolean.valueOf(isSuccess());
-
     case REQUESTED_VALUES:
       return getRequestedValues();
-
-    case ERROR_STRING:
-      return getErrorString();
 
     }
     throw new IllegalStateException();
@@ -314,12 +215,8 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     }
 
     switch (field) {
-    case SUCCESS:
-      return isSetSuccess();
     case REQUESTED_VALUES:
       return isSetRequestedValues();
-    case ERROR_STRING:
-      return isSetErrorString();
     }
     throw new IllegalStateException();
   }
@@ -337,30 +234,12 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     if (that == null)
       return false;
 
-    boolean this_present_success = true;
-    boolean that_present_success = true;
-    if (this_present_success || that_present_success) {
-      if (!(this_present_success && that_present_success))
-        return false;
-      if (this.success != that.success)
-        return false;
-    }
-
     boolean this_present_requestedValues = true && this.isSetRequestedValues();
     boolean that_present_requestedValues = true && that.isSetRequestedValues();
     if (this_present_requestedValues || that_present_requestedValues) {
       if (!(this_present_requestedValues && that_present_requestedValues))
         return false;
       if (!this.requestedValues.equals(that.requestedValues))
-        return false;
-    }
-
-    boolean this_present_errorString = true && this.isSetErrorString();
-    boolean that_present_errorString = true && that.isSetErrorString();
-    if (this_present_errorString || that_present_errorString) {
-      if (!(this_present_errorString && that_present_errorString))
-        return false;
-      if (!this.errorString.equals(that.errorString))
         return false;
     }
 
@@ -380,32 +259,12 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     int lastComparison = 0;
     TwoPLTransactionResult typedOther = (TwoPLTransactionResult)other;
 
-    lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetSuccess()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     lastComparison = Boolean.valueOf(isSetRequestedValues()).compareTo(typedOther.isSetRequestedValues());
     if (lastComparison != 0) {
       return lastComparison;
     }
     if (isSetRequestedValues()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.requestedValues, typedOther.requestedValues);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetErrorString()).compareTo(typedOther.isSetErrorString());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetErrorString()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.errorString, typedOther.errorString);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -430,23 +289,11 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     StringBuilder sb = new StringBuilder("TwoPLTransactionResult(");
     boolean first = true;
 
-    sb.append("success:");
-    sb.append(this.success);
-    first = false;
-    if (!first) sb.append(", ");
     sb.append("requestedValues:");
     if (this.requestedValues == null) {
       sb.append("null");
     } else {
       sb.append(this.requestedValues);
-    }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("errorString:");
-    if (this.errorString == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.errorString);
     }
     first = false;
     sb.append(")");
@@ -467,8 +314,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -493,14 +338,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
           break;
         }
         switch (schemeField.id) {
-          case 1: // SUCCESS
-            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-              struct.success = iprot.readBool();
-              struct.setSuccessIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           case 2: // REQUESTED_VALUES
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
@@ -521,14 +358,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // ERROR_STRING
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.errorString = iprot.readString();
-              struct.setErrorStringIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -544,9 +373,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-      oprot.writeBool(struct.success);
-      oprot.writeFieldEnd();
       if (struct.requestedValues != null) {
         oprot.writeFieldBegin(REQUESTED_VALUES_FIELD_DESC);
         {
@@ -558,11 +384,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
           }
           oprot.writeMapEnd();
         }
-        oprot.writeFieldEnd();
-      }
-      if (struct.errorString != null) {
-        oprot.writeFieldBegin(ERROR_STRING_FIELD_DESC);
-        oprot.writeString(struct.errorString);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -583,19 +404,10 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
     public void write(org.apache.thrift.protocol.TProtocol prot, TwoPLTransactionResult struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetSuccess()) {
+      if (struct.isSetRequestedValues()) {
         optionals.set(0);
       }
-      if (struct.isSetRequestedValues()) {
-        optionals.set(1);
-      }
-      if (struct.isSetErrorString()) {
-        optionals.set(2);
-      }
-      oprot.writeBitSet(optionals, 3);
-      if (struct.isSetSuccess()) {
-        oprot.writeBool(struct.success);
-      }
+      oprot.writeBitSet(optionals, 1);
       if (struct.isSetRequestedValues()) {
         {
           oprot.writeI32(struct.requestedValues.size());
@@ -606,20 +418,13 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
           }
         }
       }
-      if (struct.isSetErrorString()) {
-        oprot.writeString(struct.errorString);
-      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TwoPLTransactionResult struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
-        struct.success = iprot.readBool();
-        struct.setSuccessIsSet(true);
-      }
-      if (incoming.get(1)) {
         {
           org.apache.thrift.protocol.TMap _map6 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
           struct.requestedValues = new HashMap<String,ByteBuffer>(2*_map6.size);
@@ -633,10 +438,6 @@ public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTran
           }
         }
         struct.setRequestedValuesIsSet(true);
-      }
-      if (incoming.get(2)) {
-        struct.errorString = iprot.readString();
-        struct.setErrorStringIsSet(true);
       }
     }
   }

@@ -18,14 +18,6 @@ public class ThebesTwoPLTransactionManager {
     public static void startServer(TwoPLTransactionServiceHandler serviceHandler) {
         logger.debug("Starting transaction manager...");
 
-        // Connect to the masters.
-//        new Thread() {
-//            @Override
-//            public void run() {
-//                slaveReplicationService.connectSlaves();
-//            }
-//        }.start();
-        
         ThriftServer.startInCurrentThread(
                 new TwoPLTransactionService.Processor<TwoPLTransactionServiceHandler>(serviceHandler),
                 Config.getTwoPLTransactionManagerBindIP());

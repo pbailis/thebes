@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.thrift.TException;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 
@@ -23,18 +24,16 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
     @Override
     public TwoPLTransactionResult execute(List<String> transaction) throws TException {
         client.beginTransaction();
-        String errorOutput = null;
         try {
             for (String operation : transaction) {
                 interpreter.execute(operation);
             }
         } catch (AssertionError e) {
-            errorOutput = e.getMessage();
+            throw new TTransactionAbortedException(e.getMessage());
         } finally {
             client.endTransaction();
         }
         
-        return new TwoPLTransactionResult(errorOutput == null,
-                interpreter.getOutput(), errorOutput);
+        return new TwoPLTransactionResult(interpreter.getOutput());
     }
 }

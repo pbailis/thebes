@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
@@ -47,18 +48,21 @@ public class ThebesTwoPLClient implements IThebesClient {
     @Override
     public boolean endTransaction() throws TException {
         inTransaction = false;
-        TwoPLTransactionResult result = xactClient.execute(xactCommands);
-        if (result.success) {
+        TwoPLTransactionResult result;
+        try {
+            result = xactClient.execute(xactCommands);
             System.out.println("Transaction committed successfully.");
-        } else {
-            System.out.println("ERROR: " + result.errorString);
+            
+            for (Entry<String, ByteBuffer> value : result.requestedValues.entrySet()) {
+                System.out.println("Returned: " + value.getKey() + " -> "
+                        + value.getValue().getInt());
+            }
+            return true;
+        } catch (TTransactionAbortedException e) {
+            System.out.println("ERROR: " + e.getErrorMessage());
             System.out.println("Transaction aborted.");
+            return false;
         }
-        for (Entry<String, ByteBuffer> value : result.requestedValues.entrySet()) {
-            System.out.println("Returned: " + value.getKey() + " -> "
-                    + value.getValue().getInt());
-        }
-        return true;
     }
 
     @Override

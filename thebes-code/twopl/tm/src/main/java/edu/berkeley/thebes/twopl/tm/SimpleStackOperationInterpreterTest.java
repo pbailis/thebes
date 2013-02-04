@@ -43,10 +43,10 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
     public void test1() {
         try {
             assertEquals(interpreter.execute("put x + 1 2"), fromInt(3));
-            assertEquals(interpreter.execute("put y * x x"), fromInt(9));
-            assertEquals(interpreter.execute("put y + y 1"), fromInt(10));
+            assertEquals(interpreter.execute("put y * x + x 1"), fromInt(12));
+            assertEquals(interpreter.execute("put y + y 1"), fromInt(13));
             assertEquals(interpreter.execute("get x"), fromInt(3));
-            assertEquals(interpreter.execute("get y"), fromInt(10));
+            assertEquals(interpreter.execute("get y"), fromInt(13));
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -80,9 +80,11 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         try {
             String[] badCommands = {
                     "put x",
+                    "put x 3 4",
                     "get",
                     "write x",
                     "put x + 1",
+                    "put x + 1 2 3",
                     "put x + 1 +",
                     "put + 1 x",
                     "put 1 x",
