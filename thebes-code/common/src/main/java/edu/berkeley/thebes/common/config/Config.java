@@ -1,17 +1,15 @@
 package edu.berkeley.thebes.common.config;
 
+import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import javax.naming.ConfigurationException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
-import java.io.FileNotFoundException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class Config {
     public enum TransactionMode {
@@ -61,10 +59,15 @@ public class Config {
         initialize(ConfigStrings.requiredServerConfigOptions);
         neighborServers = getSiblingServers(getClusterID(), getServerID());
     }
+    
+    public static void initializeTwoPLTransactionManager()
+            throws FileNotFoundException, ConfigurationException {
+        txnMode = TransactionMode.TWOPL;
+        // TODO: Be aware that the TM depends on common... should probably restructure some time
+        initialize(ConfigStrings.requiredCommonConfigOptions);
+    }
 
-    public Config() throws FileNotFoundException,
-                                                                           ConfigurationException {
-
+    public Config() throws FileNotFoundException, ConfigurationException {
         clusterServers = getServersInCluster(getClusterID());
     }
 
@@ -108,7 +111,11 @@ public class Config {
     }
     
     public static int getTwoPLServerPort() {
-        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWO_PL_PORT);
+        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWOPL_PORT);
+    }
+
+    private static int getTwoPLTransactionManagerPort() {
+        return (Integer) getOption(ConfigStrings.TWOPL_TM_PORT, ConfigDefaults.TWOPL_TM_PORT);
     }
 
     private static int getClusterID() {
@@ -199,21 +206,26 @@ public class Config {
     }
 
     public static InetSocketAddress getServerBindIP() {
-        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
-                                                        ConfigDefaults.SERVER_BIND_IP),
-                                     getServerPort());
+        return new InetSocketAddress(getServerIP(), getServerPort());
     }
 
     public static InetSocketAddress getAntiEntropyServerBindIP() {
-        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
-                                                        ConfigDefaults.SERVER_BIND_IP),
-                                     getAntiEntropyServerPort());
+        return new InetSocketAddress(getServerIP(), getAntiEntropyServerPort());
     }
 
     public static InetSocketAddress getTwoPLServerBindIP() {
-        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
-                                                        ConfigDefaults.SERVER_BIND_IP),
-                                     getTwoPLServerPort());
+        return new InetSocketAddress(getServerIP(), getTwoPLServerPort());
+    }
+
+    public static InetSocketAddress getTwoPLTransactionManagerBindIP() {
+        return new InetSocketAddress(
+                (String) getOption(ConfigStrings.TWOPL_TM_IP, ConfigDefaults.TWOPL_TM_IP),
+                getTwoPLTransactionManagerPort());
+    }
+    
+    public static boolean shouldReplicateToTwoPLSlaves() {
+        return (boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
+                ConfigDefaults.TWOPL_REPLICATE_TO_SLAVES);
     }
 
     //todo: should change this to include port numbers as well
@@ -242,6 +254,22 @@ public class Config {
             return TransactionMode.TWOPL;
         } else {
             throw new IllegalStateException("Incorrect configuration for txn_mode: " + opt);
+        }
+    }
+    
+    /** Returns true if this server is the Master of a 2PL replica set. */
+    public static boolean isMaster() {
+        return txnMode == TransactionMode.TWOPL &&
+                masterServers.get(getServerID()).equals(getServerIP());
+    }
+    
+    /** Returns the IP for this server, based on our clusterid and serverid. */
+    private static String getServerIP() {
+        String ip = getClusterMap().get(getClusterID()).get(getServerID());
+        if (ip.endsWith("*")) {
+            return ip.substring(0, ip.length()-1);
+        } else {
+            return ip;
         }
     }
 }

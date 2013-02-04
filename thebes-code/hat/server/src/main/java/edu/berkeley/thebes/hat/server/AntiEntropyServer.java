@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.server;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
@@ -34,20 +35,10 @@ public class AntiEntropyServer implements Runnable {
     }
 
     public void run() {
-        try {
-            AntiEntropyService.Processor<AntiEntropyServiceHandler> processor =
-                    new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler);
-            
-            TServerTransport serverTransport = new TServerSocket(Config.getAntiEntropyServerBindIP());
-            TServer server = new TThreadPoolServer(
-                    new TThreadPoolServer.Args(serverTransport).processor(processor));
-    
-            logger.debug("Starting the anti-entropy server...");
-    
-            server.serve();
-        } catch (TTransportException e) {
-            throw new RuntimeException(e);
-        }
+        logger.debug("Starting the anti-entropy server...");
+        ThriftServer.startInCurrentThread(
+                new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler),
+                Config.getAntiEntropyServerBindIP());
     }
 
     public void connectNeighbors() {

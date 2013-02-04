@@ -16,6 +16,18 @@ public class TwoPLThriftUtil {
         return new TwoPLMasterReplicaService.Client(protocol);
     }
     
+    public static TwoPLSlaveReplicaService.Client getSlaveReplicaServiceClient(
+            String host, int port) throws TTransportException {
+        TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
+        return new TwoPLSlaveReplicaService.Client(protocol);
+    }
+    
+    public static TwoPLTransactionService.Client getTransactionServiceClient(
+            String host, int port) throws TTransportException {
+        TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
+        return new TwoPLTransactionService.Client(protocol);
+    }
+    
     private static TProtocol createProtocol(String host, int port, int timeout)
             throws TTransportException {
         TTransport transport = new TSocket(host, port, timeout);
