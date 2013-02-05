@@ -22,11 +22,19 @@ import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
  * GET/PUT requests. Communicates with the master replicas via a {@link TwoPLMasterRouter}.
  */
 public class TwoPLTransactionClient implements IThebesClient {
-    private Random sessionIdGen = new Random();
+    private Random randomNumberGen = new Random();
+    private int clientId;
+    private int sequenceNumber;
+    
     private long sessionId;
     private boolean inTransaction;
     private Set<String> lockedKeys;
     private TwoPLMasterRouter masterRouter;
+    
+    public TwoPLTransactionClient() {
+        clientId = randomNumberGen.nextInt();
+        sequenceNumber = 0;
+    }
     
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
@@ -38,7 +46,7 @@ public class TwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = sessionIdGen.nextLong();
+        sessionId = Long.parseLong("" + clientId + sequenceNumber++);
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
     }
