@@ -16,8 +16,14 @@ public class ConfigStrings {
     public static final String SERVER_PORT = "port";
     public static final String ANTI_ENTROPY_PORT = "anti_entropy_port";
     public static final String STANDALONE_MODE = "standalone";
+
     public static final String TXN_MODE = "txn_mode";
     public static final String HAT_MODE = "hat";
+    public static final String HAT_ISOLATION_LEVEL = "isolation_level";
+    public static final String HAT_NO_ISOLATION = "none";
+    public static final String HAT_READ_COMMITTED = "readcommitted";
+    public static final String HAT_REPEATABLE_READ = "repeatableread";
+
     // TWOPL CONFIG
     public static final String TWOPL_MODE = "twopl";
     public static final String TWOPL_PORT = "twopl_port";
@@ -25,6 +31,7 @@ public class ConfigStrings {
     public static final String TWOPL_TM_PORT = "twopl_tm_port";
     public static final String TWOPL_TM_IP = "twopl_tm_ip";
     public static final String TWOPL_CLUSTER_CONFIG = "twopl_cluster_configuration";
+
 
     public static final List<String> requiredCommonConfigOptions = new ArrayList<String>() {{
         add(CLUSTER_ID);

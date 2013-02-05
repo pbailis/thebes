@@ -24,7 +24,6 @@ public class ThebesTwoPLClient implements IThebesClient {
     
     private List<String> xactCommands;
     private TwoPLTransactionService.Client xactClient;
-
     
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
