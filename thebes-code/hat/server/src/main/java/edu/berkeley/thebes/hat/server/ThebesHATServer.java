@@ -9,11 +9,6 @@ import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;

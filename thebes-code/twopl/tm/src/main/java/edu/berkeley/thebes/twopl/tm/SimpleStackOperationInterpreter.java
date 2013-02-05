@@ -1,16 +1,14 @@
 package edu.berkeley.thebes.twopl.tm;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import org.apache.thrift.TException;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
-import org.apache.thrift.TException;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
 
 public class SimpleStackOperationInterpreter implements TwoPLOperationInterpreter {
     private IThebesClient client;
@@ -142,7 +140,7 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
         
         private int toInt(Object o) {
             if (o instanceof Integer) {
-                return (int) o;
+                return (Integer) o;
             } else if (o instanceof VariableNode) {
                 // Force resolution of variables
                 VariableNode varNode = (VariableNode) o;

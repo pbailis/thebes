@@ -1,12 +1,9 @@
 package edu.berkeley.thebes.twopl.server;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
+import com.google.common.collect.Maps;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
+import java.util.Map;
 
 public class TwoPLLocalLockManager {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(TwoPLLocalLockManager.class);

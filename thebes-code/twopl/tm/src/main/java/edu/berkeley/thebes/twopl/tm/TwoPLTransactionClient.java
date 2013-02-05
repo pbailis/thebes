@@ -1,21 +1,18 @@
 package edu.berkeley.thebes.twopl.tm;
 
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-import java.util.Random;
-import java.util.Set;
-
-import javax.naming.ConfigurationException;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
 import com.google.common.collect.Sets;
-
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * Provides a layer of abstraction that manages getting the actual locks from a set of

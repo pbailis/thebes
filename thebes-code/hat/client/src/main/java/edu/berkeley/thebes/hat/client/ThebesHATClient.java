@@ -1,16 +1,14 @@
 package edu.berkeley.thebes.hat.client;
 
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-
-import javax.naming.ConfigurationException;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
 
 public class ThebesHATClient implements IThebesClient {
     private ReplicaRouter router;

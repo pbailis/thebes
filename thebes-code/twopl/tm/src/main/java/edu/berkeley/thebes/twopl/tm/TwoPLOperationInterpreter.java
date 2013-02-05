@@ -1,9 +1,9 @@
 package edu.berkeley.thebes.twopl.tm;
 
+import org.apache.thrift.TException;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
-
-import org.apache.thrift.TException;
 
 public interface TwoPLOperationInterpreter {    
     /** Parses and executes the given operation! 

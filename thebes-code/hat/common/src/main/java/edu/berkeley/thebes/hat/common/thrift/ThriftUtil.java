@@ -1,8 +1,6 @@
 package edu.berkeley.thebes.hat.common.thrift;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;

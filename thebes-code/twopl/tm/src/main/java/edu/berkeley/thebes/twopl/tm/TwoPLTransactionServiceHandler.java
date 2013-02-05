@@ -1,13 +1,12 @@
 package edu.berkeley.thebes.twopl.tm;
 
-import java.util.List;
-
-import org.apache.thrift.TException;
-
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
+import org.apache.thrift.TException;
+
+import java.util.List;
 
 public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.Iface {
     private IPersistenceEngine persistenceEngine;

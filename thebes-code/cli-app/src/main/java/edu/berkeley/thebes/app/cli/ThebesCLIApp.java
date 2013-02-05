@@ -1,13 +1,13 @@
 package edu.berkeley.thebes.app.cli;
 
+import edu.berkeley.thebes.client.ThebesClient;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-
-import edu.berkeley.thebes.client.ThebesClient;
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
 
 public class ThebesCLIApp {
 

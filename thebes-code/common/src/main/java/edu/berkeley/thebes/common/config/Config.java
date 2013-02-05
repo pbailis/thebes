@@ -1,15 +1,14 @@
 package edu.berkeley.thebes.common.config;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import javax.naming.ConfigurationException;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 public class Config {
     public enum TransactionMode {
@@ -224,7 +223,7 @@ public class Config {
     }
     
     public static boolean shouldReplicateToTwoPLSlaves() {
-        return (boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
+        return (Boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
                 ConfigDefaults.TWOPL_REPLICATE_TO_SLAVES);
     }
 

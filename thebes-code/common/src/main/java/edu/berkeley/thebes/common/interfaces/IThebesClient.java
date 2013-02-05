@@ -1,12 +1,11 @@
 package edu.berkeley.thebes.common.interfaces;
 
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-
-import javax.naming.ConfigurationException;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
 
 public interface IThebesClient {
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException;

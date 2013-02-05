@@ -1,24 +1,21 @@
 package edu.berkeley.thebes.twopl.client;
 
-import java.io.FileNotFoundException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map.Entry;
-
-import javax.naming.ConfigurationException;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
 import com.google.common.collect.Lists;
-
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map.Entry;
 
 /** Client buffers a transaction and sends it off at the END.
  * Accordingly, GET and PUT cannot return valid values. */
@@ -33,7 +30,7 @@ public class ThebesTwoPLClient implements IThebesClient {
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         InetSocketAddress addr = Config.getTwoPLTransactionManagerBindIP();
         xactClient = TwoPLThriftUtil.getTransactionServiceClient(
-                addr.getHostString(), addr.getPort());
+                addr.getHostName(), addr.getPort());
     }
 
     @Override

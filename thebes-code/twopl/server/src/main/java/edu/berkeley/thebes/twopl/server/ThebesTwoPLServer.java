@@ -1,9 +1,5 @@
 package edu.berkeley.thebes.twopl.server;
 
-import javax.naming.ConfigurationException;
-
-import org.slf4j.LoggerFactory;
-
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.config.ConfigStrings;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
@@ -12,6 +8,9 @@ import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
+import org.slf4j.LoggerFactory;
+
+import javax.naming.ConfigurationException;
 
 public class ThebesTwoPLServer {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesTwoPLServer.class);

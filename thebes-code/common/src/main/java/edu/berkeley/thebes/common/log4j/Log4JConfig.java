@@ -1,12 +1,12 @@
 package edu.berkeley.thebes.common.log4j;
 
-import java.util.Enumeration;
-
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+
+import java.util.Enumeration;
 
 public class Log4JConfig {
     public static void configureLog4J() {

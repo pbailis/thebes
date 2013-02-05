@@ -1,19 +1,17 @@
 package edu.berkeley.thebes.twopl.tm;
 
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-import java.util.Map;
+/*
 
-import javax.naming.ConfigurationException;
-
+import com.google.common.collect.Maps;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import junit.framework.TestCase;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import com.google.common.collect.Maps;
-
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import javax.naming.ConfigurationException;
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class SimpleStackOperationInterpreterTest extends TestCase {
     FakeClient client;
@@ -70,7 +68,7 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
             try {
                 assertEquals(interpreter.execute("put x + x y"), fromInt(8));
                 fail();
-            } catch (AssertionError e) { /* expected */ }
+            } catch (AssertionError e) { }
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -100,7 +98,7 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
                     System.out.println("Executing: " + cmd);
                     interpreter.execute(cmd);
                     fail("Should've failed on: " + cmd);
-                } catch (AssertionError e) { /* expected */ }
+                } catch (AssertionError e) { }
             }
         } catch (TException e) {
             e.printStackTrace();
@@ -153,3 +151,5 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         }
     }
 }
+
+*/
