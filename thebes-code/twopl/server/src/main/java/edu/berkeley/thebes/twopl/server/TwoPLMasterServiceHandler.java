@@ -1,12 +1,10 @@
 package edu.berkeley.thebes.twopl.server;
 
-import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.server.AntiEntropyServer;
-
 import org.apache.thrift.TException;
+
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
 
 public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;

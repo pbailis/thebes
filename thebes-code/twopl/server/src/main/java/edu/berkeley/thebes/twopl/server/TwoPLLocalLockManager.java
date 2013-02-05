@@ -1,8 +1,6 @@
 package edu.berkeley.thebes.twopl.server;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 import org.slf4j.LoggerFactory;
 

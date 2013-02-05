@@ -1,15 +1,13 @@
 package edu.berkeley.thebes.twopl.common;
 
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.thrift.transport.TTransportException;
 
-import java.util.ArrayList;
-import java.util.List;
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 
 /** Helps route traffic to the master of each replica set. */
 public class TwoPLMasterRouter {

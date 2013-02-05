@@ -25,7 +25,7 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         try {
             client.open();
             interpreter = new SimpleStackOperationInterpreter(client);
-        } catch (TTransportException | ConfigurationException | FileNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

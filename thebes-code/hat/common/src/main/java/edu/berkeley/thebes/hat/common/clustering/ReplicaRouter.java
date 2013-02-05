@@ -1,12 +1,13 @@
 package edu.berkeley.thebes.hat.common.clustering;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.thrift.transport.TTransportException;
+
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
-import org.apache.thrift.transport.TTransportException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ReplicaRouter {
     private static List<ReplicaService.Client> replicas;

@@ -1,27 +1,21 @@
 package edu.berkeley.thebes.hat.server;
 
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftServer;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 
 public class AntiEntropyServer implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServer.class);

@@ -1,9 +1,10 @@
 package edu.berkeley.thebes.common.config;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
@@ -86,20 +87,15 @@ public enum ConfigParameters {
                 Method m = type.getMethod("valueOf", String.class);
                 String key = o.toString().toUpperCase();
                 return m.invoke(null, key);
-            } catch (NoSuchMethodException | SecurityException | IllegalAccessException
-                    | IllegalArgumentException | InvocationTargetException e) {
+            } catch (Exception e) {
                 throw new IllegalArgumentException("Cannot cast " + o + " to " + type);
             }
         
         // Boolean casting
         } else if (type.equals(Boolean.class)) {
-            switch (o.toString()) {
-            case "":
-            case "true":
-            case "on":
+            if (Lists.newArrayList("", "true", "on").contains(o)) {
                 return Boolean.TRUE;
-            case "false":
-            case "off":
+            } else if (Lists.newArrayList("false", "off").contains(o)) {
                 return Boolean.FALSE;
             }
         

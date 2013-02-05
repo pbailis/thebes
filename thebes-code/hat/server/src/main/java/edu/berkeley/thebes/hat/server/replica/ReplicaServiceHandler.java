@@ -1,11 +1,11 @@
 package edu.berkeley.thebes.hat.server.replica;
 
+import org.apache.thrift.TException;
+
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.AntiEntropyServer;
-
-import org.apache.thrift.TException;
 
 public class ReplicaServiceHandler implements ReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;

@@ -142,7 +142,7 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
         
         private int toInt(Object o) {
             if (o instanceof Integer) {
-                return (int) o;
+                return (Integer) o;
             } else if (o instanceof VariableNode) {
                 // Force resolution of variables
                 VariableNode varNode = (VariableNode) o;
