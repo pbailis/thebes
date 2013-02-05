@@ -1,7 +1,8 @@
 package edu.berkeley.thebes.twopl.server;
 
-import com.google.common.collect.Maps;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 

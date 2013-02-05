@@ -1,6 +1,7 @@
 package edu.berkeley.thebes.hat.client;
 
 import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
@@ -17,7 +18,7 @@ public class ThebesHATClient implements IThebesClient {
     private ReplicaRouter router;
     private Map<String, DataItem> transactionWriteBuffer;
     private Map<String, DataItem> transactionReadBuffer;
-    private Config.IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
+    private IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
     private boolean transactionInProgress = false;
 
     @Override
@@ -27,10 +28,10 @@ public class ThebesHATClient implements IThebesClient {
 
     @Override
     public void beginTransaction() throws TException {
-        if(isolationLevel.ordinal() >= Config.IsolationLevel.READ_COMMITTED.ordinal()) {
+        if(isolationLevel.ordinal() >= IsolationLevel.READ_COMMITTED.ordinal()) {
             transactionWriteBuffer = new HashMap<String, DataItem>();
         }
-        if(isolationLevel.ordinal() >= Config.IsolationLevel.REPEATABLE_READ.ordinal()) {
+        if(isolationLevel.ordinal() >= IsolationLevel.REPEATABLE_READ.ordinal()) {
             transactionReadBuffer = new HashMap<String, DataItem>();
         }
 
@@ -41,7 +42,7 @@ public class ThebesHATClient implements IThebesClient {
     public boolean endTransaction() throws TException {
         transactionInProgress = false;
 
-        if(isolationLevel.ordinal() > Config.IsolationLevel.NO_ISOLATION.ordinal()) {
+        if(isolationLevel.ordinal() > IsolationLevel.NO_ISOLATION.ordinal()) {
             for(String key : transactionWriteBuffer.keySet()) {
                 router.getReplicaByKey(key).put(key, transactionWriteBuffer.get(key));
             }
@@ -58,8 +59,8 @@ public class ThebesHATClient implements IThebesClient {
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, timestamp);
 
-        if(isolationLevel.ordinal() > Config.IsolationLevel.NO_ISOLATION.ordinal()) {
-            if(isolationLevel == Config.IsolationLevel.REPEATABLE_READ) {
+        if(isolationLevel.ordinal() > IsolationLevel.NO_ISOLATION.ordinal()) {
+            if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
                 transactionReadBuffer.put(key, dataItem);
             }
 
@@ -76,13 +77,13 @@ public class ThebesHATClient implements IThebesClient {
         if(!transactionInProgress)
             throw new TException("transaction is not in progress");
 
-        if(isolationLevel == Config.IsolationLevel.REPEATABLE_READ && transactionReadBuffer.containsKey(key)) {
+        if(isolationLevel == IsolationLevel.REPEATABLE_READ && transactionReadBuffer.containsKey(key)) {
             return transactionReadBuffer.get(key).data;
         }
 
         DataItem ret = router.getReplicaByKey(key).get(key);
 
-        if(isolationLevel == Config.IsolationLevel.REPEATABLE_READ) {
+        if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
             transactionReadBuffer.put(key, ret);
         }
 

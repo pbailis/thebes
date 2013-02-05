@@ -6,12 +6,6 @@
  */
 package edu.berkeley.thebes.common.thrift;
 
-import org.apache.thrift.protocol.TTupleProtocol;
-import org.apache.thrift.scheme.IScheme;
-import org.apache.thrift.scheme.SchemeFactory;
-import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
-
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Collections;
@@ -19,6 +13,12 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.thrift.protocol.TTupleProtocol;
+import org.apache.thrift.scheme.IScheme;
+import org.apache.thrift.scheme.SchemeFactory;
+import org.apache.thrift.scheme.StandardScheme;
+import org.apache.thrift.scheme.TupleScheme;
 
 public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataItem");

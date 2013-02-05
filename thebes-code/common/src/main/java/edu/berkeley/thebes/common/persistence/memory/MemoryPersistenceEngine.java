@@ -1,13 +1,14 @@
 package edu.berkeley.thebes.common.persistence.memory;
 
-import com.google.common.collect.Maps;
-import com.google.common.primitives.UnsignedBytes;
-import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.common.thrift.DataItem;
-
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
+import com.google.common.primitives.UnsignedBytes;
+
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.thrift.DataItem;
 
 public class MemoryPersistenceEngine implements IPersistenceEngine {
     private Map<String, DataItem> map;
