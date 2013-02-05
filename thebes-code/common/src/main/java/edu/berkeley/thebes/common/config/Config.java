@@ -25,6 +25,22 @@ public class Config {
             return clusterConfigString;
         }
     }
+
+    public enum IsolationLevel {
+        NO_ISOLATION (ConfigStrings.HAT_NO_ISOLATION),
+        READ_COMMITTED (ConfigStrings.HAT_READ_COMMITTED),
+        REPEATABLE_READ (ConfigStrings.HAT_REPEATABLE_READ);
+
+        private final String isolationLevelString;
+
+        private IsolationLevel(String isolationLevelString) {
+            this.isolationLevelString = isolationLevelString;
+        }
+
+        public String getClusterConfigString() {
+            return isolationLevelString;
+        }
+    }
     
     private static TransactionMode txnMode;
     private static List<String> clusterServers;
@@ -253,6 +269,20 @@ public class Config {
             return TransactionMode.TWOPL;
         } else {
             throw new IllegalStateException("Incorrect configuration for txn_mode: " + opt);
+        }
+    }
+
+    public static IsolationLevel getThebesIsolationLevel() {
+        String opt = (String) getOption(ConfigStrings.HAT_ISOLATION_LEVEL, ConfigDefaults.HAT_ISOLATION_LEVEL);
+        if (ConfigStrings.HAT_NO_ISOLATION.equals(opt)) {
+            return IsolationLevel.NO_ISOLATION;
+        } else if (ConfigStrings.HAT_READ_COMMITTED.equals(opt)) {
+            return IsolationLevel.READ_COMMITTED;
+        } else if (ConfigStrings.HAT_REPEATABLE_READ.equals(opt)) {
+            return IsolationLevel.REPEATABLE_READ;
+        }
+        else {
+            throw new IllegalStateException("Incorrect configuration for isolation_level: " + opt);
         }
     }
     
