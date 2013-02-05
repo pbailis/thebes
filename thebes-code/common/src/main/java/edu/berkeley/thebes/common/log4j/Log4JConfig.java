@@ -10,6 +10,7 @@ import java.util.Enumeration;
 
 public class Log4JConfig {
     public static void configureLog4J() {
+        /*
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.DEBUG);
         PatternLayout layout = new PatternLayout("%r [%t] %p %c{2} %x - %m%n");
@@ -18,5 +19,6 @@ public class Log4JConfig {
         while (appenders.hasMoreElements()) {
             appenders.nextElement().setLayout(layout);
         }
+        */
     }
 }
