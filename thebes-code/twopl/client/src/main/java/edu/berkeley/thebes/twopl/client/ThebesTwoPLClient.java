@@ -1,30 +1,39 @@
 package edu.berkeley.thebes.twopl.client;
 
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
+import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map.Entry;
+
+import javax.naming.ConfigurationException;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
-import javax.naming.ConfigurationException;
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-import java.util.Random;
-import java.util.Set;
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 
+/** Client buffers a transaction and sends it off at the END.
+ * Accordingly, GET and PUT cannot return valid values. */
 public class ThebesTwoPLClient implements IThebesClient {
-    private Random sessionIdGen = new Random();
-    private long sessionId;
     private boolean inTransaction;
-    private Set<String> lockedKeys;
-    private TwoPLMasterRouter masterRouter;
+    
+    private List<String> xactCommands;
+    private TwoPLTransactionService.Client xactClient;
+
     
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
-        masterRouter = new TwoPLMasterRouter();
+        InetSocketAddress addr = Config.getTwoPLTransactionManagerBindIP();
+        xactClient = TwoPLThriftUtil.getTransactionServiceClient(
+                addr.getHostString(), addr.getPort());
     }
 
     @Override
@@ -32,18 +41,28 @@ public class ThebesTwoPLClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = sessionIdGen.nextLong();
+        xactCommands = Lists.newArrayList();
         inTransaction = true;
-        lockedKeys = Sets.newHashSet();
     }
 
     @Override
     public boolean endTransaction() throws TException {
-        for (String key : lockedKeys) {
-            masterRouter.getMasterByKey(key).unlock(sessionId, key);
-        }
         inTransaction = false;
-        return true;
+        TwoPLTransactionResult result;
+        try {
+            result = xactClient.execute(xactCommands);
+            System.out.println("Transaction committed successfully.");
+            
+            for (Entry<String, ByteBuffer> value : result.requestedValues.entrySet()) {
+                System.out.println("Returned: " + value.getKey() + " -> "
+                        + value.getValue().getInt());
+            }
+            return true;
+        } catch (TTransactionAbortedException e) {
+            System.out.println("ERROR: " + e.getErrorMessage());
+            System.out.println("Transaction aborted.");
+            return false;
+        }
     }
 
     @Override
@@ -51,11 +70,8 @@ public class ThebesTwoPLClient implements IThebesClient {
         if (!inTransaction) {
             throw new TException("Must be in a transaction!");
         }
-        
-        long timestamp = System.currentTimeMillis();
-        DataItem dataItem = new DataItem(value, timestamp);
-        acquireLock(key);
-        return masterRouter.getMasterByKey(key).put(sessionId, key, dataItem);
+        xactCommands.add("put " + key + " " + new String(value.array()));
+        return true;
     }
 
     @Override
@@ -63,24 +79,18 @@ public class ThebesTwoPLClient implements IThebesClient {
         if (!inTransaction) {
             throw new TException("Must be in a transaction!");
         }
-        
-        acquireLock(key);
-        DataItem dataItem = masterRouter.getMasterByKey(key).get(sessionId, key);
-        return ByteBuffer.wrap(dataItem.getData());
-    }
-    
-    /** Ensures we own the given lock. If not, we acquire it or die trying. */
-    private void acquireLock(String key) throws TException {
-        Client master = masterRouter.getMasterByKey(key);
-        if (!lockedKeys.contains(key)) {
-            boolean lockAcquired = master.lock(sessionId, key);
-            if (!lockAcquired) {
-                throw new TException("Lock could not be acquired for key '" + key + "'");
-            } else {
-                lockedKeys.add(key);
-            }
-        }
+        xactCommands.add("get " + key);
+        return null;
     }
 
+    /** Adds a raw command accepted by the Thebes Transactional Language (TTL). */
+    @Override
+    public void sendCommand(String cmd) throws TException {
+        if (!inTransaction) {
+            throw new TException("Must be in a transaction!");
+        }
+        xactCommands.add(cmd);
+    }
+    
     public void close() { return; }
 }

@@ -5,6 +5,7 @@ import edu.berkeley.thebes.common.config.ConfigStrings;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
@@ -34,20 +35,10 @@ public class ThebesHATServer {
     }
 
     public static void startThebesServer(ReplicaServiceHandler serviceHandler) {
-        try {
-            ReplicaService.Processor<ReplicaServiceHandler> processor =
-                    new ReplicaService.Processor<ReplicaServiceHandler>(serviceHandler);
-            
-            TServerTransport serverTransport = new TServerSocket(Config.getServerBindIP());
-            TServer server = new TThreadPoolServer(
-                    new TThreadPoolServer.Args(serverTransport).processor(processor));
-
-            logger.debug("Starting the server...");
-
-            server.serve();
-        } catch (TTransportException e) {
-            throw new RuntimeException(e);
-        }
+        logger.debug("Starting the server...");
+        ThriftServer.startInCurrentThread(
+                new ReplicaService.Processor<ReplicaServiceHandler>(serviceHandler),
+                Config.getServerBindIP());
     }
 
     public static void main(String[] args) {

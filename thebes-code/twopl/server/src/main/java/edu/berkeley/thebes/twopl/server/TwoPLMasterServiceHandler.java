@@ -11,11 +11,14 @@ import org.apache.thrift.TException;
 public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;
     private TwoPLLocalLockManager lockManager;
+    private TwoPLSlaveReplicationService slaveReplicationService;
 
     public TwoPLMasterServiceHandler(IPersistenceEngine persistenceEngine,
-            TwoPLLocalLockManager lockManager) {
+            TwoPLLocalLockManager lockManager,
+            TwoPLSlaveReplicationService slaveReplicationService) {
         this.persistenceEngine = persistenceEngine;
         this.lockManager = lockManager;
+        this.slaveReplicationService = slaveReplicationService;
     }
 
     @Override
@@ -40,7 +43,11 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public boolean put(long sessionId, String key, DataItem value) throws TException {
         if (lockManager.ownsLock(key, sessionId)) {
-            return persistenceEngine.put(key, value);
+            boolean success = persistenceEngine.put(key, value);
+            if (success) {
+                slaveReplicationService.sendToSlaves(key, value);
+            }
+            return success;
         } else {
             throw new TException("Session does not own PUT lock on '" + key + "'");
         }

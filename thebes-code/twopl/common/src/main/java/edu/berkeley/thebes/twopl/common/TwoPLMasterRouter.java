@@ -1,4 +1,4 @@
-package edu.berkeley.thebes.twopl.client;
+package edu.berkeley.thebes.twopl.common;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
