@@ -12,4 +12,5 @@ public class ConfigDefaults {
     protected final static String SERVER_BIND_IP = "127.0.0.1";
     protected final static String THEBES_TXN_MODE = ConfigStrings.HAT_MODE;
     protected final static String TWOPL_REPLICATE_TO_SLAVES = "on";
+    protected final static String HAT_ISOLATION_LEVEL = ConfigStrings.HAT_NO_ISOLATION;
 }
