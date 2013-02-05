@@ -1,24 +1,17 @@
 package edu.berkeley.thebes.hat.server;
 
+import com.google.common.collect.Lists;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
-
 import org.apache.thrift.TException;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,20 +27,10 @@ public class AntiEntropyServer implements Runnable {
     }
 
     public void run() {
-        try {
-            AntiEntropyService.Processor<AntiEntropyServiceHandler> processor =
-                    new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler);
-            
-            TServerTransport serverTransport = new TServerSocket(Config.getAntiEntropyServerBindIP());
-            TServer server = new TThreadPoolServer(
-                    new TThreadPoolServer.Args(serverTransport).processor(processor));
-    
-            logger.debug("Starting the anti-entropy server...");
-    
-            server.serve();
-        } catch (TTransportException e) {
-            throw new RuntimeException(e);
-        }
+        logger.debug("Starting the anti-entropy server...");
+        ThriftServer.startInCurrentThread(
+                new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler),
+                Config.getAntiEntropyServerBindIP());
     }
 
     public void connectNeighbors() {
@@ -60,7 +43,7 @@ public class AntiEntropyServer implements Runnable {
 
         logger.debug("Bootstrapping anti-entropy...");
 
-        for (String neighbor : Config.getNeighborServers()) {
+        for (String neighbor : Config.getSiblingServers()) {
             while (true) {
                 try {
                     neighborClients.add(

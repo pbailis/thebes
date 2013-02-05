@@ -1,9 +1,8 @@
 package edu.berkeley.thebes.hat.client;
 
-import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
-
+import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -20,10 +19,10 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     @Override
-    public void beginTransaction() throws TTransportException {}
+    public void beginTransaction() throws TException {}
 
     @Override
-    public boolean endTransaction() throws TTransportException { return true; }
+    public boolean endTransaction() throws TException { return true; }
 
     @Override
     public boolean put(String key, ByteBuffer value) throws TException {
@@ -35,6 +34,11 @@ public class ThebesHATClient implements IThebesClient {
     @Override
     public ByteBuffer get(String key) throws TException {
         return ByteBuffer.wrap(router.getReplicaByKey(key).get(key).getData());
+    }
+    
+    @Override
+    public void sendCommand(String cmd) throws TException {
+        throw new UnsupportedOperationException();
     }
 
     public void close() { return; }

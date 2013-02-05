@@ -18,14 +18,22 @@ public class ConfigStrings {
     public static final String STANDALONE_MODE = "standalone";
     public static final String TXN_MODE = "txn_mode";
     public static final String HAT_MODE = "hat";
+    // TWOPL CONFIG
     public static final String TWOPL_MODE = "twopl";
+    public static final String TWOPL_PORT = "twopl_port";
+    public static final String TWOPL_REPLICATE_TO_SLAVES = "twopl_replicate_to_slaves";
+    public static final String TWOPL_TM_PORT = "twopl_tm_port";
+    public static final String TWOPL_TM_IP = "twopl_tm_ip";
+    public static final String TWOPL_CLUSTER_CONFIG = "twopl_cluster_configuration";
 
     public static final List<String> requiredCommonConfigOptions = new ArrayList<String>() {{
         add(CLUSTER_ID);
     }};
 
+    // TODO: 2PL doesn't need CLUSTER_ID
     public static final List<String> requiredClientConfigOptions = new ArrayList<String>() {{
         addAll(requiredCommonConfigOptions);
+        add(TXN_MODE);
     }};
 
     public static final List<String> requiredServerConfigOptions = new ArrayList<String>() {{

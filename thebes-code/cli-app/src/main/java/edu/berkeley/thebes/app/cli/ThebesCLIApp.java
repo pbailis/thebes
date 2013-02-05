@@ -46,6 +46,7 @@ public class ThebesCLIApp {
         END (0, "e", "end"),
         GET (1, "g", "get"),
         PUT (2, "p", "put"),
+        CMD (-1, "!", "!cmd"),
         ;
         
         private int numArgs;
@@ -58,7 +59,7 @@ public class ThebesCLIApp {
         
         public static Command getMatchingCommand(String name, String[] args) {
             for (Command c : Command.values()) {
-                if (c.matchesCommandName(name) && c.numArgs == args.length) {
+                if (c.matchesCommandName(name) && (c.numArgs == args.length || c.numArgs == -1)) {
                     return c;
                 }
             }
@@ -87,7 +88,7 @@ public class ThebesCLIApp {
 
 
             while(true) {
-                String command = getNextCommand();
+                String command = getNextCommand().trim();
                 if(command == null)
                     doExit();
 
@@ -96,6 +97,7 @@ public class ThebesCLIApp {
                 String[] commandArgs = Arrays.copyOfRange(splitCommand, 1, splitCommand.length);
                 Command c = Command.getMatchingCommand(commandName, commandArgs);
                 
+                ByteBuffer val;
                 if (c == null) {
                     printUsage();
                 } else {
@@ -111,8 +113,9 @@ public class ThebesCLIApp {
                         break;
                         
                     case GET:
+                        val = client.get(commandArgs[0]);
                         System.out.printf("GET %s -> '%s'\n", commandArgs[0],
-                                new String(client.get(commandArgs[0]).array()));
+                                val == null ? "null" : new String(val.array()));
                         break;
                     case PUT:
                         System.out.printf("PUT %s='%s' -> %b\n",
@@ -120,6 +123,8 @@ public class ThebesCLIApp {
                                 client.put(commandArgs[0],
                                            ByteBuffer.wrap(commandArgs[1].getBytes())));
                         break;
+                    case CMD:
+                        client.sendCommand(command.split(" ", 2)[1]);
                     }
                 }
             }

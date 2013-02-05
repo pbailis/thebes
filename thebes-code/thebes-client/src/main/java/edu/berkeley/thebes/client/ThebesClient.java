@@ -1,7 +1,6 @@
 package edu.berkeley.thebes.client;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.config.ConfigStrings;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
 import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
@@ -24,26 +23,27 @@ public class ThebesClient implements IThebesClient {
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         Config.initializeClient();
 
-        if(Config.getThebesTxnMode().equals(ConfigStrings.HAT_MODE)) {
+        switch (Config.getThebesTxnMode()) {
+        case HAT:
             internalClient = new ThebesHATClient();
-        }
-        else if(Config.getThebesTxnMode().equals(ConfigStrings.TWOPL_MODE)) {
+            break;
+        case TWOPL:
             internalClient = new ThebesTwoPLClient();
-        }
-        else {
-            throw new ConfigurationException(String.format("invalid transaction mode: %s", Config.getThebesTxnMode()));
+            break;
+        default:
+            throw new ConfigurationException("Unrecognized txn mode: " + Config.getThebesTxnMode());
         }
 
         internalClient.open();
     }
 
     @Override
-    public void beginTransaction() throws TTransportException {
+    public void beginTransaction() throws TException {
         internalClient.beginTransaction();
     }
 
     @Override
-    public boolean endTransaction() throws TTransportException {
+    public boolean endTransaction() throws TException {
         return internalClient.endTransaction();
     }
 
@@ -55,6 +55,11 @@ public class ThebesClient implements IThebesClient {
     @Override
     public ByteBuffer get(String key) throws TException {
         return internalClient.get(key);
+    }
+
+    @Override
+    public void sendCommand(String cmd) throws TException {
+        internalClient.sendCommand(cmd);
     }
 
     public void close() {

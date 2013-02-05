@@ -1,16 +1,35 @@
 package edu.berkeley.thebes.common.config;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class Config {
+    public enum TransactionMode {
+        HAT (ConfigStrings.CLUSTER_CONFIG),
+        TWOPL (ConfigStrings.TWOPL_CLUSTER_CONFIG);
+        
+        private final String clusterConfigString;
+
+        private TransactionMode(String clusterConfigString) {
+            this.clusterConfigString = clusterConfigString;
+        }
+
+        public String getClusterConfigString() {
+            return clusterConfigString;
+        }
+    }
+    
+    private static TransactionMode txnMode;
     private static List<String> clusterServers;
     private static List<String> neighborServers = null;
+    private static List<String> masterServers;
 
     private static void initialize(List<String> requiredFields) throws FileNotFoundException, ConfigurationException {
         YamlConfig.initialize(System.getProperty(ConfigStrings.CONFIG_FILE, ConfigDefaults.CONFIG_LOCATION));
@@ -24,22 +43,30 @@ public class Config {
         if(missingFields.size() > 0)
             throw new ConfigurationException("missing required configuration options: "+missingFields);
 
+        if (txnMode == null)
+            txnMode = getThebesTxnMode();
         clusterServers = getServersInCluster(getClusterID());
+        masterServers = getMasterServers();
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
         initialize(ConfigStrings.requiredClientConfigOptions);
     }
 
-    public static void initializeServer() throws FileNotFoundException, ConfigurationException {
+    public static void initializeServer(TransactionMode mode) throws FileNotFoundException, ConfigurationException {
+        txnMode = mode;
         initialize(ConfigStrings.requiredServerConfigOptions);
-
         neighborServers = getSiblingServers(getClusterID(), getServerID());
     }
+    
+    public static void initializeTwoPLTransactionManager()
+            throws FileNotFoundException, ConfigurationException {
+        txnMode = TransactionMode.TWOPL;
+        // TODO: Be aware that the TM depends on common... should probably restructure some time
+        initialize(ConfigStrings.requiredCommonConfigOptions);
+    }
 
-    public Config() throws FileNotFoundException,
-                                                                           ConfigurationException {
-
+    public Config() throws FileNotFoundException, ConfigurationException {
         clusterServers = getServersInCluster(getClusterID());
     }
 
@@ -81,13 +108,42 @@ public class Config {
     public static int getAntiEntropyServerPort() {
         return (Integer) getOption(ConfigStrings.ANTI_ENTROPY_PORT, ConfigDefaults.ANTI_ENTROPY_PORT);
     }
+    
+    public static int getTwoPLServerPort() {
+        return (Integer) getOption(ConfigStrings.TWOPL_PORT, ConfigDefaults.TWOPL_PORT);
+    }
+
+    private static int getTwoPLTransactionManagerPort() {
+        return (Integer) getOption(ConfigStrings.TWOPL_TM_PORT, ConfigDefaults.TWOPL_TM_PORT);
+    }
 
     private static int getClusterID() {
         return getIntegerOption(ConfigStrings.CLUSTER_ID);
     }
+    
+    /** Returns the cluster map (based on the current transaction mode). */
+    @SuppressWarnings("unchecked")
+    private static Map<Integer, List<String>> getClusterMap() {
+        return (Map<Integer, List<String>>) YamlConfig.getOption(txnMode.getClusterConfigString());
+    }
 
     private static List<String> getServersInCluster(int clusterID) {
-        return (List) ((Map) YamlConfig.getOption(ConfigStrings.CLUSTER_CONFIG)).get(clusterID);
+        List<String> servers = getClusterMap().get(clusterID);
+        
+        // The Master of a 2PL set is signified by an * at the end. We need to remove this.
+        if (txnMode == TransactionMode.TWOPL) {
+            List<String> serverNames = Lists.newArrayListWithCapacity(servers.size());
+            for (String s : servers) {
+                if (s.endsWith("*")) {
+                    serverNames.add(s.substring(0, s.length()-1));
+                } else {
+                    serverNames.add(s);
+                }
+            }
+            return serverNames;
+        } else {
+            return servers;
+        }
     }
 
     private static int getServerID() {
@@ -96,14 +152,52 @@ public class Config {
 
     private static List<String> getSiblingServers(int clusterID, int serverID) {
         List<String> ret = new ArrayList<String>();
-        Map clusterMap = ((Map) YamlConfig.getOption(ConfigStrings.CLUSTER_CONFIG));
-        for (int clusterKey : (Set<Integer>) clusterMap.keySet()) {
+        Map<Integer, List<String>> clusterMap = getClusterMap();
+        for (int clusterKey : clusterMap.keySet()) {
             if (clusterKey == clusterID)
                 continue;
 
-            ret.add(((List<String>) clusterMap.get(clusterKey)).get(serverID));
+            String server = clusterMap.get(clusterKey).get(serverID);
+            if (txnMode == TransactionMode.TWOPL && server.endsWith("*")) {
+                server = server.substring(0, server.length()-1);
+            }
+            ret.add(server);
         }
         return ret;
+    }
+    
+    /**
+     * Returns the ordered list of Master servers for each serverId.
+     * This returns null in HAT mode.
+     */
+    public static List<String> getMasterServers() {
+        if (txnMode == TransactionMode.HAT) {
+            return null;
+        }
+        if (masterServers != null) {
+            return masterServers;
+        }
+
+        Map<Integer, String> masterMap = Maps.newHashMap();
+
+        Map<Integer, List<String>> clusterMap = getClusterMap();
+        for (int clusterKey : clusterMap.keySet()) {
+            for (int serverID = 0; serverID < clusterMap.get(clusterKey).size(); serverID ++) {
+                String server = clusterMap.get(clusterKey).get(serverID);
+                if (server.endsWith("*")) {
+                    assert !masterMap.containsKey(serverID) : "2 masters for serverID " + serverID;
+                    masterMap.put(serverID, server.substring(0, server.length()-1));
+                }
+            }
+        }
+        
+        // Add a little post condition checking, since this could be misconfigured.
+        List<String> masters = Lists.newArrayListWithCapacity(clusterServers.size());
+        for (int i = 0; i < clusterServers.size(); i ++) {
+            assert masterMap.containsKey(i) : "Missing master for replica set " + i;
+            masters.add(masterMap.get(i));
+        }
+        return masters;
     }
 
     public static int getSocketTimeout() {
@@ -111,15 +205,26 @@ public class Config {
     }
 
     public static InetSocketAddress getServerBindIP() {
-        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
-                                                        ConfigDefaults.SERVER_BIND_IP),
-                                     getServerPort());
+        return new InetSocketAddress(getServerIP(), getServerPort());
     }
 
     public static InetSocketAddress getAntiEntropyServerBindIP() {
-        return new InetSocketAddress((String) getOption(ConfigStrings.SERVER_BIND_IP,
-                                                        ConfigDefaults.SERVER_BIND_IP),
-                                     getAntiEntropyServerPort());
+        return new InetSocketAddress(getServerIP(), getAntiEntropyServerPort());
+    }
+
+    public static InetSocketAddress getTwoPLServerBindIP() {
+        return new InetSocketAddress(getServerIP(), getTwoPLServerPort());
+    }
+
+    public static InetSocketAddress getTwoPLTransactionManagerBindIP() {
+        return new InetSocketAddress(
+                (String) getOption(ConfigStrings.TWOPL_TM_IP, ConfigDefaults.TWOPL_TM_IP),
+                getTwoPLTransactionManagerPort());
+    }
+    
+    public static boolean shouldReplicateToTwoPLSlaves() {
+        return (Boolean) getOption(ConfigStrings.TWOPL_REPLICATE_TO_SLAVES,
+                ConfigDefaults.TWOPL_REPLICATE_TO_SLAVES);
     }
 
     //todo: should change this to include port numbers as well
@@ -128,7 +233,7 @@ public class Config {
     }
 
     //todo: should change this to include port numbers as well
-    public static List<String> getNeighborServers() {
+    public static List<String> getSiblingServers() {
         return neighborServers;
     }
 
@@ -140,7 +245,30 @@ public class Config {
         return getOption(ConfigStrings.STANDALONE_MODE) != null;
     }
 
-    public static String getThebesTxnMode() {
-        return (String) getOption(ConfigStrings.TXN_MODE, ConfigDefaults.THEBES_TXN_MODE);
+    public static TransactionMode getThebesTxnMode() {
+        String opt = (String) getOption(ConfigStrings.TXN_MODE, ConfigDefaults.THEBES_TXN_MODE);
+        if (ConfigStrings.HAT_MODE.equals(opt)) {
+            return TransactionMode.HAT;
+        } else if (ConfigStrings.TWOPL_MODE.equals(opt)) {
+            return TransactionMode.TWOPL;
+        } else {
+            throw new IllegalStateException("Incorrect configuration for txn_mode: " + opt);
+        }
+    }
+    
+    /** Returns true if this server is the Master of a 2PL replica set. */
+    public static boolean isMaster() {
+        return txnMode == TransactionMode.TWOPL &&
+                masterServers.get(getServerID()).equals(getServerIP());
+    }
+    
+    /** Returns the IP for this server, based on our clusterid and serverid. */
+    private static String getServerIP() {
+        String ip = getClusterMap().get(getClusterID()).get(getServerID());
+        if (ip.endsWith("*")) {
+            return ip.substring(0, ip.length()-1);
+        } else {
+            return ip;
+        }
     }
 }

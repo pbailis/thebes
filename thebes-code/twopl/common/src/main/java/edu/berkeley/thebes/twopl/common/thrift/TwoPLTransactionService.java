@@ -4,7 +4,7 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-package edu.berkeley.thebes.hat.common.thrift;
+package edu.berkeley.thebes.twopl.common.thrift;
 
 import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
@@ -14,24 +14,26 @@ import org.apache.thrift.scheme.TupleScheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class AntiEntropyService {
+public class TwoPLTransactionService {
 
   public interface Iface {
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException;
+    public TwoPLTransactionResult execute(List<String> transaction) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void execute(List<String> transaction, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.execute_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -55,28 +57,27 @@ public class AntiEntropyService {
       super(iprot, oprot);
     }
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public TwoPLTransactionResult execute(List<String> transaction) throws org.apache.thrift.TException
     {
-      send_put(key, value);
-      return recv_put();
+      send_execute(transaction);
+      return recv_execute();
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public void send_execute(List<String> transaction) throws org.apache.thrift.TException
     {
-      put_args args = new put_args();
-      args.setKey(key);
-      args.setValue(value);
-      sendBase("put", args);
+      execute_args args = new execute_args();
+      args.setTransaction(transaction);
+      sendBase("execute", args);
     }
 
-    public boolean recv_put() throws org.apache.thrift.TException
+    public TwoPLTransactionResult recv_execute() throws org.apache.thrift.TException
     {
-      put_result result = new put_result();
-      receiveBase(result, "put");
+      execute_result result = new execute_result();
+      receiveBase(result, "execute");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "put failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "execute failed: unknown result");
     }
 
   }
@@ -97,38 +98,35 @@ public class AntiEntropyService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void execute(List<String> transaction, org.apache.thrift.async.AsyncMethodCallback<execute_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
+      execute_call method_call = new execute_call(transaction, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String key;
-      private edu.berkeley.thebes.common.thrift.DataItem value;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+    public static class execute_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private List<String> transaction;
+      public execute_call(List<String> transaction, org.apache.thrift.async.AsyncMethodCallback<execute_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.key = key;
-        this.value = value;
+        this.transaction = transaction;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("put", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        put_args args = new put_args();
-        args.setKey(key);
-        args.setValue(value);
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("execute", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        execute_args args = new execute_args();
+        args.setTransaction(transaction);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public TwoPLTransactionResult getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_put();
+        return (new Client(prot)).recv_execute();
       }
     }
 
@@ -145,48 +143,44 @@ public class AntiEntropyService {
     }
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
-      processMap.put("put", new put());
+      processMap.put("execute", new execute());
       return processMap;
     }
 
-    private static class put<I extends Iface> extends org.apache.thrift.ProcessFunction<I, put_args> {
-      public put() {
-        super("put");
+    private static class execute<I extends Iface> extends org.apache.thrift.ProcessFunction<I, execute_args> {
+      public execute() {
+        super("execute");
       }
 
-      protected put_args getEmptyArgsInstance() {
-        return new put_args();
+      protected execute_args getEmptyArgsInstance() {
+        return new execute_args();
       }
 
-      protected put_result getResult(I iface, put_args args) throws org.apache.thrift.TException {
-        put_result result = new put_result();
-        result.success = iface.put(args.key, args.value);
-        result.setSuccessIsSet(true);
+      protected execute_result getResult(I iface, execute_args args) throws org.apache.thrift.TException {
+        execute_result result = new execute_result();
+        result.success = iface.execute(args.transaction);
         return result;
       }
     }
 
   }
 
-  public static class put_args implements org.apache.thrift.TBase<put_args, put_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_args");
+  public static class execute_args implements org.apache.thrift.TBase<execute_args, execute_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("execute_args");
 
-    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField TRANSACTION_FIELD_DESC = new org.apache.thrift.protocol.TField("transaction", org.apache.thrift.protocol.TType.LIST, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new put_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new put_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new execute_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new execute_argsTupleSchemeFactory());
     }
 
-    public String key; // required
-    public edu.berkeley.thebes.common.thrift.DataItem value; // required
+    public List<String> transaction; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      KEY((short)1, "key"),
-      VALUE((short)2, "value");
+      TRANSACTION((short)1, "transaction");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -201,10 +195,8 @@ public class AntiEntropyService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // KEY
-            return KEY;
-          case 2: // VALUE
-            return VALUE;
+          case 1: // TRANSACTION
+            return TRANSACTION;
           default:
             return null;
         }
@@ -248,111 +240,91 @@ public class AntiEntropyService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+      tmpMap.put(_Fields.TRANSACTION, new org.apache.thrift.meta_data.FieldMetaData("transaction", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(execute_args.class, metaDataMap);
     }
 
-    public put_args() {
+    public execute_args() {
     }
 
-    public put_args(
-      String key,
-      edu.berkeley.thebes.common.thrift.DataItem value)
+    public execute_args(
+      List<String> transaction)
     {
       this();
-      this.key = key;
-      this.value = value;
+      this.transaction = transaction;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_args(put_args other) {
-      if (other.isSetKey()) {
-        this.key = other.key;
-      }
-      if (other.isSetValue()) {
-        this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
+    public execute_args(execute_args other) {
+      if (other.isSetTransaction()) {
+        List<String> __this__transaction = new ArrayList<String>();
+        for (String other_element : other.transaction) {
+          __this__transaction.add(other_element);
+        }
+        this.transaction = __this__transaction;
       }
     }
 
-    public put_args deepCopy() {
-      return new put_args(this);
+    public execute_args deepCopy() {
+      return new execute_args(this);
     }
 
     @Override
     public void clear() {
-      this.key = null;
-      this.value = null;
+      this.transaction = null;
     }
 
-    public String getKey() {
-      return this.key;
+    public int getTransactionSize() {
+      return (this.transaction == null) ? 0 : this.transaction.size();
     }
 
-    public put_args setKey(String key) {
-      this.key = key;
-      return this;
+    public java.util.Iterator<String> getTransactionIterator() {
+      return (this.transaction == null) ? null : this.transaction.iterator();
     }
 
-    public void unsetKey() {
-      this.key = null;
-    }
-
-    /** Returns true if field key is set (has been assigned a value) and false otherwise */
-    public boolean isSetKey() {
-      return this.key != null;
-    }
-
-    public void setKeyIsSet(boolean value) {
-      if (!value) {
-        this.key = null;
+    public void addToTransaction(String elem) {
+      if (this.transaction == null) {
+        this.transaction = new ArrayList<String>();
       }
+      this.transaction.add(elem);
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getValue() {
-      return this.value;
+    public List<String> getTransaction() {
+      return this.transaction;
     }
 
-    public put_args setValue(edu.berkeley.thebes.common.thrift.DataItem value) {
-      this.value = value;
+    public execute_args setTransaction(List<String> transaction) {
+      this.transaction = transaction;
       return this;
     }
 
-    public void unsetValue() {
-      this.value = null;
+    public void unsetTransaction() {
+      this.transaction = null;
     }
 
-    /** Returns true if field value is set (has been assigned a value) and false otherwise */
-    public boolean isSetValue() {
-      return this.value != null;
+    /** Returns true if field transaction is set (has been assigned a value) and false otherwise */
+    public boolean isSetTransaction() {
+      return this.transaction != null;
     }
 
-    public void setValueIsSet(boolean value) {
+    public void setTransactionIsSet(boolean value) {
       if (!value) {
-        this.value = null;
+        this.transaction = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case KEY:
+      case TRANSACTION:
         if (value == null) {
-          unsetKey();
+          unsetTransaction();
         } else {
-          setKey((String)value);
-        }
-        break;
-
-      case VALUE:
-        if (value == null) {
-          unsetValue();
-        } else {
-          setValue((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setTransaction((List<String>)value);
         }
         break;
 
@@ -361,11 +333,8 @@ public class AntiEntropyService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case KEY:
-        return getKey();
-
-      case VALUE:
-        return getValue();
+      case TRANSACTION:
+        return getTransaction();
 
       }
       throw new IllegalStateException();
@@ -378,10 +347,8 @@ public class AntiEntropyService {
       }
 
       switch (field) {
-      case KEY:
-        return isSetKey();
-      case VALUE:
-        return isSetValue();
+      case TRANSACTION:
+        return isSetTransaction();
       }
       throw new IllegalStateException();
     }
@@ -390,30 +357,21 @@ public class AntiEntropyService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_args)
-        return this.equals((put_args)that);
+      if (that instanceof execute_args)
+        return this.equals((execute_args)that);
       return false;
     }
 
-    public boolean equals(put_args that) {
+    public boolean equals(execute_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_key = true && this.isSetKey();
-      boolean that_present_key = true && that.isSetKey();
-      if (this_present_key || that_present_key) {
-        if (!(this_present_key && that_present_key))
+      boolean this_present_transaction = true && this.isSetTransaction();
+      boolean that_present_transaction = true && that.isSetTransaction();
+      if (this_present_transaction || that_present_transaction) {
+        if (!(this_present_transaction && that_present_transaction))
           return false;
-        if (!this.key.equals(that.key))
-          return false;
-      }
-
-      boolean this_present_value = true && this.isSetValue();
-      boolean that_present_value = true && that.isSetValue();
-      if (this_present_value || that_present_value) {
-        if (!(this_present_value && that_present_value))
-          return false;
-        if (!this.value.equals(that.value))
+        if (!this.transaction.equals(that.transaction))
           return false;
       }
 
@@ -425,30 +383,20 @@ public class AntiEntropyService {
       return 0;
     }
 
-    public int compareTo(put_args other) {
+    public int compareTo(execute_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_args typedOther = (put_args)other;
+      execute_args typedOther = (execute_args)other;
 
-      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
+      lastComparison = Boolean.valueOf(isSetTransaction()).compareTo(typedOther.isSetTransaction());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetKey()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetValue()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value, typedOther.value);
+      if (isSetTransaction()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transaction, typedOther.transaction);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -470,22 +418,14 @@ public class AntiEntropyService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_args(");
+      StringBuilder sb = new StringBuilder("execute_args(");
       boolean first = true;
 
-      sb.append("key:");
-      if (this.key == null) {
+      sb.append("transaction:");
+      if (this.transaction == null) {
         sb.append("null");
       } else {
-        sb.append(this.key);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("value:");
-      if (this.value == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.value);
+        sb.append(this.transaction);
       }
       first = false;
       sb.append(")");
@@ -512,15 +452,15 @@ public class AntiEntropyService {
       }
     }
 
-    private static class put_argsStandardSchemeFactory implements SchemeFactory {
-      public put_argsStandardScheme getScheme() {
-        return new put_argsStandardScheme();
+    private static class execute_argsStandardSchemeFactory implements SchemeFactory {
+      public execute_argsStandardScheme getScheme() {
+        return new execute_argsStandardScheme();
       }
     }
 
-    private static class put_argsStandardScheme extends StandardScheme<put_args> {
+    private static class execute_argsStandardScheme extends StandardScheme<execute_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, put_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, execute_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -530,19 +470,20 @@ public class AntiEntropyService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // KEY
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.key = iprot.readString();
-                struct.setKeyIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // VALUE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
-                struct.value.read(iprot);
-                struct.setValueIsSet(true);
+            case 1: // TRANSACTION
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
+                  struct.transaction = new ArrayList<String>(_list10.size);
+                  for (int _i11 = 0; _i11 < _list10.size; ++_i11)
+                  {
+                    String _elem12; // required
+                    _elem12 = iprot.readString();
+                    struct.transaction.add(_elem12);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setTransactionIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -558,18 +499,20 @@ public class AntiEntropyService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, put_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, execute_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.key != null) {
-          oprot.writeFieldBegin(KEY_FIELD_DESC);
-          oprot.writeString(struct.key);
-          oprot.writeFieldEnd();
-        }
-        if (struct.value != null) {
-          oprot.writeFieldBegin(VALUE_FIELD_DESC);
-          struct.value.write(oprot);
+        if (struct.transaction != null) {
+          oprot.writeFieldBegin(TRANSACTION_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.transaction.size()));
+            for (String _iter13 : struct.transaction)
+            {
+              oprot.writeString(_iter13);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -578,63 +521,67 @@ public class AntiEntropyService {
 
     }
 
-    private static class put_argsTupleSchemeFactory implements SchemeFactory {
-      public put_argsTupleScheme getScheme() {
-        return new put_argsTupleScheme();
+    private static class execute_argsTupleSchemeFactory implements SchemeFactory {
+      public execute_argsTupleScheme getScheme() {
+        return new execute_argsTupleScheme();
       }
     }
 
-    private static class put_argsTupleScheme extends TupleScheme<put_args> {
+    private static class execute_argsTupleScheme extends TupleScheme<execute_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, put_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, execute_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetKey()) {
+        if (struct.isSetTransaction()) {
           optionals.set(0);
         }
-        if (struct.isSetValue()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetKey()) {
-          oprot.writeString(struct.key);
-        }
-        if (struct.isSetValue()) {
-          struct.value.write(oprot);
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetTransaction()) {
+          {
+            oprot.writeI32(struct.transaction.size());
+            for (String _iter14 : struct.transaction)
+            {
+              oprot.writeString(_iter14);
+            }
+          }
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, put_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, execute_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.key = iprot.readString();
-          struct.setKeyIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
-          struct.value.read(iprot);
-          struct.setValueIsSet(true);
+          {
+            org.apache.thrift.protocol.TList _list15 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.transaction = new ArrayList<String>(_list15.size);
+            for (int _i16 = 0; _i16 < _list15.size; ++_i16)
+            {
+              String _elem17; // required
+              _elem17 = iprot.readString();
+              struct.transaction.add(_elem17);
+            }
+          }
+          struct.setTransactionIsSet(true);
         }
       }
     }
 
   }
 
-  public static class put_result implements org.apache.thrift.TBase<put_result, put_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_result");
+  public static class execute_result implements org.apache.thrift.TBase<execute_result, execute_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("execute_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new put_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new put_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new execute_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new execute_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TwoPLTransactionResult success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -695,68 +642,65 @@ public class AntiEntropyService {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TwoPLTransactionResult.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(execute_result.class, metaDataMap);
     }
 
-    public put_result() {
+    public execute_result() {
     }
 
-    public put_result(
-      boolean success)
+    public execute_result(
+      TwoPLTransactionResult success)
     {
       this();
       this.success = success;
-      setSuccessIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_result(put_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+    public execute_result(execute_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new TwoPLTransactionResult(other.success);
+      }
     }
 
-    public put_result deepCopy() {
-      return new put_result(this);
+    public execute_result deepCopy() {
+      return new execute_result(this);
     }
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.success = null;
     }
 
-    public boolean isSuccess() {
+    public TwoPLTransactionResult getSuccess() {
       return this.success;
     }
 
-    public put_result setSuccess(boolean success) {
+    public execute_result setSuccess(TwoPLTransactionResult success) {
       this.success = success;
-      setSuccessIsSet(true);
       return this;
     }
 
     public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+      this.success = null;
     }
 
     /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+      return this.success != null;
     }
 
     public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+      if (!value) {
+        this.success = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -765,7 +709,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Boolean)value);
+          setSuccess((TwoPLTransactionResult)value);
         }
         break;
 
@@ -775,7 +719,7 @@ public class AntiEntropyService {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+        return getSuccess();
 
       }
       throw new IllegalStateException();
@@ -798,21 +742,21 @@ public class AntiEntropyService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_result)
-        return this.equals((put_result)that);
+      if (that instanceof execute_result)
+        return this.equals((execute_result)that);
       return false;
     }
 
-    public boolean equals(put_result that) {
+    public boolean equals(execute_result that) {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (this.success != that.success)
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -824,13 +768,13 @@ public class AntiEntropyService {
       return 0;
     }
 
-    public int compareTo(put_result other) {
+    public int compareTo(execute_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_result typedOther = (put_result)other;
+      execute_result typedOther = (execute_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -859,11 +803,15 @@ public class AntiEntropyService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_result(");
+      StringBuilder sb = new StringBuilder("execute_result(");
       boolean first = true;
 
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -889,15 +837,15 @@ public class AntiEntropyService {
       }
     }
 
-    private static class put_resultStandardSchemeFactory implements SchemeFactory {
-      public put_resultStandardScheme getScheme() {
-        return new put_resultStandardScheme();
+    private static class execute_resultStandardSchemeFactory implements SchemeFactory {
+      public execute_resultStandardScheme getScheme() {
+        return new execute_resultStandardScheme();
       }
     }
 
-    private static class put_resultStandardScheme extends StandardScheme<put_result> {
+    private static class execute_resultStandardScheme extends StandardScheme<execute_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, put_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, execute_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -908,8 +856,9 @@ public class AntiEntropyService {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new TwoPLTransactionResult();
+                struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -926,29 +875,31 @@ public class AntiEntropyService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, put_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, execute_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
 
     }
 
-    private static class put_resultTupleSchemeFactory implements SchemeFactory {
-      public put_resultTupleScheme getScheme() {
-        return new put_resultTupleScheme();
+    private static class execute_resultTupleSchemeFactory implements SchemeFactory {
+      public execute_resultTupleScheme getScheme() {
+        return new execute_resultTupleScheme();
       }
     }
 
-    private static class put_resultTupleScheme extends TupleScheme<put_result> {
+    private static class execute_resultTupleScheme extends TupleScheme<execute_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, put_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, execute_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -956,16 +907,17 @@ public class AntiEntropyService {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+          struct.success.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, put_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, execute_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
+          struct.success = new TwoPLTransactionResult();
+          struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
       }
