@@ -1,19 +1,22 @@
 package edu.berkeley.thebes.hat.server;
 
-import com.google.common.collect.Lists;
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftServer;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
+import com.google.common.collect.Lists;
+
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.common.thrift.ThriftServer;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
 
 public class AntiEntropyServer implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServer.class);
@@ -43,16 +46,16 @@ public class AntiEntropyServer implements Runnable {
 
         logger.debug("Bootstrapping anti-entropy...");
 
-        for (String neighbor : Config.getSiblingServers()) {
+        for (ServerAddress neighbor : Config.getSiblingServers()) {
             while (true) {
                 try {
                     neighborClients.add(
-                            ThriftUtil.getAntiEntropyServiceClient(neighbor,
+                            ThriftUtil.getAntiEntropyServiceClient(neighbor.getIP(),
                                                                    Config.getAntiEntropyServerPort()));
                     break;
                 } catch (TTransportException e) {
                     System.err.println("Exception while bootstrapping connection with neighbor: " +
-                                       neighbor + ":" + Config.getAntiEntropyServerPort());
+                                       neighbor.getIP() + ":" + Config.getAntiEntropyServerPort());
                     e.printStackTrace();
                 }
             }

@@ -1,5 +1,6 @@
 persistence_engine: memory
 cluster_configuration: {1: [127.0.0.1], 2: [127.0.0.2]}
 twopl_cluster_configuration: {1: [127.0.0.1*]}
+twopl_tm_config: {1: 127.0.0.1}
 twopl_tm_ip: 127.0.0.1
 socket_timeout_ms: 1000

@@ -23,7 +23,7 @@ public class ConfigStrings {
     public static final String TWOPL_PORT = "twopl_port";
     public static final String TWOPL_REPLICATE_TO_SLAVES = "twopl_replicate_to_slaves";
     public static final String TWOPL_TM_PORT = "twopl_tm_port";
-    public static final String TWOPL_TM_IP = "twopl_tm_ip";
+    public static final String TWOPL_TM_CONFIG = "twopl_tm_config";
     public static final String TWOPL_CLUSTER_CONFIG = "twopl_cluster_configuration";
 
     public static final List<String> requiredCommonConfigOptions = new ArrayList<String>() {{

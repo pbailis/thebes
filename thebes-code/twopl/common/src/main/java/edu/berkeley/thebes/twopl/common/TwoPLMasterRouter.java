@@ -1,12 +1,14 @@
 package edu.berkeley.thebes.twopl.common;
 
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
-import org.apache.thrift.transport.TTransportException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.thrift.transport.TTransportException;
+
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 
 /** Helps route traffic to the master of each replica set. */
 public class TwoPLMasterRouter {
@@ -14,16 +16,21 @@ public class TwoPLMasterRouter {
     private static List<TwoPLMasterReplicaService.Client> masterReplicas;
 
     public TwoPLMasterRouter() throws TTransportException {
-        List<String> serverIPs = Config.getMasterServers();
+        List<ServerAddress> serverIPs = Config.getMasterServers();
         masterReplicas = new ArrayList<TwoPLMasterReplicaService.Client>(serverIPs.size());
 
-        for (String server : serverIPs) {
+        for (ServerAddress server : serverIPs) {
             masterReplicas.add(TwoPLThriftUtil.getMasterReplicaServiceClient(
-                    server,  Config.getTwoPLServerPort()));
+                    server.getIP(), server.getPort()));
         }
     }
 
     public TwoPLMasterReplicaService.Client getMasterByKey(String key) {
         return masterReplicas.get(key.hashCode() % masterReplicas.size());
+    }
+    
+    public ServerAddress getMasterAddressByKey(String key) {
+        List<ServerAddress> servers = Config.getMasterServers();
+        return servers.get(key.hashCode() % servers.size());
     }
 }

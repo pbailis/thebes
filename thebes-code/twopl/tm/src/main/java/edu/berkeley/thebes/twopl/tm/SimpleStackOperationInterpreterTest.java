@@ -1,17 +1,19 @@
 package edu.berkeley.thebes.twopl.tm;
 
-/*
-
-import com.google.common.collect.Maps;
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import junit.framework.TestCase;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
-import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+
+import javax.naming.ConfigurationException;
+
+import junit.framework.TestCase;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import com.google.common.collect.Maps;
+
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
 
 public class SimpleStackOperationInterpreterTest extends TestCase {
     FakeClient client;
@@ -23,7 +25,7 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         try {
             client.open();
             interpreter = new SimpleStackOperationInterpreter(client);
-        } catch (TTransportException | ConfigurationException | FileNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -151,5 +153,3 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         }
     }
 }
-
-*/
