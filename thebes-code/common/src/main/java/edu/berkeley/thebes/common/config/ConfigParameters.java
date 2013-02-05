@@ -1,0 +1,113 @@
+package edu.berkeley.thebes.common.config;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Map;
+
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
+
+/**
+ * These define parameters that can have default values or be set by
+ * configuration or command-line interfaces.
+ */
+public enum ConfigParameters {
+    
+    CONFIG_FILE(String.class, "conf/thebes.yaml"),
+    CLUSTERID(Integer.class, RequirementLevel.COMMON),
+    /** 0 to N-1, exactly N servers per cluster */
+    SERVERID(Integer.class, RequirementLevel.SERVER_COMMON),
+    /** Map of clusters, indexed starting at 1. */
+    CLUSTER_CONFIG(Map.class, RequirementLevel.HAT_COMMON),
+    PERSISTENCE_ENGINE(PersistenceEngine.class, PersistenceEngine.MEMORY),
+    SOCKET_TIMEOUT(Integer.class, 4000),
+    SERVER_PORT(Integer.class, 8080),
+    ANTI_ENTROPY_PORT(Integer.class, 8081),
+    STANDALONE(Boolean.class, false),
+    TXN_MODE(TransactionMode.class, RequirementLevel.CLIAPP),
+    
+    TWOPL_PORT(Integer.class, 8082),
+    TWOPL_REPLICATE_TO_SLAVES(Boolean.class, true),
+    TWOPL_TM_PORT(Integer.class, 8083),
+    TWOPL_TM_IP(String.class, RequirementLevel.TWOPL_TM),
+    TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON)
+    ;
+    
+    /** Note that defaultValue and reqLevels are mutually exclusive. */
+    private Class<?> type;
+    private Object defaultValue;
+    private RequirementLevel[] reqLevels;
+    
+    private <T> ConfigParameters(Class<T> type, Object defaultValue) {
+        this.type = type;
+        this.defaultValue = defaultValue;
+        this.reqLevels = new RequirementLevel[]{};
+    }
+
+    private <T> ConfigParameters(Class<T> type, RequirementLevel reqLevel) {
+        this.type = type;
+        this.defaultValue = null;
+        this.reqLevels = new RequirementLevel[]{ reqLevel };
+    }
+    
+    private <T> ConfigParameters(Class<T> type, RequirementLevel ... reqLevels) {
+        this.type = type;
+        this.defaultValue = null;
+        this.reqLevels = reqLevels;
+    }
+    
+    public String getTextName() {
+        return this.name().toLowerCase();
+    }
+    
+    public Object getDefaultValue() {
+        return defaultValue;
+    }
+    
+    public boolean requiresLevel(RequirementLevel reqLevel) {
+        for (RequirementLevel level : reqLevels) {
+            if (level == reqLevel) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Object castValue(Object o) {
+        // If our type is already a superclass of o, we can just return!
+        if (type.isAssignableFrom(o.getClass())) {
+            return o;
+            
+        // Casting to custom enumeration types. See {@link ConfigParameterTypes}.
+        } else if (Arrays.asList(type.getInterfaces()).contains(ConfigParameterTypes.class)) {
+            assert o instanceof String;
+            try {
+                Method m = type.getMethod("valueOf", String.class);
+                String key = o.toString().toUpperCase();
+                return m.invoke(null, key);
+            } catch (NoSuchMethodException | SecurityException | IllegalAccessException
+                    | IllegalArgumentException | InvocationTargetException e) {
+                throw new IllegalArgumentException("Cannot cast " + o + " to " + type);
+            }
+        
+        // Boolean casting
+        } else if (type.equals(Boolean.class)) {
+            switch (o.toString()) {
+            case "":
+            case "true":
+            case "on":
+                return Boolean.TRUE;
+            case "false":
+            case "off":
+                return Boolean.FALSE;
+            }
+        
+        // String->Integer casting
+        } else if (type.equals(Integer.class) && o instanceof String) {
+            return Integer.parseInt(o.toString());
+        }
+        
+        throw new IllegalArgumentException("Cannot convert " + o.getClass() + " to " + type);
+    }
+}
