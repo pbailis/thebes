@@ -1,13 +1,13 @@
 package edu.berkeley.thebes.common.thrift;
 
+/** Simply stores all the attributes of some external server. */
 public class ServerAddress {
     private final int clusterID;
     private final int serverID;
     private final String ip;
-    private final int port;
+    private int port;
     
     public ServerAddress(int clusterID, int serverID, String ip, int port) {
-        super();
         this.clusterID = clusterID;
         this.serverID = serverID;
         this.ip = ip;
@@ -27,4 +27,8 @@ public class ServerAddress {
         return port;
     }
     
+    @Override
+    public String toString() {
+        return ip + ":" + port + " [" + clusterID + ", " + serverID + "]";
+    }
 }

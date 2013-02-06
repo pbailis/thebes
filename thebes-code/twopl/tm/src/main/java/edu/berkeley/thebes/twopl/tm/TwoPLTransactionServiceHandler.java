@@ -1,27 +1,23 @@
 package edu.berkeley.thebes.twopl.tm;
 
-import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import org.apache.thrift.TException;
+
 import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
-import org.apache.thrift.TException;
 
 import java.util.List;
 
 public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.Iface {
-    private IPersistenceEngine persistenceEngine;
     private TwoPLTransactionClient client;
-    private TwoPLOperationInterpreter interpreter;
 
-    public TwoPLTransactionServiceHandler(IPersistenceEngine persistenceEngine,
-            TwoPLTransactionClient client) {
-        this.persistenceEngine = persistenceEngine;
+    public TwoPLTransactionServiceHandler(TwoPLTransactionClient client) {
         this.client = client;
-        this.interpreter = new SimpleStackOperationInterpreter(client);
     }
 
     @Override
     public TwoPLTransactionResult execute(List<String> transaction) throws TException {
+        TwoPLOperationInterpreter interpreter = new SimpleStackOperationInterpreter(client); 
         client.beginTransaction();
         try {
             for (String operation : transaction) {

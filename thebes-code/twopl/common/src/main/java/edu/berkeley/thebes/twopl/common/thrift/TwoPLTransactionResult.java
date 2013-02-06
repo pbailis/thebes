@@ -20,6 +20,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class TwoPLTransactionResult implements org.apache.thrift.TBase<TwoPLTransactionResult, TwoPLTransactionResult._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TwoPLTransactionResult");
 
