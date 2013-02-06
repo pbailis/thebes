@@ -85,23 +85,23 @@ public class Config {
         return getOption(ConfigParameters.PERSISTENCE_ENGINE);
     }
 
-    public static int getServerPort() {
+    public static Integer getServerPort() {
         return getOption(ConfigParameters.SERVER_PORT);
     }
     
-    public static int getAntiEntropyServerPort() {
+    public static Integer getAntiEntropyServerPort() {
         return getOption(ConfigParameters.ANTI_ENTROPY_PORT);
     }
     
-    public static int getTwoPLServerPort() {
+    public static Integer getTwoPLServerPort() {
         return getOption(ConfigParameters.TWOPL_PORT);
     }
 
-    private static int getTwoPLTransactionManagerPort() {
+    private static Integer getTwoPLTransactionManagerPort() {
         return getOption(ConfigParameters.TWOPL_TM_PORT);
     }
 
-    private static int getClusterID() {
+    private static Integer getClusterID() {
         return getOption(ConfigParameters.CLUSTERID);
     }
     
@@ -130,7 +130,7 @@ public class Config {
         }
     }
 
-    private static int getServerID() {
+    private static Integer getServerID() {
         return getOption(ConfigParameters.SERVERID);
     }
 
@@ -184,7 +184,7 @@ public class Config {
         return masters;
     }
 
-    public static int getSocketTimeout() {
+    public static Integer getSocketTimeout() {
         return getOption(ConfigParameters.SOCKET_TIMEOUT);
     }
 
@@ -206,7 +206,7 @@ public class Config {
                 getTwoPLTransactionManagerPort());
     }
     
-    public static boolean shouldReplicateToTwoPLSlaves() {
+    public static Boolean shouldReplicateToTwoPLSlaves() {
         return getOption(ConfigParameters.TWOPL_REPLICATE_TO_SLAVES);
     }
 
@@ -237,7 +237,7 @@ public class Config {
     }
     
     /** Returns true if this server is the Master of a 2PL replica set. */
-    public static boolean isMaster() {
+    public static Boolean isMaster() {
         return txnMode == TransactionMode.TWOPL &&
                 masterServers.get(getServerID()).equals(getServerIP());
     }
