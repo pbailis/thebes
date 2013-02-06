@@ -203,13 +203,13 @@ public class Config {
 
     /** Returns the TM bind ip for the TM in *this* cluster. */
     public static InetSocketAddress getTwoPLTransactionManagerBindIP() {
-        Map<Integer, String> tmConfig = getOption(ConfigParameters.TWOPL_TM_IP);
+        Map<Integer, String> tmConfig = getOption(ConfigParameters.TWOPL_TM_CONFIG);
         String myIP = tmConfig.get(getClusterID());
         return new InetSocketAddress(myIP, getTwoPLTransactionManagerPort());
     }
     
     public static ServerAddress getTwoPLTransactionManagerByCluster(int clusterID) {
-        Map<Integer, String> tmConfig = getOption(ConfigParameters.TWOPL_TM_IP);
+        Map<Integer, String> tmConfig = getOption(ConfigParameters.TWOPL_TM_CONFIG);
         return new ServerAddress(clusterID, -1,
                 tmConfig.get(clusterID), getTwoPLTransactionManagerPort());
     }
