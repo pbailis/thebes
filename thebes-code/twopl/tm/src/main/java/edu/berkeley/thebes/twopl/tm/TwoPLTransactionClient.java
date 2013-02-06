@@ -76,7 +76,9 @@ public class TwoPLTransactionClient implements IThebesClient {
         }
         
         acquireLock(key);
+        System.out.println("Lock acquired");
         DataItem dataItem = masterRouter.getMasterByKey(key).get(sessionId, key);
+        System.out.println("Get performed: " + dataItem);
         // Null is returned by 0-length data
         if (dataItem.getData().length == 0) {
             return null;
