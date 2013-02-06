@@ -75,11 +75,14 @@ public class Config {
             return (T) option.castValue(ret);
 
         ret = YamlConfig.getOption(option.getTextName());
-        
         if (ret != null)
             return (T) option.castValue(ret);
         
-        return (T) option.getDefaultValue();
+        ret = option.getDefaultValue();
+        if (ret != null)
+            return (T) ret;
+        else
+            throw new IllegalStateException("No configuration for " + option);
     }
 
     public static PersistenceEngine getPersistenceType() {
