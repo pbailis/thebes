@@ -32,8 +32,10 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public DataItem get(long sessionId, String key) throws TException {
         if (lockManager.ownsLock(key, sessionId)) {
+            System.out.println("PREPARED TO GET " + key);
             return persistenceEngine.get(key);
         } else {
+            System.out.println("~GET " + key);
             throw new TException("Session does not own GET lock on '" + key + "'");
         }
     }
