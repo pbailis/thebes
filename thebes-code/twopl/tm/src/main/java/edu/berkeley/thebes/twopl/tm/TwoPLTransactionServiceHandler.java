@@ -24,8 +24,12 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
                 interpreter.execute(operation);
             }
         } catch (AssertionError e) {
+            e.printStackTrace();
             throw new TTransactionAbortedException(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
+            System.out.println("END TRANSACTION");
             client.endTransaction();
         }
         
