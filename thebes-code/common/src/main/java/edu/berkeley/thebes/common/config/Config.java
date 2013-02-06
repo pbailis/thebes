@@ -224,7 +224,7 @@ public class Config {
         return String.format("C%d:S%d", getClusterID(), getServerID());
     }
 
-    public static boolean isStandaloneServer() {
+    public static Boolean isStandaloneServer() {
         return getOption(ConfigParameters.STANDALONE);
     }
 
