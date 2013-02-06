@@ -33,7 +33,6 @@ public enum ConfigParameters {
     TWOPL_PORT(Integer.class, 8082),
     TWOPL_REPLICATE_TO_SLAVES(Boolean.class, true),
     TWOPL_TM_PORT(Integer.class, 8083),
-    TWOPL_TM_IP(String.class, RequirementLevel.TWOPL_TM),
     TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON)
     ;
     
