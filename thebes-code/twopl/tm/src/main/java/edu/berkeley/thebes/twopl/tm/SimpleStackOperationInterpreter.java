@@ -199,9 +199,12 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
             System.out.println("..GET");
             value = client.get(key);
             System.out.println("..GETTED!");
-            assert value != null : "`" + key + "` not found!";
-            mostRecentValues.put(key, value);
-            System.out.println("GET " + key + " -> " + value.getInt(0));
+            if (value != null) {
+                mostRecentValues.put(key, value);
+                System.out.println("GET " + key + " -> " + value.getInt(0));
+            } else {
+                System.out.println("GET " + key + " -> " + value);
+            }
             return value;
         case PUT:
             assert node.getChild(0) instanceof VariableNode;
