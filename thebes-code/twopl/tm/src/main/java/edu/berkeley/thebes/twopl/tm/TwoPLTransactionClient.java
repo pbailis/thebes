@@ -90,7 +90,9 @@ public class TwoPLTransactionClient implements IThebesClient {
     private void acquireLock(String key) throws TException {
         Client master = masterRouter.getMasterByKey(key);
         if (!lockedKeys.contains(key)) {
+            System.out.println("PREPARE THRIFT LOCK");
             boolean lockAcquired = master.lock(sessionId, key);
+            System.out.println("ACQUIRED THRIFT LOCK");
             if (!lockAcquired) {
                 throw new TException("Lock could not be acquired for key '" + key + "'");
             } else {
