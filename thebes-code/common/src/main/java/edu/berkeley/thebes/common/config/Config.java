@@ -176,7 +176,6 @@ public class Config {
             }
         }
         
-        System.out.println(clusterServers + " / " + masterMap);
         List<ServerAddress> masters = Lists.newArrayListWithCapacity(clusterServers.size());
         for (int i = 0; i < clusterServers.size(); i ++) {
             assert masterMap.containsKey(i) : "Missing master for replica set " + i;

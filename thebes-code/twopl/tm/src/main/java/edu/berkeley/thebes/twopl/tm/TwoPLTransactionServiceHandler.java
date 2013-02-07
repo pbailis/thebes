@@ -33,12 +33,9 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            System.out.println("END TRANSACTION");
             client.endTransaction();
         }
         
-//        return null;
-        System.out.println(interpreter.getOutput());
         return new TwoPLTransactionResult(interpreter.getOutput());
     }
 }

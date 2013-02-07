@@ -70,7 +70,6 @@ public class ThebesTwoPLClient implements IThebesClient {
             }
         }
         
-        System.out.println("HERE WE GO: " + max + " / " + maxClusterID + " : " + clusterToAccessesMap);
         if (maxClusterID == null) {
             maxClusterID = Config.getClusterID();
         }
