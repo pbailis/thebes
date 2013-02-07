@@ -2,10 +2,14 @@ package edu.berkeley.thebes.twopl.tm;
 
 import org.apache.thrift.TException;
 
+import com.google.common.collect.Maps;
+
 import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 
 public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.Iface {
@@ -24,7 +28,10 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
                 interpreter.execute(operation);
             }
         } catch (AssertionError e) {
+            e.printStackTrace();
             throw new TTransactionAbortedException(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             client.endTransaction();
         }

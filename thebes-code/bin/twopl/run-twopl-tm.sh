@@ -1,1 +1,1 @@
-java -ea -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar --clusterid 1
+java -ea -Dclusterid=$1 -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar
