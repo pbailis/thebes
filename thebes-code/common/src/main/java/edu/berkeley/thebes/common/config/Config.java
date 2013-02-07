@@ -105,7 +105,7 @@ public class Config {
         return getOption(ConfigParameters.TWOPL_TM_PORT);
     }
 
-    private static Integer getClusterID() {
+    public static Integer getClusterID() {
         return getOption(ConfigParameters.CLUSTERID);
     }
     

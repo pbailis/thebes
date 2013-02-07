@@ -69,6 +69,11 @@ public class ThebesTwoPLClient implements IThebesClient {
                 max = clusterIDCount.getValue().get();
             }
         }
+        
+        System.out.println("HERE WE GO: " + max + " / " + maxClusterID + " : " + clusterToAccessesMap);
+        if (maxClusterID == null) {
+            maxClusterID = Config.getClusterID();
+        }
         ServerAddress bestTM = Config.getTwoPLTransactionManagerByCluster(maxClusterID); 
         TwoPLTransactionService.Client xactClient =
                 TwoPLThriftUtil.getTransactionServiceClient(bestTM.getIP(), bestTM.getPort());
