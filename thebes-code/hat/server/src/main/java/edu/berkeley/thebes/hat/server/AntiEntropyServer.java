@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
@@ -46,16 +47,16 @@ public class AntiEntropyServer implements Runnable {
 
         logger.debug("Bootstrapping anti-entropy...");
 
-        for (String neighbor : Config.getSiblingServers()) {
+        for (ServerAddress neighbor : Config.getSiblingServers()) {
             while (true) {
                 try {
                     neighborClients.add(
-                            ThriftUtil.getAntiEntropyServiceClient(neighbor,
+                            ThriftUtil.getAntiEntropyServiceClient(neighbor.getIP(),
                                                                    Config.getAntiEntropyServerPort()));
                     break;
                 } catch (TTransportException e) {
                     System.err.println("Exception while bootstrapping connection with neighbor: " +
-                                       neighbor + ":" + Config.getAntiEntropyServerPort());
+                                       neighbor.getIP() + ":" + Config.getAntiEntropyServerPort());
                     e.printStackTrace();
                 }
             }
