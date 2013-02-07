@@ -34,15 +34,12 @@ public class ThebesTwoPLClient implements IThebesClient {
     
     private List<String> xactCommands;
     private TwoPLMasterRouter masterRouter;
+    // Note: only ConcurrentMap for method putIfAbsent.
     private ConcurrentMap<Integer, AtomicInteger> clusterToAccessesMap;
-    private Set<String> observedKeys;
     
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
-        InetSocketAddress addr = Config.getTwoPLTransactionManagerBindIP();
         masterRouter = new TwoPLMasterRouter();
-        clusterToAccessesMap = Maps.newConcurrentMap();
-        observedKeys = Sets.newHashSet();
     }
 
     @Override
@@ -50,6 +47,7 @@ public class ThebesTwoPLClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
+        clusterToAccessesMap = Maps.newConcurrentMap();
         xactCommands = Lists.newArrayList();
         inTransaction = true;
     }
@@ -117,10 +115,6 @@ public class ThebesTwoPLClient implements IThebesClient {
     }
     
     private void incrementCluster(String key) {
-        if (observedKeys.contains(key))
-            return;
-        observedKeys.add(key);
-        
         ServerAddress address = masterRouter.getMasterAddressByKey(key);
         int clusterID = address.getClusterID();
         clusterToAccessesMap.putIfAbsent(clusterID, new AtomicInteger(0));

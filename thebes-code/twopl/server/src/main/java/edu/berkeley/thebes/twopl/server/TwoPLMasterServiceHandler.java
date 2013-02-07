@@ -21,8 +21,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
 
     @Override
     public boolean lock(long sessionId, String key) throws TException {
-        boolean x = lockManager.lock(key, sessionId);
-        return x;
+        return lockManager.lock(key, sessionId);
     }
 
     @Override
