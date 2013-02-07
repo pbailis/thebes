@@ -3,6 +3,7 @@ package edu.berkeley.thebes.twopl.server;
 import com.google.common.collect.Lists;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 import org.apache.thrift.TException;
@@ -32,16 +33,16 @@ public class TwoPLSlaveReplicationService {
 
         logger.debug("Bootstrapping slave replication service...");
 
-        for (String slave : Config.getSiblingServers()) {
+        for (ServerAddress slave : Config.getSiblingServers()) {
             while (true) {
                 try {
                     slaveReplicas.add(
-                            TwoPLThriftUtil.getSlaveReplicaServiceClient(slave,
-                                    Config.getTwoPLServerPort()));
+                            TwoPLThriftUtil.getSlaveReplicaServiceClient(slave.getIP(),
+                                    slave.getPort()));
                     break;
                 } catch (TTransportException e) {
                     System.err.println("Exception while bootstrapping connection with slave: " +
-                                       slave + ":" + Config.getTwoPLServerPort());
+                                       slave);
                     e.printStackTrace();
                 }
             }
