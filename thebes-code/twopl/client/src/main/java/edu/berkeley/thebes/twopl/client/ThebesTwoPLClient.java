@@ -1,21 +1,31 @@
 package edu.berkeley.thebes.twopl.client;
 
-import com.google.common.collect.Lists;
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
-import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.naming.ConfigurationException;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
+import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 
 /** Client buffers a transaction and sends it off at the END.
  * Accordingly, GET and PUT cannot return valid values. */
@@ -23,13 +33,13 @@ public class ThebesTwoPLClient implements IThebesClient {
     private boolean inTransaction;
     
     private List<String> xactCommands;
-    private TwoPLTransactionService.Client xactClient;
+    private TwoPLMasterRouter masterRouter;
+    // Note: only ConcurrentMap for method putIfAbsent.
+    private ConcurrentMap<Integer, AtomicInteger> clusterToAccessesMap;
     
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
-        InetSocketAddress addr = Config.getTwoPLTransactionManagerBindIP();
-        xactClient = TwoPLThriftUtil.getTransactionServiceClient(
-                addr.getHostName(), addr.getPort());
+        masterRouter = new TwoPLMasterRouter();
     }
 
     @Override
@@ -37,12 +47,34 @@ public class ThebesTwoPLClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
+        clusterToAccessesMap = Maps.newConcurrentMap();
         xactCommands = Lists.newArrayList();
         inTransaction = true;
     }
 
     @Override
     public boolean endTransaction() throws TException {
+        if (!inTransaction) {
+            return false;
+        }
+        
+        // Open the transaction client with the TM that's closest to the most-used masters.
+        int max = -1;
+        Integer maxClusterID = null;
+        for (Entry<Integer, AtomicInteger> clusterIDCount : clusterToAccessesMap.entrySet()) {
+            if (maxClusterID == null || clusterIDCount.getValue().get() > max) {
+                maxClusterID = clusterIDCount.getKey();
+                max = clusterIDCount.getValue().get();
+            }
+        }
+        
+        if (maxClusterID == null) {
+            maxClusterID = Config.getClusterID();
+        }
+        ServerAddress bestTM = Config.getTwoPLTransactionManagerByCluster(maxClusterID); 
+        TwoPLTransactionService.Client xactClient =
+                TwoPLThriftUtil.getTransactionServiceClient(bestTM.getIP(), bestTM.getPort());
+        
         inTransaction = false;
         TwoPLTransactionResult result;
         try {
@@ -67,6 +99,8 @@ public class ThebesTwoPLClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         xactCommands.add("put " + key + " " + new String(value.array()));
+        
+        incrementCluster(key);
         return true;
     }
 
@@ -76,7 +110,15 @@ public class ThebesTwoPLClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         xactCommands.add("get " + key);
+        incrementCluster(key);
         return null;
+    }
+    
+    private void incrementCluster(String key) {
+        ServerAddress address = masterRouter.getMasterAddressByKey(key);
+        int clusterID = address.getClusterID();
+        clusterToAccessesMap.putIfAbsent(clusterID, new AtomicInteger(0));
+        clusterToAccessesMap.get(clusterID).incrementAndGet();
     }
 
     /** Adds a raw command accepted by the Thebes Transactional Language (TTL). */

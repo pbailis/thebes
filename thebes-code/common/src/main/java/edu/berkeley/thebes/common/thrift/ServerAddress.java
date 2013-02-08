@@ -13,19 +13,16 @@ public class ServerAddress {
         this.ip = ip;
         this.port = port;
     }
-
+    
     public int getClusterID() {
         return clusterID;
     }
-
     public int getServerID() {
         return serverID;
     }
-
     public String getIP() {
         return ip;
     }
-
     public int getPort() {
         return port;
     }

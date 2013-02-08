@@ -1,9 +1,12 @@
 package edu.berkeley.thebes.twopl.tm;
 
+import org.apache.thrift.TException;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import org.apache.thrift.TException;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -11,6 +14,8 @@ import java.util.Map;
 import java.util.Stack;
 
 public class SimpleStackOperationInterpreter implements TwoPLOperationInterpreter {
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(SimpleStackOperationInterpreter.class);
+
     private IThebesClient client;
     private Map<String, ByteBuffer> mostRecentValues = Maps.newHashMap();
     
@@ -197,16 +202,19 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
             assert node.getChild(0) instanceof VariableNode;
             key = ((VariableNode) node.getChild(0)).getVariableName();
             value = client.get(key);
-            assert value != null : "`" + key + "` not found!";
-            mostRecentValues.put(key, value);
-            System.out.println("GET " + key + " -> " + value.getInt(0));
+            if (value != null) {
+                mostRecentValues.put(key, value);
+                logger.debug("GET " + key + " -> " + value.getInt(0));
+            } else {
+                logger.debug("GET " + key + " -> " + value);
+            }
             return value;
         case PUT:
             assert node.getChild(0) instanceof VariableNode;
             key = ((VariableNode) node.getChild(0)).getVariableName();
             value = toByteBuffer(node.getChild(1));
             assert value != null : "`" + key + "` not found!";
-            System.out.println("PUT " + key + " -> " + value.getInt(0));
+            logger.debug("PUT " + key + " -> " + value.getInt(0));
             client.put(key, value);
             mostRecentValues.put(key, value);
             return value;
