@@ -5,11 +5,13 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.yammer.metrics.reporting.ConsoleReporter;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;

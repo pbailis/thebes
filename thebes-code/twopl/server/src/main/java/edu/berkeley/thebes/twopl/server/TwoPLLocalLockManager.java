@@ -3,11 +3,18 @@ package edu.berkeley.thebes.twopl.server;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+
+import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 
 import java.util.Map;
 
 public class TwoPLLocalLockManager {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(TwoPLLocalLockManager.class);
+
+    private final Counter lockMetric = Metrics.newCounter(ThebesTwoPLClient.class, "2pl-locks");
+
     
     /** A lock held by a particular session. */
     private static class TwoPLLock {
@@ -68,6 +75,7 @@ public class TwoPLLocalLockManager {
                     lock.waitForRelease();
                 }
             }
+            lockMetric.inc();
             lockTable.put(key, TwoPLLock.createAndAcquire(sessionId));
             logger.debug("Lock granted for [" + sessionId + "] on key '" + key + "'");
             return true;
@@ -85,6 +93,7 @@ public class TwoPLLocalLockManager {
         if (lockTable.containsKey(key)) {
             TwoPLLock lock = lockTable.get(key);
             if (lock.sessionId == sessionId) {
+                lockMetric.dec();
                 lock.release();
                 lockTable.remove(key);
                 logger.debug("Lock released by [" + sessionId + "] on key '" + key + "'");
