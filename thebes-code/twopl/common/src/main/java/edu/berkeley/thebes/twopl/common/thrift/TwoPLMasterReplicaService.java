@@ -6,26 +6,34 @@
  */
 package edu.berkeley.thebes.twopl.common.thrift;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
+
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 public class TwoPLMasterReplicaService {
 
   public interface Iface {
 
-    public boolean lock(long sessionId, String key) throws org.apache.thrift.TException;
+    public boolean write_lock(long sessionId, String key) throws org.apache.thrift.TException;
+
+    public boolean read_lock(long sessionId, String key) throws org.apache.thrift.TException;
 
     public boolean unlock(long sessionId, String key) throws org.apache.thrift.TException;
 
@@ -37,7 +45,9 @@ public class TwoPLMasterReplicaService {
 
   public interface AsyncIface {
 
-    public void lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.lock_call> resultHandler) throws org.apache.thrift.TException;
+    public void write_lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.write_lock_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void read_lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.read_lock_call> resultHandler) throws org.apache.thrift.TException;
 
     public void unlock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.unlock_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -67,28 +77,52 @@ public class TwoPLMasterReplicaService {
       super(iprot, oprot);
     }
 
-    public boolean lock(long sessionId, String key) throws org.apache.thrift.TException
+    public boolean write_lock(long sessionId, String key) throws org.apache.thrift.TException
     {
-      send_lock(sessionId, key);
-      return recv_lock();
+      send_write_lock(sessionId, key);
+      return recv_write_lock();
     }
 
-    public void send_lock(long sessionId, String key) throws org.apache.thrift.TException
+    public void send_write_lock(long sessionId, String key) throws org.apache.thrift.TException
     {
-      lock_args args = new lock_args();
+      write_lock_args args = new write_lock_args();
       args.setSessionId(sessionId);
       args.setKey(key);
-      sendBase("lock", args);
+      sendBase("write_lock", args);
     }
 
-    public boolean recv_lock() throws org.apache.thrift.TException
+    public boolean recv_write_lock() throws org.apache.thrift.TException
     {
-      lock_result result = new lock_result();
-      receiveBase(result, "lock");
+      write_lock_result result = new write_lock_result();
+      receiveBase(result, "write_lock");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "lock failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "write_lock failed: unknown result");
+    }
+
+    public boolean read_lock(long sessionId, String key) throws org.apache.thrift.TException
+    {
+      send_read_lock(sessionId, key);
+      return recv_read_lock();
+    }
+
+    public void send_read_lock(long sessionId, String key) throws org.apache.thrift.TException
+    {
+      read_lock_args args = new read_lock_args();
+      args.setSessionId(sessionId);
+      args.setKey(key);
+      sendBase("read_lock", args);
+    }
+
+    public boolean recv_read_lock() throws org.apache.thrift.TException
+    {
+      read_lock_result result = new read_lock_result();
+      receiveBase(result, "read_lock");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "read_lock failed: unknown result");
     }
 
     public boolean unlock(long sessionId, String key) throws org.apache.thrift.TException
@@ -182,25 +216,25 @@ public class TwoPLMasterReplicaService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<lock_call> resultHandler) throws org.apache.thrift.TException {
+    public void write_lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<write_lock_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      lock_call method_call = new lock_call(sessionId, key, resultHandler, this, ___protocolFactory, ___transport);
+      write_lock_call method_call = new write_lock_call(sessionId, key, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class lock_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class write_lock_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long sessionId;
       private String key;
-      public lock_call(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<lock_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public write_lock_call(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<write_lock_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.sessionId = sessionId;
         this.key = key;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("lock", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        lock_args args = new lock_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("write_lock", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        write_lock_args args = new write_lock_args();
         args.setSessionId(sessionId);
         args.setKey(key);
         args.write(prot);
@@ -213,7 +247,42 @@ public class TwoPLMasterReplicaService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_lock();
+        return (new Client(prot)).recv_write_lock();
+      }
+    }
+
+    public void read_lock(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<read_lock_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      read_lock_call method_call = new read_lock_call(sessionId, key, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class read_lock_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long sessionId;
+      private String key;
+      public read_lock_call(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<read_lock_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.sessionId = sessionId;
+        this.key = key;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("read_lock", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        read_lock_args args = new read_lock_args();
+        args.setSessionId(sessionId);
+        args.setKey(key);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_read_lock();
       }
     }
 
@@ -338,25 +407,43 @@ public class TwoPLMasterReplicaService {
     }
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
-      processMap.put("lock", new lock());
+      processMap.put("write_lock", new write_lock());
+      processMap.put("read_lock", new read_lock());
       processMap.put("unlock", new unlock());
       processMap.put("get", new get());
       processMap.put("put", new put());
       return processMap;
     }
 
-    private static class lock<I extends Iface> extends org.apache.thrift.ProcessFunction<I, lock_args> {
-      public lock() {
-        super("lock");
+    private static class write_lock<I extends Iface> extends org.apache.thrift.ProcessFunction<I, write_lock_args> {
+      public write_lock() {
+        super("write_lock");
       }
 
-      protected lock_args getEmptyArgsInstance() {
-        return new lock_args();
+      protected write_lock_args getEmptyArgsInstance() {
+        return new write_lock_args();
       }
 
-      protected lock_result getResult(I iface, lock_args args) throws org.apache.thrift.TException {
-        lock_result result = new lock_result();
-        result.success = iface.lock(args.sessionId, args.key);
+      protected write_lock_result getResult(I iface, write_lock_args args) throws org.apache.thrift.TException {
+        write_lock_result result = new write_lock_result();
+        result.success = iface.write_lock(args.sessionId, args.key);
+        result.setSuccessIsSet(true);
+        return result;
+      }
+    }
+
+    private static class read_lock<I extends Iface> extends org.apache.thrift.ProcessFunction<I, read_lock_args> {
+      public read_lock() {
+        super("read_lock");
+      }
+
+      protected read_lock_args getEmptyArgsInstance() {
+        return new read_lock_args();
+      }
+
+      protected read_lock_result getResult(I iface, read_lock_args args) throws org.apache.thrift.TException {
+        read_lock_result result = new read_lock_result();
+        result.success = iface.read_lock(args.sessionId, args.key);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -414,16 +501,16 @@ public class TwoPLMasterReplicaService {
 
   }
 
-  public static class lock_args implements org.apache.thrift.TBase<lock_args, lock_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("lock_args");
+  public static class write_lock_args implements org.apache.thrift.TBase<write_lock_args, write_lock_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("write_lock_args");
 
     private static final org.apache.thrift.protocol.TField SESSION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("sessionId", org.apache.thrift.protocol.TType.I64, (short)1);
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new lock_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new lock_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new write_lock_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new write_lock_argsTupleSchemeFactory());
     }
 
     public long sessionId; // required
@@ -501,13 +588,13 @@ public class TwoPLMasterReplicaService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(lock_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(write_lock_args.class, metaDataMap);
     }
 
-    public lock_args() {
+    public write_lock_args() {
     }
 
-    public lock_args(
+    public write_lock_args(
       long sessionId,
       String key)
     {
@@ -520,7 +607,7 @@ public class TwoPLMasterReplicaService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public lock_args(lock_args other) {
+    public write_lock_args(write_lock_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.sessionId = other.sessionId;
@@ -529,8 +616,8 @@ public class TwoPLMasterReplicaService {
       }
     }
 
-    public lock_args deepCopy() {
-      return new lock_args(this);
+    public write_lock_args deepCopy() {
+      return new write_lock_args(this);
     }
 
     @Override
@@ -544,7 +631,7 @@ public class TwoPLMasterReplicaService {
       return this.sessionId;
     }
 
-    public lock_args setSessionId(long sessionId) {
+    public write_lock_args setSessionId(long sessionId) {
       this.sessionId = sessionId;
       setSessionIdIsSet(true);
       return this;
@@ -567,7 +654,7 @@ public class TwoPLMasterReplicaService {
       return this.key;
     }
 
-    public lock_args setKey(String key) {
+    public write_lock_args setKey(String key) {
       this.key = key;
       return this;
     }
@@ -639,12 +726,12 @@ public class TwoPLMasterReplicaService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof lock_args)
-        return this.equals((lock_args)that);
+      if (that instanceof write_lock_args)
+        return this.equals((write_lock_args)that);
       return false;
     }
 
-    public boolean equals(lock_args that) {
+    public boolean equals(write_lock_args that) {
       if (that == null)
         return false;
 
@@ -674,13 +761,13 @@ public class TwoPLMasterReplicaService {
       return 0;
     }
 
-    public int compareTo(lock_args other) {
+    public int compareTo(write_lock_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      lock_args typedOther = (lock_args)other;
+      write_lock_args typedOther = (write_lock_args)other;
 
       lastComparison = Boolean.valueOf(isSetSessionId()).compareTo(typedOther.isSetSessionId());
       if (lastComparison != 0) {
@@ -719,7 +806,7 @@ public class TwoPLMasterReplicaService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("lock_args(");
+      StringBuilder sb = new StringBuilder("write_lock_args(");
       boolean first = true;
 
       sb.append("sessionId:");
@@ -759,15 +846,15 @@ public class TwoPLMasterReplicaService {
       }
     }
 
-    private static class lock_argsStandardSchemeFactory implements SchemeFactory {
-      public lock_argsStandardScheme getScheme() {
-        return new lock_argsStandardScheme();
+    private static class write_lock_argsStandardSchemeFactory implements SchemeFactory {
+      public write_lock_argsStandardScheme getScheme() {
+        return new write_lock_argsStandardScheme();
       }
     }
 
-    private static class lock_argsStandardScheme extends StandardScheme<lock_args> {
+    private static class write_lock_argsStandardScheme extends StandardScheme<write_lock_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, lock_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, write_lock_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -804,7 +891,7 @@ public class TwoPLMasterReplicaService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, lock_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, write_lock_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -822,16 +909,16 @@ public class TwoPLMasterReplicaService {
 
     }
 
-    private static class lock_argsTupleSchemeFactory implements SchemeFactory {
-      public lock_argsTupleScheme getScheme() {
-        return new lock_argsTupleScheme();
+    private static class write_lock_argsTupleSchemeFactory implements SchemeFactory {
+      public write_lock_argsTupleScheme getScheme() {
+        return new write_lock_argsTupleScheme();
       }
     }
 
-    private static class lock_argsTupleScheme extends TupleScheme<lock_args> {
+    private static class write_lock_argsTupleScheme extends TupleScheme<write_lock_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, lock_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, write_lock_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSessionId()) {
@@ -850,7 +937,7 @@ public class TwoPLMasterReplicaService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, lock_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, write_lock_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -866,15 +953,15 @@ public class TwoPLMasterReplicaService {
 
   }
 
-  public static class lock_result implements org.apache.thrift.TBase<lock_result, lock_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("lock_result");
+  public static class write_lock_result implements org.apache.thrift.TBase<write_lock_result, write_lock_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("write_lock_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new lock_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new lock_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new write_lock_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new write_lock_resultTupleSchemeFactory());
     }
 
     public boolean success; // required
@@ -946,13 +1033,13 @@ public class TwoPLMasterReplicaService {
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(lock_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(write_lock_result.class, metaDataMap);
     }
 
-    public lock_result() {
+    public write_lock_result() {
     }
 
-    public lock_result(
+    public write_lock_result(
       boolean success)
     {
       this();
@@ -963,14 +1050,14 @@ public class TwoPLMasterReplicaService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public lock_result(lock_result other) {
+    public write_lock_result(write_lock_result other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.success = other.success;
     }
 
-    public lock_result deepCopy() {
-      return new lock_result(this);
+    public write_lock_result deepCopy() {
+      return new write_lock_result(this);
     }
 
     @Override
@@ -983,7 +1070,7 @@ public class TwoPLMasterReplicaService {
       return this.success;
     }
 
-    public lock_result setSuccess(boolean success) {
+    public write_lock_result setSuccess(boolean success) {
       this.success = success;
       setSuccessIsSet(true);
       return this;
@@ -1041,12 +1128,12 @@ public class TwoPLMasterReplicaService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof lock_result)
-        return this.equals((lock_result)that);
+      if (that instanceof write_lock_result)
+        return this.equals((write_lock_result)that);
       return false;
     }
 
-    public boolean equals(lock_result that) {
+    public boolean equals(write_lock_result that) {
       if (that == null)
         return false;
 
@@ -1067,13 +1154,13 @@ public class TwoPLMasterReplicaService {
       return 0;
     }
 
-    public int compareTo(lock_result other) {
+    public int compareTo(write_lock_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      lock_result typedOther = (lock_result)other;
+      write_lock_result typedOther = (write_lock_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -1102,7 +1189,7 @@ public class TwoPLMasterReplicaService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("lock_result(");
+      StringBuilder sb = new StringBuilder("write_lock_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -1132,15 +1219,15 @@ public class TwoPLMasterReplicaService {
       }
     }
 
-    private static class lock_resultStandardSchemeFactory implements SchemeFactory {
-      public lock_resultStandardScheme getScheme() {
-        return new lock_resultStandardScheme();
+    private static class write_lock_resultStandardSchemeFactory implements SchemeFactory {
+      public write_lock_resultStandardScheme getScheme() {
+        return new write_lock_resultStandardScheme();
       }
     }
 
-    private static class lock_resultStandardScheme extends StandardScheme<lock_result> {
+    private static class write_lock_resultStandardScheme extends StandardScheme<write_lock_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, lock_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, write_lock_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -1169,7 +1256,7 @@ public class TwoPLMasterReplicaService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, lock_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, write_lock_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -1182,16 +1269,16 @@ public class TwoPLMasterReplicaService {
 
     }
 
-    private static class lock_resultTupleSchemeFactory implements SchemeFactory {
-      public lock_resultTupleScheme getScheme() {
-        return new lock_resultTupleScheme();
+    private static class write_lock_resultTupleSchemeFactory implements SchemeFactory {
+      public write_lock_resultTupleScheme getScheme() {
+        return new write_lock_resultTupleScheme();
       }
     }
 
-    private static class lock_resultTupleScheme extends TupleScheme<lock_result> {
+    private static class write_lock_resultTupleScheme extends TupleScheme<write_lock_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, lock_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, write_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -1204,7 +1291,809 @@ public class TwoPLMasterReplicaService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, lock_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, write_lock_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class read_lock_args implements org.apache.thrift.TBase<read_lock_args, read_lock_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_lock_args");
+
+    private static final org.apache.thrift.protocol.TField SESSION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("sessionId", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new read_lock_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new read_lock_argsTupleSchemeFactory());
+    }
+
+    public long sessionId; // required
+    public String key; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SESSION_ID((short)1, "sessionId"),
+      KEY((short)2, "key");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // SESSION_ID
+            return SESSION_ID;
+          case 2: // KEY
+            return KEY;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SESSIONID_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SESSION_ID, new org.apache.thrift.meta_data.FieldMetaData("sessionId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_lock_args.class, metaDataMap);
+    }
+
+    public read_lock_args() {
+    }
+
+    public read_lock_args(
+      long sessionId,
+      String key)
+    {
+      this();
+      this.sessionId = sessionId;
+      setSessionIdIsSet(true);
+      this.key = key;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public read_lock_args(read_lock_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.sessionId = other.sessionId;
+      if (other.isSetKey()) {
+        this.key = other.key;
+      }
+    }
+
+    public read_lock_args deepCopy() {
+      return new read_lock_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setSessionIdIsSet(false);
+      this.sessionId = 0;
+      this.key = null;
+    }
+
+    public long getSessionId() {
+      return this.sessionId;
+    }
+
+    public read_lock_args setSessionId(long sessionId) {
+      this.sessionId = sessionId;
+      setSessionIdIsSet(true);
+      return this;
+    }
+
+    public void unsetSessionId() {
+      __isset_bit_vector.clear(__SESSIONID_ISSET_ID);
+    }
+
+    /** Returns true if field sessionId is set (has been assigned a value) and false otherwise */
+    public boolean isSetSessionId() {
+      return __isset_bit_vector.get(__SESSIONID_ISSET_ID);
+    }
+
+    public void setSessionIdIsSet(boolean value) {
+      __isset_bit_vector.set(__SESSIONID_ISSET_ID, value);
+    }
+
+    public String getKey() {
+      return this.key;
+    }
+
+    public read_lock_args setKey(String key) {
+      this.key = key;
+      return this;
+    }
+
+    public void unsetKey() {
+      this.key = null;
+    }
+
+    /** Returns true if field key is set (has been assigned a value) and false otherwise */
+    public boolean isSetKey() {
+      return this.key != null;
+    }
+
+    public void setKeyIsSet(boolean value) {
+      if (!value) {
+        this.key = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SESSION_ID:
+        if (value == null) {
+          unsetSessionId();
+        } else {
+          setSessionId((Long)value);
+        }
+        break;
+
+      case KEY:
+        if (value == null) {
+          unsetKey();
+        } else {
+          setKey((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SESSION_ID:
+        return Long.valueOf(getSessionId());
+
+      case KEY:
+        return getKey();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SESSION_ID:
+        return isSetSessionId();
+      case KEY:
+        return isSetKey();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof read_lock_args)
+        return this.equals((read_lock_args)that);
+      return false;
+    }
+
+    public boolean equals(read_lock_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_sessionId = true;
+      boolean that_present_sessionId = true;
+      if (this_present_sessionId || that_present_sessionId) {
+        if (!(this_present_sessionId && that_present_sessionId))
+          return false;
+        if (this.sessionId != that.sessionId)
+          return false;
+      }
+
+      boolean this_present_key = true && this.isSetKey();
+      boolean that_present_key = true && that.isSetKey();
+      if (this_present_key || that_present_key) {
+        if (!(this_present_key && that_present_key))
+          return false;
+        if (!this.key.equals(that.key))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(read_lock_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      read_lock_args typedOther = (read_lock_args)other;
+
+      lastComparison = Boolean.valueOf(isSetSessionId()).compareTo(typedOther.isSetSessionId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSessionId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.sessionId, typedOther.sessionId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetKey()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("read_lock_args(");
+      boolean first = true;
+
+      sb.append("sessionId:");
+      sb.append(this.sessionId);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("key:");
+      if (this.key == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.key);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class read_lock_argsStandardSchemeFactory implements SchemeFactory {
+      public read_lock_argsStandardScheme getScheme() {
+        return new read_lock_argsStandardScheme();
+      }
+    }
+
+    private static class read_lock_argsStandardScheme extends StandardScheme<read_lock_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, read_lock_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // SESSION_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.sessionId = iprot.readI64();
+                struct.setSessionIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // KEY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.key = iprot.readString();
+                struct.setKeyIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, read_lock_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SESSION_ID_FIELD_DESC);
+        oprot.writeI64(struct.sessionId);
+        oprot.writeFieldEnd();
+        if (struct.key != null) {
+          oprot.writeFieldBegin(KEY_FIELD_DESC);
+          oprot.writeString(struct.key);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class read_lock_argsTupleSchemeFactory implements SchemeFactory {
+      public read_lock_argsTupleScheme getScheme() {
+        return new read_lock_argsTupleScheme();
+      }
+    }
+
+    private static class read_lock_argsTupleScheme extends TupleScheme<read_lock_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, read_lock_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSessionId()) {
+          optionals.set(0);
+        }
+        if (struct.isSetKey()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSessionId()) {
+          oprot.writeI64(struct.sessionId);
+        }
+        if (struct.isSetKey()) {
+          oprot.writeString(struct.key);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, read_lock_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.sessionId = iprot.readI64();
+          struct.setSessionIdIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.key = iprot.readString();
+          struct.setKeyIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class read_lock_result implements org.apache.thrift.TBase<read_lock_result, read_lock_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_lock_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new read_lock_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new read_lock_resultTupleSchemeFactory());
+    }
+
+    public boolean success; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_lock_result.class, metaDataMap);
+    }
+
+    public read_lock_result() {
+    }
+
+    public read_lock_result(
+      boolean success)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public read_lock_result(read_lock_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+    }
+
+    public read_lock_result deepCopy() {
+      return new read_lock_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public read_lock_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof read_lock_result)
+        return this.equals((read_lock_result)that);
+      return false;
+    }
+
+    public boolean equals(read_lock_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(read_lock_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      read_lock_result typedOther = (read_lock_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("read_lock_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class read_lock_resultStandardSchemeFactory implements SchemeFactory {
+      public read_lock_resultStandardScheme getScheme() {
+        return new read_lock_resultStandardScheme();
+      }
+    }
+
+    private static class read_lock_resultStandardScheme extends StandardScheme<read_lock_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, read_lock_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, read_lock_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class read_lock_resultTupleSchemeFactory implements SchemeFactory {
+      public read_lock_resultTupleScheme getScheme() {
+        return new read_lock_resultTupleScheme();
+      }
+    }
+
+    private static class read_lock_resultTupleScheme extends TupleScheme<read_lock_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, read_lock_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, read_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
