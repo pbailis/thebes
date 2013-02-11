@@ -26,8 +26,22 @@ public interface ConfigParameterTypes {
     }
 
     public enum IsolationLevel {
-        NO_ISOLATION,
-        READ_COMMITTED,
-        REPEATABLE_READ;
+        NO_ISOLATION(0),
+        READ_COMMITTED(1),
+        REPEATABLE_READ(2);
+        
+        private int strictness;
+
+        private IsolationLevel(int strictness) {
+            this.strictness = strictness;
+        }
+        
+        public boolean atOrHigher(IsolationLevel level) {
+            return this.strictness >= level.strictness;
+        }
+        
+        public boolean higherThan(IsolationLevel level) {
+            return this.strictness > level.strictness;
+        }
     }
 }
