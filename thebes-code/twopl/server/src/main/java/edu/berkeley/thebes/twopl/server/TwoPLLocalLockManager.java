@@ -8,6 +8,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Provides an interface for acquiring read and write locks.
@@ -32,57 +35,85 @@ public class TwoPLLocalLockManager {
         private Set<Long> lockers;
         private int numWritersWaiting;
         
+        private Lock lockLock = new ReentrantLock();
+        private Condition readersWaiting = lockLock.newCondition();
+        private Condition writersWaiting = lockLock.newCondition();
+        
         public LockState() {
             this.held = false;
             this.lockers = new ConcurrentSkipListSet<Long>();
             this.numWritersWaiting = 0;
         }
         
+        private boolean shouldGrantLock(LockType wantType) {
+            switch (wantType) {
+            case READ:
+                return (!held || mode == LockType.READ) && numWritersWaiting == 0;
+            case WRITE:
+                return !held;
+            default:
+                throw new IllegalArgumentException("Unknown lock type: " + wantType);
+            }
+        }
+        
         /**
          * Returns true if we acquire the lock successfully -- false otherwise.
          * Does not block.
          */
-        public synchronized boolean acquire(LockType wantType, long sessionId) {
-            boolean grantReadLock = 
-                    wantType == LockType.READ && (!held || mode == LockType.READ);
-            boolean grantWriteLock = (wantType == LockType.WRITE && !held); 
-            if (grantReadLock || grantWriteLock) {
+        public boolean acquire(LockType wantType, long sessionId) {
+            lockLock.lock();
+            try {
+                while (!shouldGrantLock(wantType)) {
+                    if (wantType == LockType.READ) {
+                        readersWaiting.await();
+                    } else if (wantType == LockType.WRITE) {
+                        numWritersWaiting ++;
+                        writersWaiting.await();
+                        numWritersWaiting --;
+                    }
+                }
+
+                // We own the lock-lock, let's go to town (and lock stuff)!
                 this.held = true;
                 this.lockers.add(sessionId);
                 this.mode = wantType;
                 return true;
-            } else {
+            } catch (InterruptedException e) {
+                e.printStackTrace();
                 return false;
+            } finally {
+                lockLock.unlock();
             }
         }
         
-        public synchronized void release(long sessionId) {
-            lockers.remove(sessionId);
-            if (lockers.isEmpty()) {
-                held = false;
-                this.notifyAll();
-            }
-        }
-        
-        public synchronized void waitForRelease(LockType wantType) throws InterruptedException {
-            if (wantType == LockType.READ) {
-                while ((held && mode == LockType.WRITE) || numWritersWaiting > 0) {
-                    this.wait();
+        public void release(long sessionId) {
+            lockLock.lock();
+            try {
+                lockers.remove(sessionId);
+                if (lockers.isEmpty()) {
+                    held = false;
+                    
+                    if (numWritersWaiting > 0) {
+                        writersWaiting.signal();
+                    } else {
+                        readersWaiting.signalAll();
+                    }
                 }
-            } else if (wantType == LockType.WRITE) {
-                numWritersWaiting ++;
-                while (held) {
-                    this.wait();
-                }
-                numWritersWaiting --;
+            } finally {
+                lockLock.unlock();
             }
         }
         
         /** Returns true if the session owns the lock at the given level or above.
          * This method thus returns true if we own a WriteLock and want to READ. */
-        public synchronized boolean ownsLock(LockType needType, long sessionId) {
-            return ownsAnyLock(sessionId) &&
-                    (needType == LockType.READ || mode == LockType.WRITE);
+        public boolean ownsLock(LockType needType, long sessionId) {
+            lockLock.lock();
+            try {
+                return ownsAnyLock(sessionId) &&
+                        (needType == LockType.READ || mode == LockType.WRITE);
+            } finally {
+                lockLock.unlock();
+            }
         }
         
         public boolean ownsAnyLock(long sessionId) {
@@ -111,35 +142,22 @@ public class TwoPLLocalLockManager {
     // See: http://stackoverflow.com/a/13957003,
     //      and http://www.day.com/maven/jsr170/javadocs/jcr-2.0/javax/jcr/lock/LockManager.html
     public boolean lock(LockType lockType, String key, long sessionId) {
-        // Only attempt to lock a certain number of times.
-        // Note that the only reason we should attempt to acquire a lock and fail is
-        //   if a *new* lock request comes in at the same time as we try to acquire.
-        //   This is extremely unlikely, so a number of failures indicates a likely bug.
-        int attempts = 0;
         
-        try {
-            lockTable.putIfAbsent(key, new LockState());
-            LockState lockState = lockTable.get(key);
-            
-            while (attempts++ < 10) {
-                if (lockState.ownsLock(lockType, sessionId)) {
-                    logger.debug(lockType + " Lock re-granted for [" + sessionId + "] on key '" + key + "'");
-                    return true;
-                } else {
-                    lockState.waitForRelease(lockType);
-                }
-                
-                boolean acquired = lockState.acquire(lockType, sessionId);
-                if (acquired) {
-                    logger.debug(lockType + " Lock granted for [" + sessionId + "] on key '" + key + "'");
-                    return true;
-                }
-            }
-            
+        lockTable.putIfAbsent(key, new LockState());
+        LockState lockState = lockTable.get(key);
+        
+        if (lockState.ownsLock(lockType, sessionId)) {
+            logger.debug(lockType + " Lock re-granted for [" + sessionId + "] on key '" + key + "'");
+            return true;
+        }
+        
+        boolean acquired = lockState.acquire(lockType, sessionId);
+        if (acquired) {
+            logger.debug(lockType + " Lock granted for [" + sessionId + "] on key '" + key + "'");
+            return true;
+        } else {
             // Failed to acquire lock many times, something is up.
             logger.error(lockType + " Lock unavailable for key '" + key + "'.");
-            return false;
-        } catch (InterruptedException e) {
             return false;
         }
     }
