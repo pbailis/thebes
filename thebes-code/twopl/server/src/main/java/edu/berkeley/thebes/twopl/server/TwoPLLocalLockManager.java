@@ -56,10 +56,6 @@ public class TwoPLLocalLockManager {
             }
         }
         
-        /**
-         * Returns true if we acquire the lock successfully -- false otherwise.
-         * Does not block.
-         */
         public boolean acquire(LockType wantType, long sessionId) {
             lockLock.lock();
             try {
@@ -80,7 +76,7 @@ public class TwoPLLocalLockManager {
                 return true;
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                return false;
+                throw new RuntimeException(e);
             } finally {
                 lockLock.unlock();
             }
