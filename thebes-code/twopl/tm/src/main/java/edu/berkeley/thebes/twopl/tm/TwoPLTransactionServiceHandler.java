@@ -50,10 +50,10 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
         client.beginTransaction();
         try {
             for (String writeKey : writeKeys) {
-                assert client.writeLock(writeKey) : "Failed to get write lock: " + writeKey;
+                client.writeLock(writeKey);
             }
             for (String readKey : readKeys) {
-                assert client.readLock(readKey) : "Failed to get read lock: " + readKey;
+                client.readLock(readKey);
             }
             for (StatementNode statement : statements) {
                 // TODO: Clean up interpreter by having it merely evaluate, not execute.

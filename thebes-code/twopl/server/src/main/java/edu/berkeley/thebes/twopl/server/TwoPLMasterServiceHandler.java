@@ -21,18 +21,18 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     }
 
     @Override
-    public boolean write_lock(long sessionId, String key) throws TException {
-        return lockManager.lock(LockType.WRITE, key, sessionId);
+    public void write_lock(long sessionId, String key) throws TException {
+        lockManager.lock(LockType.WRITE, key, sessionId);
     }
     
     @Override
-    public boolean read_lock(long sessionId, String key) throws TException {
-        return lockManager.lock(LockType.READ, key, sessionId);
+    public void read_lock(long sessionId, String key) throws TException {
+        lockManager.lock(LockType.READ, key, sessionId);
     }
 
     @Override
-    public boolean unlock(long sessionId, String key) throws TException {
-        return lockManager.unlock(key, sessionId);
+    public void unlock(long sessionId, String key) throws TException {
+        lockManager.unlock(key, sessionId);
     }
 
     @Override

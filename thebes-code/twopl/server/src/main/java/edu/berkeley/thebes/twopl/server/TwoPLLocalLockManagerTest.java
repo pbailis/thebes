@@ -36,13 +36,13 @@ public class TwoPLLocalLockManagerTest extends TestCase {
     }
     
     public void testBasic() {
-        assertTrue(lockManager.lock(LockType.READ, "abc", 123));
+        lockManager.lock(LockType.READ, "abc", 123);
         assertTrue(lockManager.ownsLock(LockType.READ, "abc", 123));
-        assertTrue(lockManager.unlock("abc", 123));
-        assertTrue(lockManager.lock(LockType.WRITE, "qed", 123));
+        lockManager.unlock("abc", 123);
+        lockManager.lock(LockType.WRITE, "qed", 123);
         assertTrue(lockManager.ownsLock(LockType.READ, "qed", 123));
         assertTrue(lockManager.ownsLock(LockType.WRITE, "qed", 123));
-        assertTrue(lockManager.unlock("qed", 123));
+        lockManager.unlock("qed", 123);
     }
     
     public void testMultipleReaders() {
@@ -55,7 +55,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                 @Override
                 public void run() {
                     try {
-                        assertTrue(lockManager.lock(LockType.READ, "abc", index));
+                        lockManager.lock(LockType.READ, "abc", index);
                         owners.incrementAndGet();
                         assertTrue(lockManager.ownsLock(LockType.READ, "abc", index));
                         assertFalse(lockManager.ownsLock(LockType.WRITE, "abc", index));
@@ -68,7 +68,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) { fail(); }
-                        assertTrue(lockManager.unlock("abc", index));
+                        lockManager.unlock("abc", index);
                         owners.decrementAndGet();
                     } catch (AssertionFailedError e) {
                         errors.add(e);
@@ -99,7 +99,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                 @Override
                 public void run() {
                     try {
-                        assertTrue(lockManager.lock(LockType.WRITE, "abc", index));
+                        lockManager.lock(LockType.WRITE, "abc", index);
                         owners.incrementAndGet();
                         assertTrue(lockManager.ownsLock(LockType.WRITE, "abc", index));
                         assertTrue(lockManager.ownsLock(LockType.READ, "abc", index));
@@ -113,7 +113,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) { fail(); }
                         System.out.println("Unlockly!");
-                        assertTrue(lockManager.unlock("abc", index));
+                        lockManager.unlock("abc", index);
                         owners.decrementAndGet();
                     } catch (AssertionFailedError e) {
                         errors.add(e);
@@ -145,7 +145,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                 @Override
                 public void run() {
                     try {
-                        assertTrue(lockManager.lock(LockType.READ, "abc", index));
+                        lockManager.lock(LockType.READ, "abc", index);
                         owners.incrementAndGet();
                         assertTrue(lockManager.ownsLock(LockType.READ, "abc", index));
                         assertFalse(lockManager.ownsLock(LockType.WRITE, "abc", index));
@@ -158,7 +158,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                         try {
                             Thread.sleep(2000);
                         } catch (InterruptedException e) { fail(); }
-                        assertTrue(lockManager.unlock("abc", index));
+                        lockManager.unlock("abc", index);
                         owners.decrementAndGet();
                     } catch (AssertionFailedError e) {
                         errors.add(e);
@@ -181,7 +181,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                     // Assert the readers own the lock.
                     assertEquals(NUM_THREADS, owners.get());
                     
-                    assertTrue(lockManager.lock(LockType.WRITE, "abc", mySessionId));
+                    lockManager.lock(LockType.WRITE, "abc", mySessionId);
                     owners.incrementAndGet();
                     assertTrue(lockManager.ownsLock(LockType.READ, "abc", mySessionId));
                     assertTrue(lockManager.ownsLock(LockType.WRITE, "abc", mySessionId));
@@ -192,7 +192,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) { fail(); }
-                    assertTrue(lockManager.unlock("abc", mySessionId));
+                    lockManager.unlock("abc", mySessionId);
                     owners.decrementAndGet();
                 } catch (AssertionFailedError e) {
                     errors.add(e);
@@ -215,7 +215,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                     // Assert the readers still own the lock.
                     assertEquals(NUM_THREADS, owners.get());
                     
-                    assertTrue(lockManager.lock(LockType.READ, "abc", mySessionId));
+                    lockManager.lock(LockType.READ, "abc", mySessionId);
                     owners.incrementAndGet();
                     assertTrue(lockManager.ownsLock(LockType.READ, "abc", mySessionId));
                     assertFalse(lockManager.ownsLock(LockType.WRITE, "abc", mySessionId));
@@ -227,7 +227,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) { fail(); }
-                    assertTrue(lockManager.unlock("abc", mySessionId));
+                    lockManager.unlock("abc", mySessionId);
                     owners.decrementAndGet();
                 } catch (AssertionFailedError e) {
                     errors.add(e);

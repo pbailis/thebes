@@ -84,14 +84,14 @@ public class TwoPLTransactionClient implements IThebesClient {
         return ByteBuffer.wrap(dataItem.getData());
     }
     
-    public boolean writeLock(String key) throws TException {
+    public void writeLock(String key) throws TException {
         lockedKeys.add(key);
-        return masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+        masterRouter.getMasterByKey(key).write_lock(sessionId, key);
     }
     
-    public boolean readLock(String key) throws TException {
+    public void readLock(String key) throws TException {
         lockedKeys.add(key);
-        return masterRouter.getMasterByKey(key).read_lock(sessionId, key);
+        masterRouter.getMasterByKey(key).read_lock(sessionId, key);
     }
 
     @Override

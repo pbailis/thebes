@@ -31,11 +31,11 @@ public class TwoPLMasterReplicaService {
 
   public interface Iface {
 
-    public boolean write_lock(long sessionId, String key) throws org.apache.thrift.TException;
+    public void write_lock(long sessionId, String key) throws org.apache.thrift.TException;
 
-    public boolean read_lock(long sessionId, String key) throws org.apache.thrift.TException;
+    public void read_lock(long sessionId, String key) throws org.apache.thrift.TException;
 
-    public boolean unlock(long sessionId, String key) throws org.apache.thrift.TException;
+    public void unlock(long sessionId, String key) throws org.apache.thrift.TException;
 
     public edu.berkeley.thebes.common.thrift.DataItem get(long sessionId, String key) throws org.apache.thrift.TException;
 
@@ -77,10 +77,10 @@ public class TwoPLMasterReplicaService {
       super(iprot, oprot);
     }
 
-    public boolean write_lock(long sessionId, String key) throws org.apache.thrift.TException
+    public void write_lock(long sessionId, String key) throws org.apache.thrift.TException
     {
       send_write_lock(sessionId, key);
-      return recv_write_lock();
+      recv_write_lock();
     }
 
     public void send_write_lock(long sessionId, String key) throws org.apache.thrift.TException
@@ -91,20 +91,17 @@ public class TwoPLMasterReplicaService {
       sendBase("write_lock", args);
     }
 
-    public boolean recv_write_lock() throws org.apache.thrift.TException
+    public void recv_write_lock() throws org.apache.thrift.TException
     {
       write_lock_result result = new write_lock_result();
       receiveBase(result, "write_lock");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "write_lock failed: unknown result");
+      return;
     }
 
-    public boolean read_lock(long sessionId, String key) throws org.apache.thrift.TException
+    public void read_lock(long sessionId, String key) throws org.apache.thrift.TException
     {
       send_read_lock(sessionId, key);
-      return recv_read_lock();
+      recv_read_lock();
     }
 
     public void send_read_lock(long sessionId, String key) throws org.apache.thrift.TException
@@ -115,20 +112,17 @@ public class TwoPLMasterReplicaService {
       sendBase("read_lock", args);
     }
 
-    public boolean recv_read_lock() throws org.apache.thrift.TException
+    public void recv_read_lock() throws org.apache.thrift.TException
     {
       read_lock_result result = new read_lock_result();
       receiveBase(result, "read_lock");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "read_lock failed: unknown result");
+      return;
     }
 
-    public boolean unlock(long sessionId, String key) throws org.apache.thrift.TException
+    public void unlock(long sessionId, String key) throws org.apache.thrift.TException
     {
       send_unlock(sessionId, key);
-      return recv_unlock();
+      recv_unlock();
     }
 
     public void send_unlock(long sessionId, String key) throws org.apache.thrift.TException
@@ -139,14 +133,11 @@ public class TwoPLMasterReplicaService {
       sendBase("unlock", args);
     }
 
-    public boolean recv_unlock() throws org.apache.thrift.TException
+    public void recv_unlock() throws org.apache.thrift.TException
     {
       unlock_result result = new unlock_result();
       receiveBase(result, "unlock");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "unlock failed: unknown result");
+      return;
     }
 
     public edu.berkeley.thebes.common.thrift.DataItem get(long sessionId, String key) throws org.apache.thrift.TException
@@ -241,13 +232,13 @@ public class TwoPLMasterReplicaService {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_write_lock();
+        (new Client(prot)).recv_write_lock();
       }
     }
 
@@ -276,13 +267,13 @@ public class TwoPLMasterReplicaService {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_read_lock();
+        (new Client(prot)).recv_read_lock();
       }
     }
 
@@ -311,13 +302,13 @@ public class TwoPLMasterReplicaService {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_unlock();
+        (new Client(prot)).recv_unlock();
       }
     }
 
@@ -426,8 +417,7 @@ public class TwoPLMasterReplicaService {
 
       protected write_lock_result getResult(I iface, write_lock_args args) throws org.apache.thrift.TException {
         write_lock_result result = new write_lock_result();
-        result.success = iface.write_lock(args.sessionId, args.key);
-        result.setSuccessIsSet(true);
+        iface.write_lock(args.sessionId, args.key);
         return result;
       }
     }
@@ -443,8 +433,7 @@ public class TwoPLMasterReplicaService {
 
       protected read_lock_result getResult(I iface, read_lock_args args) throws org.apache.thrift.TException {
         read_lock_result result = new read_lock_result();
-        result.success = iface.read_lock(args.sessionId, args.key);
-        result.setSuccessIsSet(true);
+        iface.read_lock(args.sessionId, args.key);
         return result;
       }
     }
@@ -460,8 +449,7 @@ public class TwoPLMasterReplicaService {
 
       protected unlock_result getResult(I iface, unlock_args args) throws org.apache.thrift.TException {
         unlock_result result = new unlock_result();
-        result.success = iface.unlock(args.sessionId, args.key);
-        result.setSuccessIsSet(true);
+        iface.unlock(args.sessionId, args.key);
         return result;
       }
     }
@@ -956,7 +944,6 @@ public class TwoPLMasterReplicaService {
   public static class write_lock_result implements org.apache.thrift.TBase<write_lock_result, write_lock_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("write_lock_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -964,11 +951,10 @@ public class TwoPLMasterReplicaService {
       schemes.put(TupleScheme.class, new write_lock_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -983,8 +969,6 @@ public class TwoPLMasterReplicaService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
           default:
             return null;
         }
@@ -1023,15 +1007,9 @@ public class TwoPLMasterReplicaService {
         return _fieldName;
       }
     }
-
-    // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(write_lock_result.class, metaDataMap);
     }
@@ -1039,21 +1017,10 @@ public class TwoPLMasterReplicaService {
     public write_lock_result() {
     }
 
-    public write_lock_result(
-      boolean success)
-    {
-      this();
-      this.success = success;
-      setSuccessIsSet(true);
-    }
-
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public write_lock_result(write_lock_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
     }
 
     public write_lock_result deepCopy() {
@@ -1062,51 +1029,15 @@ public class TwoPLMasterReplicaService {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
-    }
-
-    public boolean isSuccess() {
-      return this.success;
-    }
-
-    public write_lock_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
-      return this;
-    }
-
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((Boolean)value);
-        }
-        break;
-
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
-
       }
       throw new IllegalStateException();
     }
@@ -1118,8 +1049,6 @@ public class TwoPLMasterReplicaService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
       }
       throw new IllegalStateException();
     }
@@ -1137,15 +1066,6 @@ public class TwoPLMasterReplicaService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (this.success != that.success)
-          return false;
-      }
-
       return true;
     }
 
@@ -1162,16 +1082,6 @@ public class TwoPLMasterReplicaService {
       int lastComparison = 0;
       write_lock_result typedOther = (write_lock_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -1192,9 +1102,6 @@ public class TwoPLMasterReplicaService {
       StringBuilder sb = new StringBuilder("write_lock_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
-      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -1237,14 +1144,6 @@ public class TwoPLMasterReplicaService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1260,9 +1159,6 @@ public class TwoPLMasterReplicaService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1280,24 +1176,11 @@ public class TwoPLMasterReplicaService {
       @Override
       public void write(org.apache.thrift.protocol.TProtocol prot, write_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
-        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, write_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
-        }
       }
     }
 
@@ -1758,7 +1641,6 @@ public class TwoPLMasterReplicaService {
   public static class read_lock_result implements org.apache.thrift.TBase<read_lock_result, read_lock_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_lock_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1766,11 +1648,10 @@ public class TwoPLMasterReplicaService {
       schemes.put(TupleScheme.class, new read_lock_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1785,8 +1666,6 @@ public class TwoPLMasterReplicaService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
           default:
             return null;
         }
@@ -1825,15 +1704,9 @@ public class TwoPLMasterReplicaService {
         return _fieldName;
       }
     }
-
-    // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_lock_result.class, metaDataMap);
     }
@@ -1841,21 +1714,10 @@ public class TwoPLMasterReplicaService {
     public read_lock_result() {
     }
 
-    public read_lock_result(
-      boolean success)
-    {
-      this();
-      this.success = success;
-      setSuccessIsSet(true);
-    }
-
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public read_lock_result(read_lock_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
     }
 
     public read_lock_result deepCopy() {
@@ -1864,51 +1726,15 @@ public class TwoPLMasterReplicaService {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
-    }
-
-    public boolean isSuccess() {
-      return this.success;
-    }
-
-    public read_lock_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
-      return this;
-    }
-
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((Boolean)value);
-        }
-        break;
-
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
-
       }
       throw new IllegalStateException();
     }
@@ -1920,8 +1746,6 @@ public class TwoPLMasterReplicaService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
       }
       throw new IllegalStateException();
     }
@@ -1939,15 +1763,6 @@ public class TwoPLMasterReplicaService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (this.success != that.success)
-          return false;
-      }
-
       return true;
     }
 
@@ -1964,16 +1779,6 @@ public class TwoPLMasterReplicaService {
       int lastComparison = 0;
       read_lock_result typedOther = (read_lock_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -1994,9 +1799,6 @@ public class TwoPLMasterReplicaService {
       StringBuilder sb = new StringBuilder("read_lock_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
-      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -2039,14 +1841,6 @@ public class TwoPLMasterReplicaService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -2062,9 +1856,6 @@ public class TwoPLMasterReplicaService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -2082,24 +1873,11 @@ public class TwoPLMasterReplicaService {
       @Override
       public void write(org.apache.thrift.protocol.TProtocol prot, read_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
-        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, read_lock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
-        }
       }
     }
 
@@ -2560,7 +2338,6 @@ public class TwoPLMasterReplicaService {
   public static class unlock_result implements org.apache.thrift.TBase<unlock_result, unlock_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("unlock_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -2568,11 +2345,10 @@ public class TwoPLMasterReplicaService {
       schemes.put(TupleScheme.class, new unlock_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2587,8 +2363,6 @@ public class TwoPLMasterReplicaService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
           default:
             return null;
         }
@@ -2627,15 +2401,9 @@ public class TwoPLMasterReplicaService {
         return _fieldName;
       }
     }
-
-    // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(unlock_result.class, metaDataMap);
     }
@@ -2643,21 +2411,10 @@ public class TwoPLMasterReplicaService {
     public unlock_result() {
     }
 
-    public unlock_result(
-      boolean success)
-    {
-      this();
-      this.success = success;
-      setSuccessIsSet(true);
-    }
-
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public unlock_result(unlock_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
     }
 
     public unlock_result deepCopy() {
@@ -2666,51 +2423,15 @@ public class TwoPLMasterReplicaService {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
-    }
-
-    public boolean isSuccess() {
-      return this.success;
-    }
-
-    public unlock_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
-      return this;
-    }
-
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((Boolean)value);
-        }
-        break;
-
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
-
       }
       throw new IllegalStateException();
     }
@@ -2722,8 +2443,6 @@ public class TwoPLMasterReplicaService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
       }
       throw new IllegalStateException();
     }
@@ -2741,15 +2460,6 @@ public class TwoPLMasterReplicaService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (this.success != that.success)
-          return false;
-      }
-
       return true;
     }
 
@@ -2766,16 +2476,6 @@ public class TwoPLMasterReplicaService {
       int lastComparison = 0;
       unlock_result typedOther = (unlock_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -2796,9 +2496,6 @@ public class TwoPLMasterReplicaService {
       StringBuilder sb = new StringBuilder("unlock_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
-      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -2841,14 +2538,6 @@ public class TwoPLMasterReplicaService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -2864,9 +2553,6 @@ public class TwoPLMasterReplicaService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -2884,24 +2570,11 @@ public class TwoPLMasterReplicaService {
       @Override
       public void write(org.apache.thrift.protocol.TProtocol prot, unlock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
-        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, unlock_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
-        }
       }
     }
 

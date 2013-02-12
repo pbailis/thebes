@@ -141,24 +141,22 @@ public class TwoPLLocalLockManager {
     // TODO: Consider using more performant code when logic settles down.
     // See: http://stackoverflow.com/a/13957003,
     //      and http://www.day.com/maven/jsr170/javadocs/jcr-2.0/javax/jcr/lock/LockManager.html
-    public boolean lock(LockType lockType, String key, long sessionId) {
+    public void lock(LockType lockType, String key, long sessionId) {
         
         lockTable.putIfAbsent(key, new LockState());
         LockState lockState = lockTable.get(key);
         
         if (lockState.ownsLock(lockType, sessionId)) {
             logger.debug(lockType + " Lock re-granted for [" + sessionId + "] on key '" + key + "'");
-            return true;
+            return;
         }
         
         boolean acquired = lockState.acquire(lockType, sessionId);
         if (acquired) {
             logger.debug(lockType + " Lock granted for [" + sessionId + "] on key '" + key + "'");
-            return true;
         } else {
-            // Failed to acquire lock many times, something is up.
             logger.error(lockType + " Lock unavailable for key '" + key + "'.");
-            return false;
+            throw new IllegalStateException("Unable to acquire lock for key '" + key + "'.");
         }
     }
     
@@ -167,17 +165,15 @@ public class TwoPLLocalLockManager {
      * (i.e., it was removed or no lock existed.)
      * @throws IllegalArgumentException if we don't own the lock on the key.
      */
-    public synchronized boolean unlock(String key, long sessionId) {
+    public synchronized void unlock(String key, long sessionId) {
         if (lockTable.containsKey(key)) {
             LockState lockState = lockTable.get(key);
             if (lockState.ownsAnyLock(sessionId)) {
                 lockState.release(sessionId);
                 logger.debug("Lock released by [" + sessionId + "] on key '" + key + "'");
-                return true;
             } else {
                 throw new IllegalArgumentException("[" + sessionId + "] cannot unlock key '" + key + "'");
             }
         }
-        return true;
     }
 }
