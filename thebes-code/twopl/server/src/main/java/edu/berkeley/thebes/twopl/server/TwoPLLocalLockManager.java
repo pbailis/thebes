@@ -63,6 +63,10 @@ public class TwoPLLocalLockManager {
                     if (wantType == LockType.READ) {
                         readersWaiting.await();
                     } else if (wantType == LockType.WRITE) {
+                        if (ownsLock(LockType.READ, sessionId)) {
+                            throw new IllegalStateException("Cannot upgrade lock from READ TO WRITE for session " + sessionId);
+                        }
+                        
                         numWritersWaiting ++;
                         writersWaiting.await();
                         numWritersWaiting --;
