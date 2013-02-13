@@ -30,11 +30,15 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         }
     }
     
+    private ByteBuffer execute(String str) throws TException {
+        return interpreter.execute(interpreter.parse(str));
+    }
+    
     public void testBasic() {
         try {
-            assertEquals(interpreter.execute("put x 3"), fromInt(3));
+            assertEquals(execute("put x 3"), fromInt(3));
             assertEquals(client.memory.get("x"), fromInt(3));
-            assertEquals(interpreter.execute("get x"), fromInt(3));
+            assertEquals(execute("get x"), fromInt(3));
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -42,11 +46,11 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
     
     public void test1() {
         try {
-            assertEquals(interpreter.execute("put x + 1 2"), fromInt(3));
-            assertEquals(interpreter.execute("put y * x + x 1"), fromInt(12));
-            assertEquals(interpreter.execute("put y + y 1"), fromInt(13));
-            assertEquals(interpreter.execute("get x"), fromInt(3));
-            assertEquals(interpreter.execute("get y"), fromInt(13));
+            assertEquals(execute("put x + 1 2"), fromInt(3));
+            assertEquals(execute("put y * x + x 1"), fromInt(12));
+            assertEquals(execute("put y + y 1"), fromInt(13));
+            assertEquals(execute("get x"), fromInt(3));
+            assertEquals(execute("get y"), fromInt(13));
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -55,9 +59,9 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
     public void test2() {
         try {
             client.memory.put("y", fromInt(7));
-            assertEquals(interpreter.execute("put x 1"), fromInt(1));
-            assertEquals(interpreter.execute("get y"), fromInt(7));
-            assertEquals(interpreter.execute("put x + x y"), fromInt(8));
+            assertEquals(execute("put x 1"), fromInt(1));
+            assertEquals(execute("get y"), fromInt(7));
+            assertEquals(execute("put x + x y"), fromInt(8));
         } catch (TException e) {
             e.printStackTrace();
         }
@@ -66,9 +70,9 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
     public void testUseUnreadValue() {
         try {
             client.memory.put("y", fromInt(7));
-            assertEquals(interpreter.execute("put x 1"), fromInt(1));
+            assertEquals(execute("put x 1"), fromInt(1));
             try {
-                assertEquals(interpreter.execute("put x + x y"), fromInt(8));
+                assertEquals(execute("put x + x y"), fromInt(8));
                 fail();
             } catch (AssertionError e) { }
         } catch (TException e) {
@@ -98,7 +102,7 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
             for (String cmd : badCommands) {
                 try {
                     System.out.println("Executing: " + cmd);
-                    interpreter.execute(cmd);
+                    execute(cmd);
                     fail("Should've failed on: " + cmd);
                 } catch (AssertionError e) { }
             }

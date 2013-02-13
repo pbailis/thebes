@@ -5,6 +5,8 @@ import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
+import edu.berkeley.thebes.twopl.server.TwoPLLocalLockManager.LockType;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -65,7 +67,6 @@ public class TwoPLTransactionClient implements IThebesClient {
         
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, timestamp);
-        acquireLock(key);
         return masterRouter.getMasterByKey(key).put(sessionId, key, dataItem);
     }
 
@@ -75,7 +76,6 @@ public class TwoPLTransactionClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         
-        acquireLock(key);
         DataItem dataItem = masterRouter.getMasterByKey(key).get(sessionId, key);
         // Null is returned by 0-length data
         if (dataItem.getData().length == 0) {
@@ -84,17 +84,14 @@ public class TwoPLTransactionClient implements IThebesClient {
         return ByteBuffer.wrap(dataItem.getData());
     }
     
-    /** Ensures we own the given lock. If not, we acquire it or die trying. */
-    private void acquireLock(String key) throws TException {
-        Client master = masterRouter.getMasterByKey(key);
-        if (!lockedKeys.contains(key)) {
-            boolean lockAcquired = master.lock(sessionId, key);
-            if (!lockAcquired) {
-                throw new TException("Lock could not be acquired for key '" + key + "'");
-            } else {
-                lockedKeys.add(key);
-            }
-        }
+    public void writeLock(String key) throws TException {
+        lockedKeys.add(key);
+        masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+    }
+    
+    public void readLock(String key) throws TException {
+        lockedKeys.add(key);
+        masterRouter.getMasterByKey(key).read_lock(sessionId, key);
     }
 
     @Override

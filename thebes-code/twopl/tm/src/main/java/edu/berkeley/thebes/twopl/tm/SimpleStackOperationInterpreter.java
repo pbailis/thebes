@@ -7,19 +7,20 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.StatementNode;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-public class SimpleStackOperationInterpreter implements TwoPLOperationInterpreter {
+public class SimpleStackOperationInterpreter implements TwoPLOperationInterpreter<StatementNode> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(SimpleStackOperationInterpreter.class);
 
     private IThebesClient client;
     private Map<String, ByteBuffer> mostRecentValues = Maps.newHashMap();
     
-    private enum Function {
+    public enum Function {
         PUT (2, "put", false),
         GET (1, "get", false),
         PLUS (2, "+", true),
@@ -106,18 +107,22 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
     }
 
     /** Statement nodes cannot self-evaluate, they can only evaluate their sub-expressions. */
-    private class StatementNode extends ExecutableNode {
+    public class StatementNode extends ExecutableNode {
         private List<Object> evaluatedChildren;
         
         public StatementNode(Function func) {
             super(func);
             assert !func.isExpression;
-            this.evaluatedChildren = Lists.newArrayList();
         }
         
         /** Evaluates sub-expressions and returns null. */
         @Override
         public Object evaluate() {
+            if (evaluatedChildren != null) {
+                return null;
+            }
+
+            this.evaluatedChildren = Lists.newArrayList();
             for (Node child : children) {
                 evaluatedChildren.add(child.evaluate());
             }
@@ -126,6 +131,18 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
         
         public Object getChild(int index) {
             return evaluatedChildren.get(index);
+        }
+        
+        public Function getFunction() {
+            return func;
+        }
+        
+        /** For PUT and GET requests, returns the name of the key. */
+        public String getTarget() {
+            evaluate();
+            assert getChild(0) instanceof VariableNode;
+            VariableNode target = (VariableNode) getChild(0);
+            return target.getVariableName();
         }
     }
     
@@ -183,13 +200,17 @@ public class SimpleStackOperationInterpreter implements TwoPLOperationInterprete
         return mostRecentValues;
     }
     
+    @Override
+    public StatementNode parse(String operation) {
+        String[] tokens = tokenize(operation);
+        return parse(tokens);
+    }
+    
     /** Parses and executes the given operation! 
      * @throws TException */
     @Override
-    public ByteBuffer execute(String operation) throws TException {
-        String[] tokens = tokenize(operation);
-        StatementNode node = parse(tokens);
-        return interpret(node);
+    public ByteBuffer execute(StatementNode operation) throws TException {
+        return interpret(operation);
     }
     
     private ByteBuffer interpret(StatementNode node) throws TException {
