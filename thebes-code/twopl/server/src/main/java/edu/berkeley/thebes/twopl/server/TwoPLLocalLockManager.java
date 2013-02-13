@@ -6,8 +6,6 @@ import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 
-import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -24,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TwoPLLocalLockManager {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(TwoPLLocalLockManager.class);
 
-    private final Counter lockMetric = Metrics.newCounter(ThebesTwoPLClient.class, "2pl-locks");
+    private final Counter lockMetric = Metrics.newCounter(TwoPLLocalLockManager.class, "2pl-locks");
 
     public enum LockType { READ, WRITE }
     
