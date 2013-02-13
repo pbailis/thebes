@@ -5,7 +5,6 @@ import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.hat.common.clustering.ReplicaRouter;
-import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class ThebesHATClient implements IThebesClient {
     private final Meter requestMetric = Metrics.newMeter(ThebesHATClient.class, "hat-requests", "requests", TimeUnit.SECONDS);
     private final Meter operationMetric = Metrics.newMeter(ThebesHATClient.class, "hat-operations", "operations", TimeUnit.SECONDS);
-    private final Meter errorMetric = Metrics.newMeter(ThebesTwoPLClient.class, "hat-errors", "errors", TimeUnit.SECONDS);
+    private final Meter errorMetric = Metrics.newMeter(ThebesHATClient.class, "hat-errors", "errors", TimeUnit.SECONDS);
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
     private final Timer latencyPerOperationMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-op", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 

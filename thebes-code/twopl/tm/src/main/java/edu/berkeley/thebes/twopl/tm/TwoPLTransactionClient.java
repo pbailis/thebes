@@ -5,7 +5,6 @@ import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
-import edu.berkeley.thebes.twopl.server.TwoPLLocalLockManager.LockType;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
