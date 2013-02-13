@@ -13,11 +13,10 @@ import com.yammer.metrics.core.Meter;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.hat.client.ThebesHATClient;
 
 public class MemoryPersistenceEngine implements IPersistenceEngine {
-    private final Meter putsMetric = Metrics.newMeter(ThebesHATClient.class, "put-requests", "requests", TimeUnit.SECONDS);
-    private final Meter getsMetric = Metrics.newMeter(ThebesHATClient.class, "get-requests", "requests", TimeUnit.SECONDS);
+    private final Meter putsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "put-requests", "requests", TimeUnit.SECONDS);
+    private final Meter getsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "get-requests", "requests", TimeUnit.SECONDS);
 
     private Map<String, DataItem> map;
     private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), 0);
