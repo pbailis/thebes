@@ -15,6 +15,7 @@ import com.yammer.metrics.reporting.ConsoleReporter;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 
@@ -242,7 +243,11 @@ public class Config {
     public static IsolationLevel getThebesIsolationLevel() {
         return getOption(ConfigParameters.HAT_ISOLATION_LEVEL);
     }
-    
+
+    public static SessionLevel getThebesSessionLevel() {
+        return getOption(ConfigParameters.SESSION_LEVEL);
+    }
+
     /** Returns true if this server is the Master of a 2PL replica set. */
     public static Boolean isMaster() {
         return txnMode == TransactionMode.TWOPL &&

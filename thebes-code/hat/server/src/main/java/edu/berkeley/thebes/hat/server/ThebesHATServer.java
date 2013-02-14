@@ -2,6 +2,10 @@ package edu.berkeley.thebes.hat.server;
 
 import javax.naming.ConfigurationException;
 
+import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServer;
+import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
+import edu.berkeley.thebes.hat.server.causal.CausalDependencyChecker;
+import edu.berkeley.thebes.hat.server.causal.CausalDependencyResolver;
 import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.Config;
@@ -12,31 +16,13 @@ import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.server.replica.AntiEntropyServiceHandler;
+import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServiceHandler;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
 
-public class ThebesHATServer {
-    public static AntiEntropyServer antiEntropyServer;
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesHATServer.class);
-    
-    public static AntiEntropyServer startAntiEntropyServer(
-            AntiEntropyServiceHandler serviceHandler) {
-        antiEntropyServer = new AntiEntropyServer(serviceHandler);
-        if (!Config.isStandaloneServer()) {
-            (new Thread(antiEntropyServer)).start();
-            antiEntropyServer.connectNeighbors();
-        } else {
-            logger.debug("Server marked as standalone; not starting anti-entropy!");
-        }
-        return antiEntropyServer;
-    }
+import java.util.List;
 
-    public static void startThebesServer(ReplicaServiceHandler serviceHandler) {
-        logger.debug("Starting the server...");
-        ThriftServer.startInCurrentThread(
-                new ReplicaService.Processor<ReplicaServiceHandler>(serviceHandler),
-                Config.getServerBindIP());
-    }
+public class ThebesHATServer {
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesHATServer.class);
 
     public static void main(String[] args) {
         try {
@@ -55,9 +41,30 @@ public class ThebesHATServer {
             }
             engine.open();
 
-            AntiEntropyServer antiEntropyServer = 
-                    startAntiEntropyServer(new AntiEntropyServiceHandler(engine));
-            startThebesServer(new ReplicaServiceHandler(engine, antiEntropyServer));
+            AntiEntropyServiceRouter router = new AntiEntropyServiceRouter();
+
+            CausalDependencyResolver resolver = new CausalDependencyResolver(engine);
+            CausalDependencyChecker checker = new CausalDependencyChecker(engine,
+                                                                          router,
+                                                                          resolver);
+
+            AntiEntropyServiceHandler antiEntropyServiceHandler = new AntiEntropyServiceHandler(engine,
+                                                                                                checker,
+                                                                                                resolver);
+            AntiEntropyServer antiEntropyServer = new AntiEntropyServer(antiEntropyServiceHandler);
+
+            if (!Config.isStandaloneServer()) {
+                (new Thread(antiEntropyServer)).start();
+            } else {
+                logger.debug("Server marked as standalone; not starting anti-entropy!");
+            }
+
+            ReplicaServiceHandler replicaServiceHandler = new ReplicaServiceHandler(engine, antiEntropyServer, resolver);
+
+            logger.debug("Starting the server...");
+            ThriftServer.startInCurrentThread(
+                    new ReplicaService.Processor<ReplicaServiceHandler>(replicaServiceHandler),
+                    Config.getServerBindIP());
 
         } catch (Exception e) {
             e.printStackTrace();

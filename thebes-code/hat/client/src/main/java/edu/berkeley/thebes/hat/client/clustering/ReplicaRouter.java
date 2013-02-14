@@ -1,8 +1,9 @@
-package edu.berkeley.thebes.hat.common.clustering;
+package edu.berkeley.thebes.hat.client.clustering;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.berkeley.thebes.hat.common.clustering.RoutingHash;
 import org.apache.thrift.transport.TTransportException;
 
 import edu.berkeley.thebes.common.config.Config;
@@ -23,6 +24,6 @@ public class ReplicaRouter {
     }
 
     public ReplicaService.Client getReplicaByKey(String key) {
-        return replicas.get(key.hashCode() % replicas.size());
+        return replicas.get(RoutingHash.hashKey(key, replicas.size()));
     }
 }
