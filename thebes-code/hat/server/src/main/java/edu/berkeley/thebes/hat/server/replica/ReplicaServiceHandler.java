@@ -29,7 +29,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     public boolean put(String key, DataItem value, List<DataDependency> happensAfter) throws TException {
         antiEntropyServer.sendToNeighbors(key, value, happensAfter);
         boolean ret = persistenceEngine.put(key, value);
-        causalDependencyResolver.notifyNewLocalWrite(key);
+        causalDependencyResolver.notifyNewLocalWrite(key, value);
         return ret;
     }
 
