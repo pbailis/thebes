@@ -1,7 +1,8 @@
 package edu.berkeley.thebes.hat.server.replica;
 
 import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import edu.berkeley.thebes.hat.server.causal.CausalDependencyResolver;
+import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyChecker;
+import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyResolver;
 import org.apache.thrift.TException;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
@@ -14,11 +15,11 @@ import java.util.List;
 public class ReplicaServiceHandler implements ReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;
     private AntiEntropyServer antiEntropyServer;
-    private CausalDependencyResolver causalDependencyResolver;
+    private GenericDependencyResolver causalDependencyResolver;
 
     public ReplicaServiceHandler(IPersistenceEngine persistenceEngine,
                                  AntiEntropyServer antiEntropyServer,
-                                 CausalDependencyResolver causalDependencyResolver) {
+                                 GenericDependencyResolver causalDependencyResolver) {
         this.persistenceEngine = persistenceEngine;
         this.antiEntropyServer = antiEntropyServer;
         this.causalDependencyResolver = causalDependencyResolver;
