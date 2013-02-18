@@ -1,4 +1,4 @@
-package edu.berkeley.thebes.hat.server.causal;
+package edu.berkeley.thebes.hat.server.dependencies;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
@@ -14,11 +14,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /* Handles all logic for checking causal dependencies of remote writes */
-public class CausalDependencyChecker {
+public class GenericDependencyChecker {
     private IPersistenceEngine localStore;
     private AntiEntropyServiceRouter router;
-    private CausalDependencyResolver resolver;
-    private static Logger logger = LoggerFactory.getLogger(CausalDependencyChecker.class);
+    private GenericDependencyResolver resolver;
+    private static Logger logger = LoggerFactory.getLogger(
+            GenericDependencyChecker.class);
 
     private class DependencyCallback implements
             AsyncMethodCallback<AntiEntropyService.AsyncClient.waitForDependency_call> {
@@ -35,7 +36,7 @@ public class CausalDependencyChecker {
         public void onComplete(AntiEntropyService.AsyncClient.waitForDependency_call waitForDependency_call) {
             if(blockFor.decrementAndGet() == 0) {
                 localStore.put(key, toApply);
-                resolver.notifyNewLocalWrite(key);
+                resolver.notifyNewLocalWrite(key, toApply);
             }
         }
 
@@ -46,9 +47,9 @@ public class CausalDependencyChecker {
         }
     }
 
-    public CausalDependencyChecker(IPersistenceEngine localStore,
-                                   AntiEntropyServiceRouter router,
-                                   CausalDependencyResolver resolver) {
+    public GenericDependencyChecker(IPersistenceEngine localStore,
+                                    AntiEntropyServiceRouter router,
+                                    GenericDependencyResolver resolver) {
         this.localStore = localStore;
         this.router = router;
         this.resolver = resolver;
