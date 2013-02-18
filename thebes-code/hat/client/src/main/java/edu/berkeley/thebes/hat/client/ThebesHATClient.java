@@ -131,13 +131,9 @@ public class ThebesHATClient implements IThebesClient {
                 transactionReadBuffer.put(key, dataItem);
             }
 
-            if(sessionLevel != SessionLevel.CAUSAL) {
-                transactionWriteBuffer.put(key, new QueuedWrite(dataItem, null));
-            }
-            else {
-                transactionWriteBuffer.put(key, new QueuedWrite(dataItem, causalDependencies));
-                rebaseCausalDependencies(key, dataItem);
-            }
+            transactionWriteBuffer.put(key, new QueuedWrite(dataItem, causalDependencies));
+            rebaseCausalDependencies(key, dataItem);
+
             return true;
         }
         else {

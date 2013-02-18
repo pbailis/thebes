@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -15,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
    This includes buffering requests and synchronizing new value updates */
 public class CausalDependencyResolver {
 
-    private Map<String, Integer> blocked;
+    private Map<String, AtomicInteger> blocked;
     private Lock blockedLock = new ReentrantLock();
 
     private IPersistenceEngine engine;
@@ -28,7 +30,7 @@ public class CausalDependencyResolver {
     }
 
     public void blockForDependency(DataDependency dependency) {
-        Integer numWaiting = null;
+        AtomicInteger numWaiting = null;
 
         while(true) {
             DataItem storedItem = engine.get(dependency.getKey());
@@ -44,14 +46,18 @@ public class CausalDependencyResolver {
             }
 
             blockedLock.lock();
+
             numWaiting = blocked.get(dependency.getKey());
             if(numWaiting == null) {
-                numWaiting = new Integer(0);
+                numWaiting = new AtomicInteger(0);
                 blocked.put(dependency.getKey(), numWaiting);
+            }
+            else{
+                numWaiting = blocked.get(dependency.getKey());
             }
 
             synchronized (numWaiting) {
-                numWaiting++;
+                numWaiting.incrementAndGet();
                 blockedLock.unlock();
                 try {
                     numWaiting.wait();
