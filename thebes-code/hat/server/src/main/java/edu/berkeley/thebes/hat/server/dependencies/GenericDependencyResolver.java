@@ -40,8 +40,11 @@ public class GenericDependencyResolver {
         public synchronized void blockForDependency(DataDependency dependency) {
             while(true) {
                 try {
-                    if(lastSeenVersion >= dependency.getTimestamp())
+                    if(lastSeenVersion >= dependency.getTimestamp()) {
+                        numWaiters--;
                         return;
+                    }
+
                     this.wait();
                 } catch (InterruptedException e) {
                     logger.warn(e.getMessage());
