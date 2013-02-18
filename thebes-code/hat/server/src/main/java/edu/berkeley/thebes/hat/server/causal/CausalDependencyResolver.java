@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,7 +37,7 @@ public class CausalDependencyResolver {
                && storedItem.getTimestamp() >= dependency.getTimestamp()) {
 
                 blockedLock.lock();
-                if(numWaiting != null && numWaiting == 0) {
+                if(numWaiting != null && numWaiting.get() == 0) {
                     blocked.remove(dependency.getKey());
                 }
                 blockedLock.unlock();
@@ -70,7 +69,7 @@ public class CausalDependencyResolver {
 
     public void notifyNewLocalWrite(String key) {
         blockedLock.lock();
-        Integer waiting = blocked.get(key);
+        AtomicInteger waiting = blocked.get(key);
         blockedLock.unlock();
 
         if(waiting == null)
