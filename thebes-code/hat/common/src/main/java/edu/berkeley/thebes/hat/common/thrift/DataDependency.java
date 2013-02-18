@@ -4,7 +4,7 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-package edu.berkeley.thebes.common.thrift;
+package edu.berkeley.thebes.hat.common.thrift;
 
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
@@ -27,24 +27,24 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataItem");
+public class DataDependency implements org.apache.thrift.TBase<DataDependency, DataDependency._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataDependency");
 
-  private static final org.apache.thrift.protocol.TField DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("data", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new DataItemStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new DataItemTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new DataDependencyStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new DataDependencyTupleSchemeFactory());
   }
 
-  public ByteBuffer data; // required
+  public String key; // required
   public long timestamp; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    DATA((short)1, "data"),
+    KEY((short)1, "key"),
     TIMESTAMP((short)2, "timestamp");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -60,8 +60,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // DATA
-          return DATA;
+        case 1: // KEY
+          return KEY;
         case 2: // TIMESTAMP
           return TIMESTAMP;
         default:
@@ -109,23 +109,23 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.DATA, new org.apache.thrift.meta_data.FieldMetaData("data", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataItem.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataDependency.class, metaDataMap);
   }
 
-  public DataItem() {
+  public DataDependency() {
   }
 
-  public DataItem(
-    ByteBuffer data,
+  public DataDependency(
+    String key,
     long timestamp)
   {
     this();
-    this.data = data;
+    this.key = key;
     this.timestamp = timestamp;
     setTimestampIsSet(true);
   }
@@ -133,58 +133,47 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataItem(DataItem other) {
+  public DataDependency(DataDependency other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetData()) {
-      this.data = org.apache.thrift.TBaseHelper.copyBinary(other.data);
-;
+    if (other.isSetKey()) {
+      this.key = other.key;
     }
     this.timestamp = other.timestamp;
   }
 
-  public DataItem deepCopy() {
-    return new DataItem(this);
+  public DataDependency deepCopy() {
+    return new DataDependency(this);
   }
 
   @Override
   public void clear() {
-    this.data = null;
+    this.key = null;
     setTimestampIsSet(false);
     this.timestamp = 0;
   }
 
-  public byte[] getData() {
-    setData(org.apache.thrift.TBaseHelper.rightSize(data));
-    return data == null ? null : data.array();
+  public String getKey() {
+    return this.key;
   }
 
-  public ByteBuffer bufferForData() {
-    return data;
-  }
-
-  public DataItem setData(byte[] data) {
-    setData(data == null ? (ByteBuffer)null : ByteBuffer.wrap(data));
+  public DataDependency setKey(String key) {
+    this.key = key;
     return this;
   }
 
-  public DataItem setData(ByteBuffer data) {
-    this.data = data;
-    return this;
+  public void unsetKey() {
+    this.key = null;
   }
 
-  public void unsetData() {
-    this.data = null;
+  /** Returns true if field key is set (has been assigned a value) and false otherwise */
+  public boolean isSetKey() {
+    return this.key != null;
   }
 
-  /** Returns true if field data is set (has been assigned a value) and false otherwise */
-  public boolean isSetData() {
-    return this.data != null;
-  }
-
-  public void setDataIsSet(boolean value) {
+  public void setKeyIsSet(boolean value) {
     if (!value) {
-      this.data = null;
+      this.key = null;
     }
   }
 
@@ -192,7 +181,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return this.timestamp;
   }
 
-  public DataItem setTimestamp(long timestamp) {
+  public DataDependency setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     setTimestampIsSet(true);
     return this;
@@ -213,11 +202,11 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case DATA:
+    case KEY:
       if (value == null) {
-        unsetData();
+        unsetKey();
       } else {
-        setData((ByteBuffer)value);
+        setKey((String)value);
       }
       break;
 
@@ -234,8 +223,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case DATA:
-      return getData();
+    case KEY:
+      return getKey();
 
     case TIMESTAMP:
       return Long.valueOf(getTimestamp());
@@ -251,8 +240,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
 
     switch (field) {
-    case DATA:
-      return isSetData();
+    case KEY:
+      return isSetKey();
     case TIMESTAMP:
       return isSetTimestamp();
     }
@@ -263,21 +252,21 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataItem)
-      return this.equals((DataItem)that);
+    if (that instanceof DataDependency)
+      return this.equals((DataDependency)that);
     return false;
   }
 
-  public boolean equals(DataItem that) {
+  public boolean equals(DataDependency that) {
     if (that == null)
       return false;
 
-    boolean this_present_data = true && this.isSetData();
-    boolean that_present_data = true && that.isSetData();
-    if (this_present_data || that_present_data) {
-      if (!(this_present_data && that_present_data))
+    boolean this_present_key = true && this.isSetKey();
+    boolean that_present_key = true && that.isSetKey();
+    if (this_present_key || that_present_key) {
+      if (!(this_present_key && that_present_key))
         return false;
-      if (!this.data.equals(that.data))
+      if (!this.key.equals(that.key))
         return false;
     }
 
@@ -298,20 +287,20 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return 0;
   }
 
-  public int compareTo(DataItem other) {
+  public int compareTo(DataDependency other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataItem typedOther = (DataItem)other;
+    DataDependency typedOther = (DataDependency)other;
 
-    lastComparison = Boolean.valueOf(isSetData()).compareTo(typedOther.isSetData());
+    lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetData()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.data, typedOther.data);
+    if (isSetKey()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -343,14 +332,14 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataItem(");
+    StringBuilder sb = new StringBuilder("DataDependency(");
     boolean first = true;
 
-    sb.append("data:");
-    if (this.data == null) {
+    sb.append("key:");
+    if (this.key == null) {
       sb.append("null");
     } else {
-      org.apache.thrift.TBaseHelper.toString(this.data, sb);
+      sb.append(this.key);
     }
     first = false;
     if (!first) sb.append(", ");
@@ -383,15 +372,15 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  private static class DataItemStandardSchemeFactory implements SchemeFactory {
-    public DataItemStandardScheme getScheme() {
-      return new DataItemStandardScheme();
+  private static class DataDependencyStandardSchemeFactory implements SchemeFactory {
+    public DataDependencyStandardScheme getScheme() {
+      return new DataDependencyStandardScheme();
     }
   }
 
-  private static class DataItemStandardScheme extends StandardScheme<DataItem> {
+  private static class DataDependencyStandardScheme extends StandardScheme<DataDependency> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, DataDependency struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -401,10 +390,10 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
           break;
         }
         switch (schemeField.id) {
-          case 1: // DATA
+          case 1: // KEY
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.data = iprot.readBinary();
-              struct.setDataIsSet(true);
+              struct.key = iprot.readString();
+              struct.setKeyIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -428,13 +417,13 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, DataDependency struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (struct.data != null) {
-        oprot.writeFieldBegin(DATA_FIELD_DESC);
-        oprot.writeBinary(struct.data);
+      if (struct.key != null) {
+        oprot.writeFieldBegin(KEY_FIELD_DESC);
+        oprot.writeString(struct.key);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
@@ -446,27 +435,27 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   }
 
-  private static class DataItemTupleSchemeFactory implements SchemeFactory {
-    public DataItemTupleScheme getScheme() {
-      return new DataItemTupleScheme();
+  private static class DataDependencyTupleSchemeFactory implements SchemeFactory {
+    public DataDependencyTupleScheme getScheme() {
+      return new DataDependencyTupleScheme();
     }
   }
 
-  private static class DataItemTupleScheme extends TupleScheme<DataItem> {
+  private static class DataDependencyTupleScheme extends TupleScheme<DataDependency> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetData()) {
+      if (struct.isSetKey()) {
         optionals.set(0);
       }
       if (struct.isSetTimestamp()) {
         optionals.set(1);
       }
       oprot.writeBitSet(optionals, 2);
-      if (struct.isSetData()) {
-        oprot.writeBinary(struct.data);
+      if (struct.isSetKey()) {
+        oprot.writeString(struct.key);
       }
       if (struct.isSetTimestamp()) {
         oprot.writeI64(struct.timestamp);
@@ -474,12 +463,12 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
-        struct.data = iprot.readBinary();
-        struct.setDataIsSet(true);
+        struct.key = iprot.readString();
+        struct.setKeyIsSet(true);
       }
       if (incoming.get(1)) {
         struct.timestamp = iprot.readI64();

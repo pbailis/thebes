@@ -1,12 +1,16 @@
 package edu.berkeley.thebes.hat.common.thrift;
 
+import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TNonblockingSocket;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import edu.berkeley.thebes.common.config.Config;
+
+import java.io.IOException;
 
 public class ThriftUtil {
     public static ReplicaService.Client getReplicaServiceClient(
@@ -20,6 +24,13 @@ public class ThriftUtil {
         TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
         return new AntiEntropyService.Client(protocol);
     }
+
+    public static AntiEntropyService.AsyncClient getAntiEntropyServiceAsyncClient(
+            String host, int port) throws TTransportException, IOException {
+        return new AntiEntropyService.AsyncClient(new TBinaryProtocol.Factory(), new TAsyncClientManager(),
+                                                  new TNonblockingSocket(host, port, Config.getSocketTimeout()));
+    }
+
     private static TProtocol createProtocol(String host, int port, int timeout)
             throws TTransportException {
         TTransport transport = new TSocket(host, port, timeout);
