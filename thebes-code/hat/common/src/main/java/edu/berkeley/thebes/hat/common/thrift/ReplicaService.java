@@ -6,20 +6,26 @@
  */
 package edu.berkeley.thebes.hat.common.thrift;
 
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
+
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ReplicaService {
 
@@ -27,7 +33,7 @@ public class ReplicaService {
 
     public edu.berkeley.thebes.common.thrift.DataItem get(String key) throws org.apache.thrift.TException;
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException;
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException;
 
   }
 
@@ -35,7 +41,7 @@ public class ReplicaService {
 
     public void get(String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -82,17 +88,18 @@ public class ReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException
     {
-      send_put(key, value);
+      send_put(key, value, happensAfter);
       return recv_put();
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
       args.setValue(value);
+      args.setHappensAfter(happensAfter);
       sendBase("put", args);
     }
 
@@ -156,9 +163,9 @@ public class ReplicaService {
       }
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
+      put_call method_call = new put_call(key, value, happensAfter, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -166,10 +173,12 @@ public class ReplicaService {
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
       private edu.berkeley.thebes.common.thrift.DataItem value;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private List<DataDependency> happensAfter;
+      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.value = value;
+        this.happensAfter = happensAfter;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -177,6 +186,7 @@ public class ReplicaService {
         put_args args = new put_args();
         args.setKey(key);
         args.setValue(value);
+        args.setHappensAfter(happensAfter);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -236,7 +246,7 @@ public class ReplicaService {
 
       protected put_result getResult(I iface, put_args args) throws org.apache.thrift.TException {
         put_result result = new put_result();
-        result.success = iface.put(args.key, args.value);
+        result.success = iface.put(args.key, args.value, args.happensAfter);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -957,6 +967,7 @@ public class ReplicaService {
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField HAPPENS_AFTER_FIELD_DESC = new org.apache.thrift.protocol.TField("happensAfter", org.apache.thrift.protocol.TType.LIST, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -966,11 +977,13 @@ public class ReplicaService {
 
     public String key; // required
     public edu.berkeley.thebes.common.thrift.DataItem value; // required
+    public List<DataDependency> happensAfter; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       KEY((short)1, "key"),
-      VALUE((short)2, "value");
+      VALUE((short)2, "value"),
+      HAPPENS_AFTER((short)3, "happensAfter");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -989,6 +1002,8 @@ public class ReplicaService {
             return KEY;
           case 2: // VALUE
             return VALUE;
+          case 3: // HAPPENS_AFTER
+            return HAPPENS_AFTER;
           default:
             return null;
         }
@@ -1036,6 +1051,9 @@ public class ReplicaService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+      tmpMap.put(_Fields.HAPPENS_AFTER, new org.apache.thrift.meta_data.FieldMetaData("happensAfter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -1045,11 +1063,13 @@ public class ReplicaService {
 
     public put_args(
       String key,
-      edu.berkeley.thebes.common.thrift.DataItem value)
+      edu.berkeley.thebes.common.thrift.DataItem value,
+      List<DataDependency> happensAfter)
     {
       this();
       this.key = key;
       this.value = value;
+      this.happensAfter = happensAfter;
     }
 
     /**
@@ -1062,6 +1082,13 @@ public class ReplicaService {
       if (other.isSetValue()) {
         this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
       }
+      if (other.isSetHappensAfter()) {
+        List<DataDependency> __this__happensAfter = new ArrayList<DataDependency>();
+        for (DataDependency other_element : other.happensAfter) {
+          __this__happensAfter.add(new DataDependency(other_element));
+        }
+        this.happensAfter = __this__happensAfter;
+      }
     }
 
     public put_args deepCopy() {
@@ -1072,6 +1099,7 @@ public class ReplicaService {
     public void clear() {
       this.key = null;
       this.value = null;
+      this.happensAfter = null;
     }
 
     public String getKey() {
@@ -1122,6 +1150,45 @@ public class ReplicaService {
       }
     }
 
+    public int getHappensAfterSize() {
+      return (this.happensAfter == null) ? 0 : this.happensAfter.size();
+    }
+
+    public java.util.Iterator<DataDependency> getHappensAfterIterator() {
+      return (this.happensAfter == null) ? null : this.happensAfter.iterator();
+    }
+
+    public void addToHappensAfter(DataDependency elem) {
+      if (this.happensAfter == null) {
+        this.happensAfter = new ArrayList<DataDependency>();
+      }
+      this.happensAfter.add(elem);
+    }
+
+    public List<DataDependency> getHappensAfter() {
+      return this.happensAfter;
+    }
+
+    public put_args setHappensAfter(List<DataDependency> happensAfter) {
+      this.happensAfter = happensAfter;
+      return this;
+    }
+
+    public void unsetHappensAfter() {
+      this.happensAfter = null;
+    }
+
+    /** Returns true if field happensAfter is set (has been assigned a value) and false otherwise */
+    public boolean isSetHappensAfter() {
+      return this.happensAfter != null;
+    }
+
+    public void setHappensAfterIsSet(boolean value) {
+      if (!value) {
+        this.happensAfter = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case KEY:
@@ -1140,6 +1207,14 @@ public class ReplicaService {
         }
         break;
 
+      case HAPPENS_AFTER:
+        if (value == null) {
+          unsetHappensAfter();
+        } else {
+          setHappensAfter((List<DataDependency>)value);
+        }
+        break;
+
       }
     }
 
@@ -1150,6 +1225,9 @@ public class ReplicaService {
 
       case VALUE:
         return getValue();
+
+      case HAPPENS_AFTER:
+        return getHappensAfter();
 
       }
       throw new IllegalStateException();
@@ -1166,6 +1244,8 @@ public class ReplicaService {
         return isSetKey();
       case VALUE:
         return isSetValue();
+      case HAPPENS_AFTER:
+        return isSetHappensAfter();
       }
       throw new IllegalStateException();
     }
@@ -1198,6 +1278,15 @@ public class ReplicaService {
         if (!(this_present_value && that_present_value))
           return false;
         if (!this.value.equals(that.value))
+          return false;
+      }
+
+      boolean this_present_happensAfter = true && this.isSetHappensAfter();
+      boolean that_present_happensAfter = true && that.isSetHappensAfter();
+      if (this_present_happensAfter || that_present_happensAfter) {
+        if (!(this_present_happensAfter && that_present_happensAfter))
+          return false;
+        if (!this.happensAfter.equals(that.happensAfter))
           return false;
       }
 
@@ -1237,6 +1326,16 @@ public class ReplicaService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetHappensAfter()).compareTo(typedOther.isSetHappensAfter());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetHappensAfter()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.happensAfter, typedOther.happensAfter);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -1270,6 +1369,14 @@ public class ReplicaService {
         sb.append("null");
       } else {
         sb.append(this.value);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("happensAfter:");
+      if (this.happensAfter == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.happensAfter);
       }
       first = false;
       sb.append(")");
@@ -1331,6 +1438,25 @@ public class ReplicaService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // HAPPENS_AFTER
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                  struct.happensAfter = new ArrayList<DataDependency>(_list0.size);
+                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                  {
+                    DataDependency _elem2; // required
+                    _elem2 = new DataDependency();
+                    _elem2.read(iprot);
+                    struct.happensAfter.add(_elem2);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setHappensAfterIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1354,6 +1480,18 @@ public class ReplicaService {
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
           struct.value.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.happensAfter != null) {
+          oprot.writeFieldBegin(HAPPENS_AFTER_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.happensAfter.size()));
+            for (DataDependency _iter3 : struct.happensAfter)
+            {
+              _iter3.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1380,19 +1518,31 @@ public class ReplicaService {
         if (struct.isSetValue()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetHappensAfter()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetKey()) {
           oprot.writeString(struct.key);
         }
         if (struct.isSetValue()) {
           struct.value.write(oprot);
         }
+        if (struct.isSetHappensAfter()) {
+          {
+            oprot.writeI32(struct.happensAfter.size());
+            for (DataDependency _iter4 : struct.happensAfter)
+            {
+              _iter4.write(oprot);
+            }
+          }
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, put_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.key = iprot.readString();
           struct.setKeyIsSet(true);
@@ -1401,6 +1551,20 @@ public class ReplicaService {
           struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
           struct.value.read(iprot);
           struct.setValueIsSet(true);
+        }
+        if (incoming.get(2)) {
+          {
+            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.happensAfter = new ArrayList<DataDependency>(_list5.size);
+            for (int _i6 = 0; _i6 < _list5.size; ++_i6)
+            {
+              DataDependency _elem7; // required
+              _elem7 = new DataDependency();
+              _elem7.read(iprot);
+              struct.happensAfter.add(_elem7);
+            }
+          }
+          struct.setHappensAfterIsSet(true);
         }
       }
     }

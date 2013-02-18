@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
 
 /**
@@ -34,8 +35,8 @@ public enum ConfigParameters {
     TWOPL_REPLICATE_TO_SLAVES(Boolean.class, true),
     TWOPL_TM_PORT(Integer.class, 8083),
     TWOPL_TM_CONFIG(Map.class, RequirementLevel.TWOPL_TM),
-    TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON)
-    ;
+    TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON),
+    SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;

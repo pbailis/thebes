@@ -25,7 +25,7 @@ public interface ConfigParameterTypes {
         }
     }
 
-    public enum IsolationLevel {
+    public enum IsolationLevel implements ConfigParameterTypes {
         NO_ISOLATION(0),
         READ_COMMITTED(1),
         REPEATABLE_READ(2);
@@ -43,5 +43,10 @@ public interface ConfigParameterTypes {
         public boolean higherThan(IsolationLevel level) {
             return this.strictness > level.strictness;
         }
+    }
+
+    public enum SessionLevel implements ConfigParameterTypes {
+        NO_SESSION,
+        CAUSAL;
     }
 }

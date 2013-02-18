@@ -6,18 +6,24 @@
  */
 package edu.berkeley.thebes.hat.common.thrift;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
+
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,13 +31,17 @@ public class AntiEntropyService {
 
   public interface Iface {
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException;
+
+    public void waitForDependency(DataDependency dependency) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void waitForDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForDependency_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -55,28 +65,38 @@ public class AntiEntropyService {
       super(iprot, oprot);
     }
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException
     {
-      send_put(key, value);
-      return recv_put();
+      send_put(key, value, happensAfter);
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
       args.setValue(value);
+      args.setHappensAfter(happensAfter);
       sendBase("put", args);
     }
 
-    public boolean recv_put() throws org.apache.thrift.TException
+    public void waitForDependency(DataDependency dependency) throws org.apache.thrift.TException
     {
-      put_result result = new put_result();
-      receiveBase(result, "put");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "put failed: unknown result");
+      send_waitForDependency(dependency);
+      recv_waitForDependency();
+    }
+
+    public void send_waitForDependency(DataDependency dependency) throws org.apache.thrift.TException
+    {
+      waitForDependency_args args = new waitForDependency_args();
+      args.setDependency(dependency);
+      sendBase("waitForDependency", args);
+    }
+
+    public void recv_waitForDependency() throws org.apache.thrift.TException
+    {
+      waitForDependency_result result = new waitForDependency_result();
+      receiveBase(result, "waitForDependency");
+      return;
     }
 
   }
@@ -97,9 +117,9 @@ public class AntiEntropyService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
+      put_call method_call = new put_call(key, value, happensAfter, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -107,10 +127,12 @@ public class AntiEntropyService {
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
       private edu.berkeley.thebes.common.thrift.DataItem value;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
+      private List<DataDependency> happensAfter;
+      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, true);
         this.key = key;
         this.value = value;
+        this.happensAfter = happensAfter;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -118,17 +140,49 @@ public class AntiEntropyService {
         put_args args = new put_args();
         args.setKey(key);
         args.setValue(value);
+        args.setHappensAfter(happensAfter);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_put();
+      }
+    }
+
+    public void waitForDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForDependency_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      waitForDependency_call method_call = new waitForDependency_call(dependency, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class waitForDependency_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private DataDependency dependency;
+      public waitForDependency_call(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForDependency_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.dependency = dependency;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("waitForDependency", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        waitForDependency_args args = new waitForDependency_args();
+        args.setDependency(dependency);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_waitForDependency();
       }
     }
 
@@ -146,6 +200,7 @@ public class AntiEntropyService {
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
       processMap.put("put", new put());
+      processMap.put("waitForDependency", new waitForDependency());
       return processMap;
     }
 
@@ -158,10 +213,24 @@ public class AntiEntropyService {
         return new put_args();
       }
 
-      protected put_result getResult(I iface, put_args args) throws org.apache.thrift.TException {
-        put_result result = new put_result();
-        result.success = iface.put(args.key, args.value);
-        result.setSuccessIsSet(true);
+      protected org.apache.thrift.TBase getResult(I iface, put_args args) throws org.apache.thrift.TException {
+        iface.put(args.key, args.value, args.happensAfter);
+        return null;
+      }
+    }
+
+    private static class waitForDependency<I extends Iface> extends org.apache.thrift.ProcessFunction<I, waitForDependency_args> {
+      public waitForDependency() {
+        super("waitForDependency");
+      }
+
+      protected waitForDependency_args getEmptyArgsInstance() {
+        return new waitForDependency_args();
+      }
+
+      protected waitForDependency_result getResult(I iface, waitForDependency_args args) throws org.apache.thrift.TException {
+        waitForDependency_result result = new waitForDependency_result();
+        iface.waitForDependency(args.dependency);
         return result;
       }
     }
@@ -173,6 +242,7 @@ public class AntiEntropyService {
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField HAPPENS_AFTER_FIELD_DESC = new org.apache.thrift.protocol.TField("happensAfter", org.apache.thrift.protocol.TType.LIST, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -182,11 +252,13 @@ public class AntiEntropyService {
 
     public String key; // required
     public edu.berkeley.thebes.common.thrift.DataItem value; // required
+    public List<DataDependency> happensAfter; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       KEY((short)1, "key"),
-      VALUE((short)2, "value");
+      VALUE((short)2, "value"),
+      HAPPENS_AFTER((short)3, "happensAfter");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -205,6 +277,8 @@ public class AntiEntropyService {
             return KEY;
           case 2: // VALUE
             return VALUE;
+          case 3: // HAPPENS_AFTER
+            return HAPPENS_AFTER;
           default:
             return null;
         }
@@ -252,6 +326,9 @@ public class AntiEntropyService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+      tmpMap.put(_Fields.HAPPENS_AFTER, new org.apache.thrift.meta_data.FieldMetaData("happensAfter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -261,11 +338,13 @@ public class AntiEntropyService {
 
     public put_args(
       String key,
-      edu.berkeley.thebes.common.thrift.DataItem value)
+      edu.berkeley.thebes.common.thrift.DataItem value,
+      List<DataDependency> happensAfter)
     {
       this();
       this.key = key;
       this.value = value;
+      this.happensAfter = happensAfter;
     }
 
     /**
@@ -278,6 +357,13 @@ public class AntiEntropyService {
       if (other.isSetValue()) {
         this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
       }
+      if (other.isSetHappensAfter()) {
+        List<DataDependency> __this__happensAfter = new ArrayList<DataDependency>();
+        for (DataDependency other_element : other.happensAfter) {
+          __this__happensAfter.add(new DataDependency(other_element));
+        }
+        this.happensAfter = __this__happensAfter;
+      }
     }
 
     public put_args deepCopy() {
@@ -288,6 +374,7 @@ public class AntiEntropyService {
     public void clear() {
       this.key = null;
       this.value = null;
+      this.happensAfter = null;
     }
 
     public String getKey() {
@@ -338,6 +425,45 @@ public class AntiEntropyService {
       }
     }
 
+    public int getHappensAfterSize() {
+      return (this.happensAfter == null) ? 0 : this.happensAfter.size();
+    }
+
+    public java.util.Iterator<DataDependency> getHappensAfterIterator() {
+      return (this.happensAfter == null) ? null : this.happensAfter.iterator();
+    }
+
+    public void addToHappensAfter(DataDependency elem) {
+      if (this.happensAfter == null) {
+        this.happensAfter = new ArrayList<DataDependency>();
+      }
+      this.happensAfter.add(elem);
+    }
+
+    public List<DataDependency> getHappensAfter() {
+      return this.happensAfter;
+    }
+
+    public put_args setHappensAfter(List<DataDependency> happensAfter) {
+      this.happensAfter = happensAfter;
+      return this;
+    }
+
+    public void unsetHappensAfter() {
+      this.happensAfter = null;
+    }
+
+    /** Returns true if field happensAfter is set (has been assigned a value) and false otherwise */
+    public boolean isSetHappensAfter() {
+      return this.happensAfter != null;
+    }
+
+    public void setHappensAfterIsSet(boolean value) {
+      if (!value) {
+        this.happensAfter = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case KEY:
@@ -356,6 +482,14 @@ public class AntiEntropyService {
         }
         break;
 
+      case HAPPENS_AFTER:
+        if (value == null) {
+          unsetHappensAfter();
+        } else {
+          setHappensAfter((List<DataDependency>)value);
+        }
+        break;
+
       }
     }
 
@@ -366,6 +500,9 @@ public class AntiEntropyService {
 
       case VALUE:
         return getValue();
+
+      case HAPPENS_AFTER:
+        return getHappensAfter();
 
       }
       throw new IllegalStateException();
@@ -382,6 +519,8 @@ public class AntiEntropyService {
         return isSetKey();
       case VALUE:
         return isSetValue();
+      case HAPPENS_AFTER:
+        return isSetHappensAfter();
       }
       throw new IllegalStateException();
     }
@@ -414,6 +553,15 @@ public class AntiEntropyService {
         if (!(this_present_value && that_present_value))
           return false;
         if (!this.value.equals(that.value))
+          return false;
+      }
+
+      boolean this_present_happensAfter = true && this.isSetHappensAfter();
+      boolean that_present_happensAfter = true && that.isSetHappensAfter();
+      if (this_present_happensAfter || that_present_happensAfter) {
+        if (!(this_present_happensAfter && that_present_happensAfter))
+          return false;
+        if (!this.happensAfter.equals(that.happensAfter))
           return false;
       }
 
@@ -453,6 +601,16 @@ public class AntiEntropyService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetHappensAfter()).compareTo(typedOther.isSetHappensAfter());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetHappensAfter()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.happensAfter, typedOther.happensAfter);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -486,6 +644,14 @@ public class AntiEntropyService {
         sb.append("null");
       } else {
         sb.append(this.value);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("happensAfter:");
+      if (this.happensAfter == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.happensAfter);
       }
       first = false;
       sb.append(")");
@@ -547,6 +713,25 @@ public class AntiEntropyService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // HAPPENS_AFTER
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
+                  struct.happensAfter = new ArrayList<DataDependency>(_list8.size);
+                  for (int _i9 = 0; _i9 < _list8.size; ++_i9)
+                  {
+                    DataDependency _elem10; // required
+                    _elem10 = new DataDependency();
+                    _elem10.read(iprot);
+                    struct.happensAfter.add(_elem10);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setHappensAfterIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -570,6 +755,18 @@ public class AntiEntropyService {
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
           struct.value.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.happensAfter != null) {
+          oprot.writeFieldBegin(HAPPENS_AFTER_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.happensAfter.size()));
+            for (DataDependency _iter11 : struct.happensAfter)
+            {
+              _iter11.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -596,19 +793,31 @@ public class AntiEntropyService {
         if (struct.isSetValue()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetHappensAfter()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetKey()) {
           oprot.writeString(struct.key);
         }
         if (struct.isSetValue()) {
           struct.value.write(oprot);
         }
+        if (struct.isSetHappensAfter()) {
+          {
+            oprot.writeI32(struct.happensAfter.size());
+            for (DataDependency _iter12 : struct.happensAfter)
+            {
+              _iter12.write(oprot);
+            }
+          }
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, put_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.key = iprot.readString();
           struct.setKeyIsSet(true);
@@ -618,27 +827,41 @@ public class AntiEntropyService {
           struct.value.read(iprot);
           struct.setValueIsSet(true);
         }
+        if (incoming.get(2)) {
+          {
+            org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.happensAfter = new ArrayList<DataDependency>(_list13.size);
+            for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+            {
+              DataDependency _elem15; // required
+              _elem15 = new DataDependency();
+              _elem15.read(iprot);
+              struct.happensAfter.add(_elem15);
+            }
+          }
+          struct.setHappensAfterIsSet(true);
+        }
       }
     }
 
   }
 
-  public static class put_result implements org.apache.thrift.TBase<put_result, put_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_result");
+  public static class waitForDependency_args implements org.apache.thrift.TBase<waitForDependency_args, waitForDependency_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("waitForDependency_args");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField DEPENDENCY_FIELD_DESC = new org.apache.thrift.protocol.TField("dependency", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new put_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new put_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new waitForDependency_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new waitForDependency_argsTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public DataDependency dependency; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      DEPENDENCY((short)1, "dependency");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -653,8 +876,8 @@ public class AntiEntropyService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // DEPENDENCY
+            return DEPENDENCY;
           default:
             return null;
         }
@@ -695,77 +918,74 @@ public class AntiEntropyService {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.DEPENDENCY, new org.apache.thrift.meta_data.FieldMetaData("dependency", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(waitForDependency_args.class, metaDataMap);
     }
 
-    public put_result() {
+    public waitForDependency_args() {
     }
 
-    public put_result(
-      boolean success)
+    public waitForDependency_args(
+      DataDependency dependency)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.dependency = dependency;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_result(put_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+    public waitForDependency_args(waitForDependency_args other) {
+      if (other.isSetDependency()) {
+        this.dependency = new DataDependency(other.dependency);
+      }
     }
 
-    public put_result deepCopy() {
-      return new put_result(this);
+    public waitForDependency_args deepCopy() {
+      return new waitForDependency_args(this);
     }
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.dependency = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public DataDependency getDependency() {
+      return this.dependency;
     }
 
-    public put_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public waitForDependency_args setDependency(DataDependency dependency) {
+      this.dependency = dependency;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetDependency() {
+      this.dependency = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field dependency is set (has been assigned a value) and false otherwise */
+    public boolean isSetDependency() {
+      return this.dependency != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setDependencyIsSet(boolean value) {
+      if (!value) {
+        this.dependency = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case DEPENDENCY:
         if (value == null) {
-          unsetSuccess();
+          unsetDependency();
         } else {
-          setSuccess((Boolean)value);
+          setDependency((DataDependency)value);
         }
         break;
 
@@ -774,8 +994,8 @@ public class AntiEntropyService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case DEPENDENCY:
+        return getDependency();
 
       }
       throw new IllegalStateException();
@@ -788,8 +1008,8 @@ public class AntiEntropyService {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case DEPENDENCY:
+        return isSetDependency();
       }
       throw new IllegalStateException();
     }
@@ -798,21 +1018,21 @@ public class AntiEntropyService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_result)
-        return this.equals((put_result)that);
+      if (that instanceof waitForDependency_args)
+        return this.equals((waitForDependency_args)that);
       return false;
     }
 
-    public boolean equals(put_result that) {
+    public boolean equals(waitForDependency_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_dependency = true && this.isSetDependency();
+      boolean that_present_dependency = true && that.isSetDependency();
+      if (this_present_dependency || that_present_dependency) {
+        if (!(this_present_dependency && that_present_dependency))
           return false;
-        if (this.success != that.success)
+        if (!this.dependency.equals(that.dependency))
           return false;
       }
 
@@ -824,20 +1044,20 @@ public class AntiEntropyService {
       return 0;
     }
 
-    public int compareTo(put_result other) {
+    public int compareTo(waitForDependency_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_result typedOther = (put_result)other;
+      waitForDependency_args typedOther = (waitForDependency_args)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetDependency()).compareTo(typedOther.isSetDependency());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetDependency()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dependency, typedOther.dependency);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -855,15 +1075,19 @@ public class AntiEntropyService {
 
     public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
       schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
+    }
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_result(");
+      StringBuilder sb = new StringBuilder("waitForDependency_args(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("dependency:");
+      if (this.dependency == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.dependency);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -889,15 +1113,15 @@ public class AntiEntropyService {
       }
     }
 
-    private static class put_resultStandardSchemeFactory implements SchemeFactory {
-      public put_resultStandardScheme getScheme() {
-        return new put_resultStandardScheme();
+    private static class waitForDependency_argsStandardSchemeFactory implements SchemeFactory {
+      public waitForDependency_argsStandardScheme getScheme() {
+        return new waitForDependency_argsStandardScheme();
       }
     }
 
-    private static class put_resultStandardScheme extends StandardScheme<put_result> {
+    private static class waitForDependency_argsStandardScheme extends StandardScheme<waitForDependency_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, put_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, waitForDependency_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -907,10 +1131,11 @@ public class AntiEntropyService {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // DEPENDENCY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.dependency = new DataDependency();
+                struct.dependency.read(iprot);
+                struct.setDependencyIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -926,48 +1151,296 @@ public class AntiEntropyService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, put_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, waitForDependency_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.dependency != null) {
+          oprot.writeFieldBegin(DEPENDENCY_FIELD_DESC);
+          struct.dependency.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
 
     }
 
-    private static class put_resultTupleSchemeFactory implements SchemeFactory {
-      public put_resultTupleScheme getScheme() {
-        return new put_resultTupleScheme();
+    private static class waitForDependency_argsTupleSchemeFactory implements SchemeFactory {
+      public waitForDependency_argsTupleScheme getScheme() {
+        return new waitForDependency_argsTupleScheme();
       }
     }
 
-    private static class put_resultTupleScheme extends TupleScheme<put_result> {
+    private static class waitForDependency_argsTupleScheme extends TupleScheme<waitForDependency_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, put_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, waitForDependency_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetDependency()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetDependency()) {
+          struct.dependency.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, put_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, waitForDependency_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.dependency = new DataDependency();
+          struct.dependency.read(iprot);
+          struct.setDependencyIsSet(true);
         }
+      }
+    }
+
+  }
+
+  public static class waitForDependency_result implements org.apache.thrift.TBase<waitForDependency_result, waitForDependency_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("waitForDependency_result");
+
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new waitForDependency_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new waitForDependency_resultTupleSchemeFactory());
+    }
+
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+;
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(waitForDependency_result.class, metaDataMap);
+    }
+
+    public waitForDependency_result() {
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public waitForDependency_result(waitForDependency_result other) {
+    }
+
+    public waitForDependency_result deepCopy() {
+      return new waitForDependency_result(this);
+    }
+
+    @Override
+    public void clear() {
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof waitForDependency_result)
+        return this.equals((waitForDependency_result)that);
+      return false;
+    }
+
+    public boolean equals(waitForDependency_result that) {
+      if (that == null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(waitForDependency_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      waitForDependency_result typedOther = (waitForDependency_result)other;
+
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("waitForDependency_result(");
+      boolean first = true;
+
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class waitForDependency_resultStandardSchemeFactory implements SchemeFactory {
+      public waitForDependency_resultStandardScheme getScheme() {
+        return new waitForDependency_resultStandardScheme();
+      }
+    }
+
+    private static class waitForDependency_resultStandardScheme extends StandardScheme<waitForDependency_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, waitForDependency_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, waitForDependency_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class waitForDependency_resultTupleSchemeFactory implements SchemeFactory {
+      public waitForDependency_resultTupleScheme getScheme() {
+        return new waitForDependency_resultTupleScheme();
+      }
+    }
+
+    private static class waitForDependency_resultTupleScheme extends TupleScheme<waitForDependency_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, waitForDependency_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, waitForDependency_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
       }
     }
 
