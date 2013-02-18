@@ -4,23 +4,23 @@ import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import edu.berkeley.thebes.hat.server.causal.CausalDependencyChecker;
-import edu.berkeley.thebes.hat.server.causal.CausalDependencyResolver;
+import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyChecker;
+import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyResolver;
 import org.apache.thrift.TException;
 
 import java.util.List;
 
 public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     private IPersistenceEngine persistenceEngine;
-    CausalDependencyResolver resolver;
-    CausalDependencyChecker checker;
+    GenericDependencyChecker causalDependencyChecker;
+    GenericDependencyResolver causalDependencyResolver;
 
     public AntiEntropyServiceHandler(IPersistenceEngine persistenceEngine,
-                                     CausalDependencyChecker checker,
-                                     CausalDependencyResolver resolver) {
+                                     GenericDependencyChecker causalDependencyChecker,
+                                     GenericDependencyResolver causalDependencyResolver) {
         this.persistenceEngine = persistenceEngine;
-        this.checker = checker;
-        this.resolver = resolver;
+        this.causalDependencyChecker = causalDependencyChecker;
+        this.causalDependencyResolver = causalDependencyResolver;
     }
 
     @Override
@@ -28,11 +28,11 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
         if(happensAfter.isEmpty())
             persistenceEngine.put(key, value);
         else
-            checker.applyWriteAfterDependencies(key, value, happensAfter);
+            causalDependencyChecker.applyWriteAfterDependencies(key, value, happensAfter);
     }
 
     @Override
     public void waitForDependency(DataDependency dependency) {
-        resolver.blockForDependency(dependency);
+        causalDependencyResolver.blockForDependency(dependency);
     }
 }
