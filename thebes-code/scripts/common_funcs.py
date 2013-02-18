@@ -38,8 +38,6 @@ def sed(file, find, repl):
 def escape(path):
     return path.replace('/', '\/')
 
-#### CASSANDRA STUFF
-
 def get_node_ips():
     ret = []
     system("ec2-describe-instances > /tmp/instances.txt")
