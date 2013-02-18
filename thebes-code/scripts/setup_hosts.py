@@ -3,21 +3,15 @@
 
 import argparse
 import datetime
-from common_funcs import checkout_branch
-from common_funcs import clean_cassandra
-from common_funcs import kill_cassandra
-from common_funcs import launch_cassandra_ring
 from common_funcs import run_cmd
 from common_funcs import sed
 from common_funcs import upload_file
 from common_funcs import run_script
-from common_funcs import set_up_cassandra_ring
-from os import system
+import os
+import os.path
 from time import sleep
 
 AMIs = {'us-east-1': 'ami-7339b41a'}
-eastAMI = "ami-8ee848e7"
-eastInstaceIDs = []
 
 class Host:
     def __init__(self, ip, region, instanceid):
@@ -155,46 +149,35 @@ def start_cluster(clusterid, region, num_hosts, use_spot):
     sleep(30)
     print "Awake!"
 
-
 def setup_clusters(num_clusters):
+    global SCRIPTS_DIR
     print "Enabling root SSH...",
-    run_script("all-hosts", "resources/enable_root_ssh.sh", user="ubuntu")
+    run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
     print "Done"
     
     print "Uploading git key...",
-    upload_file("all-hosts", "resources/git-repo.rsa", "/home/ubuntu/.ssh/id_rsa", user="ubuntu")
+    upload_file("all-hosts", SCRIPTS_DIR + "/resources/git-repo.rsa", "/home/ubuntu/.ssh/id_rsa", user="ubuntu")
+    print "Done"
+    
+    print "Uploading authorized key...",
+    upload_file("all-hosts", SCRIPTS_DIR + "/resources/git-repo.pub", "/home/ubuntu/git-repo.pub", user="ubuntu")
+    print "Done"
+    
+    print "Appending authorized key...",
+    run_cmd("all-hosts", "cat /home/ubuntu/git-repo.pub >> /home/ubuntu/.ssh/authorized_keys", user="ubuntu")
     print "Done"
 
     print "Uploading git to ssh config...",
-    upload_file("all-hosts", "resources/config", "/home/ubuntu/.ssh/config", user="ubuntu")
+    upload_file("all-hosts", SCRIPTS_DIR + "/resources/config", "/home/ubuntu/.ssh/config", user="ubuntu")
     print "Done"
     
     print "Running startup scripts...",
-    run_script("all-hosts", "resources/node_self_setup.sh", user="ubuntu")
+    run_script("all-hosts", SCRIPTS_DIR + "/resources/node_self_setup.sh", user="ubuntu")
     print "Done"
 
     print "Uploading config file...",
-    upload_file("all-hosts", "../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
+    upload_file("all-hosts", SCRIPTS_DIR + "../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
     print "Done"
-
-#    print "Setting up XFS...",
-#    run_script("all-hosts", "scripts/set_up_xfs.sh")
-#    print "Done"
-
-#    print "Fixing host file bugs...",
-#    run_script("all-hosts", "scripts/fix-hosts-file.sh")
-#    print "Done"
-
-#    print "Installing NTP (Ignore failures)..."
-#    run_cmd("all-hosts", "sudo apt-get -q -y install ntp")
-#    run_cmd("all-hosts", "sudo ntpd -q")
-#    print "Done"
-
-#    print "Installing Jmxterm..."
-#    run_cmd("all-hosts", "wget http://downloads.sourceforge.net/"\
-#            "cyclops-group/jmxterm-1.0-alpha-4-uber.jar",
-#            user="ubuntu")
-#    print "Done"
 
 def check_for_instances(regions):
     numRunningAnywhere = 0
@@ -214,14 +197,17 @@ def terminate_cluster():
     system("ec2-terminate-instances %s" % all_instance_ids)
     system("ec2-cancel-spot-instance-requests %s" % all_spot_request_ids)
 
-
-
-
-def clone_cassandra_pbs():
-    run_cmd("all-hosts", "rm -rf cassandra", user="ubuntu")
-    run_cmd("all-hosts",
-            "git clone https://github.com/pbailis/cassandra-pbs cassandra",
-            user="ubuntu")
+SCRIPTS_DIR = ''
+def detectScriptsDir():
+    absPath = os.path.abspath('.')
+    dirs = absPath.split(os.sep)
+    for i in range(len(dirs)-1, 0, -1):
+        if dirs[i] == 'thebes':
+            SCRIPTS_DIR = os.sep.join(dirs[0:i+1])
+            break
+    SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, 'thebes-code', 'scripts')
+    assert os.path.exists(SCRIPTS_DIR), "Failed to detect scripts directory: " + SCRIPTS_DIR
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
     parser.add_argument('--launch', '-l', action='store_true',
@@ -239,9 +225,11 @@ if __name__ == "__main__":
     parser.add_argument('--no_spot', dest='no_spot', default=False,
                         help='Don\'t use spot instances, default off.')
     args = parser.parse_args()
+    
+    detectScriptsDir()
 
     if args.launch:
-        print "Launching cassandra cluster"
+        print "Launching thebes cluster"
         regions = AMIs.keys()
         check_for_instances(regions)
         for i in range(1,args.clusters+1):
@@ -250,14 +238,11 @@ if __name__ == "__main__":
         setup_clusters(args.clusters)
 
     if args.restart:
-        print "Restarting cassandra cluster"
-        kill_cassandra("all-hosts")
-        clean_cassandra("all-hosts")
-        set_up_cassandra_ring("all-hosts")
-        launch_cassandra_ring("all-hosts")
+        print "Restart not yet implemented"
+        exit(-1)
 
     if args.terminate:
-        print "Terminating cassandra cluster"
+        print "Terminating thebes cluster"
         terminate_cluster()
 
     if not args.launch and not args.restart and not args.terminate:
