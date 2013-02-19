@@ -2,7 +2,10 @@
 
 namespace java edu.berkeley.thebes.common.thrift
 
+include "version.thrift"
+
 struct DataItem {
   1: binary data,
-  2: i64 timestamp
+  2: version.Version version,
+  4: optional list<string> transactionKeys
 }

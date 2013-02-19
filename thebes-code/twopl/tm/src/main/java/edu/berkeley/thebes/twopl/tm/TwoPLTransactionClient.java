@@ -1,8 +1,10 @@
 package edu.berkeley.thebes.twopl.tm;
 
 import com.google.common.collect.Sets;
+import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.Version;
 import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
 
@@ -21,7 +23,7 @@ import java.util.Set;
  */
 public class TwoPLTransactionClient implements IThebesClient {
     private Random randomNumberGen = new Random();
-    private int clientId;
+    private short clientId = Config.getClientID();
     private int sequenceNumber;
     
     private long sessionId;
@@ -30,7 +32,6 @@ public class TwoPLTransactionClient implements IThebesClient {
     private TwoPLMasterRouter masterRouter;
     
     public TwoPLTransactionClient() {
-        clientId = randomNumberGen.nextInt();
         sequenceNumber = 0;
     }
     
@@ -65,7 +66,7 @@ public class TwoPLTransactionClient implements IThebesClient {
         }
         
         long timestamp = System.currentTimeMillis();
-        DataItem dataItem = new DataItem(value, timestamp);
+        DataItem dataItem = new DataItem(value, new Version((short) clientId, timestamp));
         return masterRouter.getMasterByKey(key).put(sessionId, key, dataItem);
     }
 

@@ -31,7 +31,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataItem");
 
   private static final org.apache.thrift.protocol.TField DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("data", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+  private static final org.apache.thrift.protocol.TField TRANSACTION_KEYS_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionKeys", org.apache.thrift.protocol.TType.LIST, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -40,12 +41,14 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   }
 
   public ByteBuffer data; // required
-  public long timestamp; // required
+  public edu.berkeley.thebes.common.thrift.Version version; // required
+  public List<String> transactionKeys; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     DATA((short)1, "data"),
-    TIMESTAMP((short)2, "timestamp");
+    VERSION((short)2, "version"),
+    TRANSACTION_KEYS((short)4, "transactionKeys");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -62,8 +65,10 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       switch(fieldId) {
         case 1: // DATA
           return DATA;
-        case 2: // TIMESTAMP
-          return TIMESTAMP;
+        case 2: // VERSION
+          return VERSION;
+        case 4: // TRANSACTION_KEYS
+          return TRANSACTION_KEYS;
         default:
           return null;
       }
@@ -104,15 +109,17 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   }
 
   // isset id assignments
-  private static final int __TIMESTAMP_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.TRANSACTION_KEYS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.DATA, new org.apache.thrift.meta_data.FieldMetaData("data", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.Version.class)));
+    tmpMap.put(_Fields.TRANSACTION_KEYS, new org.apache.thrift.meta_data.FieldMetaData("transactionKeys", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataItem.class, metaDataMap);
   }
@@ -122,25 +129,31 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   public DataItem(
     ByteBuffer data,
-    long timestamp)
+    edu.berkeley.thebes.common.thrift.Version version)
   {
     this();
     this.data = data;
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+    this.version = version;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public DataItem(DataItem other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetData()) {
       this.data = org.apache.thrift.TBaseHelper.copyBinary(other.data);
 ;
     }
-    this.timestamp = other.timestamp;
+    if (other.isSetVersion()) {
+      this.version = new edu.berkeley.thebes.common.thrift.Version(other.version);
+    }
+    if (other.isSetTransactionKeys()) {
+      List<String> __this__transactionKeys = new ArrayList<String>();
+      for (String other_element : other.transactionKeys) {
+        __this__transactionKeys.add(other_element);
+      }
+      this.transactionKeys = __this__transactionKeys;
+    }
   }
 
   public DataItem deepCopy() {
@@ -150,8 +163,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   @Override
   public void clear() {
     this.data = null;
-    setTimestampIsSet(false);
-    this.timestamp = 0;
+    this.version = null;
+    this.transactionKeys = null;
   }
 
   public byte[] getData() {
@@ -188,27 +201,67 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  public long getTimestamp() {
-    return this.timestamp;
+  public edu.berkeley.thebes.common.thrift.Version getVersion() {
+    return this.version;
   }
 
-  public DataItem setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+  public DataItem setVersion(edu.berkeley.thebes.common.thrift.Version version) {
+    this.version = version;
     return this;
   }
 
-  public void unsetTimestamp() {
-    __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
+  public void unsetVersion() {
+    this.version = null;
   }
 
-  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
-  public boolean isSetTimestamp() {
-    return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersion() {
+    return this.version != null;
   }
 
-  public void setTimestampIsSet(boolean value) {
-    __isset_bit_vector.set(__TIMESTAMP_ISSET_ID, value);
+  public void setVersionIsSet(boolean value) {
+    if (!value) {
+      this.version = null;
+    }
+  }
+
+  public int getTransactionKeysSize() {
+    return (this.transactionKeys == null) ? 0 : this.transactionKeys.size();
+  }
+
+  public java.util.Iterator<String> getTransactionKeysIterator() {
+    return (this.transactionKeys == null) ? null : this.transactionKeys.iterator();
+  }
+
+  public void addToTransactionKeys(String elem) {
+    if (this.transactionKeys == null) {
+      this.transactionKeys = new ArrayList<String>();
+    }
+    this.transactionKeys.add(elem);
+  }
+
+  public List<String> getTransactionKeys() {
+    return this.transactionKeys;
+  }
+
+  public DataItem setTransactionKeys(List<String> transactionKeys) {
+    this.transactionKeys = transactionKeys;
+    return this;
+  }
+
+  public void unsetTransactionKeys() {
+    this.transactionKeys = null;
+  }
+
+  /** Returns true if field transactionKeys is set (has been assigned a value) and false otherwise */
+  public boolean isSetTransactionKeys() {
+    return this.transactionKeys != null;
+  }
+
+  public void setTransactionKeysIsSet(boolean value) {
+    if (!value) {
+      this.transactionKeys = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -221,11 +274,19 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       }
       break;
 
-    case TIMESTAMP:
+    case VERSION:
       if (value == null) {
-        unsetTimestamp();
+        unsetVersion();
       } else {
-        setTimestamp((Long)value);
+        setVersion((edu.berkeley.thebes.common.thrift.Version)value);
+      }
+      break;
+
+    case TRANSACTION_KEYS:
+      if (value == null) {
+        unsetTransactionKeys();
+      } else {
+        setTransactionKeys((List<String>)value);
       }
       break;
 
@@ -237,8 +298,11 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     case DATA:
       return getData();
 
-    case TIMESTAMP:
-      return Long.valueOf(getTimestamp());
+    case VERSION:
+      return getVersion();
+
+    case TRANSACTION_KEYS:
+      return getTransactionKeys();
 
     }
     throw new IllegalStateException();
@@ -253,8 +317,10 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     switch (field) {
     case DATA:
       return isSetData();
-    case TIMESTAMP:
-      return isSetTimestamp();
+    case VERSION:
+      return isSetVersion();
+    case TRANSACTION_KEYS:
+      return isSetTransactionKeys();
     }
     throw new IllegalStateException();
   }
@@ -281,12 +347,21 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
         return false;
     }
 
-    boolean this_present_timestamp = true;
-    boolean that_present_timestamp = true;
-    if (this_present_timestamp || that_present_timestamp) {
-      if (!(this_present_timestamp && that_present_timestamp))
+    boolean this_present_version = true && this.isSetVersion();
+    boolean that_present_version = true && that.isSetVersion();
+    if (this_present_version || that_present_version) {
+      if (!(this_present_version && that_present_version))
         return false;
-      if (this.timestamp != that.timestamp)
+      if (!this.version.equals(that.version))
+        return false;
+    }
+
+    boolean this_present_transactionKeys = true && this.isSetTransactionKeys();
+    boolean that_present_transactionKeys = true && that.isSetTransactionKeys();
+    if (this_present_transactionKeys || that_present_transactionKeys) {
+      if (!(this_present_transactionKeys && that_present_transactionKeys))
+        return false;
+      if (!this.transactionKeys.equals(that.transactionKeys))
         return false;
     }
 
@@ -316,12 +391,22 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetTransactionKeys()).compareTo(typedOther.isSetTransactionKeys());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTransactionKeys()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionKeys, typedOther.transactionKeys);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -354,9 +439,23 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("timestamp:");
-    sb.append(this.timestamp);
+    sb.append("version:");
+    if (this.version == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.version);
+    }
     first = false;
+    if (isSetTransactionKeys()) {
+      if (!first) sb.append(", ");
+      sb.append("transactionKeys:");
+      if (this.transactionKeys == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.transactionKeys);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -375,8 +474,6 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -409,10 +506,29 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // TIMESTAMP
-            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.timestamp = iprot.readI64();
-              struct.setTimestampIsSet(true);
+          case 2: // VERSION
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.version = new edu.berkeley.thebes.common.thrift.Version();
+              struct.version.read(iprot);
+              struct.setVersionIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // TRANSACTION_KEYS
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                struct.transactionKeys = new ArrayList<String>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                {
+                  String _elem2; // required
+                  _elem2 = iprot.readString();
+                  struct.transactionKeys.add(_elem2);
+                }
+                iprot.readListEnd();
+              }
+              struct.setTransactionKeysIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -437,9 +553,25 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
         oprot.writeBinary(struct.data);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-      oprot.writeI64(struct.timestamp);
-      oprot.writeFieldEnd();
+      if (struct.version != null) {
+        oprot.writeFieldBegin(VERSION_FIELD_DESC);
+        struct.version.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (struct.transactionKeys != null) {
+        if (struct.isSetTransactionKeys()) {
+          oprot.writeFieldBegin(TRANSACTION_KEYS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.transactionKeys.size()));
+            for (String _iter3 : struct.transactionKeys)
+            {
+              oprot.writeString(_iter3);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -461,29 +593,55 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       if (struct.isSetData()) {
         optionals.set(0);
       }
-      if (struct.isSetTimestamp()) {
+      if (struct.isSetVersion()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetTransactionKeys()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetData()) {
         oprot.writeBinary(struct.data);
       }
-      if (struct.isSetTimestamp()) {
-        oprot.writeI64(struct.timestamp);
+      if (struct.isSetVersion()) {
+        struct.version.write(oprot);
+      }
+      if (struct.isSetTransactionKeys()) {
+        {
+          oprot.writeI32(struct.transactionKeys.size());
+          for (String _iter4 : struct.transactionKeys)
+          {
+            oprot.writeString(_iter4);
+          }
+        }
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.data = iprot.readBinary();
         struct.setDataIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.timestamp = iprot.readI64();
-        struct.setTimestampIsSet(true);
+        struct.version = new edu.berkeley.thebes.common.thrift.Version();
+        struct.version.read(iprot);
+        struct.setVersionIsSet(true);
+      }
+      if (incoming.get(2)) {
+        {
+          org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.transactionKeys = new ArrayList<String>(_list5.size);
+          for (int _i6 = 0; _i6 < _list5.size; ++_i6)
+          {
+            String _elem7; // required
+            _elem7 = iprot.readString();
+            struct.transactionKeys.add(_elem7);
+          }
+        }
+        struct.setTransactionKeysIsSet(true);
       }
     }
   }

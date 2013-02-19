@@ -1,7 +1,6 @@
 package edu.berkeley.thebes.common.persistence.memory;
 
 import java.nio.ByteBuffer;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -13,13 +12,16 @@ import com.yammer.metrics.core.Meter;
 
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.common.thrift.ThriftUtil.VersionCompare;
+import edu.berkeley.thebes.common.thrift.Version;
 
 public class MemoryPersistenceEngine implements IPersistenceEngine {
     private final Meter putsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "put-requests", "requests", TimeUnit.SECONDS);
     private final Meter getsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "get-requests", "requests", TimeUnit.SECONDS);
 
     private Map<String, DataItem> map;
-    private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), 0);
+    private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), new Version((short) -1, -1));
 
     public void open() {
         map = Maps.newConcurrentMap();
@@ -41,21 +43,14 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
             // If we already have this key, ensure new item has more recent timestamp
             if (map.containsKey(key)) {
                 DataItem curItem = map.get(key);
-                if (curItem.getTimestamp() > value.getTimestamp()) {
+                if (ThriftUtil.compareVersions(curItem.getVersion(), value.getVersion()) != VersionCompare.LATER)
                     return false;
-                } else if (curItem.getTimestamp() == value.getTimestamp()) {
-                    // If the timestamps are equal, just order by the data bytes.
-                    Comparator<byte[]> byteComparator = UnsignedBytes.lexicographicalComparator();
-                    
-                    if (byteComparator.compare(curItem.getData(), value.getData()) >= 0) {
-                        return false;
-                    }
-                }
             }
+
+            // New key or newer timestamp.
+            map.put(key, value);
         }
-        
-        // New key or newer timestamp.
-        map.put(key, value);
+
         return true;
     }
 

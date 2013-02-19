@@ -3,11 +3,15 @@ package edu.berkeley.thebes.hat.client;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.common.thrift.ThriftUtil.VersionCompare;
+import edu.berkeley.thebes.common.thrift.Version;
 import edu.berkeley.thebes.hat.client.clustering.ReplicaRouter;
 
 import edu.berkeley.thebes.hat.common.thrift.DataDependency;
@@ -24,9 +28,9 @@ import com.yammer.metrics.core.TimerContext;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class ThebesHATClient implements IThebesClient {
@@ -50,6 +54,26 @@ public class ThebesHATClient implements IThebesClient {
         }
     }
 
+    private class VersionVector {
+        private Map<String, Version> versions = Maps.newHashMap();
+
+        public void updateVector(List<String> keys, Version newVersion) {
+            for(String key : keys) {
+                if(!versions.containsKey(key))
+                    versions.put(key, newVersion);
+                else if(ThriftUtil.compareVersions(newVersion, versions.get(key)) == VersionCompare.LATER)
+                    versions.put(key, newVersion);
+            }
+        }
+
+        public Version getVersion(String key) {
+            if(versions.containsKey(key))
+                return versions.get(key);
+
+            return null;
+        }
+    }
+
     private final Meter requestMetric = Metrics.newMeter(ThebesHATClient.class, "hat-requests", "requests", TimeUnit.SECONDS);
     private final Meter operationMetric = Metrics.newMeter(ThebesHATClient.class, "hat-operations", "operations", TimeUnit.SECONDS);
     private final Meter errorMetric = Metrics.newMeter(ThebesHATClient.class, "hat-errors", "errors", TimeUnit.SECONDS);
@@ -61,6 +85,8 @@ public class ThebesHATClient implements IThebesClient {
 
     private boolean transactionInProgress = false;
 
+    private final short clientID = Config.getClientID();
+
     //ANSI client-side data structures
     private IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
     private Map<String, QueuedWrite> transactionWriteBuffer;
@@ -68,24 +94,41 @@ public class ThebesHATClient implements IThebesClient {
 
     //Session guarantee data structures
     private SessionLevel sessionLevel = Config.getThebesSessionLevel();
-    private List<DataDependency> causalDependencies = null;
+    private List<DataDependency> causalDependencies;
+
+
+    //Atomicity data structures
+    private AtomicityLevel atomicityLevel = Config.getThebesAtomicityLevel();
+    private VersionVector atomicityVersionVector;
+
+    private void addCausalDependency(String key, DataItem value) {
+        /*
+         We don't want to have a dependency both in causalDependencies and in the
+         transactional atomicity. Transactional atomicity is a strongly connected component,
+         causalDependencies form a DAG.
+         */
+        if(atomicityLevel == AtomicityLevel.NO_ATOMICITY || clientID != value.getVersion().getClientID())
+            causalDependencies.add(new DataDependency(key, value.getVersion()));
+    }
 
     private void rebaseCausalDependencies(String key, DataItem value) {
         if(sessionLevel == SessionLevel.CAUSAL) {
             causalDependencies.clear();
-            causalDependencies.add(new DataDependency(key, value.getTimestamp()));
+
+            addCausalDependency(key, value);
         }
     }
 
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         router = new ReplicaRouter();
-        causalDependencies = new ArrayList<DataDependency>();
+        causalDependencies = Lists.newArrayList();
+        atomicityVersionVector = new VersionVector();
     }
 
     @Override
     public void beginTransaction() throws TException {
-        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
+        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) || atomicityLevel != AtomicityLevel.NO_ATOMICITY) {
             transactionWriteBuffer = Maps.newHashMap();
         }
         if(isolationLevel.atOrHigher(IsolationLevel.REPEATABLE_READ)) {
@@ -106,7 +149,7 @@ public class ThebesHATClient implements IThebesClient {
             try {
                 for(String key : transactionWriteBuffer.keySet()) {
                     QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
-                    doPut(key, queuedWrite.getWrite(), queuedWrite.getDependencies());
+                    doPut(key, queuedWrite.getWrite(), queuedWrite.getDependencies(), transactionWriteBuffer.keySet());
                 }
             } finally {
                 timer.stop();
@@ -124,9 +167,9 @@ public class ThebesHATClient implements IThebesClient {
         operationMetric.mark();
 
         long timestamp = System.currentTimeMillis();
-        DataItem dataItem = new DataItem(value, timestamp);
+        DataItem dataItem = new DataItem(value, new Version(clientID,  timestamp));
 
-        if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION)) {
+        if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION) || atomicityLevel != AtomicityLevel.NO_ATOMICITY) {
             if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
                 transactionReadBuffer.put(key, dataItem);
             }
@@ -157,22 +200,48 @@ public class ThebesHATClient implements IThebesClient {
 
         DataItem ret = doGet(key);
 
-        if(sessionLevel == SessionLevel.CAUSAL) {
-            causalDependencies.add(new DataDependency(key, ret.getTimestamp()));
+        if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
+            if(ret != null)
+                transactionReadBuffer.put(key, ret);
+            else
+                /*
+                  If we read a null, we should read null for future reads too!
+                 */
+                transactionReadBuffer.put(key, new DataItem(null, ThriftUtil.NullVersion));
         }
 
-        if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            transactionReadBuffer.put(key, ret);
+        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
+            addCausalDependency(key, ret);
+        }
+
+        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.isSetTransactionKeys()) {
+            atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
         return ret.data;
     }
-    
-    private boolean doPut(String key, DataItem value, List<DataDependency> dependencies) throws TException {
+
+    private boolean doPut(String key,
+                          DataItem value,
+                          List<DataDependency> causalDependencies) throws TException {
+            return doPut(key, value,  causalDependencies, new ArrayList<String>());
+    }
+
+    private boolean doPut(String key,
+                          DataItem value,
+                          List<DataDependency> causalDependencies,
+                          Set<String> transactionKeys) throws TException {
+            return doPut(key, value,  causalDependencies, new ArrayList<String>(transactionKeys));
+    }
+
+    private boolean doPut(String key,
+                          DataItem value,
+                          List<DataDependency> causalDependencies,
+                          List<String> transactionKeys) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
         try {
-            ret = router.getReplicaByKey(key).put(key, value, dependencies);
+            ret = router.getReplicaByKey(key).put(key, value, causalDependencies, transactionKeys);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -189,7 +258,7 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ret = router.getReplicaByKey(key).get(key);
+            ret = router.getReplicaByKey(key).get(key, atomicityVersionVector.getVersion(key));
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;

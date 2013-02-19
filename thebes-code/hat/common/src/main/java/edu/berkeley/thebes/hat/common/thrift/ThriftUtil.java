@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.common.thrift;
 
+import edu.berkeley.thebes.common.thrift.Version;
 import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
