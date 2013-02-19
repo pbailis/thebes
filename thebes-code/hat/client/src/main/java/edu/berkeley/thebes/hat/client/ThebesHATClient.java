@@ -218,6 +218,12 @@ public class ThebesHATClient implements IThebesClient {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
+        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY || isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
+            if(ThriftUtil.compareVersions(transactionWriteBuffer.get(key).getWrite().getVersion(), ret.getVersion())
+                    == VersionCompare.LATER)
+                return transactionWriteBuffer.get(key).getWrite().data;
+        }
+
         return ret.data;
     }
 
