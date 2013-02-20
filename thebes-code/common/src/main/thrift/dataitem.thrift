@@ -4,8 +4,8 @@ namespace java edu.berkeley.thebes.common.thrift
 
 include "version.thrift"
 
-struct DataItem {
+struct ThriftDataItem {
   1: binary data,
-  2: version.Version version,
+  2: version.ThriftVersion version,
   4: optional list<string> transactionKeys
 }

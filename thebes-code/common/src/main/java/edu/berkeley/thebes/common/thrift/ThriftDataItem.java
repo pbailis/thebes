@@ -27,8 +27,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataItem");
+public class ThriftDataItem implements org.apache.thrift.TBase<ThriftDataItem, ThriftDataItem._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftDataItem");
 
   private static final org.apache.thrift.protocol.TField DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("data", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)2);
@@ -36,12 +36,12 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new DataItemStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new DataItemTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ThriftDataItemStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ThriftDataItemTupleSchemeFactory());
   }
 
   public ByteBuffer data; // required
-  public edu.berkeley.thebes.common.thrift.Version version; // required
+  public edu.berkeley.thebes.common.thrift.ThriftVersion version; // required
   public List<String> transactionKeys; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -116,20 +116,20 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     tmpMap.put(_Fields.DATA, new org.apache.thrift.meta_data.FieldMetaData("data", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.Version.class)));
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
     tmpMap.put(_Fields.TRANSACTION_KEYS, new org.apache.thrift.meta_data.FieldMetaData("transactionKeys", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataItem.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftDataItem.class, metaDataMap);
   }
 
-  public DataItem() {
+  public ThriftDataItem() {
   }
 
-  public DataItem(
+  public ThriftDataItem(
     ByteBuffer data,
-    edu.berkeley.thebes.common.thrift.Version version)
+    edu.berkeley.thebes.common.thrift.ThriftVersion version)
   {
     this();
     this.data = data;
@@ -139,13 +139,13 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataItem(DataItem other) {
+  public ThriftDataItem(ThriftDataItem other) {
     if (other.isSetData()) {
       this.data = org.apache.thrift.TBaseHelper.copyBinary(other.data);
 ;
     }
     if (other.isSetVersion()) {
-      this.version = new edu.berkeley.thebes.common.thrift.Version(other.version);
+      this.version = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.version);
     }
     if (other.isSetTransactionKeys()) {
       List<String> __this__transactionKeys = new ArrayList<String>();
@@ -156,8 +156,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  public DataItem deepCopy() {
-    return new DataItem(this);
+  public ThriftDataItem deepCopy() {
+    return new ThriftDataItem(this);
   }
 
   @Override
@@ -176,12 +176,12 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return data;
   }
 
-  public DataItem setData(byte[] data) {
+  public ThriftDataItem setData(byte[] data) {
     setData(data == null ? (ByteBuffer)null : ByteBuffer.wrap(data));
     return this;
   }
 
-  public DataItem setData(ByteBuffer data) {
+  public ThriftDataItem setData(ByteBuffer data) {
     this.data = data;
     return this;
   }
@@ -201,11 +201,11 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  public edu.berkeley.thebes.common.thrift.Version getVersion() {
+  public edu.berkeley.thebes.common.thrift.ThriftVersion getVersion() {
     return this.version;
   }
 
-  public DataItem setVersion(edu.berkeley.thebes.common.thrift.Version version) {
+  public ThriftDataItem setVersion(edu.berkeley.thebes.common.thrift.ThriftVersion version) {
     this.version = version;
     return this;
   }
@@ -244,7 +244,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return this.transactionKeys;
   }
 
-  public DataItem setTransactionKeys(List<String> transactionKeys) {
+  public ThriftDataItem setTransactionKeys(List<String> transactionKeys) {
     this.transactionKeys = transactionKeys;
     return this;
   }
@@ -278,7 +278,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       if (value == null) {
         unsetVersion();
       } else {
-        setVersion((edu.berkeley.thebes.common.thrift.Version)value);
+        setVersion((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
       }
       break;
 
@@ -329,12 +329,12 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataItem)
-      return this.equals((DataItem)that);
+    if (that instanceof ThriftDataItem)
+      return this.equals((ThriftDataItem)that);
     return false;
   }
 
-  public boolean equals(DataItem that) {
+  public boolean equals(ThriftDataItem that) {
     if (that == null)
       return false;
 
@@ -373,13 +373,13 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return 0;
   }
 
-  public int compareTo(DataItem other) {
+  public int compareTo(ThriftDataItem other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataItem typedOther = (DataItem)other;
+    ThriftDataItem typedOther = (ThriftDataItem)other;
 
     lastComparison = Boolean.valueOf(isSetData()).compareTo(typedOther.isSetData());
     if (lastComparison != 0) {
@@ -428,7 +428,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataItem(");
+    StringBuilder sb = new StringBuilder("ThriftDataItem(");
     boolean first = true;
 
     sb.append("data:");
@@ -480,15 +480,15 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  private static class DataItemStandardSchemeFactory implements SchemeFactory {
-    public DataItemStandardScheme getScheme() {
-      return new DataItemStandardScheme();
+  private static class ThriftDataItemStandardSchemeFactory implements SchemeFactory {
+    public ThriftDataItemStandardScheme getScheme() {
+      return new ThriftDataItemStandardScheme();
     }
   }
 
-  private static class DataItemStandardScheme extends StandardScheme<DataItem> {
+  private static class ThriftDataItemStandardScheme extends StandardScheme<ThriftDataItem> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ThriftDataItem struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -508,7 +508,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
             break;
           case 2: // VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.version = new edu.berkeley.thebes.common.thrift.Version();
+              struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
               struct.version.read(iprot);
               struct.setVersionIsSet(true);
             } else { 
@@ -544,7 +544,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ThriftDataItem struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -578,16 +578,16 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   }
 
-  private static class DataItemTupleSchemeFactory implements SchemeFactory {
-    public DataItemTupleScheme getScheme() {
-      return new DataItemTupleScheme();
+  private static class ThriftDataItemTupleSchemeFactory implements SchemeFactory {
+    public ThriftDataItemTupleScheme getScheme() {
+      return new ThriftDataItemTupleScheme();
     }
   }
 
-  private static class DataItemTupleScheme extends TupleScheme<DataItem> {
+  private static class ThriftDataItemTupleScheme extends TupleScheme<ThriftDataItem> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ThriftDataItem struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetData()) {
@@ -618,7 +618,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ThriftDataItem struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
@@ -626,7 +626,7 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
         struct.setDataIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.version = new edu.berkeley.thebes.common.thrift.Version();
+        struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
         struct.version.read(iprot);
         struct.setVersionIsSet(true);
       }

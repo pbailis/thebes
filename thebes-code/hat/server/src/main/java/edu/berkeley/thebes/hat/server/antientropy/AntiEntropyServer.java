@@ -1,21 +1,20 @@
 package edu.berkeley.thebes.hat.server.antientropy;
 
-import edu.berkeley.thebes.common.thrift.ServerAddress;
-import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
+import java.util.List;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
+import edu.berkeley.thebes.hat.common.data.DataDependency;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-
-import java.util.ArrayList;
-import java.util.List;
+import edu.berkeley.thebes.hat.common.thrift.ThriftDataDependency;
+import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
 
 public class AntiEntropyServer implements Runnable {
@@ -39,8 +38,8 @@ public class AntiEntropyServer implements Runnable {
     //todo: change interface
     //todo: race condition between serving and when we've connected to neighbors
     public void sendToNeighbors(String key,
-                                DataItem value,
-                                List<DataDependency> happensAfter,
+                                ThriftDataItem value,
+                                List<ThriftDataDependency> happensAfter,
                                 List<String> transactionKeys) throws TException {
         for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
             logger.debug("sending to neighbor");

@@ -27,16 +27,16 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Version implements org.apache.thrift.TBase<Version, Version._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Version");
+public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, ThriftVersion._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftVersion");
 
   private static final org.apache.thrift.protocol.TField CLIENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("clientID", org.apache.thrift.protocol.TType.I16, (short)1);
   private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new VersionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new VersionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ThriftVersionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ThriftVersionTupleSchemeFactory());
   }
 
   public short clientID; // required
@@ -115,13 +115,13 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Version.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftVersion.class, metaDataMap);
   }
 
-  public Version() {
+  public ThriftVersion() {
   }
 
-  public Version(
+  public ThriftVersion(
     short clientID,
     long timestamp)
   {
@@ -135,15 +135,15 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Version(Version other) {
+  public ThriftVersion(ThriftVersion other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.clientID = other.clientID;
     this.timestamp = other.timestamp;
   }
 
-  public Version deepCopy() {
-    return new Version(this);
+  public ThriftVersion deepCopy() {
+    return new ThriftVersion(this);
   }
 
   @Override
@@ -158,7 +158,7 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     return this.clientID;
   }
 
-  public Version setClientID(short clientID) {
+  public ThriftVersion setClientID(short clientID) {
     this.clientID = clientID;
     setClientIDIsSet(true);
     return this;
@@ -181,7 +181,7 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     return this.timestamp;
   }
 
-  public Version setTimestamp(long timestamp) {
+  public ThriftVersion setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     setTimestampIsSet(true);
     return this;
@@ -252,12 +252,12 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Version)
-      return this.equals((Version)that);
+    if (that instanceof ThriftVersion)
+      return this.equals((ThriftVersion)that);
     return false;
   }
 
-  public boolean equals(Version that) {
+  public boolean equals(ThriftVersion that) {
     if (that == null)
       return false;
 
@@ -287,13 +287,13 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     return 0;
   }
 
-  public int compareTo(Version other) {
+  public int compareTo(ThriftVersion other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Version typedOther = (Version)other;
+    ThriftVersion typedOther = (ThriftVersion)other;
 
     lastComparison = Boolean.valueOf(isSetClientID()).compareTo(typedOther.isSetClientID());
     if (lastComparison != 0) {
@@ -332,7 +332,7 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Version(");
+    StringBuilder sb = new StringBuilder("ThriftVersion(");
     boolean first = true;
 
     sb.append("clientID:");
@@ -368,15 +368,15 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     }
   }
 
-  private static class VersionStandardSchemeFactory implements SchemeFactory {
-    public VersionStandardScheme getScheme() {
-      return new VersionStandardScheme();
+  private static class ThriftVersionStandardSchemeFactory implements SchemeFactory {
+    public ThriftVersionStandardScheme getScheme() {
+      return new ThriftVersionStandardScheme();
     }
   }
 
-  private static class VersionStandardScheme extends StandardScheme<Version> {
+  private static class ThriftVersionStandardScheme extends StandardScheme<ThriftVersion> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, Version struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ThriftVersion struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -413,7 +413,7 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, Version struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ThriftVersion struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -429,16 +429,16 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
 
   }
 
-  private static class VersionTupleSchemeFactory implements SchemeFactory {
-    public VersionTupleScheme getScheme() {
-      return new VersionTupleScheme();
+  private static class ThriftVersionTupleSchemeFactory implements SchemeFactory {
+    public ThriftVersionTupleScheme getScheme() {
+      return new ThriftVersionTupleScheme();
     }
   }
 
-  private static class VersionTupleScheme extends TupleScheme<Version> {
+  private static class ThriftVersionTupleScheme extends TupleScheme<ThriftVersion> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, Version struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetClientID()) {
@@ -457,7 +457,7 @@ public class Version implements org.apache.thrift.TBase<Version, Version._Fields
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, Version struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {

@@ -27,20 +27,20 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataDependency implements org.apache.thrift.TBase<DataDependency, DataDependency._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataDependency");
+public class ThriftDataDependency implements org.apache.thrift.TBase<ThriftDataDependency, ThriftDataDependency._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftDataDependency");
 
   private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new DataDependencyStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new DataDependencyTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ThriftDataDependencyStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ThriftDataDependencyTupleSchemeFactory());
   }
 
   public String key; // required
-  public edu.berkeley.thebes.common.thrift.Version version; // required
+  public edu.berkeley.thebes.common.thrift.ThriftVersion version; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -110,17 +110,17 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.Version.class)));
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataDependency.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftDataDependency.class, metaDataMap);
   }
 
-  public DataDependency() {
+  public ThriftDataDependency() {
   }
 
-  public DataDependency(
+  public ThriftDataDependency(
     String key,
-    edu.berkeley.thebes.common.thrift.Version version)
+    edu.berkeley.thebes.common.thrift.ThriftVersion version)
   {
     this();
     this.key = key;
@@ -130,17 +130,17 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataDependency(DataDependency other) {
+  public ThriftDataDependency(ThriftDataDependency other) {
     if (other.isSetKey()) {
       this.key = other.key;
     }
     if (other.isSetVersion()) {
-      this.version = new edu.berkeley.thebes.common.thrift.Version(other.version);
+      this.version = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.version);
     }
   }
 
-  public DataDependency deepCopy() {
-    return new DataDependency(this);
+  public ThriftDataDependency deepCopy() {
+    return new ThriftDataDependency(this);
   }
 
   @Override
@@ -153,7 +153,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     return this.key;
   }
 
-  public DataDependency setKey(String key) {
+  public ThriftDataDependency setKey(String key) {
     this.key = key;
     return this;
   }
@@ -173,11 +173,11 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     }
   }
 
-  public edu.berkeley.thebes.common.thrift.Version getVersion() {
+  public edu.berkeley.thebes.common.thrift.ThriftVersion getVersion() {
     return this.version;
   }
 
-  public DataDependency setVersion(edu.berkeley.thebes.common.thrift.Version version) {
+  public ThriftDataDependency setVersion(edu.berkeley.thebes.common.thrift.ThriftVersion version) {
     this.version = version;
     return this;
   }
@@ -211,7 +211,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
       if (value == null) {
         unsetVersion();
       } else {
-        setVersion((edu.berkeley.thebes.common.thrift.Version)value);
+        setVersion((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
       }
       break;
 
@@ -249,12 +249,12 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataDependency)
-      return this.equals((DataDependency)that);
+    if (that instanceof ThriftDataDependency)
+      return this.equals((ThriftDataDependency)that);
     return false;
   }
 
-  public boolean equals(DataDependency that) {
+  public boolean equals(ThriftDataDependency that) {
     if (that == null)
       return false;
 
@@ -284,13 +284,13 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     return 0;
   }
 
-  public int compareTo(DataDependency other) {
+  public int compareTo(ThriftDataDependency other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataDependency typedOther = (DataDependency)other;
+    ThriftDataDependency typedOther = (ThriftDataDependency)other;
 
     lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
@@ -329,7 +329,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataDependency(");
+    StringBuilder sb = new StringBuilder("ThriftDataDependency(");
     boolean first = true;
 
     sb.append("key:");
@@ -371,15 +371,15 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     }
   }
 
-  private static class DataDependencyStandardSchemeFactory implements SchemeFactory {
-    public DataDependencyStandardScheme getScheme() {
-      return new DataDependencyStandardScheme();
+  private static class ThriftDataDependencyStandardSchemeFactory implements SchemeFactory {
+    public ThriftDataDependencyStandardScheme getScheme() {
+      return new ThriftDataDependencyStandardScheme();
     }
   }
 
-  private static class DataDependencyStandardScheme extends StandardScheme<DataDependency> {
+  private static class ThriftDataDependencyStandardScheme extends StandardScheme<ThriftDataDependency> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, DataDependency struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -399,7 +399,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
             break;
           case 2: // VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.version = new edu.berkeley.thebes.common.thrift.Version();
+              struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
               struct.version.read(iprot);
               struct.setVersionIsSet(true);
             } else { 
@@ -417,7 +417,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, DataDependency struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -437,16 +437,16 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
 
   }
 
-  private static class DataDependencyTupleSchemeFactory implements SchemeFactory {
-    public DataDependencyTupleScheme getScheme() {
-      return new DataDependencyTupleScheme();
+  private static class ThriftDataDependencyTupleSchemeFactory implements SchemeFactory {
+    public ThriftDataDependencyTupleScheme getScheme() {
+      return new ThriftDataDependencyTupleScheme();
     }
   }
 
-  private static class DataDependencyTupleScheme extends TupleScheme<DataDependency> {
+  private static class ThriftDataDependencyTupleScheme extends TupleScheme<ThriftDataDependency> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetKey()) {
@@ -465,7 +465,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
@@ -473,7 +473,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
         struct.setKeyIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.version = new edu.berkeley.thebes.common.thrift.Version();
+        struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
         struct.version.read(iprot);
         struct.setVersionIsSet(true);
       }

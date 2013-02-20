@@ -5,27 +5,27 @@ include "version.thrift"
 
 namespace java edu.berkeley.thebes.hat.common.thrift
 
-struct DataDependency {
+struct ThriftDataDependency {
   1: string key,
-  2: version.Version version
+  2: version.ThriftVersion version
 }
 
 service ReplicaService {
-  dataitem.DataItem get(1: string key
-                        2: version.Version requiredVersion);
+  dataitem.ThriftDataItem get(1: string key
+                        2: version.ThriftVersion requiredVersion);
 
   bool put(1: string key,
-           2: dataitem.DataItem value,
-           3: list<DataDependency> happensAfter,
+           2: dataitem.ThriftDataItem value,
+           3: list<ThriftDataDependency> happensAfter,
            4: list<string> transactionKeys);
 }
 
 service AntiEntropyService {
   oneway void put(1: string key,
-                  2: dataitem.DataItem value,
-                  3: list<DataDependency> happensAfter,
+                  2: dataitem.ThriftDataItem value,
+                  3: list<ThriftDataDependency> happensAfter,
                   4: list<string> transactionKeys);
 
-  void waitForCausalDependency(1: DataDependency dependency);
-  void waitForTransactionalDependency(1: DataDependency dependency);
+  void waitForCausalDependency(1: ThriftDataDependency dependency);
+  void waitForTransactionalDependency(1: ThriftDataDependency dependency);
 }

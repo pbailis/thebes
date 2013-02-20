@@ -31,17 +31,17 @@ public class ReplicaService {
 
   public interface Iface {
 
-    public edu.berkeley.thebes.common.thrift.DataItem get(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion) throws org.apache.thrift.TException;
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) throws org.apache.thrift.TException;
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException;
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void get(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
+    public void get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -65,13 +65,13 @@ public class ReplicaService {
       super(iprot, oprot);
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem get(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion) throws org.apache.thrift.TException
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) throws org.apache.thrift.TException
     {
       send_get(key, requiredVersion);
       return recv_get();
     }
 
-    public void send_get(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion) throws org.apache.thrift.TException
+    public void send_get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) throws org.apache.thrift.TException
     {
       get_args args = new get_args();
       args.setKey(key);
@@ -79,7 +79,7 @@ public class ReplicaService {
       sendBase("get", args);
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem recv_get() throws org.apache.thrift.TException
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem recv_get() throws org.apache.thrift.TException
     {
       get_result result = new get_result();
       receiveBase(result, "get");
@@ -89,13 +89,13 @@ public class ReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
     {
       send_put(key, value, happensAfter, transactionKeys);
       return recv_put();
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
+    public void send_put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
@@ -133,7 +133,7 @@ public class ReplicaService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void get(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler) throws org.apache.thrift.TException {
+    public void get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       get_call method_call = new get_call(key, requiredVersion, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -142,8 +142,8 @@ public class ReplicaService {
 
     public static class get_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
-      private edu.berkeley.thebes.common.thrift.Version requiredVersion;
-      public get_call(String key, edu.berkeley.thebes.common.thrift.Version requiredVersion, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion;
+      public get_call(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion, org.apache.thrift.async.AsyncMethodCallback<get_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.requiredVersion = requiredVersion;
@@ -158,7 +158,7 @@ public class ReplicaService {
         prot.writeMessageEnd();
       }
 
-      public edu.berkeley.thebes.common.thrift.DataItem getResult() throws org.apache.thrift.TException {
+      public edu.berkeley.thebes.common.thrift.ThriftDataItem getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -168,7 +168,7 @@ public class ReplicaService {
       }
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(key, value, happensAfter, transactionKeys, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -177,10 +177,10 @@ public class ReplicaService {
 
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
-      private edu.berkeley.thebes.common.thrift.DataItem value;
-      private List<DataDependency> happensAfter;
+      private edu.berkeley.thebes.common.thrift.ThriftDataItem value;
+      private List<ThriftDataDependency> happensAfter;
       private List<String> transactionKeys;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public put_call(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.value = value;
@@ -275,7 +275,7 @@ public class ReplicaService {
     }
 
     public String key; // required
-    public edu.berkeley.thebes.common.thrift.Version requiredVersion; // required
+    public edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -345,7 +345,7 @@ public class ReplicaService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.REQUIRED_VERSION, new org.apache.thrift.meta_data.FieldMetaData("requiredVersion", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.Version.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_args.class, metaDataMap);
     }
@@ -355,7 +355,7 @@ public class ReplicaService {
 
     public get_args(
       String key,
-      edu.berkeley.thebes.common.thrift.Version requiredVersion)
+      edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion)
     {
       this();
       this.key = key;
@@ -370,7 +370,7 @@ public class ReplicaService {
         this.key = other.key;
       }
       if (other.isSetRequiredVersion()) {
-        this.requiredVersion = new edu.berkeley.thebes.common.thrift.Version(other.requiredVersion);
+        this.requiredVersion = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.requiredVersion);
       }
     }
 
@@ -408,11 +408,11 @@ public class ReplicaService {
       }
     }
 
-    public edu.berkeley.thebes.common.thrift.Version getRequiredVersion() {
+    public edu.berkeley.thebes.common.thrift.ThriftVersion getRequiredVersion() {
       return this.requiredVersion;
     }
 
-    public get_args setRequiredVersion(edu.berkeley.thebes.common.thrift.Version requiredVersion) {
+    public get_args setRequiredVersion(edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) {
       this.requiredVersion = requiredVersion;
       return this;
     }
@@ -446,7 +446,7 @@ public class ReplicaService {
         if (value == null) {
           unsetRequiredVersion();
         } else {
-          setRequiredVersion((edu.berkeley.thebes.common.thrift.Version)value);
+          setRequiredVersion((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
         }
         break;
 
@@ -634,7 +634,7 @@ public class ReplicaService {
               break;
             case 2: // REQUIRED_VERSION
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.requiredVersion = new edu.berkeley.thebes.common.thrift.Version();
+                struct.requiredVersion = new edu.berkeley.thebes.common.thrift.ThriftVersion();
                 struct.requiredVersion.read(iprot);
                 struct.setRequiredVersionIsSet(true);
               } else { 
@@ -708,7 +708,7 @@ public class ReplicaService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.requiredVersion = new edu.berkeley.thebes.common.thrift.Version();
+          struct.requiredVersion = new edu.berkeley.thebes.common.thrift.ThriftVersion();
           struct.requiredVersion.read(iprot);
           struct.setRequiredVersionIsSet(true);
         }
@@ -728,7 +728,7 @@ public class ReplicaService {
       schemes.put(TupleScheme.class, new get_resultTupleSchemeFactory());
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem success; // required
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -793,7 +793,7 @@ public class ReplicaService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_result.class, metaDataMap);
     }
@@ -802,7 +802,7 @@ public class ReplicaService {
     }
 
     public get_result(
-      edu.berkeley.thebes.common.thrift.DataItem success)
+      edu.berkeley.thebes.common.thrift.ThriftDataItem success)
     {
       this();
       this.success = success;
@@ -813,7 +813,7 @@ public class ReplicaService {
      */
     public get_result(get_result other) {
       if (other.isSetSuccess()) {
-        this.success = new edu.berkeley.thebes.common.thrift.DataItem(other.success);
+        this.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.success);
       }
     }
 
@@ -826,11 +826,11 @@ public class ReplicaService {
       this.success = null;
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getSuccess() {
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem getSuccess() {
       return this.success;
     }
 
-    public get_result setSuccess(edu.berkeley.thebes.common.thrift.DataItem success) {
+    public get_result setSuccess(edu.berkeley.thebes.common.thrift.ThriftDataItem success) {
       this.success = success;
       return this;
     }
@@ -856,7 +856,7 @@ public class ReplicaService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setSuccess((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
         }
         break;
 
@@ -1004,7 +1004,7 @@ public class ReplicaService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new edu.berkeley.thebes.common.thrift.DataItem();
+                struct.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -1063,7 +1063,7 @@ public class ReplicaService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = new edu.berkeley.thebes.common.thrift.DataItem();
+          struct.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
@@ -1087,8 +1087,8 @@ public class ReplicaService {
     }
 
     public String key; // required
-    public edu.berkeley.thebes.common.thrift.DataItem value; // required
-    public List<DataDependency> happensAfter; // required
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem value; // required
+    public List<ThriftDataDependency> happensAfter; // required
     public List<String> transactionKeys; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -1165,10 +1165,10 @@ public class ReplicaService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
       tmpMap.put(_Fields.HAPPENS_AFTER, new org.apache.thrift.meta_data.FieldMetaData("happensAfter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class))));
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ThriftDataDependency.class))));
       tmpMap.put(_Fields.TRANSACTION_KEYS, new org.apache.thrift.meta_data.FieldMetaData("transactionKeys", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
               new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
@@ -1181,8 +1181,8 @@ public class ReplicaService {
 
     public put_args(
       String key,
-      edu.berkeley.thebes.common.thrift.DataItem value,
-      List<DataDependency> happensAfter,
+      edu.berkeley.thebes.common.thrift.ThriftDataItem value,
+      List<ThriftDataDependency> happensAfter,
       List<String> transactionKeys)
     {
       this();
@@ -1200,12 +1200,12 @@ public class ReplicaService {
         this.key = other.key;
       }
       if (other.isSetValue()) {
-        this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
+        this.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.value);
       }
       if (other.isSetHappensAfter()) {
-        List<DataDependency> __this__happensAfter = new ArrayList<DataDependency>();
-        for (DataDependency other_element : other.happensAfter) {
-          __this__happensAfter.add(new DataDependency(other_element));
+        List<ThriftDataDependency> __this__happensAfter = new ArrayList<ThriftDataDependency>();
+        for (ThriftDataDependency other_element : other.happensAfter) {
+          __this__happensAfter.add(new ThriftDataDependency(other_element));
         }
         this.happensAfter = __this__happensAfter;
       }
@@ -1254,11 +1254,11 @@ public class ReplicaService {
       }
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getValue() {
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem getValue() {
       return this.value;
     }
 
-    public put_args setValue(edu.berkeley.thebes.common.thrift.DataItem value) {
+    public put_args setValue(edu.berkeley.thebes.common.thrift.ThriftDataItem value) {
       this.value = value;
       return this;
     }
@@ -1282,22 +1282,22 @@ public class ReplicaService {
       return (this.happensAfter == null) ? 0 : this.happensAfter.size();
     }
 
-    public java.util.Iterator<DataDependency> getHappensAfterIterator() {
+    public java.util.Iterator<ThriftDataDependency> getHappensAfterIterator() {
       return (this.happensAfter == null) ? null : this.happensAfter.iterator();
     }
 
-    public void addToHappensAfter(DataDependency elem) {
+    public void addToHappensAfter(ThriftDataDependency elem) {
       if (this.happensAfter == null) {
-        this.happensAfter = new ArrayList<DataDependency>();
+        this.happensAfter = new ArrayList<ThriftDataDependency>();
       }
       this.happensAfter.add(elem);
     }
 
-    public List<DataDependency> getHappensAfter() {
+    public List<ThriftDataDependency> getHappensAfter() {
       return this.happensAfter;
     }
 
-    public put_args setHappensAfter(List<DataDependency> happensAfter) {
+    public put_args setHappensAfter(List<ThriftDataDependency> happensAfter) {
       this.happensAfter = happensAfter;
       return this;
     }
@@ -1370,7 +1370,7 @@ public class ReplicaService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setValue((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
         }
         break;
 
@@ -1378,7 +1378,7 @@ public class ReplicaService {
         if (value == null) {
           unsetHappensAfter();
         } else {
-          setHappensAfter((List<DataDependency>)value);
+          setHappensAfter((List<ThriftDataDependency>)value);
         }
         break;
 
@@ -1638,7 +1638,7 @@ public class ReplicaService {
               break;
             case 2: // VALUE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+                struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
                 struct.value.read(iprot);
                 struct.setValueIsSet(true);
               } else { 
@@ -1649,11 +1649,11 @@ public class ReplicaService {
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
                   org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.happensAfter = new ArrayList<DataDependency>(_list0.size);
+                  struct.happensAfter = new ArrayList<ThriftDataDependency>(_list0.size);
                   for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                   {
-                    DataDependency _elem2; // required
-                    _elem2 = new DataDependency();
+                    ThriftDataDependency _elem2; // required
+                    _elem2 = new ThriftDataDependency();
                     _elem2.read(iprot);
                     struct.happensAfter.add(_elem2);
                   }
@@ -1711,7 +1711,7 @@ public class ReplicaService {
           oprot.writeFieldBegin(HAPPENS_AFTER_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.happensAfter.size()));
-            for (DataDependency _iter6 : struct.happensAfter)
+            for (ThriftDataDependency _iter6 : struct.happensAfter)
             {
               _iter6.write(oprot);
             }
@@ -1771,7 +1771,7 @@ public class ReplicaService {
         if (struct.isSetHappensAfter()) {
           {
             oprot.writeI32(struct.happensAfter.size());
-            for (DataDependency _iter8 : struct.happensAfter)
+            for (ThriftDataDependency _iter8 : struct.happensAfter)
             {
               _iter8.write(oprot);
             }
@@ -1797,18 +1797,18 @@ public class ReplicaService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+          struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.value.read(iprot);
           struct.setValueIsSet(true);
         }
         if (incoming.get(2)) {
           {
             org.apache.thrift.protocol.TList _list10 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.happensAfter = new ArrayList<DataDependency>(_list10.size);
+            struct.happensAfter = new ArrayList<ThriftDataDependency>(_list10.size);
             for (int _i11 = 0; _i11 < _list10.size; ++_i11)
             {
-              DataDependency _elem12; // required
-              _elem12 = new DataDependency();
+              ThriftDataDependency _elem12; // required
+              _elem12 = new ThriftDataDependency();
               _elem12.read(iprot);
               struct.happensAfter.add(_elem12);
             }
