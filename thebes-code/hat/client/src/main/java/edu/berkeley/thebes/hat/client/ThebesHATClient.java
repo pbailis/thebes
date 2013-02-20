@@ -251,18 +251,19 @@ public class ThebesHATClient implements IThebesClient {
                 transactionReadBuffer.put(key, new DataItem(null, ThriftUtil.NullVersion));
         }
 
-        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
-            addCausalDependency(key, ret);
+        // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
+        if(transactionWriteBuffer.containsKey(key)) {
+            if(ThriftUtil.compareVersions(transactionWriteBuffer.get(key).getWrite().getVersion(), ret.getVersion())
+                    == VersionCompare.LATER)
+                return transactionWriteBuffer.get(key).getWrite().data;
         }
 
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.isSetTransactionKeys()) {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
-        if(transactionWriteBuffer.containsKey(key)) {
-            if(ThriftUtil.compareVersions(transactionWriteBuffer.get(key).getWrite().getVersion(), ret.getVersion())
-                    == VersionCompare.LATER)
-                return transactionWriteBuffer.get(key).getWrite().data;
+        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
+            addCausalDependency(key, ret);
         }
 
         return ret.data;
