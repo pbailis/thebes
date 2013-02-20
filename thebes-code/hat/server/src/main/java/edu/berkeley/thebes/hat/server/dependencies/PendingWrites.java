@@ -1,14 +1,13 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
-import com.google.common.collect.Maps;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.Version;
-import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
+
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
 
 public class PendingWrites {
     /*

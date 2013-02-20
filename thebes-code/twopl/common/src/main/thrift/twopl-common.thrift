@@ -8,12 +8,12 @@ service TwoPLMasterReplicaService {
   void write_lock(1: i64 sessionId, 2: string key);
   void read_lock(1: i64 sessionId, 2: string key);
   void unlock(1: i64 sessionId, 2: string key);
-  dataitem.DataItem get(1: i64 sessionId, 2: string key);
-  bool put(1: i64 sessionId, 2: string key, 3: dataitem.DataItem value);
+  dataitem.ThriftDataItem get(1: i64 sessionId, 2: string key);
+  bool put(1: i64 sessionId, 2: string key, 3: dataitem.ThriftDataItem value);
 }
 
 service TwoPLSlaveReplicaService {
-  bool put(1: string key, 2: dataitem.DataItem value);
+  bool put(1: string key, 2: dataitem.ThriftDataItem value);
 }
 
 struct TwoPLTransactionResult {

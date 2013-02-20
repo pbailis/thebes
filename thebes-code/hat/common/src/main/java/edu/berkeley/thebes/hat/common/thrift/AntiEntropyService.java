@@ -31,21 +31,21 @@ public class AntiEntropyService {
 
   public interface Iface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException;
 
-    public void waitForCausalDependency(DataDependency dependency) throws org.apache.thrift.TException;
+    public void waitForCausalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException;
 
-    public void waitForTransactionalDependency(DataDependency dependency) throws org.apache.thrift.TException;
+    public void waitForTransactionalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void waitForCausalDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForCausalDependency_call> resultHandler) throws org.apache.thrift.TException;
+    public void waitForCausalDependency(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForCausalDependency_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void waitForTransactionalDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForTransactionalDependency_call> resultHandler) throws org.apache.thrift.TException;
+    public void waitForTransactionalDependency(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForTransactionalDependency_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -69,12 +69,12 @@ public class AntiEntropyService {
       super(iprot, oprot);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
     {
       send_put(key, value, happensAfter, transactionKeys);
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
+    public void send_put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
@@ -84,13 +84,13 @@ public class AntiEntropyService {
       sendBase("put", args);
     }
 
-    public void waitForCausalDependency(DataDependency dependency) throws org.apache.thrift.TException
+    public void waitForCausalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException
     {
       send_waitForCausalDependency(dependency);
       recv_waitForCausalDependency();
     }
 
-    public void send_waitForCausalDependency(DataDependency dependency) throws org.apache.thrift.TException
+    public void send_waitForCausalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException
     {
       waitForCausalDependency_args args = new waitForCausalDependency_args();
       args.setDependency(dependency);
@@ -104,13 +104,13 @@ public class AntiEntropyService {
       return;
     }
 
-    public void waitForTransactionalDependency(DataDependency dependency) throws org.apache.thrift.TException
+    public void waitForTransactionalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException
     {
       send_waitForTransactionalDependency(dependency);
       recv_waitForTransactionalDependency();
     }
 
-    public void send_waitForTransactionalDependency(DataDependency dependency) throws org.apache.thrift.TException
+    public void send_waitForTransactionalDependency(ThriftDataDependency dependency) throws org.apache.thrift.TException
     {
       waitForTransactionalDependency_args args = new waitForTransactionalDependency_args();
       args.setDependency(dependency);
@@ -142,7 +142,7 @@ public class AntiEntropyService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(key, value, happensAfter, transactionKeys, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -151,10 +151,10 @@ public class AntiEntropyService {
 
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
-      private edu.berkeley.thebes.common.thrift.DataItem value;
-      private List<DataDependency> happensAfter;
+      private edu.berkeley.thebes.common.thrift.ThriftDataItem value;
+      private List<ThriftDataDependency> happensAfter;
       private List<String> transactionKeys;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.DataItem value, List<DataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public put_call(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<ThriftDataDependency> happensAfter, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
         this.key = key;
         this.value = value;
@@ -182,7 +182,7 @@ public class AntiEntropyService {
       }
     }
 
-    public void waitForCausalDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForCausalDependency_call> resultHandler) throws org.apache.thrift.TException {
+    public void waitForCausalDependency(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForCausalDependency_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       waitForCausalDependency_call method_call = new waitForCausalDependency_call(dependency, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -190,8 +190,8 @@ public class AntiEntropyService {
     }
 
     public static class waitForCausalDependency_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private DataDependency dependency;
-      public waitForCausalDependency_call(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForCausalDependency_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ThriftDataDependency dependency;
+      public waitForCausalDependency_call(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForCausalDependency_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.dependency = dependency;
       }
@@ -214,7 +214,7 @@ public class AntiEntropyService {
       }
     }
 
-    public void waitForTransactionalDependency(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependency_call> resultHandler) throws org.apache.thrift.TException {
+    public void waitForTransactionalDependency(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependency_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       waitForTransactionalDependency_call method_call = new waitForTransactionalDependency_call(dependency, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -222,8 +222,8 @@ public class AntiEntropyService {
     }
 
     public static class waitForTransactionalDependency_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private DataDependency dependency;
-      public waitForTransactionalDependency_call(DataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependency_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ThriftDataDependency dependency;
+      public waitForTransactionalDependency_call(ThriftDataDependency dependency, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependency_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.dependency = dependency;
       }
@@ -329,8 +329,8 @@ public class AntiEntropyService {
     }
 
     public String key; // required
-    public edu.berkeley.thebes.common.thrift.DataItem value; // required
-    public List<DataDependency> happensAfter; // required
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem value; // required
+    public List<ThriftDataDependency> happensAfter; // required
     public List<String> transactionKeys; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -407,10 +407,10 @@ public class AntiEntropyService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
       tmpMap.put(_Fields.HAPPENS_AFTER, new org.apache.thrift.meta_data.FieldMetaData("happensAfter", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class))));
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ThriftDataDependency.class))));
       tmpMap.put(_Fields.TRANSACTION_KEYS, new org.apache.thrift.meta_data.FieldMetaData("transactionKeys", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
               new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
@@ -423,8 +423,8 @@ public class AntiEntropyService {
 
     public put_args(
       String key,
-      edu.berkeley.thebes.common.thrift.DataItem value,
-      List<DataDependency> happensAfter,
+      edu.berkeley.thebes.common.thrift.ThriftDataItem value,
+      List<ThriftDataDependency> happensAfter,
       List<String> transactionKeys)
     {
       this();
@@ -442,12 +442,12 @@ public class AntiEntropyService {
         this.key = other.key;
       }
       if (other.isSetValue()) {
-        this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
+        this.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.value);
       }
       if (other.isSetHappensAfter()) {
-        List<DataDependency> __this__happensAfter = new ArrayList<DataDependency>();
-        for (DataDependency other_element : other.happensAfter) {
-          __this__happensAfter.add(new DataDependency(other_element));
+        List<ThriftDataDependency> __this__happensAfter = new ArrayList<ThriftDataDependency>();
+        for (ThriftDataDependency other_element : other.happensAfter) {
+          __this__happensAfter.add(new ThriftDataDependency(other_element));
         }
         this.happensAfter = __this__happensAfter;
       }
@@ -496,11 +496,11 @@ public class AntiEntropyService {
       }
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getValue() {
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem getValue() {
       return this.value;
     }
 
-    public put_args setValue(edu.berkeley.thebes.common.thrift.DataItem value) {
+    public put_args setValue(edu.berkeley.thebes.common.thrift.ThriftDataItem value) {
       this.value = value;
       return this;
     }
@@ -524,22 +524,22 @@ public class AntiEntropyService {
       return (this.happensAfter == null) ? 0 : this.happensAfter.size();
     }
 
-    public java.util.Iterator<DataDependency> getHappensAfterIterator() {
+    public java.util.Iterator<ThriftDataDependency> getHappensAfterIterator() {
       return (this.happensAfter == null) ? null : this.happensAfter.iterator();
     }
 
-    public void addToHappensAfter(DataDependency elem) {
+    public void addToHappensAfter(ThriftDataDependency elem) {
       if (this.happensAfter == null) {
-        this.happensAfter = new ArrayList<DataDependency>();
+        this.happensAfter = new ArrayList<ThriftDataDependency>();
       }
       this.happensAfter.add(elem);
     }
 
-    public List<DataDependency> getHappensAfter() {
+    public List<ThriftDataDependency> getHappensAfter() {
       return this.happensAfter;
     }
 
-    public put_args setHappensAfter(List<DataDependency> happensAfter) {
+    public put_args setHappensAfter(List<ThriftDataDependency> happensAfter) {
       this.happensAfter = happensAfter;
       return this;
     }
@@ -612,7 +612,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setValue((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
         }
         break;
 
@@ -620,7 +620,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetHappensAfter();
         } else {
-          setHappensAfter((List<DataDependency>)value);
+          setHappensAfter((List<ThriftDataDependency>)value);
         }
         break;
 
@@ -880,7 +880,7 @@ public class AntiEntropyService {
               break;
             case 2: // VALUE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+                struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
                 struct.value.read(iprot);
                 struct.setValueIsSet(true);
               } else { 
@@ -891,11 +891,11 @@ public class AntiEntropyService {
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
                   org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
-                  struct.happensAfter = new ArrayList<DataDependency>(_list16.size);
+                  struct.happensAfter = new ArrayList<ThriftDataDependency>(_list16.size);
                   for (int _i17 = 0; _i17 < _list16.size; ++_i17)
                   {
-                    DataDependency _elem18; // required
-                    _elem18 = new DataDependency();
+                    ThriftDataDependency _elem18; // required
+                    _elem18 = new ThriftDataDependency();
                     _elem18.read(iprot);
                     struct.happensAfter.add(_elem18);
                   }
@@ -953,7 +953,7 @@ public class AntiEntropyService {
           oprot.writeFieldBegin(HAPPENS_AFTER_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.happensAfter.size()));
-            for (DataDependency _iter22 : struct.happensAfter)
+            for (ThriftDataDependency _iter22 : struct.happensAfter)
             {
               _iter22.write(oprot);
             }
@@ -1013,7 +1013,7 @@ public class AntiEntropyService {
         if (struct.isSetHappensAfter()) {
           {
             oprot.writeI32(struct.happensAfter.size());
-            for (DataDependency _iter24 : struct.happensAfter)
+            for (ThriftDataDependency _iter24 : struct.happensAfter)
             {
               _iter24.write(oprot);
             }
@@ -1039,18 +1039,18 @@ public class AntiEntropyService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+          struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.value.read(iprot);
           struct.setValueIsSet(true);
         }
         if (incoming.get(2)) {
           {
             org.apache.thrift.protocol.TList _list26 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.happensAfter = new ArrayList<DataDependency>(_list26.size);
+            struct.happensAfter = new ArrayList<ThriftDataDependency>(_list26.size);
             for (int _i27 = 0; _i27 < _list26.size; ++_i27)
             {
-              DataDependency _elem28; // required
-              _elem28 = new DataDependency();
+              ThriftDataDependency _elem28; // required
+              _elem28 = new ThriftDataDependency();
               _elem28.read(iprot);
               struct.happensAfter.add(_elem28);
             }
@@ -1086,7 +1086,7 @@ public class AntiEntropyService {
       schemes.put(TupleScheme.class, new waitForCausalDependency_argsTupleSchemeFactory());
     }
 
-    public DataDependency dependency; // required
+    public ThriftDataDependency dependency; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1151,7 +1151,7 @@ public class AntiEntropyService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.DEPENDENCY, new org.apache.thrift.meta_data.FieldMetaData("dependency", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ThriftDataDependency.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(waitForCausalDependency_args.class, metaDataMap);
     }
@@ -1160,7 +1160,7 @@ public class AntiEntropyService {
     }
 
     public waitForCausalDependency_args(
-      DataDependency dependency)
+      ThriftDataDependency dependency)
     {
       this();
       this.dependency = dependency;
@@ -1171,7 +1171,7 @@ public class AntiEntropyService {
      */
     public waitForCausalDependency_args(waitForCausalDependency_args other) {
       if (other.isSetDependency()) {
-        this.dependency = new DataDependency(other.dependency);
+        this.dependency = new ThriftDataDependency(other.dependency);
       }
     }
 
@@ -1184,11 +1184,11 @@ public class AntiEntropyService {
       this.dependency = null;
     }
 
-    public DataDependency getDependency() {
+    public ThriftDataDependency getDependency() {
       return this.dependency;
     }
 
-    public waitForCausalDependency_args setDependency(DataDependency dependency) {
+    public waitForCausalDependency_args setDependency(ThriftDataDependency dependency) {
       this.dependency = dependency;
       return this;
     }
@@ -1214,7 +1214,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetDependency();
         } else {
-          setDependency((DataDependency)value);
+          setDependency((ThriftDataDependency)value);
         }
         break;
 
@@ -1362,7 +1362,7 @@ public class AntiEntropyService {
           switch (schemeField.id) {
             case 1: // DEPENDENCY
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.dependency = new DataDependency();
+                struct.dependency = new ThriftDataDependency();
                 struct.dependency.read(iprot);
                 struct.setDependencyIsSet(true);
               } else { 
@@ -1421,7 +1421,7 @@ public class AntiEntropyService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.dependency = new DataDependency();
+          struct.dependency = new ThriftDataDependency();
           struct.dependency.read(iprot);
           struct.setDependencyIsSet(true);
         }
@@ -1686,7 +1686,7 @@ public class AntiEntropyService {
       schemes.put(TupleScheme.class, new waitForTransactionalDependency_argsTupleSchemeFactory());
     }
 
-    public DataDependency dependency; // required
+    public ThriftDataDependency dependency; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1751,7 +1751,7 @@ public class AntiEntropyService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.DEPENDENCY, new org.apache.thrift.meta_data.FieldMetaData("dependency", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependency.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ThriftDataDependency.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(waitForTransactionalDependency_args.class, metaDataMap);
     }
@@ -1760,7 +1760,7 @@ public class AntiEntropyService {
     }
 
     public waitForTransactionalDependency_args(
-      DataDependency dependency)
+      ThriftDataDependency dependency)
     {
       this();
       this.dependency = dependency;
@@ -1771,7 +1771,7 @@ public class AntiEntropyService {
      */
     public waitForTransactionalDependency_args(waitForTransactionalDependency_args other) {
       if (other.isSetDependency()) {
-        this.dependency = new DataDependency(other.dependency);
+        this.dependency = new ThriftDataDependency(other.dependency);
       }
     }
 
@@ -1784,11 +1784,11 @@ public class AntiEntropyService {
       this.dependency = null;
     }
 
-    public DataDependency getDependency() {
+    public ThriftDataDependency getDependency() {
       return this.dependency;
     }
 
-    public waitForTransactionalDependency_args setDependency(DataDependency dependency) {
+    public waitForTransactionalDependency_args setDependency(ThriftDataDependency dependency) {
       this.dependency = dependency;
       return this;
     }
@@ -1814,7 +1814,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetDependency();
         } else {
-          setDependency((DataDependency)value);
+          setDependency((ThriftDataDependency)value);
         }
         break;
 
@@ -1962,7 +1962,7 @@ public class AntiEntropyService {
           switch (schemeField.id) {
             case 1: // DEPENDENCY
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.dependency = new DataDependency();
+                struct.dependency = new ThriftDataDependency();
                 struct.dependency.read(iprot);
                 struct.setDependencyIsSet(true);
               } else { 
@@ -2021,7 +2021,7 @@ public class AntiEntropyService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.dependency = new DataDependency();
+          struct.dependency = new ThriftDataDependency();
           struct.dependency.read(iprot);
           struct.setDependencyIsSet(true);
         }

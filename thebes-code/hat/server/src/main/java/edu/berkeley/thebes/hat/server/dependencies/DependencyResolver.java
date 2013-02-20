@@ -1,26 +1,27 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.common.thrift.ThriftUtil.VersionCompare;
-import edu.berkeley.thebes.common.thrift.Version;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
-import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.async.AsyncMethodCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.hat.common.data.DataDependency;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
 /*
 The following class does most of the heavy lifting for the HAT
@@ -78,11 +79,11 @@ public class DependencyResolver {
         }
 
         public DependencyWaitingQueue() {
-            this(ThriftUtil.NullVersion);
+            this(Version.NULL_VERSION);
         }
 
         public synchronized void setLastWrittenVersion(Version newVersion) {
-            if(ThriftUtil.compareVersions(newVersion, lastWrittenVersion) == VersionCompare.LATER)
+            if (newVersion.compareTo(lastWrittenVersion) > 0)
                 this.lastWrittenVersion = newVersion;
         }
 
@@ -93,9 +94,9 @@ public class DependencyResolver {
         public synchronized void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
             while(true) {
                 try {
-                    if((ThriftUtil.compareVersions(lastWrittenVersion, dependency.getVersion()) != VersionCompare.EARLIER) ||
-                       (dependencyType == DependencyType.ATOMIC &&
-                        pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
+                    if (lastWrittenVersion.compareTo(dependency.getVersion()) >= 0 ||
+                    		(dependencyType == DependencyType.ATOMIC &&
+                    		pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
                         numWaiters--;
                         return;
                     }
@@ -211,8 +212,9 @@ public class DependencyResolver {
 
     private void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
         DataItem storedItem = persistenceEngine.get(dependency.getKey());
-        if((storedItem != null
-           && ThriftUtil.compareVersions(storedItem.getVersion(), dependency.getVersion()) == VersionCompare.EARLIER) ||
+        
+        // TODO(pbailis): Should there be parentheses somewhere below?
+        if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) < 0) ||
                 dependencyType == DependencyType.ATOMIC &&
                 pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null) {
             blockedLock.lock();
@@ -249,10 +251,12 @@ public class DependencyResolver {
 
                     // technically don't need a callback per call, but the state is in 'waiting' anyway
                     if(dependencyType == DependencyType.CAUSAL) {
-                        client.waitForCausalDependency(dependency, new CausalDependencyCallback(key, waiting));
+                        client.waitForCausalDependency(DataDependency.toThrift(dependency),
+                        		new CausalDependencyCallback(key, waiting));
                     }
                     else if (dependencyType == DependencyType.ATOMIC) {
-                        client.waitForTransactionalDependency(dependency, new TransactionalDependencyCallback(key, waiting));
+                        client.waitForTransactionalDependency(DataDependency.toThrift(dependency),
+                        		new TransactionalDependencyCallback(key, waiting));
                     }
                 }
 
@@ -305,7 +309,7 @@ public class DependencyResolver {
             @Override
             public void run() {
                 try {
-                    if(ThriftUtil.compareVersions(persistenceEngine.get(key).getVersion(), write.getVersion()) != VersionCompare.EARLIER)
+                    if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
                         return;
 
                     if(!resolveDependencies(key, causalDependencies, DependencyType.CAUSAL)) {

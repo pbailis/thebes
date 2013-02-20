@@ -1,30 +1,5 @@
 package edu.berkeley.thebes.hat.client;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
-import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
-import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
-
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.common.thrift.ThriftUtil.VersionCompare;
-import edu.berkeley.thebes.common.thrift.Version;
-import edu.berkeley.thebes.hat.client.clustering.ReplicaRouter;
-
-import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
-import javax.naming.ConfigurationException;
-
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Meter;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
-
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -32,6 +7,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import javax.naming.ConfigurationException;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
+
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.hat.client.clustering.ReplicaRouter;
+import edu.berkeley.thebes.hat.common.data.DataDependency;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 public class ThebesHATClient implements IThebesClient {
 
@@ -58,11 +56,10 @@ public class ThebesHATClient implements IThebesClient {
         private Map<String, Version> versions = Maps.newHashMap();
 
         public void updateVector(List<String> keys, Version newVersion) {
-            for(String key : keys) {
-                if(!versions.containsKey(key))
+            for (String key : keys) {
+                if (!versions.containsKey(key) || newVersion.compareTo(versions.get(key)) > 0) {
                     versions.put(key, newVersion);
-                else if(ThriftUtil.compareVersions(newVersion, versions.get(key)) == VersionCompare.LATER)
-                    versions.put(key, newVersion);
+                }
             }
         }
 
@@ -195,7 +192,7 @@ public class ThebesHATClient implements IThebesClient {
 
         if(isolationLevel == IsolationLevel.REPEATABLE_READ &&
                 transactionReadBuffer.containsKey(key)) {
-            return transactionReadBuffer.get(key).data;
+            return transactionReadBuffer.get(key).getData();
         }
 
         DataItem ret = doGet(key);
@@ -207,24 +204,25 @@ public class ThebesHATClient implements IThebesClient {
                 /*
                   If we read a null, we should read null for future reads too!
                  */
-                transactionReadBuffer.put(key, new DataItem(null, ThriftUtil.NullVersion));
+                transactionReadBuffer.put(key, new DataItem(null, Version.NULL_VERSION));
         }
 
         if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
             addCausalDependency(key, ret);
         }
 
-        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.isSetTransactionKeys()) {
+        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.getTransactionKeys() != null) {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY || isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
-            if(ThriftUtil.compareVersions(transactionWriteBuffer.get(key).getWrite().getVersion(), ret.getVersion())
-                    == VersionCompare.LATER)
-                return transactionWriteBuffer.get(key).getWrite().data;
+            if (transactionWriteBuffer.get(key).getWrite().getVersion()
+            		.compareTo(ret.getVersion()) > 0) {
+                return transactionWriteBuffer.get(key).getWrite().getData();
+            }
         }
 
-        return ret.data;
+        return ret.getData();
     }
 
     private boolean doPut(String key,
@@ -247,7 +245,8 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
         try {
-            ret = router.getReplicaByKey(key).put(key, value, causalDependencies, transactionKeys);
+            ret = router.getReplicaByKey(key).put(key, DataItem.toThrift(value),
+            		DataDependency.toThrift(causalDependencies), transactionKeys);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -264,7 +263,8 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ret = router.getReplicaByKey(key).get(key, atomicityVersionVector.getVersion(key));
+            ret = DataItem.fromThrift(router.getReplicaByKey(key).get(key,
+            		Version.toThrift(atomicityVersionVector.getVersion(key))));
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;

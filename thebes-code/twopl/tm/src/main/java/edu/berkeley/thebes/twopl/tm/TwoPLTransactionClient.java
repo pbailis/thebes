@@ -1,21 +1,22 @@
 package edu.berkeley.thebes.twopl.tm;
 
-import com.google.common.collect.Sets;
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.Version;
-import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
-import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
-import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.Set;
+
+import javax.naming.ConfigurationException;
+
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import com.google.common.collect.Sets;
+
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
+import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 
 /**
  * Provides a layer of abstraction that manages getting the actual locks from a set of
@@ -67,7 +68,7 @@ public class TwoPLTransactionClient implements IThebesClient {
         
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version((short) clientId, timestamp));
-        return masterRouter.getMasterByKey(key).put(sessionId, key, dataItem);
+        return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
     }
 
     @Override
@@ -76,12 +77,12 @@ public class TwoPLTransactionClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         
-        DataItem dataItem = masterRouter.getMasterByKey(key).get(sessionId, key);
+        DataItem dataItem = DataItem.fromThrift(masterRouter.getMasterByKey(key).get(sessionId, key));
         // Null is returned by 0-length data
-        if (dataItem.getData().length == 0) {
+        if (dataItem.getData().limit() == 0) {
             return null;
         }
-        return ByteBuffer.wrap(dataItem.getData());
+        return dataItem.getData();
     }
     
     public void writeLock(String key) throws TException {

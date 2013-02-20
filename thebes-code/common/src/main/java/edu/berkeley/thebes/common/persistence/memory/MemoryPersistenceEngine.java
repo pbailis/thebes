@@ -5,16 +5,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Maps;
-import com.google.common.primitives.UnsignedBytes;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
 import com.yammer.metrics.core.Meter;
 
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.common.thrift.ThriftUtil;
-import edu.berkeley.thebes.common.thrift.ThriftUtil.VersionCompare;
-import edu.berkeley.thebes.common.thrift.Version;
 
 public class MemoryPersistenceEngine implements IPersistenceEngine {
     private final Meter putsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "put-requests", "requests", TimeUnit.SECONDS);
@@ -40,11 +37,12 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
     public boolean put(String key, DataItem value) {
         putsMetric.mark();
         synchronized (map) {
-            // If we already have this key, ensure new item has more recent timestamp
+            // If we already have this key, ensure new item is a more recent version
             if (map.containsKey(key)) {
                 DataItem curItem = map.get(key);
-                if (ThriftUtil.compareVersions(curItem.getVersion(), value.getVersion()) != VersionCompare.LATER)
+                if (curItem.getVersion().compareTo(value.getVersion()) <= 0) {
                     return false;
+                }
             }
 
             // New key or newer timestamp.

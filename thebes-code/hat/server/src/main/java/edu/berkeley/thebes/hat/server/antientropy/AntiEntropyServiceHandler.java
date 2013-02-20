@@ -1,12 +1,15 @@
 package edu.berkeley.thebes.hat.server.antientropy;
 
-import edu.berkeley.thebes.common.thrift.DataItem;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-import edu.berkeley.thebes.hat.common.thrift.DataDependency;
-import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
+import java.util.List;
+
 import org.apache.thrift.TException;
 
-import java.util.List;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
+import edu.berkeley.thebes.hat.common.data.DataDependency;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftDataDependency;
+import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
 
 public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     DependencyResolver dependencyResolver;
@@ -17,23 +20,23 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
 
     @Override
     public void put(String key,
-                    DataItem value,
-                    List<DataDependency> happensAfter,
+                    ThriftDataItem value,
+                    List<ThriftDataDependency> happensAfter,
                     List<String> transactionKeys) throws TException{
 
         dependencyResolver.asyncApplyNewRemoteWrite(key,
-                                                    value,
-                                                    happensAfter,
-                                                    transactionKeys);
+        		DataItem.fromThrift(value),
+        		DataDependency.fromThrift(happensAfter),
+        		transactionKeys);
     }
 
     @Override
-    public void waitForCausalDependency(DataDependency dependency) {
-        dependencyResolver.blockForCausalDependency(dependency);
+    public void waitForCausalDependency(ThriftDataDependency dependency) {
+        dependencyResolver.blockForCausalDependency(DataDependency.fromThrift(dependency));
     }
 
     @Override
-    public void waitForTransactionalDependency(DataDependency dependency) {
-        dependencyResolver.blockForAtomicDependency(dependency);
+    public void waitForTransactionalDependency(ThriftDataDependency dependency) {
+        dependencyResolver.blockForAtomicDependency(DataDependency.fromThrift(dependency));
     }
 }
