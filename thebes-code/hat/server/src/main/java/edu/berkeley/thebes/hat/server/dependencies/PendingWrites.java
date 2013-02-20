@@ -1,8 +1,8 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
@@ -12,15 +12,11 @@ import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 
 public class PendingWrites {
-    /*
-      Thrift datatypes have hashcode 0, making this annoying.
-      However, the nested map structure makes GC pretty easy to remove
-      items from pending when they are moved to good.
-     */
-    private Map<String, Map<Long, Map<Short, DataItem>>> pending;
+    private ConcurrentMap<String, ConcurrentLinkedQueue<DataItem>> pending;
 
     public PendingWrites() {
-        pending = Maps.newHashMap();
+        pending = Maps.newConcurrentMap();
+        //todo: FIX THIS GAUGE
         Metrics.newGauge(PendingWrites.class, "hat-pending", "numpending",
     		new Gauge<Integer>() {
     			@Override
@@ -32,94 +28,57 @@ public class PendingWrites {
     }
 
     public DataItem getMatchingItem(String key, Version version) {
-        Map<Long, Map<Short, DataItem>> writesForKey;
-
-        synchronized (pending) {
-            writesForKey = pending.get(key);
-
-            if(writesForKey == null)
-                return null;
+        if(!pending.containsKey(key)) {
+            return null;
         }
 
-        synchronized (writesForKey) {
-            Map<Short, DataItem> writesWithStamp = writesForKey.get(version.getTimestamp());
+        //todo: make more efficient lookup, here it's O(n)
+        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
 
-            if(writesWithStamp == null)
-                return null;
+        if(pendingList == null)
+            return null;
 
-            synchronized(writesWithStamp) {
-                DataItem pendingItem = writesWithStamp.get(version.getClientID());
+        Iterator<DataItem> pendingIt = pendingList.iterator();
 
-                if(pendingItem == null)
-                    return null;
-
-                return pendingItem;
+        while(pendingIt.hasNext()) {
+            DataItem pendingWrite = pendingIt.next();
+            if(pendingWrite.getVersion().equals(version)) {
+                return pendingWrite;
             }
         }
+
+        return null;
     }
 
     public void makeItemPending(String key, DataItem item) {
-        synchronized (pending) {
-            Map<Long, Map<Short, DataItem>> writesForKey = pending.get(key);
+        pending.putIfAbsent(key, new ConcurrentLinkedQueue<DataItem>());
 
-            if(writesForKey == null) {
-                writesForKey = new HashMap<Long, Map<Short, DataItem>>();
-                pending.put(key, writesForKey);
-            }
-
-            synchronized (writesForKey) {
-                Map<Short, DataItem> writesWithStamp = writesForKey.get(item.getVersion().getTimestamp());
-
-                if(writesWithStamp == null) {
-                    writesWithStamp = Maps.newHashMap();
-                    writesForKey.put(item.getVersion().getTimestamp(), writesWithStamp);
-                }
-
-                synchronized(writesWithStamp) {
-                    writesWithStamp.put(item.getVersion().getClientID(), item);
-                }
-            }
-        }
+        //todo: race condition?
+        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
+        pendingList.add(item);
     }
 
     public void removeDominatedItems(String key, DataItem newItem) {
-        synchronized(pending) {
-            Map<Long, Map<Short, DataItem>> writesForKey = pending.get(key);
+        if(!pending.containsKey(key)) {
+            return;
+        }
 
-            if(writesForKey == null)
-                return;
+        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
 
-            synchronized (writesForKey) {
-                Iterator<Long> timestampIt = writesForKey.keySet().iterator();
-                while(timestampIt.hasNext()) {
-                    long timestamp = timestampIt.next();
-                    if(timestamp < newItem.getVersion().getTimestamp()) {
-                        timestampIt.remove();
-                    }
-                    else if(timestamp == newItem.getVersion().getTimestamp()) {
-                        Map<Short, DataItem> writesWithStamp = writesForKey.get(newItem.getVersion().getTimestamp());
+        if(pendingList == null)
+            return;
 
-                        if(writesWithStamp != null) {
-                            synchronized (writesWithStamp) {
-                                Iterator<Short> clientIDIt = writesWithStamp.keySet().iterator();
-                                while(clientIDIt.hasNext()) {
-                                    short clientID = clientIDIt.next();
-                                    if(clientID <= newItem.getVersion().getClientID()) {
-                                        clientIDIt.remove();
-                                    }
-                                }
+        Iterator<DataItem> pendingIt = pendingList.iterator();
 
-                                if(writesWithStamp.keySet().isEmpty()) {
-                                    timestampIt.remove();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(writesForKey.keySet().isEmpty())
-                    pending.remove(key);
+        while(pendingIt.hasNext()) {
+            DataItem pendingWrite = pendingIt.next();
+            if(pendingWrite.getVersion().compareTo(newItem.getVersion()) <= 0) {
+                pendingIt.remove();
             }
+        }
+
+        if(pendingList.size() == 0) {
+            pending.remove(key);
         }
     }
 }
