@@ -6,12 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,9 +32,9 @@ import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.hat.client.clustering.ReplicaRouter;
 import edu.berkeley.thebes.hat.common.data.DataDependency;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 public class ThebesHATClient implements IThebesClient {
+    private static Logger logger = LoggerFactory.getLogger(ThebesHATClient.class);
 
     private class QueuedWrite {
         private DataItem write;
@@ -116,6 +119,17 @@ public class ThebesHATClient implements IThebesClient {
         }
     }
 
+    public ThebesHATClient() {
+        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) && atomicityLevel == AtomicityLevel.NO_ATOMICITY) {
+            /*
+              Begs the question: why have TA and RC as separate? Answer is that this may change if we go with the
+              more permissive "broad interpretation" of RC: c.f., P1 vs. A1 in Berensen et al., SIGMOD '95
+             */
+            throw new IllegalStateException("Isolation of RC or higher must be accompanied " +
+                                            "by transactional atomicity at this time.");
+        }
+    }
+
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         router = new ReplicaRouter();
@@ -135,6 +149,35 @@ public class ThebesHATClient implements IThebesClient {
         transactionInProgress = true;
     }
 
+    private void applyWritesInBuffer() {
+        final Semaphore parallelWriteSemaphore = new Semaphore(transactionWriteBuffer.size());
+        for(final String key : transactionWriteBuffer.keySet()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
+                    try {
+                        doPut(key,
+                              queuedWrite.getWrite(),
+                              queuedWrite.getDependencies(),
+                              transactionWriteBuffer.keySet());
+                    } catch (TException e) {
+                        logger.warn(e.getMessage());
+                    } finally {
+                        parallelWriteSemaphore.release();
+                    }
+                }
+            }).start();
+        }
+
+        try {
+            for(int i = 0; i < transactionWriteBuffer.size(); ++i)
+                parallelWriteSemaphore.acquire();
+        } catch (InterruptedException e) {
+            logger.warn(e.getMessage());
+        }
+    }
+
     @Override
     public boolean endTransaction() throws TException {
         transactionInProgress = false;
@@ -143,15 +186,12 @@ public class ThebesHATClient implements IThebesClient {
 
         if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION)) {
             TimerContext timer = latencyBufferedXactMetric.time();
-            try {
-                for(String key : transactionWriteBuffer.keySet()) {
-                    QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
-                    doPut(key, queuedWrite.getWrite(), queuedWrite.getDependencies(), transactionWriteBuffer.keySet());
-                }
-            } finally {
-                timer.stop();
-            }
+            applyWritesInBuffer();
+            timer.stop();
         }
+
+        transactionWriteBuffer.clear();
+        transactionReadBuffer.clear();
 
         return true;
     }
@@ -207,19 +247,28 @@ public class ThebesHATClient implements IThebesClient {
                 transactionReadBuffer.put(key, new DataItem(null, Version.NULL_VERSION));
         }
 
-        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
-            addCausalDependency(key, ret);
+        // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
+        if(transactionWriteBuffer.containsKey(key)) {
+            if (transactionWriteBuffer.get(key).getWrite().getVersion()
+            		.compareTo(ret.getVersion()) > 0) {
+                return transactionWriteBuffer.get(key).getWrite().getData();
         }
 
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.getTransactionKeys() != null) {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
+        // TODO(pbailis) Uhh... cannot resolve...
+<<<<<<< HEAD
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY || isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
             if (transactionWriteBuffer.get(key).getWrite().getVersion()
             		.compareTo(ret.getVersion()) > 0) {
                 return transactionWriteBuffer.get(key).getWrite().getData();
             }
+=======
+        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
+            addCausalDependency(key, ret);
+>>>>>>> 4726ea7806a4c4898e6a4f5f6ae58b44c8ada782
         }
 
         return ret.getData();

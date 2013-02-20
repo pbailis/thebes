@@ -67,7 +67,7 @@ public class TwoPLTransactionClient implements IThebesClient {
         }
         
         long timestamp = System.currentTimeMillis();
-        DataItem dataItem = new DataItem(value, new Version((short) clientId, timestamp));
+        DataItem dataItem = new DataItem(value, new Version(clientId, timestamp));
         return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
     }
 

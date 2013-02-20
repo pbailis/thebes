@@ -18,7 +18,7 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
     private final Meter getsMetric = Metrics.newMeter(MemoryPersistenceEngine.class, "get-requests", "requests", TimeUnit.SECONDS);
 
     private Map<String, DataItem> map;
-    private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), new Version((short) -1, -1));
+    private DataItem nullItem = new DataItem(ByteBuffer.allocate(0), Version.NULL_VERSION);
 
     public void open() {
         map = Maps.newConcurrentMap();
