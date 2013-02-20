@@ -14,63 +14,82 @@ import edu.berkeley.thebes.common.data.Version;
 
 public class PendingWrites {
     private ConcurrentMap<String, ConcurrentLinkedQueue<DataItem>> pending;
+    /** Class lock. Monotonic operations acquire the read lock (multiple may happen simultaneously),
+     * while deletion operations acquire the write lock to ensure no races. */
+    private ReadWriteLock monotonicityLock = new ReentrantReadWriteLock();
 
     private final Counter pendingWritesCounter = Metrics.newCounter(PendingWrites.class, "pendingWrites");
 
     public DataItem getMatchingItem(String key, Version version) {
-        if(!pending.containsKey(key)) {
-            return null;
-        }
+	monotonicityLock.readLock().lock();
 
-        //todo: make more efficient lookup, here it's O(n)
-        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
+	try {
+	    if (!pending.containsKey(key)) {
+		return null;
+	    }
 
-        if(pendingList == null)
-            return null;
+	    //todo: make more efficient lookup, here it's O(n)
+	    // (aaron): on versions for the same key... expecting lots?
+	    ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
 
-        Iterator<DataItem> pendingIt = pendingList.iterator();
+	    if (pendingList == null) {
+		return null;
+	    }
 
-        while(pendingIt.hasNext()) {
-            DataItem pendingWrite = pendingIt.next();
-            if(pendingWrite.getVersion().equals(version)) {
-                return pendingWrite;
-            }
-        }
+	    for (DataItem pendingWrite : pendingList.iterator()) {
+		if (pendingWrite.getVersion().equals(version)) {
+		    return pendingWrite;
+		}
+	    }
 
-        return null;
+	    return null;
+	} finally {
+	    monotonicityLock.readLock().unlock();
+	}
     }
 
     public void makeItemPending(String key, DataItem item) {
-        pending.putIfAbsent(key, new ConcurrentLinkedQueue<DataItem>());
+	monotonicityLock.readLock().lock();
+	
+	try {
+	    pending.putIfAbsent(key, new ConcurrentLinkedQueue<DataItem>());
 
-        //todo: race condition?
-        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
-        pendingList.add(item);
-        pendingWritesCounter.inc();
+	    //todo: race condition?
+	    ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
+	    pendingList.add(item);
+	    pendingWritesCounter.inc();
+	} finally {
+	    monotonicityLock.readLock().unlock();
     }
 
     public void removeDominatedItems(String key, DataItem newItem) {
-        if(!pending.containsKey(key)) {
-            return;
-        }
+	monotonicityLock.writeLock().lock();
 
-        ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
+	try {
+	    if (!pending.containsKey(key)) {
+		return;
+	    }
 
-        if(pendingList == null)
-            return;
+	    ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
 
-        Iterator<DataItem> pendingIt = pendingList.iterator();
+	    if(pendingList == null)
+		return;
 
-        while(pendingIt.hasNext()) {
-            DataItem pendingWrite = pendingIt.next();
-            if(pendingWrite.getVersion().compareTo(newItem.getVersion()) <= 0) {
-                pendingIt.remove();
-                pendingWritesCounter.dec();
-            }
-        }
+	    Iterator<DataItem> pendingIt = pendingList.iterator();
 
-        if(pendingList.size() == 0) {
-            pending.remove(key);
-        }
+	    while(pendingIt.hasNext()) {
+		DataItem pendingWrite = pendingIt.next();
+		if(pendingWrite.getVersion().compareTo(newItem.getVersion()) <= 0) {
+		    pendingIt.remove();
+		    pendingWritesCounter.dec();
+		}
+	    }
+
+	    if(pendingList.size() == 0) {
+		pending.remove(key);
+	    }
+	} finally {
+	    monotonicityLock.writeLock().unlock();
+	}
     }
 }
