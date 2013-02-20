@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Gauge;
 
 import edu.berkeley.thebes.common.data.DataItem;
@@ -14,18 +15,7 @@ import edu.berkeley.thebes.common.data.Version;
 public class PendingWrites {
     private ConcurrentMap<String, ConcurrentLinkedQueue<DataItem>> pending;
 
-    public PendingWrites() {
-        pending = Maps.newConcurrentMap();
-        //todo: FIX THIS GAUGE
-        Metrics.newGauge(PendingWrites.class, "hat-pending", "numpending",
-    		new Gauge<Integer>() {
-    			@Override
-    			public Integer value() {
-    				synchronized (pending) {
-    					return pending.size();
-    				}
-    			}});
-    }
+    private final Counter pendingWritesCounter = Metrics.newCounter(PendingWrites.class, "pendingWrites");
 
     public DataItem getMatchingItem(String key, Version version) {
         if(!pending.containsKey(key)) {
@@ -56,6 +46,7 @@ public class PendingWrites {
         //todo: race condition?
         ConcurrentLinkedQueue<DataItem> pendingList = pending.get(key);
         pendingList.add(item);
+        pendingWritesCounter.inc();
     }
 
     public void removeDominatedItems(String key, DataItem newItem) {
@@ -74,6 +65,7 @@ public class PendingWrites {
             DataItem pendingWrite = pendingIt.next();
             if(pendingWrite.getVersion().compareTo(newItem.getVersion()) <= 0) {
                 pendingIt.remove();
+                pendingWritesCounter.dec();
             }
         }
 
