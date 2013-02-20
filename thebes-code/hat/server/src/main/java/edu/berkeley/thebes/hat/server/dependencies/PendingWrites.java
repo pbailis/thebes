@@ -1,6 +1,9 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
 import com.google.common.collect.Maps;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Meter;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.common.thrift.Version;
 import edu.berkeley.thebes.hat.common.thrift.DataDependency;
@@ -9,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class PendingWrites {
     /*
@@ -20,6 +24,13 @@ public class PendingWrites {
 
     public PendingWrites() {
         pending = Maps.newHashMap();
+        Metrics.newGauge(PendingWrites.class, "hat-pending", "numpending", new Gauge<Integer>() {
+                                                                                @Override
+                                                                                public Integer value() {
+                                                                                    synchronized (pending) {
+                                                                                        return pending.size();
+                                                                                    }
+                                                                                }});
     }
 
     public DataItem getMatchingItem(String key, Version version) {

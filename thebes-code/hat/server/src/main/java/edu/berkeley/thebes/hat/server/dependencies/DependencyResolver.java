@@ -2,6 +2,9 @@ package edu.berkeley.thebes.hat.server.dependencies;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.DataItem;
 import edu.berkeley.thebes.common.thrift.ThriftUtil;
@@ -18,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -68,6 +72,26 @@ notifyNewLocalWrite() is called.
 
 public class DependencyResolver {
 
+    private final Timer waitingDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
+                                                                        "hat-dependencies-check-waiting",
+                                                                        TimeUnit.MILLISECONDS,
+                                                                        TimeUnit.SECONDS);
+
+    private final Timer resolvingDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
+                                                                          "hat-dependencies-resolving",
+                                                                          TimeUnit.MILLISECONDS,
+                                                                          TimeUnit.SECONDS);
+
+    private final Timer resolvingCausalDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
+                                                                          "hat-dependencies-resolving-causal",
+                                                                          TimeUnit.MILLISECONDS,
+                                                                          TimeUnit.SECONDS);
+
+    private final Timer resolvingAtomicDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
+                                                                          "hat-dependencies-resolving-atomic",
+                                                                          TimeUnit.MILLISECONDS,
+                                                                          TimeUnit.SECONDS);
+
     private class DependencyWaitingQueue {
         private Version lastWrittenVersion;
         private int numWaiters;
@@ -91,12 +115,14 @@ public class DependencyResolver {
         }
 
         public synchronized void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
+            TimerContext startTime = waitingDependencyTimerMetric.time();
             while(true) {
                 try {
                     if((ThriftUtil.compareVersions(lastWrittenVersion, dependency.getVersion()) != VersionCompare.EARLIER) ||
                        (dependencyType == DependencyType.ATOMIC &&
                         pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
                         numWaiters--;
+                        startTime.stop();
                         return;
                     }
 
@@ -296,8 +322,10 @@ public class DependencyResolver {
                                    boolean local) throws TException {
 
         if(local && atomicityDependencies.isEmpty()) {
+            TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
             persistenceEngine.put(key, write);
             notifyNewLocalWrite(key, write);
+            totalDependencyTime.stop();
             return;
         }
 
@@ -308,17 +336,28 @@ public class DependencyResolver {
                     if(ThriftUtil.compareVersions(persistenceEngine.get(key).getVersion(), write.getVersion()) != VersionCompare.EARLIER)
                         return;
 
+                    TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
+                    TimerContext causalDependencyTime = resolvingCausalDependencyTimerMetric.time();
+
                     if(!resolveDependencies(key, causalDependencies, DependencyType.CAUSAL)) {
                         return;
                     }
 
+                    causalDependencyTime.stop();
+
                     if(!atomicityDependencies.isEmpty())
                         pendingWrites.makeItemPending(key, write);
+
+                    TimerContext atomicityDependencyTime = resolvingAtomicDependencyTimerMetric.time();
 
                     if(!resolveDependencies(key, atomicityDependencies, DependencyType.ATOMIC))
                         return;
 
+                    atomicityDependencyTime.stop();
+
                     persistenceEngine.put(key, write);
+                    totalDependencyTime.stop();
+
                     notifyNewLocalWrite(key, write);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
