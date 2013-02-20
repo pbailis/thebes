@@ -124,13 +124,15 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     public ThebesHATClient() {
-        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) && atomicityLevel == AtomicityLevel.NO_ATOMICITY) {
+        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) &&
+           sessionLevel == SessionLevel.CAUSAL &&
+           atomicityLevel == AtomicityLevel.NO_ATOMICITY) {
             /*
               Begs the question: why have TA and RC as separate? Answer is that this may change if we go with the
               more permissive "broad interpretation" of RC: c.f., P1 vs. A1 in Berensen et al., SIGMOD '95
              */
-            throw new IllegalStateException("Isolation of RC or higher must be accompanied " +
-                                            "by transactional atomicity at this time.");
+            throw new IllegalStateException("Isolation of RC or higher with causality guarantees must" +
+                                            "be accompanied by transactional atomicity at this time.");
         }
     }
 
