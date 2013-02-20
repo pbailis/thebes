@@ -254,23 +254,15 @@ public class ThebesHATClient implements IThebesClient {
             if (transactionWriteBuffer.get(key).getWrite().getVersion()
             		.compareTo(ret.getVersion()) > 0) {
                 return transactionWriteBuffer.get(key).getWrite().getData();
+            }
         }
 
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY && ret != null && ret.getTransactionKeys() != null) {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
-        // TODO(pbailis) Uhh... cannot resolve...
-<<<<<<< HEAD
-        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY || isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
-            if (transactionWriteBuffer.get(key).getWrite().getVersion()
-            		.compareTo(ret.getVersion()) > 0) {
-                return transactionWriteBuffer.get(key).getWrite().getData();
-            }
-=======
         if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
             addCausalDependency(key, ret);
->>>>>>> 4726ea7806a4c4898e6a4f5f6ae58b44c8ada782
         }
 
         return ret.getData();
