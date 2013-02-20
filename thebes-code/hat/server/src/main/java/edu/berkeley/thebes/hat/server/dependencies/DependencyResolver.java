@@ -248,7 +248,7 @@ public class DependencyResolver {
                     AntiEntropyService.AsyncClient client = router.getReplicaByKey(dependency.getKey());
 
                     // technically don't need a callback per call, but the state is in 'waiting' anyway
-                    if(dependencyType == DependencyType.CAUSAL) {
+                    if (dependencyType == DependencyType.CAUSAL) {
                         client.waitForCausalDependency(dependency, new CausalDependencyCallback(key, waiting));
                     }
                     else if (dependencyType == DependencyType.ATOMIC) {

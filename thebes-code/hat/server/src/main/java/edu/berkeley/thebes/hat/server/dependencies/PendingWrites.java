@@ -74,39 +74,43 @@ public class PendingWrites {
     }
 
     public void removeDominatedItems(String key, DataItem newItem) {
-        Map<Long, Map<Short, DataItem>> writesForKey = pending.get(key);
+        synchronized(pending) {
+            Map<Long, Map<Short, DataItem>> writesForKey = pending.get(key);
 
-        if(writesForKey == null)
-            return;
+            if(writesForKey == null)
+                return;
 
-        synchronized (writesForKey) {
-            Iterator<Long> timestampIt = writesForKey.keySet().iterator();
-            while(timestampIt.hasNext()) {
-                long timestamp = timestampIt.next();
-                if(timestamp < newItem.getVersion().getTimestamp()) {
-                    timestampIt.remove();
-                }
-                else if(timestamp == newItem.getVersion().getTimestamp()) {
-                    Map<Short, DataItem> writesWithStamp = writesForKey.get(newItem.getVersion().getTimestamp());
+            synchronized (writesForKey) {
+                Iterator<Long> timestampIt = writesForKey.keySet().iterator();
+                while(timestampIt.hasNext()) {
+                    long timestamp = timestampIt.next();
+                    if(timestamp < newItem.getVersion().getTimestamp()) {
+                        timestampIt.remove();
+                    }
+                    else if(timestamp == newItem.getVersion().getTimestamp()) {
+                        Map<Short, DataItem> writesWithStamp = writesForKey.get(newItem.getVersion().getTimestamp());
 
-                    if(writesWithStamp != null) {
-                        Iterator<Short> clientIDIt = writesWithStamp.keySet().iterator();
-                        while(clientIDIt.hasNext()) {
-                            short clientID = clientIDIt.next();
-                            if(clientID <= newItem.getVersion().getClientID()) {
-                                clientIDIt.remove();
+                        if(writesWithStamp != null) {
+                            synchronized (writesWithStamp) {
+                                Iterator<Short> clientIDIt = writesWithStamp.keySet().iterator();
+                                while(clientIDIt.hasNext()) {
+                                    short clientID = clientIDIt.next();
+                                    if(clientID <= newItem.getVersion().getClientID()) {
+                                        clientIDIt.remove();
+                                    }
+                                }
+
+                                if(writesWithStamp.keySet().isEmpty()) {
+                                    timestampIt.remove();
+                                }
                             }
-                        }
-
-                        if(writesWithStamp.keySet().isEmpty()) {
-                            timestampIt.remove();
                         }
                     }
                 }
-            }
 
-            if(writesForKey.keySet().isEmpty())
-                pending.remove(key);
+                if(writesForKey.keySet().isEmpty())
+                    pending.remove(key);
+            }
         }
     }
 }

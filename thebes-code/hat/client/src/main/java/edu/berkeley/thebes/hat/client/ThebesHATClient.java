@@ -24,6 +24,8 @@ import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
@@ -31,9 +33,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class ThebesHATClient implements IThebesClient {
+    private static Logger logger = LoggerFactory.getLogger(ThebesHATClient.class);
 
     private class QueuedWrite {
         private DataItem write;
@@ -119,6 +123,17 @@ public class ThebesHATClient implements IThebesClient {
         }
     }
 
+    public ThebesHATClient() {
+        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) && atomicityLevel == AtomicityLevel.NO_ATOMICITY) {
+            /*
+              Begs the question: why have TA and RC as separate? Answer is that this may change if we go with the
+              more permissive "broad interpretation" of RC: c.f., P1 vs. A1 in Berensen et al., SIGMOD '95
+             */
+            throw new IllegalStateException("Isolation of RC or higher must be accompanied " +
+                                            "by transactional atomicity at this time.");
+        }
+    }
+
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         router = new ReplicaRouter();
@@ -138,6 +153,35 @@ public class ThebesHATClient implements IThebesClient {
         transactionInProgress = true;
     }
 
+    private void applyWritesInBuffer() {
+        final Semaphore parallelWriteSemaphore = new Semaphore(transactionWriteBuffer.size());
+        for(final String key : transactionWriteBuffer.keySet()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
+                    try {
+                        doPut(key,
+                              queuedWrite.getWrite(),
+                              queuedWrite.getDependencies(),
+                              transactionWriteBuffer.keySet());
+                    } catch (TException e) {
+                        logger.warn(e.getMessage());
+                    } finally {
+                        parallelWriteSemaphore.release();
+                    }
+                }
+            }).start();
+        }
+
+        try {
+            for(int i = 0; i < transactionWriteBuffer.size(); ++i)
+                parallelWriteSemaphore.acquire();
+        } catch (InterruptedException e) {
+            logger.warn(e.getMessage());
+        }
+    }
+
     @Override
     public boolean endTransaction() throws TException {
         transactionInProgress = false;
@@ -146,15 +190,12 @@ public class ThebesHATClient implements IThebesClient {
 
         if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION)) {
             TimerContext timer = latencyBufferedXactMetric.time();
-            try {
-                for(String key : transactionWriteBuffer.keySet()) {
-                    QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
-                    doPut(key, queuedWrite.getWrite(), queuedWrite.getDependencies(), transactionWriteBuffer.keySet());
-                }
-            } finally {
-                timer.stop();
-            }
+            applyWritesInBuffer();
+            timer.stop();
         }
+
+        transactionWriteBuffer.clear();
+        transactionReadBuffer.clear();
 
         return true;
     }
@@ -218,7 +259,7 @@ public class ThebesHATClient implements IThebesClient {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
-        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY || isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
+        if(transactionWriteBuffer.containsKey(key)) {
             if(ThriftUtil.compareVersions(transactionWriteBuffer.get(key).getWrite().getVersion(), ret.getVersion())
                     == VersionCompare.LATER)
                 return transactionWriteBuffer.get(key).getWrite().data;
