@@ -238,10 +238,9 @@ public class DependencyResolver {
     private void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
         DataItem storedItem = persistenceEngine.get(dependency.getKey());
         
-        // TODO(pbailis): Should there be parentheses somewhere below?
         if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) < 0) ||
-                dependencyType == DependencyType.ATOMIC &&
-                pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null) {
+                (dependencyType == DependencyType.ATOMIC &&
+                 pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
             blockedLock.lock();
             DependencyWaitingQueue queue = blocked.get(dependency.getKey());
             if(queue != null && queue.isEmpty()) {
