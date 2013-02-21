@@ -360,7 +360,7 @@ if __name__ == "__main__":
                 regionName = cluster
                 numClustersInRegion = 1
 
-            newRegion = Region(Region)
+            newRegion = Region(regionName)
             regions.append(newRegion)
             for j in range(numClustersInRegion):
                 newCluster = Cluster(regionName, clusterID, args.servers, args.clients, args.tms if use2PL else 0)
