@@ -3,6 +3,7 @@
 
 import argparse
 from common_funcs import run_cmd
+from common_funcs import run_cmd_single
 from common_funcs import sed
 from common_funcs import upload_file
 from common_funcs import run_script
@@ -137,28 +138,34 @@ def check_for_instances(regions):
             exit(-1)
 
 
-def provision_cluster(cluster, use_spot):
-    if cluster.getNumHosts() == 0:
-        return
-
+def provision_clusters(regions, use_spot):
     global AMIs
-    assert cluster.regionName in AMIs, "No AMI for region '%s'" % cluster.regionName
 
-    f = raw_input("spinning up %d %s instances; okay? " %
-                  (cluster.getNumHosts(), "spot" if use_spot else "normal"))
+    for region in regions:
+        assert region.name in AMIs, "No AMI for region '%s'" % region.name
 
-    if f != "Y" and f != "y":
-        exit(-1)
+        f = raw_input("spinning up %d %s instances in %s; okay? " %
+                      (region.getTotalNumHosts(), "spot" if use_spot else "normal", region.name))
 
-    if use_spot:
-        system("ec2-request-spot-instances %s --region %s -t t1.micro -price 0.02 " \
-               "-k thebes -g thebes -n %d" % (AMIs[cluster.regionName], cluster.regionName, cluster.getNumHosts()));
-    else:
-        print "Error: Non-spot instances not implemented!"
-        exit(-1)
-        #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
-        #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
-        #   (AMIs[region], n))
+        if f != "Y" and f != "y":
+            exit(-1)
+
+        if use_spot:
+            provision_spot(region.name, region.getTotalNumHosts())
+        else:
+            provision_instance(region.name, region.getTotalNumHosts())
+
+def provision_spot(regionName, num):
+    global AMIs
+    system("ec2-request-spot-instances %s --region %s -t t1.micro -price 0.02 " \
+           "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
+
+def provision_instance(region, num):
+    #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
+    #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
+    #   (AMIs[region], n))
+    print "Error: Non-spot instances not implemented!"
+    exit(-1)
 
 
 def wait_all_hosts_up(regions):
@@ -175,7 +182,7 @@ def wait_all_hosts_up(regions):
 
     # Since ssh takes some time to come up
     print "Waiting for instances to warm up... "
-    #sleep(30)
+    sleep(30)
     print "Awake!"
 
 
@@ -279,8 +286,38 @@ def setup_hosts(clusters):
     print "Done"
 
     print "Uploading config file...",
-    upload_file("all-hosts", SCRIPTS_DIR + "../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
+    upload_file("all-hosts", SCRIPTS_DIR + "/../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
     print "Done"
+
+
+def stop_thebes_processes(clusters):
+    print "Terminating java processes..."
+    run_cmd("all-hosts", "killall -9 java")
+    print 'Termination command sent.'
+
+def rebuild_servers(clusters):
+    print 'Rebuilding servers...'
+    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git pull", user="ubuntu")
+    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; mvn package", user="ubuntu")
+    print 'Servers re-built!'
+
+
+def start_servers(clusters, use2PL):
+    baseCmd = "cd /home/ubuntu/thebes/thebes-code; screen -d -m bin/"
+    if not use2PL:
+        baseCmd += "hat/run-hat-server.sh %d %d"
+    else:
+        baseCmd += "twopl/run-twopl-server.sh %d %d"
+
+    print 'Starting servers...'
+    for cluster in clusters:
+        for sid, server in enumerate(cluster.servers):
+            print "Starting server on [%s]" % server.ip
+            run_cmd_single(server.ip, baseCmd % (cluster.clusterID, sid), user="root")
+
+    print 'Waiting for things to settle down...'
+    sleep(5)
+    print 'Servers started!'
 
 
 def terminate_clusters():
@@ -316,6 +353,40 @@ def detectScriptsDir():
     SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, 'thebes-code', 'scripts')
     assert os.path.exists(SCRIPTS_DIR), "Failed to detect scripts directory: " + SCRIPTS_DIR
 
+def parseArgs(args):
+    if args.xact_mode == 'hat':
+        print 'Using HAT mode'
+        use2PL = False
+    elif args.xact_mode == 'twopl':
+        print 'Using 2PL mode'
+        use2PL = True
+        assert args.tms <= 1, "More than 1 TM per cluster is not supported yet! (Config file does not allow it.)"
+    else:
+        print 'Invalid mode (not hat or twopl).'
+        exit(-1)
+
+    clusters = []
+    regions = []
+    clusterID = 1
+    clusterConfig = args.clusters.split(",")
+    for i in range(len(clusterConfig)):
+        cluster = clusterConfig[i]
+        if ":" in cluster:
+            regionName = cluster.split(":")[0]
+            numClustersInRegion = int(cluster.split(":")[1])
+        else:
+            regionName = cluster
+            numClustersInRegion = 1
+
+        newRegion = Region(regionName)
+        regions.append(newRegion)
+        for j in range(numClustersInRegion):
+            newCluster = Cluster(regionName, clusterID, args.servers, args.clients, args.tms if use2PL else 0)
+            clusterID += 1
+            clusters.append(newCluster)
+            newRegion.addCluster(newCluster)
+
+    return regions, clusters, use2PL
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
@@ -345,53 +416,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     detectScriptsDir()
+    (regions, clusters, use2PL) = parseArgs(args)
 
     if args.launch:
-        print "Launching thebes cluster"
-        regions = AMIs.keys()
-        check_for_instances(regions)
-
-        if args.xact_mode == 'hat':
-            print 'Using HAT mode'
-            use2PL = False
-        elif args.xact_mode == 'twopl':
-            print 'Using 2PL mode'
-            use2PL = True
-            assert args.tms <= 1, "More than 1 TM per cluster is not supported yet! (Config file does not allow it.)"
-        else:
-            print 'Invalid mode (not hat or twopl).'
-            exit(-1)
-
-        clusters = []
-        regions = []
-        clusterID = 1
-        clusterConfig = args.clusters.split(",")
-        for i in range(len(clusterConfig)):
-            cluster = clusterConfig[i]
-            if ":" in cluster:
-                regionName = cluster.split(":")[0]
-                numClustersInRegion = int(cluster.split(":")[1])
-            else:
-                regionName = cluster
-                numClustersInRegion = 1
-
-            newRegion = Region(regionName)
-            regions.append(newRegion)
-            for j in range(numClustersInRegion):
-                newCluster = Cluster(regionName, clusterID, args.servers, args.clients, args.tms if use2PL else 0)
-                clusterID += 1
-                clusters.append(newCluster)
-                newRegion.addCluster(newCluster)
-                #provision_cluster(newCluster, not args.no_spot)
-
+        print "Launching thebes clusters"
+        check_for_instances(AMIs.keys())
+        provision_clusters(regions, not args.no_spot)
         wait_all_hosts_up(regions)
         assign_hosts(regions)
         write_config(clusters)
         setup_hosts(clusters)
+        start_servers(clusters, use2PL)
 
     if args.restart:
-        print "Restart not yet implemented"
-        exit(-1)
+        print "Rebuilding and restarting thebes clusters"
+        assign_hosts(regions)
+        rebuild_servers(clusters)
+        stop_thebes_processes(clusters)
+        start_servers(clusters, use2PL)
+
 
     if args.terminate:
         print "Terminating thebes clusters"
