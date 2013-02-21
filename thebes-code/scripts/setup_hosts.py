@@ -93,8 +93,8 @@ def get_spot_request_ids(regionName):
 
     return ret
 
-def get_num_running_instances(region):
-    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % region.regionName)
+def get_num_running_instances(regionName):
+    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
     num_running = 0
 
     for line in open("/tmp/running.txt"):
@@ -105,8 +105,8 @@ def get_num_running_instances(region):
     system("rm /tmp/running.txt")
     return num_running
 
-def get_num_nonterminated_instances(region):
-    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % region)
+def get_num_nonterminated_instances(regionName):
+    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
     num_nonterminated = 0
 
     for line in open("/tmp/running.txt"):
@@ -120,7 +120,7 @@ def get_num_nonterminated_instances(region):
 def make_instancefile(name, hosts):
     f = open("hosts/" + name, 'w')
     for host in hosts:
-        f.write("%s\n" % (host))
+        f.write("%s\n" % (host.ip))
     f.close
 
 # MAIN STUFF
@@ -161,56 +161,21 @@ def provision_cluster(cluster, use_spot):
         #   (AMIs[region], n))
 
 
-# Messy string work to write out the thebes.yaml config.
-def write_config(clusters):
-    print "Writing thebes config out... ",
-    #system("git checkout -B ec2-experiment")
-
-    # resultant string: cluster_config: {1: [host1, host2], 2: [host3, host4]}
-    cluster_config = []
-    for cluster in clusters:
-        cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(cluster.servers) + "]")
-    cluster_config_str = "{" +  ", ".join(cluster_config) + "}"
-
-    # resultant string: twopl_cluster_config: {1: [host1*, host2], 2: [host3, host4*]}
-    twopl_cluster_config = []
-    for cluster in clusters:
-        # Put *s after servers owned by this cluster.
-        twoplServerNames = [name + "*" if i % len(clusters) == cluster.clusterID-1 else name for i, name in enumerate(cluster.servers)]
-        twopl_cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(twoplServerNames) + "]")
-    twopl_cluster_config_str = "{" +  ", ".join(twopl_cluster_config) + "}"
-
-    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
-    twopl_tm_config = []
-    for cluster in clusters:
-        if cluster.numTMs > 0:
-            assert cluster.numTMs == 1, "Only support 1 TM per cluster at this time"
-            twopl_tm_config.append(str(cluster.clusterID) + ": " + cluster.tms[0])
-    twopl_tm_config_str = "{" +  ", ".join(twopl_tm_config) + "}"
-
-    sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
-    #system("git add ../conf/thebes.yaml")
-    #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
-    #system("git push origin :ec2-experiment") # Delete previous remote branch
-    #system("git push origin ec2-experiment")
-    print "Done",
-
-
 def wait_all_hosts_up(regions):
     for region in regions:
-        print "Waiting for instances in %s to start..." % region
-        numInstancesInRegion = get_num_running_instances(region)
-        numInstancesExpected = region.getTotalNumHosts()
-        assert numInstancesInRegion <= numInstancesExpected, "More instances running (%d) than started (%d)!" % (numInstancesInRegion, numInstancesExpected)
-        while numInstancesInRegion < numInstancesExpected:
+        print "Waiting for instances in %s to start..." % region.name
+        while True:
+            numInstancesInRegion = get_num_running_instances(region.name)
+            numInstancesExpected = region.getTotalNumHosts()
+            assert numInstancesInRegion <= numInstancesExpected, "More instances running (%d) than started (%d)!" % (numInstancesInRegion, numInstancesExpected)
+            if numInstancesInRegion == numInstancesExpected:
+                break
             sleep(5)
-        print "All instances in %s alive!" % region
+        print "All instances in %s alive!" % region.name
 
     # Since ssh takes some time to come up
-    print "Waiting for instances to warm up... ",
-    sleep(30)
+    print "Waiting for instances to warm up... "
+    #sleep(30)
     print "Awake!"
 
 
@@ -223,10 +188,10 @@ def assign_hosts(regions):
     system("mkdir -p hosts")
 
     for region in regions:
-        hostsToAssign = get_instances(region.regionName)
-        print "Assigning %d hosts to %s... " % (len(hostsToAssign), region.regionName),
+        hostsToAssign = get_instances(region.name)
+        print "Assigning %d hosts to %s... " % (len(hostsToAssign), region.name),
         allHosts += hostsToAssign
-        hostsPerRegion[region.regionName] = hostsToAssign
+        hostsPerRegion[region.name] = hostsToAssign
 
         for cluster in region.clusters:
             cluster.allocateHosts(hostsToAssign[:cluster.getNumHosts()])
@@ -247,9 +212,48 @@ def assign_hosts(regions):
 
     print "Assigned all %d hosts!" % len(allHosts)
 
+
+# Messy string work to write out the thebes.yaml config.
+def write_config(clusters):
+    print "Writing thebes config out... ",
+    #system("git checkout -B ec2-experiment")
+
+    # resultant string: cluster_config: {1: [host1, host2], 2: [host3, host4]}
+    cluster_config = []
+    for cluster in clusters:
+        cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join([h.ip for h in cluster.servers]) + "]")
+    cluster_config_str = "{" +  ", ".join(cluster_config) + "}"
+
+    # resultant string: twopl_cluster_config: {1: [host1*, host2], 2: [host3, host4*]}
+    twopl_cluster_config = []
+    for cluster in clusters:
+        # Put *s after servers owned by this cluster.
+        twoplServerNames = [h.ip + "*" if i % len(clusters) == cluster.clusterID-1 else h.ip for i, h in enumerate(cluster.servers)]
+        twopl_cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(twoplServerNames) + "]")
+    twopl_cluster_config_str = "{" +  ", ".join(twopl_cluster_config) + "}"
+
+    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
+    twopl_tm_config = []
+    for cluster in clusters:
+        if cluster.numTMs > 0:
+            assert cluster.numTMs == 1, "Only support 1 TM per cluster at this time"
+            twopl_tm_config.append(str(cluster.clusterID) + ": " + cluster.tms[0].ip)
+    twopl_tm_config_str = "{" +  ", ".join(twopl_tm_config) + "}"
+
+    sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
+    sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
+    sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
+    #system("git add ../conf/thebes.yaml")
+    #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
+    #system("git push origin :ec2-experiment") # Delete previous remote branch
+    #system("git push origin ec2-experiment")
+    print "Done",
+
+
 # Runs general setup over all hosts.
 def setup_hosts(clusters):
     global SCRIPTS_DIR
+    print SCRIPTS_DIR, SCRIPTS_DIR + "/resources/enable_root_ssh.sh"
     print "Enabling root SSH...",
     run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
     print "Done"
@@ -286,12 +290,23 @@ def terminate_clusters():
     for regionName in AMIs.keys():
         all_instance_ids += ' '.join([h.instanceid for h in get_instances(regionName)]) + ' '
         all_spot_request_ids += ' '.join(get_spot_request_ids(regionName)) + ' '
-    system("ec2-terminate-instances %s" % all_instance_ids)
-    system("ec2-cancel-spot-instance-requests %s" % all_spot_request_ids)
+
+    if all_instance_ids.strip() != '':
+        print 'Terminating instances...'
+        system("ec2-terminate-instances %s" % all_instance_ids)
+    else:
+        print 'No instances to terminate, skipping...'
+
+    if all_spot_request_ids.strip() != '':
+        print 'Cancelling spot requests...'
+        system("ec2-cancel-spot-instance-requests %s" % all_spot_request_ids)
+    else:
+        print 'No spot requests to cancel, skipping...'
 
 
 SCRIPTS_DIR = ''
 def detectScriptsDir():
+    global SCRIPTS_DIR
     absPath = os.path.abspath('.')
     dirs = absPath.split(os.sep)
     for i in range(len(dirs)-1, 0, -1):
@@ -367,7 +382,7 @@ if __name__ == "__main__":
                 clusterID += 1
                 clusters.append(newCluster)
                 newRegion.addCluster(newCluster)
-                provision_cluster(newCluster, not args.no_spot)
+                #provision_cluster(newCluster, not args.no_spot)
 
         wait_all_hosts_up(regions)
         assign_hosts(regions)
