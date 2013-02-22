@@ -54,6 +54,8 @@ public class ThebesHATServer {
                 logger.debug("Server marked as standalone; not starting anti-entropy!");
             }
 
+            router.bootstrapAntiEntropyRouting();
+
             ReplicaServiceHandler replicaServiceHandler = new ReplicaServiceHandler(engine,
                                                                                     pendingWrites,
                                                                                     antiEntropyServer,

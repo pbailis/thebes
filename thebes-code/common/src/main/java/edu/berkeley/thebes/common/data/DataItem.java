@@ -8,7 +8,7 @@ import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
 public class DataItem {
 	private final ByteBuffer data;
-	private final Version version;
+	private Version version;
 	private List<String> transactionKeys;
 
 	public DataItem(byte[] data, Version version, List<String> transactionKeys) {
@@ -54,6 +54,11 @@ public class DataItem {
 	public Version getVersion() {
 		return version;
 	}
+
+    public Version setVersion(Version newVersion) {
+        version = newVersion;
+        return version;
+    }
 
 	public List<String> getTransactionKeys() {
 		return transactionKeys;

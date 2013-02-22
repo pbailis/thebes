@@ -57,8 +57,8 @@ causal dependencies are handled.
 To check a local server in a cluster for these dependencies, a
 server calls AntiEntropyService.waitFor{Causal,
 Transactional}Dependency. This in turn calls
-DependencyResolver.blockForDependency(). A thread in
-blockForDependency queries the local persistence engine and/or
+DependencyResolver.waitInQueueForDependency(). A thread in
+waitInQueueForDependency queries the local persistence engine and/or
 the PendingWrites list as necessary, waiting until an appropriate
 dependency is found.  waitForCausalDependency() returns when the
 write is in the persistence engine, while
@@ -66,7 +66,7 @@ waitForTransactionalDependency() returns when the write is (at
 least) in PendingWrites.
 
 Every time a new local write is applied, calls to
-blockForDependency() need to be notified and so
+waitInQueueForDependency() need to be notified and so
 notifyNewLocalWrite() is called.
 */
 
@@ -110,11 +110,11 @@ public class DependencyResolver {
                 this.lastWrittenVersion = newVersion;
         }
 
-        public synchronized void prepareToBlockForDependency() {
+        public synchronized void incrementQueueReferenceCount() {
             numWaiters++;
         }
 
-        public synchronized void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
+        public synchronized void waitInQueueForDependency(DataDependency dependency, DependencyType dependencyType) {
             TimerContext startTime = waitingDependencyTimerMetric.time();
             while(true) {
                 try {
@@ -188,7 +188,9 @@ public class DependencyResolver {
 
         public void onComplete() {
             if(blockFor.decrementAndGet() == 0) {
-                blockFor.notify();
+                synchronized (blockFor) {
+                    blockFor.notify();
+                }
             }
         }
 
@@ -235,18 +237,22 @@ public class DependencyResolver {
         blockForDependency(dependency,  DependencyType.ATOMIC);
     }
 
+    private void removePossiblyEmptyQueueByKey(String key) {
+        blockedLock.lock();
+        DependencyWaitingQueue queue = blocked.get(key);
+        if(queue != null && queue.isEmpty()) {
+            blocked.remove(key);
+        }
+        blockedLock.unlock();
+    }
+
     private void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
         DataItem storedItem = persistenceEngine.get(dependency.getKey());
         
-        if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) < 0) ||
+        if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) >= 0) ||
                 (dependencyType == DependencyType.ATOMIC &&
                  pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
-            blockedLock.lock();
-            DependencyWaitingQueue queue = blocked.get(dependency.getKey());
-            if(queue != null && queue.isEmpty()) {
-                blocked.remove(dependency.getKey());
-            }
-            blockedLock.unlock();
+                 removePossiblyEmptyQueueByKey(dependency.getKey());
             return;
         }
 
@@ -258,9 +264,10 @@ public class DependencyResolver {
             blocked.put(dependency.getKey(), queue);
         }
 
-        queue.prepareToBlockForDependency();
+        queue.incrementQueueReferenceCount();
         blockedLock.unlock();
-        queue.blockForDependency(dependency, dependencyType);
+        queue.waitInQueueForDependency(dependency, dependencyType);
+        removePossiblyEmptyQueueByKey(dependency.getKey());
     }
 
     private boolean resolveDependencies(String key,

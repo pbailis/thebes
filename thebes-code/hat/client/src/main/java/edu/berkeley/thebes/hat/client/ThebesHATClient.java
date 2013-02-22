@@ -141,24 +141,24 @@ public class ThebesHATClient implements IThebesClient {
 
     @Override
     public void beginTransaction() throws TException {
-        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) || atomicityLevel != AtomicityLevel.NO_ATOMICITY) {
-            transactionWriteBuffer = Maps.newHashMap();
-        }
-        if(isolationLevel.atOrHigher(IsolationLevel.REPEATABLE_READ)) {
-            transactionReadBuffer = Maps.newHashMap();
-        }
-
+        transactionWriteBuffer = Maps.newHashMap();
+        transactionReadBuffer = Maps.newHashMap();
         transactionInProgress = true;
     }
 
     private void applyWritesInBuffer() {
         final Semaphore parallelWriteSemaphore = new Semaphore(transactionWriteBuffer.size());
+        final Version transactionVersion = new Version(clientID, System.currentTimeMillis());
+
         for(final String key : transactionWriteBuffer.keySet()) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
                     try {
+                        if(atomicityLevel != AtomicityLevel.CLIENT)
+                            queuedWrite.getWrite().setVersion(transactionVersion);
+
                         doPut(key,
                               queuedWrite.getWrite(),
                               queuedWrite.getDependencies(),
@@ -178,6 +178,10 @@ public class ThebesHATClient implements IThebesClient {
         } catch (InterruptedException e) {
             logger.warn(e.getMessage());
         }
+
+        if(atomicityLevel != AtomicityLevel.CLIENT)
+            atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
+                                                transactionVersion);
     }
 
     @Override
@@ -287,6 +291,7 @@ public class ThebesHATClient implements IThebesClient {
                           List<String> transactionKeys) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
+
         try {
             ret = router.getReplicaByKey(key).put(key, DataItem.toThrift(value),
             		DataDependency.toThrift(causalDependencies), transactionKeys);

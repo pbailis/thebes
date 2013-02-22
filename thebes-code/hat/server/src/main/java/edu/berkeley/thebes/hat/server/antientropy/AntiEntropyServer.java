@@ -29,7 +29,7 @@ public class AntiEntropyServer implements Runnable {
     }
 
     public void run() {
-        logger.debug("Starting the anti-entropy server...");
+        logger.debug("Starting the anti-entropy server on IP..."+Config.getAntiEntropyServerBindIP());
         ThriftServer.startInCurrentThread(
                 new AntiEntropyService.Processor<AntiEntropyServiceHandler>(serviceHandler),
                 Config.getAntiEntropyServerBindIP());

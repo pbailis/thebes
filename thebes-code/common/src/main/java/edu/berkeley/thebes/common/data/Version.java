@@ -22,6 +22,9 @@ public class Version implements Comparable<Version> {
 	}
 	
 	public static ThriftVersion toThrift(Version version) {
+        if(version == null)
+            return null;
+
 		return new ThriftVersion(version.getClientID(), version.getTimestamp());
 	}
 	
