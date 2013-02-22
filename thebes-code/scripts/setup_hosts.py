@@ -203,10 +203,10 @@ def wait_all_hosts_up(regions):
             sleep(5)
         pprint("All instances in %s alive!" % region.name)
 
-        # Since ssh takes some time to come up
-        pprint("Waiting for instances to warm up... ")
-        sleep(60)
-        pprint("Awake!")
+    # Since ssh takes some time to come up
+    pprint("Waiting for instances to warm up... ")
+    sleep(60)
+    pprint("Awake!")
 
 
         # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
@@ -305,7 +305,7 @@ def write_config(clusters, graphiteRegion):
     sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
     sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
     sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
-    sed("../conf/thebes.yaml", "^graphite_ip: .*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
+    sed("../conf/thebes.yaml", "^graphite_ip:.*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
     #system("git add ../conf/thebes.yaml")
     #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
     #system("git push origin :ec2-experiment") # Delete previous remote branch
@@ -366,29 +366,29 @@ def setup_and_start_graphite(graphiteRegion):
 
     pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-settings.py", "/tmp/graphite-settings.py", user="ubuntu")
+    upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-aggregation-rules.conf", "/tmp/graphite-aggregation-rules.conf", user="ubuntu")
     run_script("graphite", SCRIPTS_DIR + "/resources/graphite-setup.sh", user="root")
     pprint("Done")
 
 
 def terminate_clusters():
-    all_instance_ids = ''
-    all_spot_request_ids = ''
-
     for regionName in AMIs.keys():
-        all_instance_ids += ' '.join([h.instanceid for h in get_instances(regionName)]) + ' '
-        all_spot_request_ids += ' '.join(get_spot_request_ids(regionName)) + ' '
+        instance_ids = ' '.join([h.instanceid for h in get_instances(regionName)])
+        spot_request_ids = ' '.join(get_spot_request_ids(regionName))
 
-    if all_instance_ids.strip() != '':
-        pprint('Terminating instances...')
-        system("ec2-terminate-instances %s" % all_instance_ids)
-    else:
-        pprint('No instances to terminate, skipping...')
+        if instance_ids.strip() != '':
+            pprint('Terminating instances in %s...' % regionName)
+            system("ec2-terminate-instances --region %s %s" % (regionName, instance_ids))
+        else:
+            pprint('No instances to terminate in %s, skipping...' % regionName)
 
-    if all_spot_request_ids.strip() != '':
-        pprint('Cancelling spot requests...')
-        system("ec2-cancel-spot-instance-requests %s" % all_spot_request_ids)
-    else:
-        pprint('No spot requests to cancel, skipping...')
+        if spot_request_ids.strip() != '':
+            pprint('Cancelling spot requests in %s...' % regionName)
+            system("ec2-cancel-spot-instance-requests --region %s %s" % (regionName, spot_request_ids))
+        else:
+            pprint('No spot requests to cancel in %s, skipping...' % regionName)
+
+
 
 
 SCRIPTS_DIR = ''
