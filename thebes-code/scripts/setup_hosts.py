@@ -20,6 +20,7 @@ class Region:
         self.name = name
         self.clusters = []
         self._ownsGraphite = False
+        self.graphiteHost = None
 
     def ownsGraphite(self):
         return self._ownsGraphite
@@ -223,7 +224,8 @@ def assign_hosts(regions):
         hostsPerRegion[region.name] = hostsToAssign
 
         if region.ownsGraphite():
-            make_instancefile("graphite.txt", [hostsToAssign[0]])
+            region.graphiteHost = hostsToAssign[0]
+            make_instancefile("graphite.txt", [region.graphiteHost])
             hostsToAssign = hostsToAssign[1:]
 
         for cluster in region.clusters:
@@ -236,8 +238,6 @@ def assign_hosts(regions):
             make_instancefile("cluster-%d-clients.txt" % cluster.clusterID, cluster.clients)
             make_instancefile("cluster-%d-tms.txt" % cluster.clusterID, cluster.tms)
 
-
-
         pprint("Done!")
 
     # Finally write the instance files for the regions and everything.
@@ -246,44 +246,6 @@ def assign_hosts(regions):
         make_instancefile("region-%s.txt" % region, hosts)
 
     pprint("Assigned all %d hosts!" % len(allHosts))
-
-
-    # Messy string work to write out the thebes.yaml config.
-def write_config(clusters):
-    pprint("Writing thebes config out... ")
-    #system("git checkout -B ec2-experiment")
-
-    # resultant string: cluster_config: {1: [host1, host2], 2: [host3, host4]}
-    cluster_config = []
-    for cluster in clusters:
-        cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join([h.ip for h in cluster.servers]) + "]")
-    cluster_config_str = "{" +  ", ".join(cluster_config) + "}"
-
-    # resultant string: twopl_cluster_config: {1: [host1*, host2], 2: [host3, host4*]}
-    twopl_cluster_config = []
-    for cluster in clusters:
-        # Put *s after servers owned by this cluster.
-        twoplServerNames = [h.ip + "*" if i % len(clusters) == cluster.clusterID-1 else h.ip for i, h in enumerate(cluster.servers)]
-        twopl_cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(twoplServerNames) + "]")
-    twopl_cluster_config_str = "{" +  ", ".join(twopl_cluster_config) + "}"
-
-    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
-    twopl_tm_config = []
-    for cluster in clusters:
-        if cluster.numTMs > 0:
-            assert cluster.numTMs == 1, "Only support 1 TM per cluster at this time"
-            twopl_tm_config.append(str(cluster.clusterID) + ": " + cluster.tms[0].ip)
-    twopl_tm_config_str = "{" +  ", ".join(twopl_tm_config) + "}"
-
-    sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
-    #system("git add ../conf/thebes.yaml")
-    #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
-    #system("git push origin :ec2-experiment") # Delete previous remote branch
-    #system("git push origin ec2-experiment")
-    pprint("Done")
-
 
 # Runs general setup over all hosts.
 def setup_hosts(clusters):
@@ -312,6 +274,44 @@ def setup_hosts(clusters):
     run_script("all-hosts", SCRIPTS_DIR + "/resources/node_self_setup.sh", user="ubuntu")
     pprint("Done")
 
+
+# Messy string work to write out the thebes.yaml config.
+def write_config(clusters, graphiteRegion):
+    pprint("Writing thebes config out... ")
+    #system("git checkout -B ec2-experiment")
+
+    # resultant string: cluster_config: {1: [host1, host2], 2: [host3, host4]}
+    cluster_config = []
+    for cluster in clusters:
+        cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join([h.ip for h in cluster.servers]) + "]")
+    cluster_config_str = "{" +  ", ".join(cluster_config) + "}"
+
+    # resultant string: twopl_cluster_config: {1: [host1*, host2], 2: [host3, host4*]}
+    twopl_cluster_config = []
+    for cluster in clusters:
+        # Put *s after servers owned by this cluster.
+        twoplServerNames = [h.ip + "*" if i % len(clusters) == cluster.clusterID-1 else h.ip for i, h in enumerate(cluster.servers)]
+        twopl_cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(twoplServerNames) + "]")
+    twopl_cluster_config_str = "{" +  ", ".join(twopl_cluster_config) + "}"
+
+    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
+    twopl_tm_config = []
+    for cluster in clusters:
+        if cluster.numTMs > 0:
+            assert cluster.numTMs == 1, "Only support 1 TM per cluster at this time"
+            twopl_tm_config.append(str(cluster.clusterID) + ": " + cluster.tms[0].ip)
+    twopl_tm_config_str = "{" +  ", ".join(twopl_tm_config) + "}"
+
+    sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
+    sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
+    sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
+    sed("../conf/thebes.yaml", "^graphite_ip: .*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
+    #system("git add ../conf/thebes.yaml")
+    #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
+    #system("git push origin :ec2-experiment") # Delete previous remote branch
+    #system("git push origin ec2-experiment")
+    pprint("Done")
+
     pprint("Uploading config file...")
     upload_file("all-hosts", SCRIPTS_DIR + "/../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
     pprint("Done")
@@ -325,33 +325,49 @@ def stop_thebes_processes(clusters):
 
 def rebuild_servers(clusters):
     pprint('Rebuilding servers...')
+    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git stash", user="ubuntu")
     run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git pull", user="ubuntu")
     run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; mvn package", user="ubuntu")
     pprint('Servers re-built!')
 
 
+CLIENT_ID = 0
+def getNextClientID():
+    global CLIENT_ID
+    CLIENT_ID += 1
+    return CLIENT_ID
+
 def start_servers(clusters, use2PL):
     baseCmd = "cd /home/ubuntu/thebes/thebes-code; screen -d -m bin/"
     if not use2PL:
-        baseCmd += "hat/run-hat-server.sh %d %d"
+        runServerCmd = baseCmd + "hat/run-hat-server.sh %d %d"
     else:
-        baseCmd += "twopl/run-twopl-server.sh %d %d"
+        runServerCmd = baseCmd + "twopl/run-twopl-server.sh %d %d"
+
+    runTMCmd = baseCmd + "twopl/run-twopl-tm.sh %d %d"
 
     pprint('Starting servers...')
     for cluster in clusters:
         for sid, server in enumerate(cluster.servers):
-            pprint("Starting server on [%s]" % server.ip)
-            run_cmd_single(server.ip, baseCmd % (cluster.clusterID, sid), user="root")
+            pprint("Starting kv-server on [%s]" % server.ip)
+            run_cmd_single(server.ip, runServerCmd % (cluster.clusterID, sid), user="root")
+
+        for tm in cluster.tms:
+            pprint("Starting TM on [%s]" % tm.ip)
+            run_cmd_single(tm.ip, runTMCmd % (cluster.clusterID, getNextClientID()), user="root")
+
 
     pprint('Waiting for things to settle down...')
-    sleep(5)
+    sleep(10)
     pprint('Servers started!')
 
-def start_graphite(graphiteRegion):
+def setup_and_start_graphite(graphiteRegion):
     global SCRIPTS_DIR
 
+    pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-settings.py", "/tmp/graphite-settings.py", user="ubuntu")
     run_script("graphite", SCRIPTS_DIR + "/resources/graphite-setup.sh", user="root")
+    pprint("Done")
 
 
 def terminate_clusters():
@@ -482,9 +498,9 @@ if __name__ == "__main__":
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
         assign_hosts(regions)
-        write_config(clusters)
         setup_hosts(clusters)
-        start_graphite(graphiteRegion)
+        write_config(clusters, graphiteRegion)
+        setup_and_start_graphite(graphiteRegion)
         start_servers(clusters, use2PL)
 
     if args.restart:
@@ -492,6 +508,8 @@ if __name__ == "__main__":
         assign_hosts(regions)
         stop_thebes_processes(clusters)
         rebuild_servers(clusters)
+        write_config(clusters, graphiteRegion)
+        setup_and_start_graphite(graphiteRegion)
         start_servers(clusters, use2PL)
 
 
