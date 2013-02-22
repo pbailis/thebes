@@ -60,7 +60,7 @@ public class Config {
     
     private static void configureGraphite() {
     	String graphiteIP = getOption(ConfigParameters.GRAPHITE_IP);
-        if (graphiteIP == null) {
+        if (graphiteIP.equals("")) {
         	return;
         }
     	
