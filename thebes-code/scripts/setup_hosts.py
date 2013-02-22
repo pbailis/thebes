@@ -11,17 +11,29 @@ import os
 from os import system # my pycharm sucks and can't find system by itself...
 from time import sleep
 
-AMIs = {'us-east-1': 'ami-7339b41a'}
+#AMIs = {'us-east-1': 'ami-7339b41a'}
+AMIs = {'us-east-1': 'ami-0cdf4965', 'us-west-1': 'ami-00b39045', 'us-west-2': 'ami-a4b83294',
+        'eu-west-1': 'ami-64636a10'}
 
 class Region:
     def __init__(self, name):
         self.name = name
         self.clusters = []
+        self._ownsGraphite = False
+
+    def ownsGraphite(self):
+        return self._ownsGraphite
+
+    def takeGraphiteOwnership(self):
+        self._ownsGraphite = True
 
     def addCluster(self, cluster):
         self.clusters.append(cluster)
 
     def getTotalNumHosts(self):
+        return self._ownsGraphite + sum([cluster.getNumHosts() for cluster in self.clusters])
+
+    def getTotalNumHostsWithoutGraphite(self):
         return sum([cluster.getNumHosts() for cluster in self.clusters])
 
 class Cluster:
@@ -132,7 +144,7 @@ def check_for_instances(regions):
         numRunningAnywhere += numRunning
 
     if numRunningAnywhere > 0:
-        print "NOTICE: You appear to have %d instances up already." % numRunningAnywhere
+        pprint("NOTICE: You appear to have %d instances up already." % numRunningAnywhere)
         f = raw_input("Continue without terminating them? ")
         if f != "Y" and f != "y":
             exit(-1)
@@ -144,6 +156,7 @@ def provision_clusters(regions, use_spot):
     for region in regions:
         assert region.name in AMIs, "No AMI for region '%s'" % region.name
 
+        # Note: This number includes graphite, even though we won't start that up until a little later.
         f = raw_input("spinning up %d %s instances in %s; okay? " %
                       (region.getTotalNumHosts(), "spot" if use_spot else "normal", region.name))
 
@@ -151,26 +164,35 @@ def provision_clusters(regions, use_spot):
             exit(-1)
 
         if use_spot:
-            provision_spot(region.name, region.getTotalNumHosts())
+            provision_spot(region.name, region.getTotalNumHostsWithoutGraphite())
         else:
-            provision_instance(region.name, region.getTotalNumHosts())
+            provision_instance(region.name, region.getTotalNumHostsWithoutGraphite())
+
+def provision_graphite(region):
+    global AMIs
+    if region == None:
+        pprint('Graphite not enabled.')
+
+    provision_instance(region.name, 1)
+
 
 def provision_spot(regionName, num):
     global AMIs
     system("ec2-request-spot-instances %s --region %s -t t1.micro -price 0.02 " \
            "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
 
-def provision_instance(region, num):
+def provision_instance(regionName, num):
+    global AMIs
+    system("ec2-run-instances %s --region %s -t t1.micro " \
+           "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
     #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
     #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
     #   (AMIs[region], n))
-    print "Error: Non-spot instances not implemented!"
-    exit(-1)
 
 
 def wait_all_hosts_up(regions):
     for region in regions:
-        print "Waiting for instances in %s to start..." % region.name
+        pprint("Waiting for instances in %s to start..." % region.name)
         while True:
             numInstancesInRegion = get_num_running_instances(region.name)
             numInstancesExpected = region.getTotalNumHosts()
@@ -178,16 +200,16 @@ def wait_all_hosts_up(regions):
             if numInstancesInRegion == numInstancesExpected:
                 break
             sleep(5)
-        print "All instances in %s alive!" % region.name
+        pprint("All instances in %s alive!" % region.name)
 
-    # Since ssh takes some time to come up
-    print "Waiting for instances to warm up... "
-    sleep(30)
-    print "Awake!"
+        # Since ssh takes some time to come up
+        pprint("Waiting for instances to warm up... ")
+        sleep(60)
+        pprint("Awake!")
 
 
-# Assigns hosts to clusters (and specifically as servers, clients, and TMs)
-# Also logs the assignments in the hosts/ files.
+        # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
+        # Also logs the assignments in the hosts/ files.
 def assign_hosts(regions):
     allHosts = []
     hostsPerRegion = {}
@@ -196,9 +218,13 @@ def assign_hosts(regions):
 
     for region in regions:
         hostsToAssign = get_instances(region.name)
-        print "Assigning %d hosts to %s... " % (len(hostsToAssign), region.name),
+        pprint("Assigning %d hosts to %s... " % (len(hostsToAssign), region.name))
         allHosts += hostsToAssign
         hostsPerRegion[region.name] = hostsToAssign
+
+        if region.ownsGraphite():
+            make_instancefile("graphite.txt", [hostsToAssign[0]])
+            hostsToAssign = hostsToAssign[1:]
 
         for cluster in region.clusters:
             cluster.allocateHosts(hostsToAssign[:cluster.getNumHosts()])
@@ -210,19 +236,21 @@ def assign_hosts(regions):
             make_instancefile("cluster-%d-clients.txt" % cluster.clusterID, cluster.clients)
             make_instancefile("cluster-%d-tms.txt" % cluster.clusterID, cluster.tms)
 
-        print "Done!"
+
+
+        pprint("Done!")
 
     # Finally write the instance files for the regions and everything.
     make_instancefile("all-hosts.txt", allHosts)
     for region, hosts in hostsPerRegion.items():
         make_instancefile("region-%s.txt" % region, hosts)
 
-    print "Assigned all %d hosts!" % len(allHosts)
+    pprint("Assigned all %d hosts!" % len(allHosts))
 
 
-# Messy string work to write out the thebes.yaml config.
+    # Messy string work to write out the thebes.yaml config.
 def write_config(clusters):
-    print "Writing thebes config out... ",
+    pprint("Writing thebes config out... ")
     #system("git checkout -B ec2-experiment")
 
     # resultant string: cluster_config: {1: [host1, host2], 2: [host3, host4]}
@@ -254,52 +282,52 @@ def write_config(clusters):
     #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
     #system("git push origin :ec2-experiment") # Delete previous remote branch
     #system("git push origin ec2-experiment")
-    print "Done",
+    pprint("Done")
 
 
 # Runs general setup over all hosts.
 def setup_hosts(clusters):
     global SCRIPTS_DIR
-    print SCRIPTS_DIR, SCRIPTS_DIR + "/resources/enable_root_ssh.sh"
-    print "Enabling root SSH...",
+    pprint("Enabling root SSH...")
     run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
-    print "Done"
-    
-    print "Uploading git key...",
+    pprint("Done")
+
+    pprint("Uploading git key...")
     upload_file("all-hosts", SCRIPTS_DIR + "/resources/git-repo.rsa", "/home/ubuntu/.ssh/id_rsa", user="ubuntu")
-    print "Done"
-    
-    print "Uploading authorized key...",
+    pprint("Done")
+
+    pprint("Uploading authorized key...")
     upload_file("all-hosts", SCRIPTS_DIR + "/resources/git-repo.pub", "/home/ubuntu/git-repo.pub", user="ubuntu")
-    print "Done"
-    
-    print "Appending authorized key...",
+    pprint("Done")
+
+    pprint("Appending authorized key...")
     run_cmd("all-hosts", "cat /home/ubuntu/git-repo.pub >> /home/ubuntu/.ssh/authorized_keys", user="ubuntu")
-    print "Done"
+    pprint("Done")
 
-    print "Uploading git to ssh config...",
+    pprint("Uploading git to ssh config...")
     upload_file("all-hosts", SCRIPTS_DIR + "/resources/config", "/home/ubuntu/.ssh/config", user="ubuntu")
-    print "Done"
-    
-    print "Running startup scripts...",
-    run_script("all-hosts", SCRIPTS_DIR + "/resources/node_self_setup.sh", user="ubuntu")
-    print "Done"
+    pprint("Done")
 
-    print "Uploading config file...",
+    pprint("Running startup scripts...")
+    run_script("all-hosts", SCRIPTS_DIR + "/resources/node_self_setup.sh", user="ubuntu")
+    pprint("Done")
+
+    pprint("Uploading config file...")
     upload_file("all-hosts", SCRIPTS_DIR + "/../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
-    print "Done"
+    pprint("Done")
+
 
 
 def stop_thebes_processes(clusters):
-    print "Terminating java processes..."
+    pprint("Terminating java processes...")
     run_cmd("all-hosts", "killall -9 java")
-    print 'Termination command sent.'
+    pprint('Termination command sent.')
 
 def rebuild_servers(clusters):
-    print 'Rebuilding servers...'
+    pprint('Rebuilding servers...')
     run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git pull", user="ubuntu")
     run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; mvn package", user="ubuntu")
-    print 'Servers re-built!'
+    pprint('Servers re-built!')
 
 
 def start_servers(clusters, use2PL):
@@ -309,15 +337,21 @@ def start_servers(clusters, use2PL):
     else:
         baseCmd += "twopl/run-twopl-server.sh %d %d"
 
-    print 'Starting servers...'
+    pprint('Starting servers...')
     for cluster in clusters:
         for sid, server in enumerate(cluster.servers):
-            print "Starting server on [%s]" % server.ip
+            pprint("Starting server on [%s]" % server.ip)
             run_cmd_single(server.ip, baseCmd % (cluster.clusterID, sid), user="root")
 
-    print 'Waiting for things to settle down...'
+    pprint('Waiting for things to settle down...')
     sleep(5)
-    print 'Servers started!'
+    pprint('Servers started!')
+
+def start_graphite(graphiteRegion):
+    global SCRIPTS_DIR
+
+    upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-settings.py", "/tmp/graphite-settings.py", user="ubuntu")
+    run_script("graphite", SCRIPTS_DIR + "/resources/graphite-setup.sh", user="root")
 
 
 def terminate_clusters():
@@ -329,16 +363,16 @@ def terminate_clusters():
         all_spot_request_ids += ' '.join(get_spot_request_ids(regionName)) + ' '
 
     if all_instance_ids.strip() != '':
-        print 'Terminating instances...'
+        pprint('Terminating instances...')
         system("ec2-terminate-instances %s" % all_instance_ids)
     else:
-        print 'No instances to terminate, skipping...'
+        pprint('No instances to terminate, skipping...')
 
     if all_spot_request_ids.strip() != '':
-        print 'Cancelling spot requests...'
+        pprint('Cancelling spot requests...')
         system("ec2-cancel-spot-instance-requests %s" % all_spot_request_ids)
     else:
-        print 'No spot requests to cancel, skipping...'
+        pprint('No spot requests to cancel, skipping...')
 
 
 SCRIPTS_DIR = ''
@@ -355,16 +389,17 @@ def detectScriptsDir():
 
 def parseArgs(args):
     if args.xact_mode == 'hat':
-        print 'Using HAT mode'
+        pprint('Using HAT mode')
         use2PL = False
     elif args.xact_mode == 'twopl':
-        print 'Using 2PL mode'
+        pprint('Using 2PL mode')
         use2PL = True
         assert args.tms <= 1, "More than 1 TM per cluster is not supported yet! (Config file does not allow it.)"
     else:
-        print 'Invalid mode (not hat or twopl).'
+        pprint('Invalid mode (not hat or twopl).')
         exit(-1)
 
+    graphiteRegion = None
     clusters = []
     regions = []
     clusterID = 1
@@ -386,7 +421,20 @@ def parseArgs(args):
             clusters.append(newCluster)
             newRegion.addCluster(newCluster)
 
-    return regions, clusters, use2PL
+        if regionName == args.graphite:
+            newRegion.takeGraphiteOwnership()
+            graphiteRegion = newRegion
+
+    return regions, clusters, use2PL, graphiteRegion
+
+
+def pprint(str):
+    global USE_COLOR
+    if USE_COLOR:
+        print '\033[94m%s\033[0m' % str
+    else:
+        print str
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
@@ -411,25 +459,36 @@ if __name__ == "__main__":
     parser.add_argument('--clusters', '-c', dest='clusters', nargs='?',
                         default="us-east-1", type=str,
                         help='List of clusters to start, command delimited, default=us-east-1:1')
-    parser.add_argument('--no_spot', dest='no_spot', default=False,
+    parser.add_argument('--graphite', '-g', dest='graphite', nargs='?',
+                        default="", type=str,
+                        help='Which cluster graphite is hosted on, default=off')
+    parser.add_argument('--no_spot', dest='no_spot', action='store_true',
                         help='Don\'t use spot instances, default off.')
+    parser.add_argument('--color', dest='color', action='store_true',
+                        help='Print with pretty colors, default off.')
     args = parser.parse_args()
-    
+
+    USE_COLOR = args.color
+    pprint("Reminder: Run this script from an ssh-agent!")
+
     detectScriptsDir()
-    (regions, clusters, use2PL) = parseArgs(args)
+    (regions, clusters, use2PL, graphiteRegion) = parseArgs(args)
+
 
     if args.launch:
-        print "Launching thebes clusters"
+        pprint("Launching thebes clusters")
         check_for_instances(AMIs.keys())
         provision_clusters(regions, not args.no_spot)
+        provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
         assign_hosts(regions)
         write_config(clusters)
         setup_hosts(clusters)
+        start_graphite(graphiteRegion)
         start_servers(clusters, use2PL)
 
     if args.restart:
-        print "Rebuilding and restarting thebes clusters"
+        pprint("Rebuilding and restarting thebes clusters")
         assign_hosts(regions)
         stop_thebes_processes(clusters)
         rebuild_servers(clusters)
@@ -437,7 +496,7 @@ if __name__ == "__main__":
 
 
     if args.terminate:
-        print "Terminating thebes clusters"
+        pprint("Terminating thebes clusters")
         terminate_clusters()
 
     if not args.launch and not args.restart and not args.terminate:

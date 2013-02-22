@@ -11,15 +11,22 @@ import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
 import org.slf4j.LoggerFactory;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+
 import javax.naming.ConfigurationException;
 
 public class ThebesTwoPLServer {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesTwoPLServer.class);
 
+    private static final Counter masterServersMetric = Metrics.newCounter(TwoPLLocalLockManager.class, "2pl-masters");
+    private static final Counter slaveServersMetric = Metrics.newCounter(TwoPLLocalLockManager.class, "2pl-slaves");
+
     private static TwoPLSlaveReplicationService slaveReplicationService;
     
     public static void startMasterServer(TwoPLMasterServiceHandler serviceHandler) {
         logger.debug("Starting master server...");
+        masterServersMetric.inc();
 
         // Connect to slaves to replicate to them.
         if (Config.shouldReplicateToTwoPLSlaves()) {
@@ -38,6 +45,7 @@ public class ThebesTwoPLServer {
     
     public static void startSlaveServer(TwoPLSlaveServiceHandler serviceHandler) {
         logger.debug("Starting slave server...");
+        slaveServersMetric.inc();
         ThriftServer.startInCurrentThread(
                 new TwoPLSlaveReplicaService.Processor<TwoPLSlaveServiceHandler>(serviceHandler),
                 Config.getTwoPLServerBindIP());
