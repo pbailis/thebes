@@ -431,8 +431,8 @@ if __name__ == "__main__":
     if args.restart:
         print "Rebuilding and restarting thebes clusters"
         assign_hosts(regions)
-        rebuild_servers(clusters)
         stop_thebes_processes(clusters)
+        rebuild_servers(clusters)
         start_servers(clusters, use2PL)
 
 
