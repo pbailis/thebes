@@ -41,30 +41,59 @@ public class ThebesYCSBClient extends DB {
         client.close();
 	}
 
-    public void beginTransaction() {
-        client.beginTransaction();
+    public int beginTransaction() {
+        try {
+            client.beginTransaction();
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            return ERROR;
+        }
+
+        return OK;
     }
 
-    public void endTransaction() {
-        client.endTransaction();
+    public int endTransaction() {
+        try {
+            client.endTransaction();
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            return ERROR;
+        }
+
+        return OK;
     }
 	
 	@Override
 	public int delete(String table, String key) {
-        client.put(key, null);
+        try {
+            client.put(key, null);
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            return ERROR;
+        }
         return OK;
 	}
 
 	@Override
 	public int insert(String table, String key, HashMap<String, ByteIterator> values) {
-        client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+        try {
+            client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            return ERROR;
+        }
 		return OK;
 	}
 
 	@Override
 	public int read(String table, String key, Set<String> fields,
 			HashMap<String, ByteIterator> result) {
-        result.put(fields.iterator().next(), new ByteArrayByteIterator(client.get(key).array()));
+        try {
+            result.put(fields.iterator().next(), new ByteArrayByteIterator(client.get(key).array()));
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            return ERROR;
+        }
 		return OK;
 	}
 
