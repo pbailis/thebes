@@ -1,7 +1,9 @@
 package edu.berkeley.thebes.common.config;
 
 import java.io.FileNotFoundException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,8 @@ public class Config {
     private static List<ServerAddress> clusterServers;
     private static List<ServerAddress> siblingServers = null;
     private static List<ServerAddress> masterServers;
+    
+    private static String HOST_NAME;
 
     private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
         YamlConfig.initialize((String) getOptionNoYaml(ConfigParameters.CONFIG_FILE));
@@ -38,6 +42,13 @@ public class Config {
 
         if(missingFields.size() > 0)
             throw new ConfigurationException("missing required configuration options: "+missingFields);
+        
+    	try {
+    		HOST_NAME = InetAddress.getLocalHost().getHostName();
+    	} catch (UnknownHostException e) {
+    		HOST_NAME = "unknown-host";
+    		e.printStackTrace();
+    	}
 
         if (txnMode == null)
             txnMode = getThebesTxnMode();
@@ -53,7 +64,7 @@ public class Config {
         	return;
         }
     	
-        GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003);
+        GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003, HOST_NAME);
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
@@ -69,7 +80,6 @@ public class Config {
     public static void initializeTwoPLTransactionManager()
             throws FileNotFoundException, ConfigurationException {
         txnMode = TransactionMode.TWOPL;
-        // TODO: Be aware that the TM depends on common... should probably restructure some time
         initialize(RequirementLevel.TWOPL_TM.getRequiredParameters());
     }
 
