@@ -2,8 +2,9 @@ package edu.berkeley.thebes.twopl.server;
 
 import org.apache.thrift.TException;
 
+import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
 import edu.berkeley.thebes.twopl.server.TwoPLLocalLockManager.LockType;
 
@@ -36,18 +37,18 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     }
 
     @Override
-    public DataItem get(long sessionId, String key) throws TException {
+    public ThriftDataItem get(long sessionId, String key) throws TException {
         if (lockManager.ownsLock(LockType.READ, key, sessionId)) {
-            return persistenceEngine.get(key);
+            return DataItem.toThrift(persistenceEngine.get(key));
         } else {
             throw new TException("Session does not own GET lock on '" + key + "'");
         }
     }
 
     @Override
-    public boolean put(long sessionId, String key, DataItem value) throws TException {
+    public boolean put(long sessionId, String key, ThriftDataItem value) throws TException {
         if (lockManager.ownsLock(LockType.WRITE, key, sessionId)) {
-            boolean success = persistenceEngine.put(key, value);
+            boolean success = persistenceEngine.put(key, DataItem.fromThrift(value));
             if (success) {
                 slaveReplicationService.sendToSlaves(key, value);
             }

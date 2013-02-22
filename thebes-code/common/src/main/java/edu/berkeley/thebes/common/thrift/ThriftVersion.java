@@ -27,25 +27,25 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataItem");
+public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, ThriftVersion._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftVersion");
 
-  private static final org.apache.thrift.protocol.TField DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("data", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField CLIENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("clientID", org.apache.thrift.protocol.TType.I16, (short)1);
+  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new DataItemStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new DataItemTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ThriftVersionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ThriftVersionTupleSchemeFactory());
   }
 
-  public ByteBuffer data; // required
+  public short clientID; // required
   public long timestamp; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    DATA((short)1, "data"),
-    TIMESTAMP((short)2, "timestamp");
+    CLIENT_ID((short)1, "clientID"),
+    TIMESTAMP((short)3, "timestamp");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -60,9 +60,9 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // DATA
-          return DATA;
-        case 2: // TIMESTAMP
+        case 1: // CLIENT_ID
+          return CLIENT_ID;
+        case 3: // TIMESTAMP
           return TIMESTAMP;
         default:
           return null;
@@ -104,28 +104,30 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   }
 
   // isset id assignments
-  private static final int __TIMESTAMP_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private static final int __CLIENTID_ISSET_ID = 0;
+  private static final int __TIMESTAMP_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.DATA, new org.apache.thrift.meta_data.FieldMetaData("data", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.CLIENT_ID, new org.apache.thrift.meta_data.FieldMetaData("clientID", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
     tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataItem.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftVersion.class, metaDataMap);
   }
 
-  public DataItem() {
+  public ThriftVersion() {
   }
 
-  public DataItem(
-    ByteBuffer data,
+  public ThriftVersion(
+    short clientID,
     long timestamp)
   {
     this();
-    this.data = data;
+    this.clientID = clientID;
+    setClientIDIsSet(true);
     this.timestamp = timestamp;
     setTimestampIsSet(true);
   }
@@ -133,66 +135,53 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataItem(DataItem other) {
+  public ThriftVersion(ThriftVersion other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetData()) {
-      this.data = org.apache.thrift.TBaseHelper.copyBinary(other.data);
-;
-    }
+    this.clientID = other.clientID;
     this.timestamp = other.timestamp;
   }
 
-  public DataItem deepCopy() {
-    return new DataItem(this);
+  public ThriftVersion deepCopy() {
+    return new ThriftVersion(this);
   }
 
   @Override
   public void clear() {
-    this.data = null;
+    setClientIDIsSet(false);
+    this.clientID = 0;
     setTimestampIsSet(false);
     this.timestamp = 0;
   }
 
-  public byte[] getData() {
-    setData(org.apache.thrift.TBaseHelper.rightSize(data));
-    return data == null ? null : data.array();
+  public short getClientID() {
+    return this.clientID;
   }
 
-  public ByteBuffer bufferForData() {
-    return data;
-  }
-
-  public DataItem setData(byte[] data) {
-    setData(data == null ? (ByteBuffer)null : ByteBuffer.wrap(data));
+  public ThriftVersion setClientID(short clientID) {
+    this.clientID = clientID;
+    setClientIDIsSet(true);
     return this;
   }
 
-  public DataItem setData(ByteBuffer data) {
-    this.data = data;
-    return this;
+  public void unsetClientID() {
+    __isset_bit_vector.clear(__CLIENTID_ISSET_ID);
   }
 
-  public void unsetData() {
-    this.data = null;
+  /** Returns true if field clientID is set (has been assigned a value) and false otherwise */
+  public boolean isSetClientID() {
+    return __isset_bit_vector.get(__CLIENTID_ISSET_ID);
   }
 
-  /** Returns true if field data is set (has been assigned a value) and false otherwise */
-  public boolean isSetData() {
-    return this.data != null;
-  }
-
-  public void setDataIsSet(boolean value) {
-    if (!value) {
-      this.data = null;
-    }
+  public void setClientIDIsSet(boolean value) {
+    __isset_bit_vector.set(__CLIENTID_ISSET_ID, value);
   }
 
   public long getTimestamp() {
     return this.timestamp;
   }
 
-  public DataItem setTimestamp(long timestamp) {
+  public ThriftVersion setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     setTimestampIsSet(true);
     return this;
@@ -213,11 +202,11 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case DATA:
+    case CLIENT_ID:
       if (value == null) {
-        unsetData();
+        unsetClientID();
       } else {
-        setData((ByteBuffer)value);
+        setClientID((Short)value);
       }
       break;
 
@@ -234,8 +223,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case DATA:
-      return getData();
+    case CLIENT_ID:
+      return Short.valueOf(getClientID());
 
     case TIMESTAMP:
       return Long.valueOf(getTimestamp());
@@ -251,8 +240,8 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
 
     switch (field) {
-    case DATA:
-      return isSetData();
+    case CLIENT_ID:
+      return isSetClientID();
     case TIMESTAMP:
       return isSetTimestamp();
     }
@@ -263,21 +252,21 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataItem)
-      return this.equals((DataItem)that);
+    if (that instanceof ThriftVersion)
+      return this.equals((ThriftVersion)that);
     return false;
   }
 
-  public boolean equals(DataItem that) {
+  public boolean equals(ThriftVersion that) {
     if (that == null)
       return false;
 
-    boolean this_present_data = true && this.isSetData();
-    boolean that_present_data = true && that.isSetData();
-    if (this_present_data || that_present_data) {
-      if (!(this_present_data && that_present_data))
+    boolean this_present_clientID = true;
+    boolean that_present_clientID = true;
+    if (this_present_clientID || that_present_clientID) {
+      if (!(this_present_clientID && that_present_clientID))
         return false;
-      if (!this.data.equals(that.data))
+      if (this.clientID != that.clientID)
         return false;
     }
 
@@ -298,20 +287,20 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     return 0;
   }
 
-  public int compareTo(DataItem other) {
+  public int compareTo(ThriftVersion other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataItem typedOther = (DataItem)other;
+    ThriftVersion typedOther = (ThriftVersion)other;
 
-    lastComparison = Boolean.valueOf(isSetData()).compareTo(typedOther.isSetData());
+    lastComparison = Boolean.valueOf(isSetClientID()).compareTo(typedOther.isSetClientID());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetData()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.data, typedOther.data);
+    if (isSetClientID()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.clientID, typedOther.clientID);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -343,15 +332,11 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataItem(");
+    StringBuilder sb = new StringBuilder("ThriftVersion(");
     boolean first = true;
 
-    sb.append("data:");
-    if (this.data == null) {
-      sb.append("null");
-    } else {
-      org.apache.thrift.TBaseHelper.toString(this.data, sb);
-    }
+    sb.append("clientID:");
+    sb.append(this.clientID);
     first = false;
     if (!first) sb.append(", ");
     sb.append("timestamp:");
@@ -383,15 +368,15 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
   }
 
-  private static class DataItemStandardSchemeFactory implements SchemeFactory {
-    public DataItemStandardScheme getScheme() {
-      return new DataItemStandardScheme();
+  private static class ThriftVersionStandardSchemeFactory implements SchemeFactory {
+    public ThriftVersionStandardScheme getScheme() {
+      return new ThriftVersionStandardScheme();
     }
   }
 
-  private static class DataItemStandardScheme extends StandardScheme<DataItem> {
+  private static class ThriftVersionStandardScheme extends StandardScheme<ThriftVersion> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ThriftVersion struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -401,15 +386,15 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
           break;
         }
         switch (schemeField.id) {
-          case 1: // DATA
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.data = iprot.readBinary();
-              struct.setDataIsSet(true);
+          case 1: // CLIENT_ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I16) {
+              struct.clientID = iprot.readI16();
+              struct.setClientIDIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // TIMESTAMP
+          case 3: // TIMESTAMP
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
               struct.timestamp = iprot.readI64();
               struct.setTimestampIsSet(true);
@@ -428,15 +413,13 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ThriftVersion struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (struct.data != null) {
-        oprot.writeFieldBegin(DATA_FIELD_DESC);
-        oprot.writeBinary(struct.data);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(CLIENT_ID_FIELD_DESC);
+      oprot.writeI16(struct.clientID);
+      oprot.writeFieldEnd();
       oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
       oprot.writeI64(struct.timestamp);
       oprot.writeFieldEnd();
@@ -446,27 +429,27 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
 
   }
 
-  private static class DataItemTupleSchemeFactory implements SchemeFactory {
-    public DataItemTupleScheme getScheme() {
-      return new DataItemTupleScheme();
+  private static class ThriftVersionTupleSchemeFactory implements SchemeFactory {
+    public ThriftVersionTupleScheme getScheme() {
+      return new ThriftVersionTupleScheme();
     }
   }
 
-  private static class DataItemTupleScheme extends TupleScheme<DataItem> {
+  private static class ThriftVersionTupleScheme extends TupleScheme<ThriftVersion> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetData()) {
+      if (struct.isSetClientID()) {
         optionals.set(0);
       }
       if (struct.isSetTimestamp()) {
         optionals.set(1);
       }
       oprot.writeBitSet(optionals, 2);
-      if (struct.isSetData()) {
-        oprot.writeBinary(struct.data);
+      if (struct.isSetClientID()) {
+        oprot.writeI16(struct.clientID);
       }
       if (struct.isSetTimestamp()) {
         oprot.writeI64(struct.timestamp);
@@ -474,12 +457,12 @@ public class DataItem implements org.apache.thrift.TBase<DataItem, DataItem._Fie
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, DataItem struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
-        struct.data = iprot.readBinary();
-        struct.setDataIsSet(true);
+        struct.clientID = iprot.readI16();
+        struct.setClientIDIsSet(true);
       }
       if (incoming.get(1)) {
         struct.timestamp = iprot.readI64();
