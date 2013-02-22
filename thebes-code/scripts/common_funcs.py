@@ -21,7 +21,7 @@ def upload_file(hosts, local_path, remote_path, user="root"):
     system("parallel-scp -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt /tmp/%s %s" % (user, hosts, script, remote_path))
 
 def run_script(hosts, script, user="root"):
-    upload_file(hosts, script, "/tmp", user)
+    upload_file(hosts, script.split(" ")[0], "/tmp", user)
     run_cmd(hosts, "bash /tmp/%s" % (script.split("/")[-1]), user)
 
 def fetch_file_single(host, remote, local, user="root"):
