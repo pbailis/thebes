@@ -2,7 +2,8 @@ package edu.berkeley.thebes.common.data;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Objects;
+
+import com.google.common.base.Objects;
 
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
@@ -70,7 +71,7 @@ public class DataItem {
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(data, version, transactionKeys);
+		return Objects.hashCode(data, version, transactionKeys);
 	}
 
 	@Override
@@ -80,8 +81,8 @@ public class DataItem {
 		}
 		
 		DataItem di = (DataItem) other;
-		return Objects.equals(getData(), di.getData()) &&
-				Objects.equals(getVersion(), di.getVersion()) &&
-				Objects.equals(getTransactionKeys(), di.getTransactionKeys());
+		return Objects.equal(getData(), di.getData()) &&
+				Objects.equal(getVersion(), di.getVersion()) &&
+				Objects.equal(getTransactionKeys(), di.getTransactionKeys());
 	}
 }
