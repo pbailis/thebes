@@ -1,8 +1,8 @@
 package edu.berkeley.thebes.hat.common.data;
 
 import java.util.List;
-import java.util.Objects;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.data.Version;
@@ -61,7 +61,7 @@ public class DataDependency {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(key, version);
+		return Objects.hashCode(key, version);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class DataDependency {
 		}
 		
 		DataDependency dd = (DataDependency) other;
-		return Objects.equals(getKey(), dd.getKey()) &&
-				Objects.equals(getVersion(), dd.getVersion());
+		return Objects.equal(getKey(), dd.getKey()) &&
+				Objects.equal(getVersion(), dd.getVersion());
 		}
 }
