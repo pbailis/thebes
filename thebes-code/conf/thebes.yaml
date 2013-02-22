@@ -1,5 +1,6 @@
 persistence_engine: memory
-cluster_config: {1: [ec2-54-234-27-44.compute-1.amazonaws.com, ec2-50-17-24-86.compute-1.amazonaws.com], 2: [ec2-54-234-243-77.compute-1.amazonaws.com, ec2-54-234-88-97.compute-1.amazonaws.com]}
-twopl_cluster_config: {1: [ec2-54-234-27-44.compute-1.amazonaws.com*, ec2-50-17-24-86.compute-1.amazonaws.com], 2: [ec2-54-234-243-77.compute-1.amazonaws.com, ec2-54-234-88-97.compute-1.amazonaws.com*]}
-twopl_tm_config: {1: ec2-23-22-117-11.compute-1.amazonaws.com, 2: ec2-204-236-203-128.compute-1.amazonaws.com}
+cluster_config: {1: [ec2-54-234-137-60.compute-1.amazonaws.com, ec2-107-20-89-255.compute-1.amazonaws.com], 2: [ec2-107-21-182-117.compute-1.amazonaws.com, ec2-23-22-64-76.compute-1.amazonaws.com]}
+twopl_cluster_config: {1: [ec2-54-234-137-60.compute-1.amazonaws.com*, ec2-107-20-89-255.compute-1.amazonaws.com], 2: [ec2-107-21-182-117.compute-1.amazonaws.com, ec2-23-22-64-76.compute-1.amazonaws.com*]}
+twopl_tm_config: {1: ec2-184-73-124-254.compute-1.amazonaws.com, 2: ec2-75-101-211-128.compute-1.amazonaws.com}
+graphite_ip: 127.0.0.1
 socket_timeout: 10000

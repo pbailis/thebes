@@ -25,6 +25,7 @@ public enum ConfigParameters {
     CLIENTID(Short.class, RequirementLevel.CLIENT_COMMON),
     /** Map of clusters, indexed starting at 1. */
     CLUSTER_CONFIG(Map.class, RequirementLevel.HAT_COMMON),
+    GRAPHITE_IP(String.class, (String) null),
     PERSISTENCE_ENGINE(PersistenceEngine.class, PersistenceEngine.MEMORY),
     SOCKET_TIMEOUT(Integer.class, 4000),
     SERVER_PORT(Integer.class, 8080),

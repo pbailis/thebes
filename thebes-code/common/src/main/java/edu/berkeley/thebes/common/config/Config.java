@@ -12,6 +12,7 @@ import javax.naming.ConfigurationException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yammer.metrics.reporting.ConsoleReporter;
+import com.yammer.metrics.reporting.GraphiteReporter;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
@@ -42,6 +43,17 @@ public class Config {
             txnMode = getThebesTxnMode();
         clusterServers = getServersInCluster(getClusterID());
         masterServers = getMasterServers();
+        
+        configureGraphite();
+    }
+    
+    private static void configureGraphite() {
+    	String graphiteIP = getOption(ConfigParameters.GRAPHITE_IP);
+        if (graphiteIP == null) {
+        	return;
+        }
+    	
+        GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003);
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
