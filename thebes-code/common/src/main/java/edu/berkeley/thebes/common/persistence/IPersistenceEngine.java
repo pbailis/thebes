@@ -1,6 +1,6 @@
 package edu.berkeley.thebes.common.persistence;
 
-import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.data.DataItem;
 
 public interface IPersistenceEngine {
     public void open();

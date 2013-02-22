@@ -4,8 +4,8 @@ import javax.naming.ConfigurationException;
 
 import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
-import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyChecker;
-import edu.berkeley.thebes.hat.server.dependencies.GenericDependencyResolver;
+import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
+import edu.berkeley.thebes.hat.server.dependencies.PendingWrites;
 import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.Config;
@@ -39,16 +39,13 @@ public class ThebesHATServer {
             }
             engine.open();
 
+            PendingWrites pendingWrites = new PendingWrites();
+
             AntiEntropyServiceRouter router = new AntiEntropyServiceRouter();
 
-            GenericDependencyResolver causalDependencyResolver = new GenericDependencyResolver(engine);
-            GenericDependencyChecker causalDependencyChecker = new GenericDependencyChecker(engine,
-                                                                                            router,
-                                                                                            causalDependencyResolver);
+            DependencyResolver dependencyResolver = new DependencyResolver(engine, pendingWrites, router);
 
-            AntiEntropyServiceHandler antiEntropyServiceHandler = new AntiEntropyServiceHandler(engine,
-                                                                                                causalDependencyChecker,
-                                                                                                causalDependencyResolver);
+            AntiEntropyServiceHandler antiEntropyServiceHandler = new AntiEntropyServiceHandler(dependencyResolver);
             AntiEntropyServer antiEntropyServer = new AntiEntropyServer(antiEntropyServiceHandler);
 
             if (!Config.isStandaloneServer()) {
@@ -57,7 +54,12 @@ public class ThebesHATServer {
                 logger.debug("Server marked as standalone; not starting anti-entropy!");
             }
 
-            ReplicaServiceHandler replicaServiceHandler = new ReplicaServiceHandler(engine, antiEntropyServer, causalDependencyResolver);
+            router.bootstrapAntiEntropyRouting();
+
+            ReplicaServiceHandler replicaServiceHandler = new ReplicaServiceHandler(engine,
+                                                                                    pendingWrites,
+                                                                                    antiEntropyServer,
+                                                                                    dependencyResolver);
 
             logger.debug("Starting the server...");
             ThriftServer.startInCurrentThread(

@@ -37,9 +37,9 @@ public class TwoPLMasterReplicaService {
 
     public void unlock(long sessionId, String key) throws org.apache.thrift.TException;
 
-    public edu.berkeley.thebes.common.thrift.DataItem get(long sessionId, String key) throws org.apache.thrift.TException;
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem get(long sessionId, String key) throws org.apache.thrift.TException;
 
-    public boolean put(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException;
+    public boolean put(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
 
   }
 
@@ -53,7 +53,7 @@ public class TwoPLMasterReplicaService {
 
     public void get(long sessionId, String key, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void put(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -140,7 +140,7 @@ public class TwoPLMasterReplicaService {
       return;
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem get(long sessionId, String key) throws org.apache.thrift.TException
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem get(long sessionId, String key) throws org.apache.thrift.TException
     {
       send_get(sessionId, key);
       return recv_get();
@@ -154,7 +154,7 @@ public class TwoPLMasterReplicaService {
       sendBase("get", args);
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem recv_get() throws org.apache.thrift.TException
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem recv_get() throws org.apache.thrift.TException
     {
       get_result result = new get_result();
       receiveBase(result, "get");
@@ -164,13 +164,13 @@ public class TwoPLMasterReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public boolean put(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public boolean put(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
     {
       send_put(sessionId, key, value);
       return recv_put();
     }
 
-    public void send_put(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value) throws org.apache.thrift.TException
+    public void send_put(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setSessionId(sessionId);
@@ -337,7 +337,7 @@ public class TwoPLMasterReplicaService {
         prot.writeMessageEnd();
       }
 
-      public edu.berkeley.thebes.common.thrift.DataItem getResult() throws org.apache.thrift.TException {
+      public edu.berkeley.thebes.common.thrift.ThriftDataItem getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -347,7 +347,7 @@ public class TwoPLMasterReplicaService {
       }
     }
 
-    public void put(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(sessionId, key, value, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -357,8 +357,8 @@ public class TwoPLMasterReplicaService {
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long sessionId;
       private String key;
-      private edu.berkeley.thebes.common.thrift.DataItem value;
-      public put_call(long sessionId, String key, edu.berkeley.thebes.common.thrift.DataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private edu.berkeley.thebes.common.thrift.ThriftDataItem value;
+      public put_call(long sessionId, String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.sessionId = sessionId;
         this.key = key;
@@ -826,6 +826,8 @@ public class TwoPLMasterReplicaService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -3041,7 +3043,7 @@ public class TwoPLMasterReplicaService {
       schemes.put(TupleScheme.class, new get_resultTupleSchemeFactory());
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem success; // required
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -3106,7 +3108,7 @@ public class TwoPLMasterReplicaService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_result.class, metaDataMap);
     }
@@ -3115,7 +3117,7 @@ public class TwoPLMasterReplicaService {
     }
 
     public get_result(
-      edu.berkeley.thebes.common.thrift.DataItem success)
+      edu.berkeley.thebes.common.thrift.ThriftDataItem success)
     {
       this();
       this.success = success;
@@ -3126,7 +3128,7 @@ public class TwoPLMasterReplicaService {
      */
     public get_result(get_result other) {
       if (other.isSetSuccess()) {
-        this.success = new edu.berkeley.thebes.common.thrift.DataItem(other.success);
+        this.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.success);
       }
     }
 
@@ -3139,11 +3141,11 @@ public class TwoPLMasterReplicaService {
       this.success = null;
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getSuccess() {
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem getSuccess() {
       return this.success;
     }
 
-    public get_result setSuccess(edu.berkeley.thebes.common.thrift.DataItem success) {
+    public get_result setSuccess(edu.berkeley.thebes.common.thrift.ThriftDataItem success) {
       this.success = success;
       return this;
     }
@@ -3169,7 +3171,7 @@ public class TwoPLMasterReplicaService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setSuccess((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
         }
         break;
 
@@ -3317,7 +3319,7 @@ public class TwoPLMasterReplicaService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new edu.berkeley.thebes.common.thrift.DataItem();
+                struct.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -3376,7 +3378,7 @@ public class TwoPLMasterReplicaService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = new edu.berkeley.thebes.common.thrift.DataItem();
+          struct.success = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
@@ -3400,7 +3402,7 @@ public class TwoPLMasterReplicaService {
 
     public long sessionId; // required
     public String key; // required
-    public edu.berkeley.thebes.common.thrift.DataItem value; // required
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem value; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -3477,7 +3479,7 @@ public class TwoPLMasterReplicaService {
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.DataItem.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -3488,7 +3490,7 @@ public class TwoPLMasterReplicaService {
     public put_args(
       long sessionId,
       String key,
-      edu.berkeley.thebes.common.thrift.DataItem value)
+      edu.berkeley.thebes.common.thrift.ThriftDataItem value)
     {
       this();
       this.sessionId = sessionId;
@@ -3508,7 +3510,7 @@ public class TwoPLMasterReplicaService {
         this.key = other.key;
       }
       if (other.isSetValue()) {
-        this.value = new edu.berkeley.thebes.common.thrift.DataItem(other.value);
+        this.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.value);
       }
     }
 
@@ -3571,11 +3573,11 @@ public class TwoPLMasterReplicaService {
       }
     }
 
-    public edu.berkeley.thebes.common.thrift.DataItem getValue() {
+    public edu.berkeley.thebes.common.thrift.ThriftDataItem getValue() {
       return this.value;
     }
 
-    public put_args setValue(edu.berkeley.thebes.common.thrift.DataItem value) {
+    public put_args setValue(edu.berkeley.thebes.common.thrift.ThriftDataItem value) {
       this.value = value;
       return this;
     }
@@ -3617,7 +3619,7 @@ public class TwoPLMasterReplicaService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((edu.berkeley.thebes.common.thrift.DataItem)value);
+          setValue((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
         }
         break;
 
@@ -3843,7 +3845,7 @@ public class TwoPLMasterReplicaService {
               break;
             case 3: // VALUE
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+                struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
                 struct.value.read(iprot);
                 struct.setValueIsSet(true);
               } else { 
@@ -3930,7 +3932,7 @@ public class TwoPLMasterReplicaService {
           struct.setKeyIsSet(true);
         }
         if (incoming.get(2)) {
-          struct.value = new edu.berkeley.thebes.common.thrift.DataItem();
+          struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.value.read(iprot);
           struct.setValueIsSet(true);
         }

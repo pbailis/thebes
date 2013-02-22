@@ -19,7 +19,7 @@ public class AntiEntropyServiceRouter {
     private static List<AntiEntropyService.Client> neighborClients = Lists.newArrayList();
     private static List<AntiEntropyService.AsyncClient> clusterClients = Lists.newArrayList();
 
-    public AntiEntropyServiceRouter() throws TTransportException {
+    public void bootstrapAntiEntropyRouting() throws TTransportException {
 
         if (Config.isStandaloneServer()) {
             logger.debug("Server marked as standalone; not starting anti-entropy!");

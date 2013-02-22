@@ -2,8 +2,9 @@ package edu.berkeley.thebes.twopl.server;
 
 import org.apache.thrift.TException;
 
+import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.common.thrift.DataItem;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLSlaveReplicaService;
 
 public class TwoPLSlaveServiceHandler implements TwoPLSlaveReplicaService.Iface {
@@ -14,7 +15,7 @@ public class TwoPLSlaveServiceHandler implements TwoPLSlaveReplicaService.Iface 
     }
 
     @Override
-    public boolean put(String key, DataItem value) throws TException {
-        return persistenceEngine.put(key, value);
+    public boolean put(String key, ThriftDataItem value) throws TException {
+        return persistenceEngine.put(key, DataItem.fromThrift(value));
     }
 }
