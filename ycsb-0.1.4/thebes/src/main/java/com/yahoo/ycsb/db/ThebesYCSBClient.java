@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.Vector;
 
 import com.yahoo.ycsb.ByteArrayByteIterator;
+import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
+import com.yahoo.ycsb.generator.IntegerGenerator;
 import org.apache.log4j.Logger;
 
 import edu.berkeley.thebes.client.ThebesClient;
@@ -27,6 +29,26 @@ public class ThebesYCSBClient extends DB {
     public static final int OK = 0;
     public static final int ERROR = -1;
     public static final int NOT_FOUND = -2;
+
+    //TOFIX!
+    private static final IntegerGenerator transactionLengthGenerator = new ConstantIntegerGenerator(10);
+
+    private int currentTransactionLength = -1;
+    private int finalTransactionLength = -1;
+
+    private void checkStartTransaction() {
+        if(currentTransactionLength <= finalTransactionLength) {
+            currentTransactionLength++;
+            return;
+        }
+        else {
+            if(finalTransactionLength != -1)
+                endTransaction();
+
+            finalTransactionLength = transactionLengthGenerator.nextInt();
+            currentTransactionLength = 0;
+        }
+    }
     
 	public void init() throws DBException {
         client = new ThebesClient();
@@ -66,6 +88,7 @@ public class ThebesYCSBClient extends DB {
 	@Override
 	public int delete(String table, String key) {
         try {
+            checkStartTransaction();
             client.put(key, null);
         } catch (Exception e) {
             logger.warn(e.getMessage());
@@ -77,6 +100,7 @@ public class ThebesYCSBClient extends DB {
 	@Override
 	public int insert(String table, String key, HashMap<String, ByteIterator> values) {
         try {
+            checkStartTransaction();
             client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
@@ -89,6 +113,7 @@ public class ThebesYCSBClient extends DB {
 	public int read(String table, String key, Set<String> fields,
 			HashMap<String, ByteIterator> result) {
         try {
+            checkStartTransaction();
             result.put(fields.iterator().next(), new ByteArrayByteIterator(client.get(key).array()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
@@ -100,12 +125,14 @@ public class ThebesYCSBClient extends DB {
 	@Override
 	public int scan(String table, String startkey, int recordcount,
 			Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
+        checkStartTransaction();
         logger.warn("Thebes scans are not implemented!");
 		return ERROR;
 	}
 
 	@Override
 	public int update(String table, String key, HashMap<String, ByteIterator> values) {
+        checkStartTransaction();
         //update doesn't pass in the entire record, so we'd need to do read-modify-write
         throw new UnsupportedOperationException("Thebes updates are not implemented!");
 	}

@@ -1,0 +1,1 @@
+bin/ycsb run thebes -P workloads/workloada -p hosts=127.0.0.1 -p fieldcount=1 -p recordcount=100 -Dconfig_file=../thebes-code/conf/thebes.yaml
