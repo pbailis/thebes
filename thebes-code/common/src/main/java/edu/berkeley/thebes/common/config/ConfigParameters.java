@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.google.common.collect.Lists;
 
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
@@ -21,6 +22,7 @@ public enum ConfigParameters {
     CLUSTERID(Integer.class, RequirementLevel.COMMON),
     /** 0 to N-1, exactly N servers per cluster */
     SERVERID(Integer.class, RequirementLevel.SERVER_COMMON),
+    CLIENTID(Short.class, RequirementLevel.CLIENT_COMMON),
     /** Map of clusters, indexed starting at 1. */
     CLUSTER_CONFIG(Map.class, RequirementLevel.HAT_COMMON),
     PERSISTENCE_ENGINE(PersistenceEngine.class, PersistenceEngine.MEMORY),
@@ -36,7 +38,8 @@ public enum ConfigParameters {
     TWOPL_TM_PORT(Integer.class, 8083),
     TWOPL_TM_CONFIG(Map.class, RequirementLevel.TWOPL_TM),
     TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON),
-    SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION);
+    SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION),
+    ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;
@@ -105,6 +108,9 @@ public enum ConfigParameters {
         // String->Integer casting
         } else if (type.equals(Integer.class) && o instanceof String) {
             return Integer.parseInt(o.toString());
+        }
+        else if (type.equals(Short.class) && o instanceof String) {
+            return Short.parseShort(o.toString());
         }
         
         throw new IllegalArgumentException("Cannot convert " + o.getClass() + " to " + type);

@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yammer.metrics.reporting.ConsoleReporter;
 
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
@@ -74,8 +75,9 @@ public class Config {
 
     public static <T> T getOption(ConfigParameters option) {
         Object ret = System.getProperty(option.getTextName());
-        if (ret != null)
+        if (ret != null) {
             return (T) option.castValue(ret);
+        }
 
         ret = YamlConfig.getOption(option.getTextName());
         if (ret != null)
@@ -133,6 +135,10 @@ public class Config {
 
     private static Integer getServerID() {
         return getOption(ConfigParameters.SERVERID);
+    }
+
+    public static Short getClientID() {
+        return getOption(ConfigParameters.CLIENTID);
     }
 
     private static List<ServerAddress> getSiblingServers(int clusterID, int serverID) {
@@ -242,6 +248,10 @@ public class Config {
 
     public static IsolationLevel getThebesIsolationLevel() {
         return getOption(ConfigParameters.HAT_ISOLATION_LEVEL);
+    }
+
+    public static AtomicityLevel getThebesAtomicityLevel() {
+        return getOption(ConfigParameters.ATOMICITY_LEVEL);
     }
 
     public static SessionLevel getThebesSessionLevel() {

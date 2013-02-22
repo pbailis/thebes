@@ -27,25 +27,25 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataDependency implements org.apache.thrift.TBase<DataDependency, DataDependency._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataDependency");
+public class ThriftDataDependency implements org.apache.thrift.TBase<ThriftDataDependency, ThriftDataDependency._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftDataDependency");
 
   private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new DataDependencyStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new DataDependencyTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new ThriftDataDependencyStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new ThriftDataDependencyTupleSchemeFactory());
   }
 
   public String key; // required
-  public long timestamp; // required
+  public edu.berkeley.thebes.common.thrift.ThriftVersion version; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     KEY((short)1, "key"),
-    TIMESTAMP((short)2, "timestamp");
+    VERSION((short)2, "version");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -62,8 +62,8 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
       switch(fieldId) {
         case 1: // KEY
           return KEY;
-        case 2: // TIMESTAMP
-          return TIMESTAMP;
+        case 2: // VERSION
+          return VERSION;
         default:
           return null;
       }
@@ -104,60 +104,56 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
   }
 
   // isset id assignments
-  private static final int __TIMESTAMP_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataDependency.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftDataDependency.class, metaDataMap);
   }
 
-  public DataDependency() {
+  public ThriftDataDependency() {
   }
 
-  public DataDependency(
+  public ThriftDataDependency(
     String key,
-    long timestamp)
+    edu.berkeley.thebes.common.thrift.ThriftVersion version)
   {
     this();
     this.key = key;
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+    this.version = version;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataDependency(DataDependency other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
+  public ThriftDataDependency(ThriftDataDependency other) {
     if (other.isSetKey()) {
       this.key = other.key;
     }
-    this.timestamp = other.timestamp;
+    if (other.isSetVersion()) {
+      this.version = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.version);
+    }
   }
 
-  public DataDependency deepCopy() {
-    return new DataDependency(this);
+  public ThriftDataDependency deepCopy() {
+    return new ThriftDataDependency(this);
   }
 
   @Override
   public void clear() {
     this.key = null;
-    setTimestampIsSet(false);
-    this.timestamp = 0;
+    this.version = null;
   }
 
   public String getKey() {
     return this.key;
   }
 
-  public DataDependency setKey(String key) {
+  public ThriftDataDependency setKey(String key) {
     this.key = key;
     return this;
   }
@@ -177,27 +173,28 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     }
   }
 
-  public long getTimestamp() {
-    return this.timestamp;
+  public edu.berkeley.thebes.common.thrift.ThriftVersion getVersion() {
+    return this.version;
   }
 
-  public DataDependency setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+  public ThriftDataDependency setVersion(edu.berkeley.thebes.common.thrift.ThriftVersion version) {
+    this.version = version;
     return this;
   }
 
-  public void unsetTimestamp() {
-    __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
+  public void unsetVersion() {
+    this.version = null;
   }
 
-  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
-  public boolean isSetTimestamp() {
-    return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersion() {
+    return this.version != null;
   }
 
-  public void setTimestampIsSet(boolean value) {
-    __isset_bit_vector.set(__TIMESTAMP_ISSET_ID, value);
+  public void setVersionIsSet(boolean value) {
+    if (!value) {
+      this.version = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -210,11 +207,11 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
       }
       break;
 
-    case TIMESTAMP:
+    case VERSION:
       if (value == null) {
-        unsetTimestamp();
+        unsetVersion();
       } else {
-        setTimestamp((Long)value);
+        setVersion((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
       }
       break;
 
@@ -226,8 +223,8 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     case KEY:
       return getKey();
 
-    case TIMESTAMP:
-      return Long.valueOf(getTimestamp());
+    case VERSION:
+      return getVersion();
 
     }
     throw new IllegalStateException();
@@ -242,8 +239,8 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     switch (field) {
     case KEY:
       return isSetKey();
-    case TIMESTAMP:
-      return isSetTimestamp();
+    case VERSION:
+      return isSetVersion();
     }
     throw new IllegalStateException();
   }
@@ -252,12 +249,12 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataDependency)
-      return this.equals((DataDependency)that);
+    if (that instanceof ThriftDataDependency)
+      return this.equals((ThriftDataDependency)that);
     return false;
   }
 
-  public boolean equals(DataDependency that) {
+  public boolean equals(ThriftDataDependency that) {
     if (that == null)
       return false;
 
@@ -270,12 +267,12 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
         return false;
     }
 
-    boolean this_present_timestamp = true;
-    boolean that_present_timestamp = true;
-    if (this_present_timestamp || that_present_timestamp) {
-      if (!(this_present_timestamp && that_present_timestamp))
+    boolean this_present_version = true && this.isSetVersion();
+    boolean that_present_version = true && that.isSetVersion();
+    if (this_present_version || that_present_version) {
+      if (!(this_present_version && that_present_version))
         return false;
-      if (this.timestamp != that.timestamp)
+      if (!this.version.equals(that.version))
         return false;
     }
 
@@ -287,13 +284,13 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     return 0;
   }
 
-  public int compareTo(DataDependency other) {
+  public int compareTo(ThriftDataDependency other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataDependency typedOther = (DataDependency)other;
+    ThriftDataDependency typedOther = (ThriftDataDependency)other;
 
     lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
@@ -305,12 +302,12 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -332,7 +329,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataDependency(");
+    StringBuilder sb = new StringBuilder("ThriftDataDependency(");
     boolean first = true;
 
     sb.append("key:");
@@ -343,8 +340,12 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("timestamp:");
-    sb.append(this.timestamp);
+    sb.append("version:");
+    if (this.version == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.version);
+    }
     first = false;
     sb.append(")");
     return sb.toString();
@@ -364,23 +365,21 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
     }
   }
 
-  private static class DataDependencyStandardSchemeFactory implements SchemeFactory {
-    public DataDependencyStandardScheme getScheme() {
-      return new DataDependencyStandardScheme();
+  private static class ThriftDataDependencyStandardSchemeFactory implements SchemeFactory {
+    public ThriftDataDependencyStandardScheme getScheme() {
+      return new ThriftDataDependencyStandardScheme();
     }
   }
 
-  private static class DataDependencyStandardScheme extends StandardScheme<DataDependency> {
+  private static class ThriftDataDependencyStandardScheme extends StandardScheme<ThriftDataDependency> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, DataDependency struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -398,10 +397,11 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // TIMESTAMP
-            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.timestamp = iprot.readI64();
-              struct.setTimestampIsSet(true);
+          case 2: // VERSION
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+              struct.version.read(iprot);
+              struct.setVersionIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -417,7 +417,7 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, DataDependency struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -426,44 +426,46 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
         oprot.writeString(struct.key);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-      oprot.writeI64(struct.timestamp);
-      oprot.writeFieldEnd();
+      if (struct.version != null) {
+        oprot.writeFieldBegin(VERSION_FIELD_DESC);
+        struct.version.write(oprot);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
   }
 
-  private static class DataDependencyTupleSchemeFactory implements SchemeFactory {
-    public DataDependencyTupleScheme getScheme() {
-      return new DataDependencyTupleScheme();
+  private static class ThriftDataDependencyTupleSchemeFactory implements SchemeFactory {
+    public ThriftDataDependencyTupleScheme getScheme() {
+      return new ThriftDataDependencyTupleScheme();
     }
   }
 
-  private static class DataDependencyTupleScheme extends TupleScheme<DataDependency> {
+  private static class ThriftDataDependencyTupleScheme extends TupleScheme<ThriftDataDependency> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetKey()) {
         optionals.set(0);
       }
-      if (struct.isSetTimestamp()) {
+      if (struct.isSetVersion()) {
         optionals.set(1);
       }
       oprot.writeBitSet(optionals, 2);
       if (struct.isSetKey()) {
         oprot.writeString(struct.key);
       }
-      if (struct.isSetTimestamp()) {
-        oprot.writeI64(struct.timestamp);
+      if (struct.isSetVersion()) {
+        struct.version.write(oprot);
       }
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, DataDependency struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, ThriftDataDependency struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
@@ -471,8 +473,9 @@ public class DataDependency implements org.apache.thrift.TBase<DataDependency, D
         struct.setKeyIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.timestamp = iprot.readI64();
-        struct.setTimestampIsSet(true);
+        struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+        struct.version.read(iprot);
+        struct.setVersionIsSet(true);
       }
     }
   }

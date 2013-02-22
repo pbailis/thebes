@@ -45,8 +45,21 @@ public interface ConfigParameterTypes {
         }
     }
 
+    /*
+        TODO: add option to choose between transaction-level and client-level
+        currently just client-level
+    */
     public enum SessionLevel implements ConfigParameterTypes {
         NO_SESSION,
         CAUSAL;
+    }
+
+    /*
+      TODO: switch between client-level and transaction level
+      currently just client-level
+     */
+    public enum AtomicityLevel implements ConfigParameterTypes {
+        NO_ATOMICITY,
+        CLIENT;
     }
 }
