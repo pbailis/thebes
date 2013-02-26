@@ -32,7 +32,7 @@ public class ThebesYCSBClient extends DB {
     public static final int NOT_FOUND = -2;
 
     //TOFIX!
-    private static final IntegerGenerator transactionLengthGenerator = new ConstantIntegerGenerator(10);
+    private static IntegerGenerator transactionLengthGenerator = new ConstantIntegerGenerator(4);
 
     private int currentTransactionLength = -1;
     private int finalTransactionLength = -1;
@@ -52,6 +52,21 @@ public class ThebesYCSBClient extends DB {
     }
     
 	public void init() throws DBException {
+        String transactionLengthDistributionType = System.getProperty("transactionLengthDistributionType");
+        String transactionLengthDistributionParameter = System.getProperty("transactionLengthDistributionParameter");
+        if(transactionLengthDistributionType == null)
+            throw new DBException("required transactionLengthDistributionType");
+
+        if(transactionLengthDistributionParameter == null)
+            throw new DBException("requried transactionLengthDistributionParameter");
+
+        if(transactionLengthDistributionType.compareTo("constant") == 0) {
+            transactionLengthGenerator = new ConstantIntegerGenerator(Integer.parseInt(transactionLengthDistributionParameter));
+        }
+        else {
+            throw new DBException("unimplemented transactionLengthDistribution type!");
+        }
+
         client = new ThebesClient();
         try {
             client.open();
