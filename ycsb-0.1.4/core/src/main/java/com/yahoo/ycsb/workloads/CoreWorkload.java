@@ -269,7 +269,7 @@ public class CoreWorkload extends Workload
 	CounterGenerator transactioninsertkeysequence;
 	
 	IntegerGenerator scanlength;
-	
+
 	boolean orderedinserts;
 
 	int recordcount;
