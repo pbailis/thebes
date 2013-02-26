@@ -564,6 +564,10 @@ public class Client
 				//System.out.println("["+name+"]=["+value+"]");
 				argindex++;
 			}
+            else
+            {
+                argindex++;
+            }
 
 			if (argindex>=args.length)
 			{

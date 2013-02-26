@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import com.yahoo.ycsb.ByteArrayByteIterator;
+import com.yahoo.ycsb.StringByteIterator;
 import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
 import com.yahoo.ycsb.generator.IntegerGenerator;
 import org.apache.log4j.Logger;
@@ -37,15 +38,15 @@ public class ThebesYCSBClient extends DB {
     private int finalTransactionLength = -1;
 
     private void checkStartTransaction() {
-        if(currentTransactionLength <= finalTransactionLength) {
+        if(currentTransactionLength < finalTransactionLength) {
             currentTransactionLength++;
-            return;
         }
         else {
             if(finalTransactionLength != -1)
                 endTransaction();
 
             finalTransactionLength = transactionLengthGenerator.nextInt();
+            beginTransaction();
             currentTransactionLength = 0;
         }
     }
@@ -104,6 +105,7 @@ public class ThebesYCSBClient extends DB {
             client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
+            e.printStackTrace();
             return ERROR;
         }
 		return OK;
@@ -114,9 +116,24 @@ public class ThebesYCSBClient extends DB {
 			HashMap<String, ByteIterator> result) {
         try {
             checkStartTransaction();
-            result.put(fields.iterator().next(), new ByteArrayByteIterator(client.get(key).array()));
+            ByteBuffer ret = client.get(key);
+
+
+
+            if(ret == null || ret.array() == null) {
+                result.put(fields.iterator().next(), null);
+                return OK;
+            }
+
+            if(fields != null)
+                result.put(fields.iterator().next(), new ByteArrayByteIterator(ret.array()));
+            else
+                result.put("value", new ByteArrayByteIterator(ret.array()));
+
+
         } catch (Exception e) {
             logger.warn(e.getMessage());
+            e.printStackTrace();
             return ERROR;
         }
 		return OK;
@@ -132,9 +149,8 @@ public class ThebesYCSBClient extends DB {
 
 	@Override
 	public int update(String table, String key, HashMap<String, ByteIterator> values) {
-        checkStartTransaction();
         //update doesn't pass in the entire record, so we'd need to do read-modify-write
-        throw new UnsupportedOperationException("Thebes updates are not implemented!");
+        return insert(table, key,  values);
 	}
 	
 	private int checkStore(String table) {

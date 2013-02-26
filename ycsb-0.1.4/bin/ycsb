@@ -89,6 +89,7 @@ def get_ycsb_home():
         dir = os.path.join(dir, os.path.pardir)
     return os.path.abspath(dir)
 
+'''
 if len(sys.argv) < 3:
     usage()
 if sys.argv[1] not in COMMANDS:
@@ -97,15 +98,24 @@ if sys.argv[1] not in COMMANDS:
 if sys.argv[2] not in DATABASES:
     print "ERROR: Database '%s' not found" % sys.argv[2]
     usage()
+'''
 
 ycsb_home = get_ycsb_home()
 command = COMMANDS[sys.argv[1]]["command"]
 database = sys.argv[2]
 db_classname = DATABASES[database]
-options = sys.argv[3:]
 
-ycsb_command = ["java", "-cp", ":".join(find_jars(ycsb_home, database)), \
-                COMMANDS[sys.argv[1]]["main"], "-db", db_classname] + options
+
+thebesoptions = []
+options = []
+for option in sys.argv[3:]:
+    if option.find("-D") != -1:
+        thebesoptions.append(option)
+    else:
+        options.append(option)
+
+ycsb_command = ["java"]+thebesoptions+["-cp", ":".join(find_jars(ycsb_home, database)), \
+                COMMANDS[sys.argv[1]]["main"]]+options+["-db", db_classname]
 if command:
     ycsb_command.append(command)
 print " ".join(ycsb_command)
