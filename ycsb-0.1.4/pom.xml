@@ -69,6 +69,7 @@
     <module>redis</module>
     <module>voldemort</module>
     <module>distribution</module>
+    <module>thebes</module>
   </modules>
 
   <build>

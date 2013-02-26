@@ -564,12 +564,10 @@ public class Client
 				//System.out.println("["+name+"]=["+value+"]");
 				argindex++;
 			}
-			else
-			{
-				System.out.println("Unknown option "+args[argindex]);
-				usageMessage();
-				System.exit(0);
-			}
+            else
+            {
+                argindex++;
+            }
 
 			if (argindex>=args.length)
 			{
