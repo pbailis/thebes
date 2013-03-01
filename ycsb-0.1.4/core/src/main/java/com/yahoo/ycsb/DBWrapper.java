@@ -47,7 +47,7 @@ public class DBWrapper extends DB
         if(txStart == -1)
             txStart = System.nanoTime();
 
-        if(_transactionalDB.transactionFinished()) {
+        if(_transactionalDB != null && _transactionalDB.transactionFinished()) {
             _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
             _measurements.reportReturnCode("TRANSACTION", 1);
             txStart = -1;
