@@ -19,9 +19,10 @@ import org.apache.thrift.transport.TTransportException;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.ByteIterator;
+import com.yahoo.ycsb.TransactionFinished;
 
 
-public class ThebesYCSBClient extends DB {
+public class ThebesYCSBClient extends DB implements TransactionFinished {
 
     ThebesClient client;
 
@@ -49,6 +50,10 @@ public class ThebesYCSBClient extends DB {
             beginTransaction();
             currentTransactionLength = 0;
         }
+    }
+
+    public boolean transactionFinished() {
+        return currentTransactionLength == 0;
     }
     
 	public void init() throws DBException {

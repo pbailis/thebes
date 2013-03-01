@@ -30,13 +30,29 @@ import com.yahoo.ycsb.measurements.Measurements;
 public class DBWrapper extends DB
 {
 	DB _db;
+    TransactionFinished _transactionalDB = null;
 	Measurements _measurements;
+
+    long txStart = -1;
 
 	public DBWrapper(DB db)
 	{
 		_db=db;
+        if(db instanceof TransactionFinished)
+            _transactionalDB = (TransactionFinished)db;
 		_measurements=Measurements.getMeasurements();
 	}
+
+    private void checkTransaction() {
+        if(txStart == -1)
+            txStart = System.nanoTime();
+
+        if(_transactionalDB.transactionFinished()) {
+            _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
+            _measurements.reportReturnCode("TRANSACTION", 1);
+            txStart = -1;
+        }
+    }
 
 	/**
 	 * Set the properties for this DB.
@@ -84,7 +100,9 @@ public class DBWrapper extends DB
 	public int read(String table, String key, Set<String> fields, HashMap<String,ByteIterator> result)
 	{
 		long st=System.nanoTime();
+        checkTransaction();
 		int res=_db.read(table,key,fields,result);
+        checkTransaction();
 		long en=System.nanoTime();
 		_measurements.measure("READ",(int)((en-st)/1000));
 		_measurements.reportReturnCode("READ",res);
@@ -104,7 +122,9 @@ public class DBWrapper extends DB
 	public int scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String,ByteIterator>> result)
 	{
 		long st=System.nanoTime();
+        checkTransaction();
 		int res=_db.scan(table,startkey,recordcount,fields,result);
+        checkTransaction();
 		long en=System.nanoTime();
 		_measurements.measure("SCAN",(int)((en-st)/1000));
 		_measurements.reportReturnCode("SCAN",res);
@@ -123,7 +143,9 @@ public class DBWrapper extends DB
 	public int update(String table, String key, HashMap<String,ByteIterator> values)
 	{
 		long st=System.nanoTime();
+        checkTransaction();
 		int res=_db.update(table,key,values);
+        checkTransaction();
 		long en=System.nanoTime();
 		_measurements.measure("UPDATE",(int)((en-st)/1000));
 		_measurements.reportReturnCode("UPDATE",res);
@@ -142,7 +164,9 @@ public class DBWrapper extends DB
 	public int insert(String table, String key, HashMap<String,ByteIterator> values)
 	{
 		long st=System.nanoTime();
+        checkTransaction();
 		int res=_db.insert(table,key,values);
+        checkTransaction();
 		long en=System.nanoTime();
 		_measurements.measure("INSERT",(int)((en-st)/1000));
 		_measurements.reportReturnCode("INSERT",res);
@@ -159,7 +183,9 @@ public class DBWrapper extends DB
 	public int delete(String table, String key)
 	{
 		long st=System.nanoTime();
+        checkTransaction();
 		int res=_db.delete(table,key);
+        checkTransaction();
 		long en=System.nanoTime();
 		_measurements.measure("DELETE",(int)((en-st)/1000));
 		_measurements.reportReturnCode("DELETE",res);
