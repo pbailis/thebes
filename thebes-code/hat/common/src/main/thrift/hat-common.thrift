@@ -16,8 +16,7 @@ service ReplicaService {
 
   bool put(1: string key,
            2: dataitem.ThriftDataItem value,
-           3: list<ThriftDataDependency> happensAfter,
-           4: list<string> transactionKeys);
+           3: list<string> transactionKeys);
 }
 
 service AntiEntropyService {
@@ -25,9 +24,7 @@ service AntiEntropyService {
    # https://issues.apache.org/jira/browse/THRIFT-1447
    void put(1: string key,
                   2: dataitem.ThriftDataItem value,
-                  3: list<ThriftDataDependency> happensAfter,
-                  4: list<string> transactionKeys);
+                  3: list<string> transactionKeys);
 
-  void waitForCausalDependency(1: ThriftDataDependency dependency);
   void waitForTransactionalDependency(1: ThriftDataDependency dependency);
 }

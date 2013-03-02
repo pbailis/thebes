@@ -21,18 +21,11 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     @Override
     public void put(String key,
                     ThriftDataItem value,
-                    List<ThriftDataDependency> happensAfter,
                     List<String> transactionKeys) throws TException{
 
-        dependencyResolver.asyncApplyNewRemoteWrite(key,
-        		DataItem.fromThrift(value),
-        		DataDependency.fromThrift(happensAfter),
-        		transactionKeys);
-    }
-
-    @Override
-    public void waitForCausalDependency(ThriftDataDependency dependency) {
-        dependencyResolver.blockForCausalDependency(DataDependency.fromThrift(dependency));
+        dependencyResolver.asyncApplyNewWrite(key,
+                                              DataItem.fromThrift(value),
+                                              transactionKeys);
     }
 
     @Override
