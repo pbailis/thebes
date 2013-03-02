@@ -36,13 +36,12 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     @Override
     public boolean put(String key,
                        ThriftDataItem value,
-                       List<ThriftDataDependency> happensAfter,
                        List<String> transactionKeys) throws TException {
-        antiEntropyServer.sendToNeighbors(key, value, happensAfter, transactionKeys);
+        antiEntropyServer.sendToNeighbors(key, value, transactionKeys);
 
-        dependencyResolver.asyncApplyNewLocalWrite(key,
-        		DataItem.fromThrift(value),
-        		transactionKeys);
+        dependencyResolver.asyncApplyNewWrite(key,
+                                              DataItem.fromThrift(value),
+                                              transactionKeys);
 
         // todo: remove this return value--it's really not necessary
         return true;

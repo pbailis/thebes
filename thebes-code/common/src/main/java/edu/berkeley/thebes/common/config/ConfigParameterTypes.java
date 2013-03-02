@@ -46,12 +46,10 @@ public interface ConfigParameterTypes {
     }
 
     /*
-        TODO: add option to choose between transaction-level and client-level
-        currently just client-level
+        no session guarantees for now!
     */
     public enum SessionLevel implements ConfigParameterTypes {
-        NO_SESSION,
-        CAUSAL;
+        NO_SESSION
     }
 
     /*

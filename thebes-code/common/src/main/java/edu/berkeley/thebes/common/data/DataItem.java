@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
@@ -21,7 +22,7 @@ public class DataItem {
 	public DataItem(ByteBuffer data, Version version) {
 		this.data = data;
 		this.version = version;
-		this.transactionKeys = null;
+		this.transactionKeys = Lists.newArrayList();
 	}
 	
 	public static DataItem fromThrift(ThriftDataItem dataItem) {
@@ -64,7 +65,7 @@ public class DataItem {
 	public List<String> getTransactionKeys() {
 		return transactionKeys;
 	}
-	
+
 	public void setTransactionKeys(List<String> transactionKeys) {
 		this.transactionKeys = transactionKeys;
 	}

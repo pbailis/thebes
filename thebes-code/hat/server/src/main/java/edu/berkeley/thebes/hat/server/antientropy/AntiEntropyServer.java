@@ -39,11 +39,10 @@ public class AntiEntropyServer implements Runnable {
     //todo: race condition between serving and when we've connected to neighbors
     public void sendToNeighbors(String key,
                                 ThriftDataItem value,
-                                List<ThriftDataDependency> happensAfter,
                                 List<String> transactionKeys) throws TException {
         for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
             logger.debug("sending to neighbor");
-            neighbor.send_put(key, value, happensAfter, transactionKeys);
+            neighbor.send_put(key, value, transactionKeys);
             logger.debug("sent to neighbor");
         }
     }
