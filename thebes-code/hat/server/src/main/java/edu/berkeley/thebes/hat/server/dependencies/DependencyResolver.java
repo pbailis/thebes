@@ -1,6 +1,5 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -35,28 +34,14 @@ transaction's sibling dependencies should be present in
 PendingWrites on their respective nodes before the write is
 applied.
 
-A causal dependency is satisfied when there is a write to the
-appropriate key in the local persistence engine with a timestamp
-greater than or equal to that of the causal dependency .
-
 A transactional atomicity dependency is satisfied when there is a
 write to the appropriate key in the local persistence engine with
 a timestamp greater than or equal to that of the causal
 dependency *or* a write in PendingWrites with an *exact* match
 for a timestamp.
 
-Before applying an incoming write, dependencies need to be
-checked. For a write originating in the local cluster, we know
-that the causal dependencies are already present, so we do not
-check them and instead only check the transactional atomicity
-dependencies. For a write originating from a remote cluster, we
-check both causal dependencies and transactional atomicity
-dependencies.  Writes are only placed in PendingWrites once their
-causal dependencies are handled.
-
 To check a local server in a cluster for these dependencies, a
-server calls AntiEntropyService.waitFor{Causal,
-Transactional}Dependency. This in turn calls
+server calls AntiEntropyService.waitForTransactionalDependency. This in turn calls
 DependencyResolver.waitInQueueForDependency(). A thread in
 waitInQueueForDependency queries the local persistence engine and/or
 the PendingWrites list as necessary, waiting until an appropriate
@@ -82,11 +67,6 @@ public class DependencyResolver {
                                                                           TimeUnit.MILLISECONDS,
                                                                           TimeUnit.SECONDS);
 
-    private final Timer resolvingCausalDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
-                                                                          "hat-dependencies-resolving-causal",
-                                                                          TimeUnit.MILLISECONDS,
-                                                                          TimeUnit.SECONDS);
-
     private final Timer resolvingAtomicDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
                                                                           "hat-dependencies-resolving-atomic",
                                                                           TimeUnit.MILLISECONDS,
@@ -97,7 +77,6 @@ public class DependencyResolver {
         private int numWaiters;
 
         public DependencyWaitingQueue(Version lastWrittenVersion) {
-
             this.lastWrittenVersion = lastWrittenVersion;
         }
 
@@ -114,13 +93,12 @@ public class DependencyResolver {
             numWaiters++;
         }
 
-        public synchronized void waitInQueueForDependency(DataDependency dependency, DependencyType dependencyType) {
+        public synchronized void waitInQueueForDependency(DataDependency dependency) {
             TimerContext startTime = waitingDependencyTimerMetric.time();
             while(true) {
                 try {
                     if (lastWrittenVersion.compareTo(dependency.getVersion()) >= 0 ||
-                    		(dependencyType == DependencyType.ATOMIC &&
-                    		pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
+                    		pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null) {
                         numWaiters--;
                         startTime.stop();
                         return;
@@ -138,55 +116,19 @@ public class DependencyResolver {
         }
     }
 
-    private class CausalDependencyCallback implements
-        AsyncMethodCallback<AntiEntropyService.AsyncClient.waitForCausalDependency_call> {
-        private DependencyCallback callback;
-
-        public CausalDependencyCallback(String key, AtomicInteger blockFor) {
-            callback = new DependencyCallback(key, blockFor);
-        }
-
-        @Override
-        public void onComplete(AntiEntropyService.AsyncClient.waitForCausalDependency_call waitForDependency_call) {
-            callback.onComplete();
-        }
-
-        @Override
-        public void onError(Exception e) {
-            callback.onError(e);
-        }
-    }
-
     private class TransactionalDependencyCallback implements
         AsyncMethodCallback<AntiEntropyService.AsyncClient.waitForTransactionalDependency_call> {
-        private DependencyCallback callback;
-
-        public TransactionalDependencyCallback(String key, AtomicInteger blockFor) {
-            callback = new DependencyCallback(key, blockFor);
-        }
-
-        @Override
-        public void onComplete(AntiEntropyService.AsyncClient.waitForTransactionalDependency_call waitForDependency_call) {
-            callback.onComplete();
-        }
-
-        @Override
-        public void onError(Exception e) {
-            callback.onError(e);
-        }
-    }
-
-    private class DependencyCallback {
         String key;
         AtomicInteger blockFor;
 
-        public DependencyCallback(String key,
-                                  AtomicInteger blockFor) {
+        public TransactionalDependencyCallback(String key,
+                                               AtomicInteger blockFor) {
             this.key = key;
             this.blockFor = blockFor;
         }
 
-        public void onComplete() {
+        @Override
+        public void onComplete(AntiEntropyService.AsyncClient.waitForTransactionalDependency_call waitForDependency_call) {
             if(blockFor.decrementAndGet() == 0) {
                 synchronized (blockFor) {
                     blockFor.notify();
@@ -194,23 +136,13 @@ public class DependencyResolver {
             }
         }
 
+        @Override
         public void onError(Exception e) {
             logger.warn(e.getMessage());
             // todo: rethink this behavior
-            onComplete();
+            onComplete(null);
         }
     }
-
-    private static List<DataDependency> keyListToDependencyList(List<String> dependencyKeys, Version version) {
-        List<DataDependency> ret = Lists.newArrayList();
-        for(String key : dependencyKeys) {
-            ret.add(new DataDependency(key, version));
-        }
-
-        return ret;
-    }
-
-    private enum DependencyType { CAUSAL, ATOMIC };
 
     private Map<String, DependencyWaitingQueue> blocked = Maps.newHashMap();
     private Lock blockedLock = new ReentrantLock();
@@ -229,14 +161,6 @@ public class DependencyResolver {
         this.router = router;
     }
 
-    public void blockForCausalDependency(DataDependency dependency) {
-        blockForDependency(dependency,  DependencyType.CAUSAL);
-    }
-
-    public void blockForAtomicDependency(DataDependency dependency) {
-        blockForDependency(dependency,  DependencyType.ATOMIC);
-    }
-
     private void removePossiblyEmptyQueueByKey(String key) {
         blockedLock.lock();
         DependencyWaitingQueue queue = blocked.get(key);
@@ -246,12 +170,11 @@ public class DependencyResolver {
         blockedLock.unlock();
     }
 
-    private void blockForDependency(DataDependency dependency, DependencyType dependencyType) {
+    public void blockForAtomicDependency(DataDependency dependency) {
         DataItem storedItem = persistenceEngine.get(dependency.getKey());
         
         if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) >= 0) ||
-                (dependencyType == DependencyType.ATOMIC &&
-                 pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
+                (pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
                  removePossiblyEmptyQueueByKey(dependency.getKey());
             return;
         }
@@ -266,29 +189,23 @@ public class DependencyResolver {
 
         queue.incrementQueueReferenceCount();
         blockedLock.unlock();
-        queue.waitInQueueForDependency(dependency, dependencyType);
+        queue.waitInQueueForDependency(dependency);
         removePossiblyEmptyQueueByKey(dependency.getKey());
     }
 
     private boolean resolveDependencies(String key,
-                                        List<DataDependency> dependencies,
-                                        DependencyType dependencyType) throws TException {
+                                        Version requiredVersion,
+                                        List<String> dependencies) throws TException {
         if(dependencies.size() > 0) {
             AtomicInteger waiting = new AtomicInteger(dependencies.size());
 
             synchronized (waiting) {
-                for(DataDependency dependency : dependencies) {
-                    AntiEntropyService.AsyncClient client = router.getReplicaByKey(dependency.getKey());
+                for(String atomicKey : dependencies) {
+                    AntiEntropyService.AsyncClient client = router.getReplicaByKey(atomicKey);
 
-                    // technically don't need a callback per call, but the state is in 'waiting' anyway
-                    if (dependencyType == DependencyType.CAUSAL) {
-                        client.waitForCausalDependency(DataDependency.toThrift(dependency),
-                        		new CausalDependencyCallback(key, waiting));
-                    }
-                    else if (dependencyType == DependencyType.ATOMIC) {
-                        client.waitForTransactionalDependency(DataDependency.toThrift(dependency),
-                        		new TransactionalDependencyCallback(key, waiting));
-                    }
+                    client.waitForTransactionalDependency(DataDependency.toThrift(new DataDependency(atomicKey,
+                                                                                                     requiredVersion)),
+                            new TransactionalDependencyCallback(key, waiting));
                 }
 
                 try {
@@ -303,71 +220,38 @@ public class DependencyResolver {
         return true;
     }
 
-    public void asyncApplyNewLocalWrite(final String key,
-                                        final DataItem write,
-                                        final List<String> transactionKeys) throws TException {
-        asyncApplyNewWrite(key,
-                           write,
-                           new ArrayList<DataDependency>(),
-                           keyListToDependencyList(transactionKeys, write.getVersion()),
-                           true);
-    }
-
-    public void asyncApplyNewRemoteWrite(final String key,
-                                        final DataItem write,
-                                        final List<DataDependency> causalDependencies,
-                                        final List<String> transactionKeys) throws TException {
-        asyncApplyNewWrite(key,
-                           write,
-                           causalDependencies,
-                           keyListToDependencyList(transactionKeys, write.getVersion()),
-                           false);
-    }
-
-    private void asyncApplyNewWrite(final String key,
+    public void asyncApplyNewWrite(final String key,
                                    final DataItem write,
-                                   final List<DataDependency> causalDependencies,
-                                   final List<DataDependency> atomicityDependencies,
-                                   boolean local) throws TException {
-
-        if(local && atomicityDependencies.isEmpty()) {
-            TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
-            persistenceEngine.put(key, write);
-            notifyNewLocalWrite(key, write);
-            totalDependencyTime.stop();
-            return;
-        }
-
+                                   final List<String> atomicityDependencies) throws TException {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
-                        return;
+                    final TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
 
-                    TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
-                    TimerContext causalDependencyTime = resolvingCausalDependencyTimerMetric.time();
-
-                    if(!resolveDependencies(key, causalDependencies, DependencyType.CAUSAL)) {
+                    if(atomicityDependencies.isEmpty()) {
+                        persistenceEngine.put(key, write);
+                        notifyNewLocalWrite(key, write);
+                        totalDependencyTime.stop();
                         return;
                     }
 
-                    causalDependencyTime.stop();
+                    if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
+                        return;
 
                     if(!atomicityDependencies.isEmpty())
                         pendingWrites.makeItemPending(key, write);
 
                     TimerContext atomicityDependencyTime = resolvingAtomicDependencyTimerMetric.time();
 
-                    if(!resolveDependencies(key, atomicityDependencies, DependencyType.ATOMIC))
+                    if(!resolveDependencies(key, write.getVersion(), atomicityDependencies))
                         return;
 
-                    atomicityDependencyTime.stop();
-
                     persistenceEngine.put(key, write);
-                    totalDependencyTime.stop();
 
                     notifyNewLocalWrite(key, write);
+                    atomicityDependencyTime.stop();
+                    totalDependencyTime.stop();
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
                 }

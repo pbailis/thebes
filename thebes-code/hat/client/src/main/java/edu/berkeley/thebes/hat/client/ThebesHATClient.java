@@ -36,25 +36,6 @@ import edu.berkeley.thebes.hat.common.data.DataDependency;
 public class ThebesHATClient implements IThebesClient {
     private static Logger logger = LoggerFactory.getLogger(ThebesHATClient.class);
 
-    private class QueuedWrite {
-        private DataItem write;
-
-        private List<DataDependency> dependencies;
-
-        private QueuedWrite(DataItem write, List<DataDependency> dependencies) {
-            this.write = write;
-            this.dependencies = Lists.newArrayList(dependencies);
-        }
-
-        public List<DataDependency> getDependencies() {
-            return dependencies;
-        }
-
-        public DataItem getWrite() {
-            return write;
-        }
-    }
-
     private class VersionVector {
         private Map<String, Version> versions = Maps.newHashMap();
 
@@ -71,6 +52,10 @@ public class ThebesHATClient implements IThebesClient {
                 return versions.get(key);
 
             return null;
+        }
+
+        public void clear() {
+            versions.clear();
         }
     }
 
@@ -89,53 +74,30 @@ public class ThebesHATClient implements IThebesClient {
 
     //ANSI client-side data structures
     private IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
-    private Map<String, QueuedWrite> transactionWriteBuffer;
+    private Map<String, DataItem> transactionWriteBuffer;
     private Map<String, DataItem> transactionReadBuffer;
 
     //Session guarantee data structures
     private SessionLevel sessionLevel = Config.getThebesSessionLevel();
-    private List<DataDependency> causalDependencies;
-
 
     //Atomicity data structures
     private AtomicityLevel atomicityLevel = Config.getThebesAtomicityLevel();
     private VersionVector atomicityVersionVector;
 
-    private void addCausalDependency(String key, DataItem value) {
-        /*
-         We don't want to have a dependency both in causalDependencies and in the
-         transactional atomicity. Transactional atomicity is a strongly connected component,
-         causalDependencies form a DAG.
-         */
-        if(atomicityLevel == AtomicityLevel.NO_ATOMICITY || clientID != value.getVersion().getClientID())
-            causalDependencies.add(new DataDependency(key, value.getVersion()));
-    }
-
-    private void rebaseCausalDependencies(String key, DataItem value) {
-        if(sessionLevel == SessionLevel.CAUSAL) {
-            causalDependencies.clear();
-
-            addCausalDependency(key, value);
-        }
-    }
-
     public ThebesHATClient() {
-        if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED) &&
-           sessionLevel == SessionLevel.CAUSAL &&
-           atomicityLevel == AtomicityLevel.NO_ATOMICITY) {
+        if(atomicityLevel != AtomicityLevel.NO_ATOMICITY &&
+           !isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
             /*
               Begs the question: why have TA and RC as separate? Answer is that this may change if we go with the
               more permissive "broad interpretation" of RC: c.f., P1 vs. A1 in Berensen et al., SIGMOD '95
              */
-            throw new IllegalStateException("Isolation of RC or higher with causality guarantees must" +
-                                            "be accompanied by transactional atomicity at this time.");
+            throw new IllegalStateException("Transactional atomicity guarantees must run at isolation of RC or higher");
         }
     }
 
     @Override
     public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
         router = new ReplicaRouter();
-        causalDependencies = Lists.newArrayList();
         atomicityVersionVector = new VersionVector();
     }
 
@@ -143,25 +105,29 @@ public class ThebesHATClient implements IThebesClient {
     public void beginTransaction() throws TException {
         transactionWriteBuffer = Maps.newHashMap();
         transactionReadBuffer = Maps.newHashMap();
+        atomicityVersionVector.clear();
         transactionInProgress = true;
     }
 
     private void applyWritesInBuffer() {
         final Semaphore parallelWriteSemaphore = new Semaphore(transactionWriteBuffer.size());
         final Version transactionVersion = new Version(clientID, System.currentTimeMillis());
+        final List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet())
+                                                                                                  ;
 
         for(final String key : transactionWriteBuffer.keySet()) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    QueuedWrite queuedWrite = transactionWriteBuffer.get(key);
+                    DataItem queuedWrite = transactionWriteBuffer.get(key);
                     try {
-                        if(atomicityLevel != AtomicityLevel.CLIENT)
-                            queuedWrite.getWrite().setVersion(transactionVersion);
+                        if(atomicityLevel != AtomicityLevel.CLIENT) {
+                            queuedWrite.setVersion(transactionVersion);
+                            queuedWrite.setTransactionKeys(transactionKeys);
+                        }
 
                         doPut(key,
-                              queuedWrite.getWrite(),
-                              queuedWrite.getDependencies(),
+                              queuedWrite,
                               transactionWriteBuffer.keySet());
                     } catch (TException e) {
                         logger.warn(e.getMessage());
@@ -216,16 +182,12 @@ public class ThebesHATClient implements IThebesClient {
             if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
                 transactionReadBuffer.put(key, dataItem);
             }
-
-            transactionWriteBuffer.put(key, new QueuedWrite(dataItem, causalDependencies));
-            rebaseCausalDependencies(key, dataItem);
+            transactionWriteBuffer.put(key, dataItem);
 
             return true;
         }
         else {
-            boolean ret = doPut(key, dataItem, causalDependencies);
-            rebaseCausalDependencies(key, dataItem);
-            return ret;
+            return doPut(key, dataItem, new ArrayList<String>());
         }
     }
 
@@ -244,20 +206,37 @@ public class ThebesHATClient implements IThebesClient {
         DataItem ret = doGet(key);
 
         if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            if(ret != null)
+            if(ret != null) {
+                /*
+                  If the value we just read was part of a transaction that i.) wrote to a key
+                  we've already read and ii.) is ordered after the transaction that wrote to
+                  that key, then we can't show it. For now, return null.
+                */
+                for(String atomicKey : ret.getTransactionKeys()) {
+                    if(atomicityVersionVector.getVersion(atomicKey) != null &&
+                       atomicityVersionVector.getVersion(atomicKey).compareTo(ret.getVersion()) < 0) {
+                        transactionReadBuffer.put(atomicKey, new DataItem(null, Version.NULL_VERSION));
+                        return null;
+                    }
+                }
+
+                atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
                 transactionReadBuffer.put(key, ret);
-            else
+            }
+            else {
                 /*
                   If we read a null, we should read null for future reads too!
                  */
                 transactionReadBuffer.put(key, new DataItem(null, Version.NULL_VERSION));
+                return null;
+            }
         }
 
         // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
         if(transactionWriteBuffer.containsKey(key)) {
-            if (transactionWriteBuffer.get(key).getWrite().getVersion()
+            if (transactionWriteBuffer.get(key).getVersion()
             		.compareTo(ret.getVersion()) > 0) {
-                return transactionWriteBuffer.get(key).getWrite().getData();
+                return transactionWriteBuffer.get(key).getData();
             }
         }
 
@@ -265,36 +244,30 @@ public class ThebesHATClient implements IThebesClient {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
-        if(sessionLevel == SessionLevel.CAUSAL && ret != null) {
-            addCausalDependency(key, ret);
-        }
-
         return ret.getData();
     }
 
-    private boolean doPut(String key,
-                          DataItem value,
-                          List<DataDependency> causalDependencies) throws TException {
-            return doPut(key, value,  causalDependencies, new ArrayList<String>());
-    }
 
     private boolean doPut(String key,
                           DataItem value,
-                          List<DataDependency> causalDependencies,
                           Set<String> transactionKeys) throws TException {
-            return doPut(key, value,  causalDependencies, new ArrayList<String>(transactionKeys));
+            return doPut(key, value,  new ArrayList<String>(transactionKeys));
     }
+
+    /*
+        Needs to be threadsafe
+     */
 
     private boolean doPut(String key,
                           DataItem value,
-                          List<DataDependency> causalDependencies,
                           List<String> transactionKeys) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
 
         try {
-            ret = router.getReplicaByKey(key).put(key, DataItem.toThrift(value),
-            		DataDependency.toThrift(causalDependencies), transactionKeys);
+            ret = router.getReplicaByKey(key).put(key,
+                                                  DataItem.toThrift(value),
+                                                  transactionKeys);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
