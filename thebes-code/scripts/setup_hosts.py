@@ -409,7 +409,7 @@ def start_servers(clusters, use2PL, thebesArgString):
 
 
     pprint('Waiting for things to settle down...')
-    sleep(10)
+    sleep(60)
     pprint('Servers started!')
 
 
