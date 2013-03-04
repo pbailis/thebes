@@ -9,6 +9,7 @@ def run_cmd(hosts, cmd, user="root"):
     system("parallel-ssh -t 1000 -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt \"%s\"" % (user, hosts, cmd))
 
 def run_cmd_single(host, cmd, user="root"):
+    print("ssh %s@%s \"%s\"" % (user, host, cmd))
     system("ssh %s@%s \"%s\"" % (user, host, cmd))
 
 def run_process_single(host, cmd, user="root", stdout=None, stderr=None):
@@ -56,4 +57,3 @@ def get_matching_ip(host, hosts):
     for h in get_node_ips():
         if h[0] == host:
             return h[1]
-
