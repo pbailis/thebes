@@ -224,7 +224,7 @@ public class DependencyResolver {
                                    final DataItem write,
                                    final List<String> atomicityDependencies) throws TException {
 
-        if(atomicityDependencies.isEmpty()) {
+        if(atomicityDependencies == null || atomicityDependencies.isEmpty()) {
             persistenceEngine.put(key, write);
             notifyNewLocalWrite(key, write);
             return;
