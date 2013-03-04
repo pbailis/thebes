@@ -7,7 +7,9 @@ from common_funcs import run_cmd_single
 from common_funcs import sed
 from common_funcs import upload_file
 from common_funcs import run_script
+from common_funcs import fetch_file_single
 from threading import Thread
+from datetime import datetime
 import os
 from os import system # my pycharm sucks and can't find system by itself...
 from time import sleep
@@ -363,8 +365,6 @@ def write_config(clusters, graphiteRegion):
     upload_file("all-hosts", SCRIPTS_DIR + "/../conf/thebes.yaml", "/home/ubuntu/thebes/thebes-code/conf", user="ubuntu")
     pprint("Done")
 
-
-
 def stop_thebes_processes(clusters):
     pprint("Terminating java processes...")
     run_cmd("all-hosts", "killall -9 java")
@@ -388,7 +388,7 @@ def getNextClientID():
     return CLIENT_ID
 
 def start_servers(clusters, use2PL, thebesArgString):
-    baseCmd = "cd /home/ubuntu/thebes/thebes-code; screen -d -m "
+    baseCmd = "cd /home/ubuntu/thebes/thebes-code; rm *.log; screen -d -m "
     if not use2PL:
         runServerCmd = baseCmd + "java -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
     else:
@@ -439,6 +439,7 @@ def start_clients(clusters, use2PL, thebesArgString):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
                'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+               'rm *.log;' \
                'bin/ycsb load thebes -p hosts=%s -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
                ' -p maxexecutiontime=60 -P workloads/workloada ' \
                ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
@@ -448,18 +449,20 @@ def start_clients(clusters, use2PL, thebesArgString):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
                 'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
-                'bin/ycsb run thebes -p hosts=%s -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
+                'rm *.log;' \
+                'bin/ycsb run thebes -p hosts=%s -threads 1 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
                 ' -p maxexecutiontime=60 -P workloads/workloada ' \
                 ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
-                ' 1>load_out.log 2>load_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
+                ' 1>run_out.log 2>run_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
 
     ths = []
-    pprint("Loading YCSB on all clients.")
-    for cluster in clusters:
-        for i,client in enumerate(cluster.clients):
-            t = Thread(target=setupYCSB, args=(cluster, client, i))
-            t.start()
-            ths.append(t)
+    cluster = clusters[0]
+    pprint("Loading YCSB on single client.")
+    for i,client in enumerate(cluster.clients):
+        t = Thread(target=setupYCSB, args=(cluster, client, i))
+        t.start()
+        ths.append(t)
+        break
 
     for th in ths:
         th.join()
@@ -467,6 +470,7 @@ def start_clients(clusters, use2PL, thebesArgString):
 
     ths = []
     pprint("Running YCSB on all clients.")
+    
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
             t = Thread(target=runYCSB, args=(cluster, client, i))
@@ -476,6 +480,46 @@ def start_clients(clusters, use2PL, thebesArgString):
     for th in ths:
         th.join()
     pprint("Done")
+
+def fetch_logs(runid, clusters):
+    def fetchYCSB(rundir, client):
+        client_dir = rundir+"/"+"C"+client.ip
+        system("mkdir -p "+client_dir)
+        fetch_file_single(client.ip, "/home/ubuntu/thebes/ycsb-0.1.4/*.log", client_dir)
+
+    def fetchThebes(rundir, server):
+        server_dir = rundir+"/"+"S"+server.ip
+        system("mkdir -p "+server_dir)
+        fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)        
+
+    outroot = './output/'+runid
+
+    system("mkdir -p "+outroot)
+
+    ths = []
+    pprint("Fetching YCSB logs from clients.")
+    for cluster in clusters:
+        for i,client in enumerate(cluster.clients):
+            t = Thread(target=fetchYCSB, args=(outroot, client))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+    ths = []
+    pprint("Fetching thebes logs from servers.")
+    for cluster in clusters:
+        for i,server in enumerate(cluster.servers):
+            t = Thread(target=fetchThebes, args=(outroot, server))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
 
 #ssh root@ec2-50-17-17-32.compute-1.amazonaws.com "cd /home/ubuntu/thebes/ycsb-0.1.4;bash bin/ycsb.sh load thebes -p hosts=ec2-107-22-85-127.compute-1.amazonaws.com, ec2-107-21-167-213.compute-1.amazonaws.com, ec2-23-22-4-123.compute-1.amazonaws.com -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t  -p maxexecutiontime=60 -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=2 -Dtxn_mode=hat -Dclusterid=2 -Dconfig_file=../thebes-code/conf/thebes.yaml  1>load_out.log 2>load_err.log"
 
@@ -563,6 +607,8 @@ def pprint(str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
+    parser.add_argument('--fetchlogs', '-f', action='store_true',
+                        help='Fetch logs and exit')
     parser.add_argument('--launch', '-l', action='store_true',
                         help='Launch EC2 cluster')
     parser.add_argument('--terminate', '-t', action='store_true',
@@ -604,6 +650,13 @@ if __name__ == "__main__":
     (regions, clusters, use2PL, graphiteRegion) = parseArgs(args)
     thebesArgString = ' '.join(['-D%s' % arg for arg in args.thebes_args])
 
+    if args.fetchlogs:
+        pprint("Fetching logs")
+        assign_hosts(regions)
+        runid = str(datetime.now()).replace(' ', '_')
+        fetch_logs(runid, clusters)
+        exit(-1)
+
     if args.launch:
         pprint("Launching thebes clusters")
         check_for_instances(AMIs.keys())
@@ -618,6 +671,8 @@ if __name__ == "__main__":
         start_graphite(graphiteRegion)
         start_servers(clusters, use2PL, thebesArgString)
         start_clients(clusters, use2PL, thebesArgString)
+        runid = str(datetime.now()).replace(' ', '_')
+        fetch_logs(runid, clusters)
 
     if args.rebuild:
         pprint("Rebuilding thebes clusters")
@@ -634,7 +689,8 @@ if __name__ == "__main__":
         restart_graphite(graphiteRegion)
         start_servers(clusters, use2PL, thebesArgString)
         start_clients(clusters, use2PL, thebesArgString)
-
+        runid = str(datetime.now()).replace(' ', '_')
+        fetch_logs(runid, clusters)
 
     if args.terminate:
         pprint("Terminating thebes clusters")
@@ -642,3 +698,4 @@ if __name__ == "__main__":
 
     if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
+

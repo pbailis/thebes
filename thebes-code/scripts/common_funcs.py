@@ -9,8 +9,8 @@ def run_cmd(hosts, cmd, user="root"):
     system("parallel-ssh -t 1000 -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt \"%s\"" % (user, hosts, cmd))
 
 def run_cmd_single(host, cmd, user="root"):
-    print("ssh %s@%s \"%s\"" % (user, host, cmd))
-    system("ssh %s@%s \"%s\"" % (user, host, cmd))
+    print("ssh -o StrictHostKeyChecking=no %s@%s \"%s\"" % (user, host, cmd))
+    system("ssh -o StrictHostKeyChecking=no %s@%s \"%s\"" % (user, host, cmd))
 
 def run_process_single(host, cmd, user="root", stdout=None, stderr=None):
     subprocess.call("ssh %s@%s \"%s\"" % (user, host, cmd),
@@ -26,15 +26,15 @@ def run_script(hosts, script, user="root"):
     run_cmd(hosts, "bash /tmp/%s" % (script.split("/")[-1]), user)
 
 def fetch_file_single(host, remote, local, user="root"):
-    system("scp %s@%s:%s %s" % (user, host, remote, local))
+    system("scp %s@%s:%s '%s'" % (user, host, remote, local))
 
 def get_host_ips(hosts):
     return open("hosts/%s.txt" % (hosts)).read().split('\n')[:-1]
         
 def sed(file, find, repl):
     iOpt = ''
-    print 'sed -i %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file)
-    system('sed -i %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file))
+    print 'sed -i "" -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file)
+    system('sed -i "" -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file))
 
 def escape(path):
     return path.replace('/', '\/')
