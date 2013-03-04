@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+
+<script language="javascript" type="text/javascript" src="jquery.js"></script>
+<script language="javascript" type="text/javascript" src="jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="jquery.flot.time.js"></script>
+
+
+<script>
+graphs = [
+{
+  "function":"sumSeries(*.edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine.put-requests.count)",
+  "time":"from=-10min",
+  "misc":"min=0"
+},
+{
+  "function":"sumSeries(*.edu.berkeley.thebes.hat.client.ThebesHATClient.hat-latencies-per-op.median)",
+  "time":"from=-10min",
+  "misc":"min=0"
+}
+]
+
+width=586;
+height=308;
+
+refresh=1;
+
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+
+function getGraphiteIp() {
+    return document.getElementById("graphite_address").value;
+}
+
+function updateImage(graphTitle, url) {
+   $.getJSON(url + "&jsonp=?", function(data) { 
+     oldData = data[0].datapoints;
+     newData = []
+     for(i = 0; i < oldData.length; i++) {
+       newData.push([oldData[i][1]*1000, oldData[i][0]]);
+     }
+
+     console.log(newData);
+     $.plot("#"+graphTitle, [newData], {xaxis: { mode: 'time',  }});
+   });
+   document.getElementById(graphTitle+"link").href = url;
+}
+
+function getGraphFunction(graphTitle, graph) {
+   return function() { 
+    if(getGraphiteIp().indexOf("http") == -1)
+       return;
+    updateImage(graphTitle, getGraphiteIp()+"/render?"+"width="+width+"&height="+height+"&target="+graph.function+"&"+graph.time+"&"+graph.misc+"&format=json"); };
+}
+
+function renderGraphs() {
+  if(getUrlVars()["site"] != null)
+      document.getElementById("graphite_address").value = getUrlVars()["site"]
+
+  for(var i = 0; i < graphs.length; i++) {
+    var graphTitle = "graph"+i;
+    document.getElementById("graphDiv").innerHTML += "<span>"+graphs[i].function+"</span><br><a href='#' id='"+graphTitle+"link'><div id='"+graphTitle+"' style='width:600px;height:300px'></div></a><br>";
+    setInterval(getGraphFunction(graphTitle, graphs[i]), refresh*1000);
+  }
+}
+
+window.onload = renderGraphs;
+
+</script>
+
+<input type="text" id="graphite_address" size="100"><br>
+
+<div id="graphDiv"></div>
