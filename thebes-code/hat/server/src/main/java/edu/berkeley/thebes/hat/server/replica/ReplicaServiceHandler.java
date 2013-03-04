@@ -16,12 +16,16 @@ import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
 import edu.berkeley.thebes.hat.server.dependencies.PendingWrites;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReplicaServiceHandler implements ReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;
     private AntiEntropyServer antiEntropyServer;
     private DependencyResolver dependencyResolver;
     private PendingWrites pendingWrites;
+    private static Logger logger = LoggerFactory.getLogger(ReplicaServiceHandler.class);
+
 
     public ReplicaServiceHandler(IPersistenceEngine persistenceEngine,
                                  PendingWrites pendingWrites,
@@ -37,6 +41,11 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     public boolean put(String key,
                        ThriftDataItem value,
                        List<String> transactionKeys) throws TException {
+        if(logger.isTraceEnabled())
+            logger.trace("received PUT request for key: '"+key+
+                         "' value: '"+value+
+                         "' transactionKeys: "+transactionKeys);
+
         antiEntropyServer.sendToNeighbors(key, value, transactionKeys);
 
         dependencyResolver.asyncApplyNewWrite(key,
@@ -49,6 +58,10 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
 
     @Override
     public ThriftDataItem get(String key, ThriftVersion requiredVersion) throws TException {
+        if(logger.isTraceEnabled())
+            logger.trace("received GET request for key: '"+key+
+                         "' requiredVersion: "+requiredVersion);
+
         DataItem ret = persistenceEngine.get(key);
 
         if (requiredVersion != null &&

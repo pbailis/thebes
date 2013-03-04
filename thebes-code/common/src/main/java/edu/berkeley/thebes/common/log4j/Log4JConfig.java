@@ -19,7 +19,7 @@ public class Log4JConfig {
     public static void configureLog4J() {
         
         BasicConfigurator.configure();
-        Logger.getRootLogger().setLevel(Level.DEBUG);
+        Logger.getRootLogger().setLevel(Level.TRACE);
         PatternLayout layout = new PatternLayout("%r [%t] %p %c{2} %x - %m%n");
 
         try {

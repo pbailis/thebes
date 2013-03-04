@@ -27,7 +27,7 @@ public class AntiEntropyServiceRouter {
         }
 
         try {
-            Thread.sleep(30000);
+            Thread.sleep(Config.getAntiEntropyBootstrapTime());
         } catch (Exception e) {
         }
 

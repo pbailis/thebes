@@ -5,10 +5,11 @@ import org.apache.thrift.transport.TTransportException;
 
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public interface IThebesClient {
-    public void open() throws TTransportException, ConfigurationException, FileNotFoundException;
+    public void open() throws TTransportException, ConfigurationException, IOException;
 
     public void beginTransaction() throws TException;
     public boolean endTransaction() throws TException;

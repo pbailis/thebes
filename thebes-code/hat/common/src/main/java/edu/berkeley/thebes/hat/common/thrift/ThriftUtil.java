@@ -13,10 +13,17 @@ import org.apache.thrift.transport.TTransportException;
 import edu.berkeley.thebes.common.config.Config;
 
 public class ThriftUtil {
-    public static ReplicaService.Client getReplicaServiceClient(
+    public static ReplicaService.Client getReplicaServiceSyncClient(
             String host, int port) throws TTransportException {
         TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
         return new ReplicaService.Client(protocol);
+    }
+
+    public static ReplicaService.AsyncClient getReplicaServiceAsyncClient(
+            String host, int port) throws TTransportException, IOException {
+        return new ReplicaService.AsyncClient(new TBinaryProtocol.Factory(),
+                                              new TAsyncClientManager(),
+                                              new TNonblockingSocket(host, port, Config.getSocketTimeout()));
     }
 
     public static AntiEntropyService.Client getAntiEntropyServiceClient(

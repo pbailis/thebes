@@ -33,7 +33,7 @@ public enum ConfigParameters {
     STANDALONE(Boolean.class, false),
     TXN_MODE(TransactionMode.class, RequirementLevel.CLIAPP),
     HAT_ISOLATION_LEVEL(IsolationLevel.class, IsolationLevel.NO_ISOLATION),
-    
+    ANTIENTROPY_BOOTSTRAP_TIME(Integer.class, 30*1000),
     TWOPL_PORT(Integer.class, 8082),
     TWOPL_REPLICATE_TO_SLAVES(Boolean.class, true),
     TWOPL_TM_PORT(Integer.class, 8083),

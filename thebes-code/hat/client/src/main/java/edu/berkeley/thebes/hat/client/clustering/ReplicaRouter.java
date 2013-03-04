@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.client.clustering;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,24 +13,30 @@ import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 public class ReplicaRouter {
-    private List<ReplicaService.Client> replicas;
+    private List<ReplicaService.Client> syncReplicas;
+    private List<ReplicaService.AsyncClient> asyncReplicas;
 
-    public ReplicaRouter() throws TTransportException {
+    public ReplicaRouter() throws TTransportException, IOException {
         List<ServerAddress> serverIPs = Config.getServersInCluster();
-        replicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
+        syncReplicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
+        asyncReplicas = new ArrayList<ReplicaService.AsyncClient>(serverIPs.size());
 
         for (ServerAddress server : serverIPs) {
         	System.out.println("Connecting to " + server);
-            replicas.add(ThriftUtil.getReplicaServiceClient(
-                    server.getIP(), server.getPort()));
+            syncReplicas.add(ThriftUtil.getReplicaServiceSyncClient(server.getIP(), server.getPort()));
+            asyncReplicas.add(ThriftUtil.getReplicaServiceAsyncClient(server.getIP(), server.getPort()));
         }
     }
 
-    public ReplicaService.Client getReplicaByKey(String key) {
-        return replicas.get(RoutingHash.hashKey(key, replicas.size()));
+    public ReplicaService.Client getSyncReplicaByKey(String key) {
+        return syncReplicas.get(RoutingHash.hashKey(key, syncReplicas.size()));
+    }
+
+    public ReplicaService.AsyncClient getAsyncReplicaByKey(String key) {
+        return asyncReplicas.get(RoutingHash.hashKey(key, asyncReplicas.size()));
     }
 
     public ServerAddress getReplicaIPByKey(String key) {
-        return Config.getServersInCluster().get(RoutingHash.hashKey(key, replicas.size()));
+        return Config.getServersInCluster().get(RoutingHash.hashKey(key, syncReplicas.size()));
     }
 }

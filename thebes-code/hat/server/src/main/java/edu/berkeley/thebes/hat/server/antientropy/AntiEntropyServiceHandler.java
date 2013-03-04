@@ -26,7 +26,7 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     public void put(String key,
                     ThriftDataItem value,
                     List<String> transactionKeys) throws TException{
-    	logger.debug("Received anti-entropy put for key!");
+    	logger.trace("Received anti-entropy put for key!");
         dependencyResolver.asyncApplyNewWrite(key,
                                               DataItem.fromThrift(value),
                                               transactionKeys);

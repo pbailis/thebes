@@ -9,6 +9,7 @@ import org.apache.thrift.transport.TTransportException;
 
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 // Wrapper class for various thebes clients
@@ -20,7 +21,7 @@ public class ThebesClient implements IThebesClient {
     }
 
     @Override
-    public void open() throws TTransportException, ConfigurationException, FileNotFoundException {
+    public void open() throws TTransportException, ConfigurationException, IOException {
         Config.initializeClient();
 
         switch (Config.getThebesTxnMode()) {

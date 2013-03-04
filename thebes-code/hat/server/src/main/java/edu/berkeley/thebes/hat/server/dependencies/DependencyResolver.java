@@ -223,18 +223,18 @@ public class DependencyResolver {
     public void asyncApplyNewWrite(final String key,
                                    final DataItem write,
                                    final List<String> atomicityDependencies) throws TException {
+
+        if(atomicityDependencies.isEmpty()) {
+            persistenceEngine.put(key, write);
+            notifyNewLocalWrite(key, write);
+            return;
+        }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     final TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
-
-                    if(atomicityDependencies.isEmpty()) {
-                        persistenceEngine.put(key, write);
-                        notifyNewLocalWrite(key, write);
-                        totalDependencyTime.stop();
-                        return;
-                    }
 
                     if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
                         return;
