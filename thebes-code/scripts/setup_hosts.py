@@ -611,7 +611,7 @@ if __name__ == "__main__":
                         help='Fetch logs and exit')
     parser.add_argument('--launch', '-l', action='store_true',
                         help='Launch EC2 cluster')
-    parser.add_argument('--setup', '-l', action='store_true',
+    parser.add_argument('--setup', '-s', action='store_true',
                         help='Set up already running EC2 cluster')
     parser.add_argument('--terminate', '-t', action='store_true',
                         help='Terminate the EC2 cluster')
