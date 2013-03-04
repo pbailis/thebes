@@ -76,5 +76,5 @@ cd /opt/graphite/webapp/graphite
 ####################################
 # START CARBON
 ####################################
-cd /opt/graphite/
-sudo ./bin/carbon-cache.py start
+#cd /opt/graphite/
+#sudo ./bin/carbon-cache.py start

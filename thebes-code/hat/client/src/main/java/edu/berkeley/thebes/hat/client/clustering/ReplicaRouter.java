@@ -18,9 +18,11 @@ public class ReplicaRouter {
         List<ServerAddress> serverIPs = Config.getServersInCluster();
         replicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
 
-        for(ServerAddress server : serverIPs)
+        for (ServerAddress server : serverIPs) {
+        	System.out.println("Connecting to " + server);
             replicas.add(ThriftUtil.getReplicaServiceClient(
                     server.getIP(), server.getPort()));
+        }
     }
 
     public ReplicaService.Client getReplicaByKey(String key) {

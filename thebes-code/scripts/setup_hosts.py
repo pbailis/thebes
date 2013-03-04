@@ -7,13 +7,16 @@ from common_funcs import run_cmd_single
 from common_funcs import sed
 from common_funcs import upload_file
 from common_funcs import run_script
+from threading import Thread
 import os
 from os import system # my pycharm sucks and can't find system by itself...
 from time import sleep
 
-#AMIs = {'us-east-1': 'ami-7339b41a'}
-AMIs = {'us-east-1': 'ami-0cdf4965', 'us-west-1': 'ami-00b39045', 'us-west-2': 'ami-a4b83294',
-        'eu-west-1': 'ami-64636a10'}
+#AMIs = {'us-east-1': 'ami-0cdf4965', 'us-west-1': 'ami-00b39045', 'us-west-2': 'ami-a4b83294',
+#        'eu-west-1': 'ami-64636a10'}
+
+# Upgraded AMIs
+AMIs = {'us-east-1': 'ami-08188561'}
 
 class Region:
     def __init__(self, name):
@@ -41,7 +44,7 @@ class Cluster:
     def __init__(self, regionName, clusterID, numServers, numClients, numTMs):
         self.regionName = regionName
         self.clusterID = clusterID
-        self.numServers = numServers;
+        self.numServers = numServers
         self.servers = []
         self.numClients = numClients
         self.clients = []
@@ -74,6 +77,13 @@ class Host:
         self.instanceid = instanceid
 
 # UTILITIES
+def run_cmd_in_thebes(hosts, cmd, user='root'):
+    run_cmd(hosts, "cd /home/ubuntu/thebes/thebes-code; %s" % cmd, user)
+
+def run_cmd_in_ycsb(hosts, cmd, user='root'):
+    run_cmd(hosts, "cd /home/ubuntu/thebes/ycsb-0.1.4; %s" % cmd, user)
+
+
 def get_instances(regionName):
     system("rm -f instances.txt")
     hosts = []
@@ -184,7 +194,7 @@ def provision_spot(regionName, num):
 
 def provision_instance(regionName, num):
     global AMIs
-    system("ec2-run-instances %s --region %s -t t1.micro " \
+    system("ec2-run-instances %s --region %s -t m1.small " \
            "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
     #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
     #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
@@ -209,10 +219,12 @@ def wait_all_hosts_up(regions):
     pprint("Awake!")
 
 
-        # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
-        # Also logs the assignments in the hosts/ files.
+    # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
+    # Also logs the assignments in the hosts/ files.
 def assign_hosts(regions):
     allHosts = []
+    allServers = []
+    allClients = []
     hostsPerRegion = {}
     clusterId = 0
     system("mkdir -p hosts")
@@ -237,19 +249,25 @@ def assign_hosts(regions):
             make_instancefile("cluster-%d-servers.txt" % cluster.clusterID, cluster.servers)
             make_instancefile("cluster-%d-clients.txt" % cluster.clusterID, cluster.clients)
             make_instancefile("cluster-%d-tms.txt" % cluster.clusterID, cluster.tms)
+            allServers += cluster.servers
+            allClients += cluster.clients
 
         pprint("Done!")
 
     # Finally write the instance files for the regions and everything.
     make_instancefile("all-hosts.txt", allHosts)
+    make_instancefile("all-servers.txt", allServers)
+    make_instancefile("all-clients.txt", allClients)
     for region, hosts in hostsPerRegion.items():
         make_instancefile("region-%s.txt" % region, hosts)
 
     pprint("Assigned all %d hosts!" % len(allHosts))
 
+
 # Runs general setup over all hosts.
 def setup_hosts(clusters):
     global SCRIPTS_DIR
+
     pprint("Enabling root SSH...")
     run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
     pprint("Done")
@@ -274,6 +292,35 @@ def setup_hosts(clusters):
     run_script("all-hosts", SCRIPTS_DIR + "/resources/node_self_setup.sh", user="ubuntu")
     pprint("Done")
 
+def jumpstart_hosts(clusters):
+    pprint("Enabling root SSH...")
+    run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
+    pprint("Done")
+
+    pprint("Exporting keys...")
+    run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /root/.bashrc", user="root")
+    run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /home/ubuntu/.bashrc", user="root")
+    pprint("Done")
+
+    pprint("Resetting git...")
+    run_cmd_in_thebes('all-hosts', 'git stash', user="ubuntu")
+    pprint("Done")
+
+    pprint("Pulling updates...")
+    run_cmd_in_thebes('all-hosts', 'git pull', user="ubuntu")
+    pprint("Done")
+
+    pprint("Building thebes...")
+    run_cmd_in_thebes('all-hosts', 'mvn package', user="ubuntu")
+    pprint("Done")
+
+    pprint("Building ycsb...")
+    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'mvn package', user="ubuntu")
+    pprint("Done")
+
+
 
 # Messy string work to write out the thebes.yaml config.
 def write_config(clusters, graphiteRegion):
@@ -294,18 +341,18 @@ def write_config(clusters, graphiteRegion):
         twopl_cluster_config.append(str(cluster.clusterID) + ": [" + ", ".join(twoplServerNames) + "]")
     twopl_cluster_config_str = "{" +  ", ".join(twopl_cluster_config) + "}"
 
-    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
     twopl_tm_config = []
+    # resultant string: twopl_cluster_config: {1: host5, 2: host6}
     for cluster in clusters:
         if cluster.numTMs > 0:
             assert cluster.numTMs == 1, "Only support 1 TM per cluster at this time"
             twopl_tm_config.append(str(cluster.clusterID) + ": " + cluster.tms[0].ip)
     twopl_tm_config_str = "{" +  ", ".join(twopl_tm_config) + "}"
 
-    sed("../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
-    sed("../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
-    sed("../conf/thebes.yaml", "^graphite_ip:.*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
+    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
+    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
+    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
+    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^graphite_ip:.*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
     #system("git add ../conf/thebes.yaml")
     #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
     #system("git push origin :ec2-experiment") # Delete previous remote branch
@@ -325,9 +372,12 @@ def stop_thebes_processes(clusters):
 
 def rebuild_servers(clusters):
     pprint('Rebuilding servers...')
-    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git stash", user="ubuntu")
-    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; git pull", user="ubuntu")
-    run_cmd("all-hosts", "cd /home/ubuntu/thebes/thebes-code; mvn package", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb("all-clients", "mvn package", user="ubuntu")
     pprint('Servers re-built!')
 
 
@@ -337,38 +387,97 @@ def getNextClientID():
     CLIENT_ID += 1
     return CLIENT_ID
 
-def start_servers(clusters, use2PL):
-    baseCmd = "cd /home/ubuntu/thebes/thebes-code; screen -d -m bin/"
+def start_servers(clusters, use2PL, thebesArgString):
+    baseCmd = "cd /home/ubuntu/thebes/thebes-code; screen -d -m "
     if not use2PL:
-        runServerCmd = baseCmd + "hat/run-hat-server.sh %d %d"
+        runServerCmd = baseCmd + "java -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
     else:
-        runServerCmd = baseCmd + "twopl/run-twopl-server.sh %d %d"
+        runServerCmd = baseCmd + "java -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
 
-    runTMCmd = baseCmd + "twopl/run-twopl-tm.sh %d %d"
+    runTMCmd = baseCmd + "java -ea -Dclusterid=%d -Dclientid=%d %s -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar 1>tm.log 2>&1"
+
 
     pprint('Starting servers...')
     for cluster in clusters:
         for sid, server in enumerate(cluster.servers):
             pprint("Starting kv-server on [%s]" % server.ip)
-            run_cmd_single(server.ip, runServerCmd % (cluster.clusterID, sid), user="root")
+            run_cmd_single(server.ip, runServerCmd % (cluster.clusterID, sid, thebesArgString), user="root")
 
         for tm in cluster.tms:
             pprint("Starting TM on [%s]" % tm.ip)
-            run_cmd_single(tm.ip, runTMCmd % (cluster.clusterID, getNextClientID()), user="root")
+            run_cmd_single(tm.ip, runTMCmd % (cluster.clusterID, getNextClientID(), thebesArgString), user="root")
 
 
     pprint('Waiting for things to settle down...')
-    sleep(10)
+    sleep(60)
     pprint('Servers started!')
 
-def setup_and_start_graphite(graphiteRegion):
+
+def setup_graphite(graphiteRegion):
     global SCRIPTS_DIR
 
-    pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
+    pprint("Setting up graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-settings.py", "/tmp/graphite-settings.py", user="ubuntu")
     upload_file("graphite", SCRIPTS_DIR + "/resources/graphite-aggregation-rules.conf", "/tmp/graphite-aggregation-rules.conf", user="ubuntu")
     run_script("graphite", SCRIPTS_DIR + "/resources/graphite-setup.sh", user="root")
     pprint("Done")
+
+def restart_graphite(graphiteRegion):
+    pprint("Stopping graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
+    run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py stop')
+    pprint("Done")
+
+    start_graphite(graphiteRegion)
+
+def start_graphite(graphiteRegion):
+    pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
+    run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py start')
+    pprint("Done")
+
+def start_clients(clusters, use2PL, thebesArgString):
+    def setupYCSB(cluster, client, clientID):
+        hosts = ','.join([host.ip for host in cluster.servers])
+        run_cmd_single(client.ip,
+               'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+               'bin/ycsb load thebes -p hosts=%s -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
+               ' -p maxexecutiontime=60 -P workloads/workloada ' \
+               ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
+               ' 1>load_out.log 2>load_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
+
+    def runYCSB(cluster, client, clientID):
+        hosts = ','.join([host.ip for host in cluster.servers])
+        run_cmd_single(client.ip,
+                'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+                'bin/ycsb run thebes -p hosts=%s -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
+                ' -p maxexecutiontime=60 -P workloads/workloada ' \
+                ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
+                ' 1>load_out.log 2>load_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
+
+    ths = []
+    pprint("Loading YCSB on all clients.")
+    for cluster in clusters:
+        for i,client in enumerate(cluster.clients):
+            t = Thread(target=setupYCSB, args=(cluster, client, i))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+    ths = []
+    pprint("Running YCSB on all clients.")
+    for cluster in clusters:
+        for i,client in enumerate(cluster.clients):
+            t = Thread(target=runYCSB, args=(cluster, client, i))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+#ssh root@ec2-50-17-17-32.compute-1.amazonaws.com "cd /home/ubuntu/thebes/ycsb-0.1.4;bash bin/ycsb.sh load thebes -p hosts=ec2-107-22-85-127.compute-1.amazonaws.com, ec2-107-21-167-213.compute-1.amazonaws.com, ec2-23-22-4-123.compute-1.amazonaws.com -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t  -p maxexecutiontime=60 -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=2 -Dtxn_mode=hat -Dclusterid=2 -Dconfig_file=../thebes-code/conf/thebes.yaml  1>load_out.log 2>load_err.log"
 
 
 def terminate_clusters():
@@ -459,7 +568,9 @@ if __name__ == "__main__":
     parser.add_argument('--terminate', '-t', action='store_true',
                         help='Terminate the EC2 cluster')
     parser.add_argument('--restart', '-r', action='store_true',
-                        help='Restart cassandra cluster')
+                        help='Restart thebes cluster')
+    parser.add_argument('--rebuild', '-rb', action='store_true',
+                        help='Rebuild thebes cluster')
     parser.add_argument('--num_servers', '-ns', dest='servers', nargs='?',
                         default=2, type=int,
                         help='Number of server machines per cluster, default=2')
@@ -482,6 +593,8 @@ if __name__ == "__main__":
                         help='Don\'t use spot instances, default off.')
     parser.add_argument('--color', dest='color', action='store_true',
                         help='Print with pretty colors, default off.')
+    parser.add_argument('-D', dest='thebes_args', action='append', default=[],
+                        help='Parameters to pass along to the thebes servers/clients.')
     args = parser.parse_args()
 
     USE_COLOR = args.color
@@ -489,7 +602,7 @@ if __name__ == "__main__":
 
     detectScriptsDir()
     (regions, clusters, use2PL, graphiteRegion) = parseArgs(args)
-
+    thebesArgString = ' '.join(['-D%s' % arg for arg in args.thebes_args])
 
     if args.launch:
         pprint("Launching thebes clusters")
@@ -498,24 +611,34 @@ if __name__ == "__main__":
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
         assign_hosts(regions)
-        setup_hosts(clusters)
+        #setup_hosts(clusters)
+        jumpstart_hosts(clusters)
         write_config(clusters, graphiteRegion)
-        setup_and_start_graphite(graphiteRegion)
-        start_servers(clusters, use2PL)
+        #setup_graphite(graphiteRegion)
+        start_graphite(graphiteRegion)
+        start_servers(clusters, use2PL, thebesArgString)
+        start_clients(clusters, use2PL, thebesArgString)
 
-    if args.restart:
-        pprint("Rebuilding and restarting thebes clusters")
+    if args.rebuild:
+        pprint("Rebuilding thebes clusters")
         assign_hosts(regions)
         stop_thebes_processes(clusters)
         rebuild_servers(clusters)
+
+    if args.restart:
+        pprint("Restarting thebes clusters")
+        assign_hosts(regions)
+        stop_thebes_processes(clusters)
         write_config(clusters, graphiteRegion)
-        setup_and_start_graphite(graphiteRegion)
-        start_servers(clusters, use2PL)
+        #setup_graphite(graphiteRegion)
+        restart_graphite(graphiteRegion)
+        start_servers(clusters, use2PL, thebesArgString)
+        start_clients(clusters, use2PL, thebesArgString)
 
 
     if args.terminate:
         pprint("Terminating thebes clusters")
         terminate_clusters()
 
-    if not args.launch and not args.restart and not args.terminate:
+    if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
