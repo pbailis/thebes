@@ -43,7 +43,7 @@ public class AntiEntropyServer implements Runnable {
         for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
             logger.debug("sending to neighbor");
             try {
-            	neighbor.send_put(key, value, transactionKeys);
+            	neighbor.put(key, value, transactionKeys);
             } catch (RuntimeException e) {
             	logger.debug("errored: " + e);
             	e.printStackTrace();

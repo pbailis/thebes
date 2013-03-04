@@ -20,9 +20,7 @@ service ReplicaService {
 }
 
 service AntiEntropyService {
-   # should be oneway, but oneway is broken in 0.8 (THRIFT-1447)
-   # https://issues.apache.org/jira/browse/THRIFT-1447
-   void put(1: string key,
+   oneway void put(1: string key,
                   2: dataitem.ThriftDataItem value,
                   3: list<string> transactionKeys);
 
