@@ -12,7 +12,7 @@ import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 public class ReplicaRouter {
-    private static List<ReplicaService.Client> replicas;
+    private List<ReplicaService.Client> replicas;
 
     public ReplicaRouter() throws TTransportException {
         List<ServerAddress> serverIPs = Config.getServersInCluster();
@@ -27,5 +27,9 @@ public class ReplicaRouter {
 
     public ReplicaService.Client getReplicaByKey(String key) {
         return replicas.get(RoutingHash.hashKey(key, replicas.size()));
+    }
+
+    public ServerAddress getReplicaIPByKey(String key) {
+        return Config.getServersInCluster().get(RoutingHash.hashKey(key, replicas.size()));
     }
 }

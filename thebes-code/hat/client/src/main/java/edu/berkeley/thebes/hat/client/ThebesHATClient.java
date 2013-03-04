@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.naming.ConfigurationException;
 
+import edu.berkeley.thebes.common.thrift.ServerAddress;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -114,7 +115,7 @@ public class ThebesHATClient implements IThebesClient {
         final Version transactionVersion = new Version(clientID, System.currentTimeMillis());
         final List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet())
                                                                                                   ;
-
+        //todo: client is not threadsafe!
         for(final String key : transactionWriteBuffer.keySet()) {
             new Thread(new Runnable() {
                 @Override
@@ -273,7 +274,7 @@ public class ThebesHATClient implements IThebesClient {
             throw e;
         } catch (TException e) {
             errorMetric.mark();
-            throw e;
+            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
         } finally {
             timer.stop();
         }
@@ -291,7 +292,7 @@ public class ThebesHATClient implements IThebesClient {
             throw e;
         } catch (TException e) {
             errorMetric.mark();
-            throw e;
+            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
         } finally {
             timer.stop();
         }
