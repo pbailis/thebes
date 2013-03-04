@@ -42,7 +42,13 @@ public class AntiEntropyServer implements Runnable {
                                 List<String> transactionKeys) throws TException {
         for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
             logger.debug("sending to neighbor");
-            neighbor.send_put(key, value, transactionKeys);
+            try {
+            	neighbor.send_put(key, value, transactionKeys);
+            } catch (RuntimeException e) {
+            	logger.debug("errored: " + e);
+            	e.printStackTrace();
+            	throw e;
+            }
             logger.debug("sent to neighbor");
         }
     }
