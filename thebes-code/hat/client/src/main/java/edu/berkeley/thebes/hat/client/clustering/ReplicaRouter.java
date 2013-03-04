@@ -26,4 +26,8 @@ public class ReplicaRouter {
     public ReplicaService.Client getReplicaByKey(String key) {
         return replicas.get(RoutingHash.hashKey(key, replicas.size()));
     }
+
+    public ServerAddress getReplicaIPByKey(String key) {
+        return Config.getServersInCluster().get(RoutingHash.hashKey(key, replicas.size()));
+    }
 }
