@@ -611,6 +611,8 @@ if __name__ == "__main__":
                         help='Fetch logs and exit')
     parser.add_argument('--launch', '-l', action='store_true',
                         help='Launch EC2 cluster')
+    parser.add_argument('--setup', '-l', action='store_true',
+                        help='Set up already running EC2 cluster')
     parser.add_argument('--terminate', '-t', action='store_true',
                         help='Terminate the EC2 cluster')
     parser.add_argument('--restart', '-r', action='store_true',
@@ -663,6 +665,8 @@ if __name__ == "__main__":
         provision_clusters(regions, not args.no_spot)
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
+
+    if args.launch or args.setup:
         assign_hosts(regions)
         #setup_hosts(clusters)
         jumpstart_hosts(clusters)
