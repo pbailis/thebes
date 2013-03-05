@@ -742,13 +742,13 @@ if __name__ == "__main__":
                         if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 2:
                             continue
                     
-                    run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s" % (transaction_length, 
-                                                                             isolation_level,
-                                                                             atomicity_level)),
-                                   threads=threads,
-                                   distributionparameter=transaction_length,
-                                   atomicity_level=atomicity_level,
-                                   isolation_level=isolation_level)
+                        run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s" % (transaction_length, 
+                                                                                 isolation_level,
+                                                                                 atomicity_level)),
+                                       threads=threads,
+                                       distributionparameter=transaction_length,
+                                       atomicity_level=atomicity_level,
+                                       isolation_level=isolation_level)
                 
     if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
