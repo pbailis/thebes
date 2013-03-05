@@ -739,12 +739,13 @@ if __name__ == "__main__":
                     for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
                         if isolation_level == "NO_ISOLATION" and atomicity_level != "NO_ATOMICITY":
                             continue
-                        if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 2:
+                        if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 4:
                             continue
                     
-                        run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s" % (transaction_length, 
-                                                                                 isolation_level,
-                                                                                 atomicity_level)),
+                        run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
+                                                                                           isolation_level,
+                                                                                           atomicity_level,
+                                                                                           threads)),
                                        threads=threads,
                                        distributionparameter=transaction_length,
                                        atomicity_level=atomicity_level,
