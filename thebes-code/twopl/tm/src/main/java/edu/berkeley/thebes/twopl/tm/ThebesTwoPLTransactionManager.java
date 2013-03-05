@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.common.thrift.ThriftServer;
+import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 
 public class ThebesTwoPLTransactionManager {
@@ -23,7 +24,7 @@ public class ThebesTwoPLTransactionManager {
             Log4JConfig.configureLog4J();
             Config.initializeTwoPLTransactionManager();
 
-            TwoPLTransactionClient client = new TwoPLTransactionClient();
+            ThebesTwoPLTransactionClient client = new ThebesTwoPLTransactionClient();
             client.open();
             startServer(new TwoPLTransactionServiceHandler(client));
 

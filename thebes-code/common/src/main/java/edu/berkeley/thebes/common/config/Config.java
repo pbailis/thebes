@@ -247,6 +247,10 @@ public class Config {
     public static Boolean shouldReplicateToTwoPLSlaves() {
         return getOption(ConfigParameters.TWOPL_REPLICATE_TO_SLAVES);
     }
+    
+    public static Boolean shouldUseTwoPLTM() {
+        return getOption(ConfigParameters.TWOPL_USE_TM);
+    }
 
     public static List<ServerAddress> getServersInCluster() {
         return clusterServers;

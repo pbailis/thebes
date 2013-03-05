@@ -39,6 +39,7 @@ public enum ConfigParameters {
     TWOPL_TM_PORT(Integer.class, 8083),
     TWOPL_TM_CONFIG(Map.class, RequirementLevel.TWOPL_TM),
     TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON),
+    TWOPL_USE_TM(Boolean.class, true),
     SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION),
     ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY),
     LOGGER_LEVEL(String.class, "WARN");
