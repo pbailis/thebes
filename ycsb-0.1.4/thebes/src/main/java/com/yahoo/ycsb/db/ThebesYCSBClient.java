@@ -1,5 +1,6 @@
 package com.yahoo.ycsb.db;
 
+import java.lang.Exception;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Set;
@@ -32,15 +33,15 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
     public static final int ERROR = -1;
     public static final int NOT_FOUND = -2;
 
-    //TOFIX!
-    private static IntegerGenerator transactionLengthGenerator = new ConstantIntegerGenerator(4);
+    private IntegerGenerator transactionLengthGenerator;
 
     private int currentTransactionLength = -1;
     private int finalTransactionLength = -1;
 
-    private void checkStartTransaction() {
+    public boolean checkStartTransaction() {
         if(currentTransactionLength < finalTransactionLength) {
             currentTransactionLength++;
+            return false;
         }
         else {
             if(finalTransactionLength != -1)
@@ -49,11 +50,12 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
             finalTransactionLength = transactionLengthGenerator.nextInt();
             beginTransaction();
             currentTransactionLength = 0;
+            return true;
         }
     }
 
     public boolean transactionFinished() {
-        return currentTransactionLength == 0;
+        return checkStartTransaction();
     }
     
 	public void init() throws DBException {
@@ -81,6 +83,11 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 	}
 	
 	public void cleanup() throws DBException {
+        try {
+            client.endTransaction();
+        } catch(Exception e) {
+            throw new DBException(e.getMessage());
+        }
         client.close();
 	}
 
@@ -109,7 +116,6 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 	@Override
 	public int delete(String table, String key) {
         try {
-            checkStartTransaction();
             client.put(key, null);
         } catch (Exception e) {
             logger.warn(e.getMessage());
@@ -121,7 +127,6 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 	@Override
 	public int insert(String table, String key, HashMap<String, ByteIterator> values) {
         try {
-            checkStartTransaction();
             client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
@@ -135,7 +140,6 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 	public int read(String table, String key, Set<String> fields,
 			HashMap<String, ByteIterator> result) {
         try {
-            checkStartTransaction();
             ByteBuffer ret = client.get(key);
 
 
@@ -162,7 +166,6 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 	@Override
 	public int scan(String table, String startkey, int recordcount,
 			Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
-        checkStartTransaction();
         logger.warn("Thebes scans are not implemented!");
 		return ERROR;
 	}
