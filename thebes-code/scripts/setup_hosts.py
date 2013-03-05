@@ -370,8 +370,8 @@ def stop_thebes_processes(clusters):
     run_cmd("all-hosts", "killall -9 java")
     pprint('Termination command sent.')
 
-def rebuild_servers(clusters):
-    pprint('Rebuilding servers...')
+def rebuild_all(clusters):
+    pprint('Rebuilding clients and servers...')
     run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
     run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
     run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
@@ -380,7 +380,23 @@ def rebuild_servers(clusters):
     run_cmd_in_ycsb("all-clients", "mvn package", user="ubuntu")
     pprint('Servers re-built!')
 
+def rebuild_clients(clusters):
+    pprint('Rebuilding clients...')
+    run_cmd_in_thebes("all-clients", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-clients", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-clients", "mvn package", user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb("all-clients", "mvn package", user="ubuntu")
+    pprint('Clients re-built!')
 
+def rebuild_servers(clusters):
+    pprint('Rebuilding servers...')
+    run_cmd_in_thebes("all-servers", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-servers", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-servers", "mvn package", user="ubuntu")
+    pprint('Servers re-built!')
+    
 CLIENT_ID = 0
 def getNextClientID():
     global CLIENT_ID
@@ -619,6 +635,10 @@ if __name__ == "__main__":
                         help='Restart thebes cluster')
     parser.add_argument('--rebuild', '-rb', action='store_true',
                         help='Rebuild thebes cluster')
+    parser.add_argument('--rebuild_clients', '-rbc', action='store_true',
+                        help='Rebuild thebes clients')
+    parser.add_argument('--rebuild_servers', '-rbs', action='store_true',
+                        help='Rebuild thebes servers')
     parser.add_argument('--num_servers', '-ns', dest='servers', nargs='?',
                         default=2, type=int,
                         help='Number of server machines per cluster, default=2')
@@ -681,6 +701,16 @@ if __name__ == "__main__":
     if args.rebuild:
         pprint("Rebuilding thebes clusters")
         assign_hosts(regions)
+        stop_thebes_processes(clusters)
+        rebuild_all(clusters)
+
+    if args.rebuild_clients:
+        pprint("Rebuilding thebes clients")
+        stop_thebes_processes(clusters)
+        rebuild_clients(clusters)
+
+    if args.rebuild_servers:
+        pprint("Rebuilding thebes servers")
         stop_thebes_processes(clusters)
         rebuild_servers(clusters)
 
