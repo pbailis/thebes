@@ -31,9 +31,14 @@ import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
+import edu.berkeley.thebes.twopl.tm.ThebesTwoPLTransactionManager;
 
-/** Client buffers a transaction and sends it off at the END.
- * Accordingly, GET and PUT cannot return valid values. */
+/** 
+ * This client forwards transactions to an appropriate {@link ThebesTwoPLTransactionManager}.
+ * 
+ * We buffer the transaction and sends it off at the END. 
+ * Accordingly, GET and PUT cannot return valid values.
+ */
 public class ThebesTwoPLClient implements IThebesClient {
     private final Meter requestMetric = Metrics.newMeter(ThebesTwoPLClient.class, "2pl-requests", "requests", TimeUnit.SECONDS);
     private final Meter operationMetric = Metrics.newMeter(ThebesTwoPLClient.class, "2pl-operations", "operations", TimeUnit.SECONDS);

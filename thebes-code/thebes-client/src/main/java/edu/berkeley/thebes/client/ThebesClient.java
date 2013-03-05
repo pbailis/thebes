@@ -4,6 +4,8 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
 import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
+import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -29,7 +31,11 @@ public class ThebesClient implements IThebesClient {
             internalClient = new ThebesHATClient();
             break;
         case TWOPL:
-            internalClient = new ThebesTwoPLClient();
+            if (Config.shouldUseTwoPLTM()) {
+                internalClient = new ThebesTwoPLClient();
+            } else {
+                internalClient = new ThebesTwoPLTransactionClient();
+            }
             break;
         default:
             throw new ConfigurationException("Unrecognized txn mode: " + Config.getThebesTxnMode());
