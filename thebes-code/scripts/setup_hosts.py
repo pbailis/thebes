@@ -425,7 +425,7 @@ def start_servers(clusters, use2PL, thebesArgString):
 
 
     pprint('Waiting for things to settle down...')
-    sleep(60)
+    sleep(20)
     pprint('Servers started!')
 
 
@@ -449,39 +449,37 @@ def start_graphite(graphiteRegion):
     pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py start')
     pprint("Done")
-
-def start_clients(clusters, use2PL, thebesArgString):
-    def setupYCSB(cluster, client, clientID):
+	
+def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
+    def startYCSB(runType, cluster, client, clientID):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
-               'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
-               'rm *.log;' \
-               'bin/ycsb load thebes -p hosts=%s -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
-               ' -p maxexecutiontime=60 -P workloads/workloada ' \
-               ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
-               ' 1>load_out.log 2>load_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
+                       'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+                           'rm *.log;' \
+                           'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
+                           ' -p maxexecutiontime=%d -P %s ' \
+                           ' -p transactionLengthDistributionType=%s -p transactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Disolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
+                           ' 1>%s_out.log 2>%s_err.log' % (runType,
+                                                           hosts,
+                                                           kwargs.get("threads", 10) if runType != 'load' else 100,
+                                                           kwargs.get("fieldlength", 1),
+                                                           kwargs.get("recordcount", 10000),
+                                                           kwargs.get("time", 60) if runType != 'load' else 10000000000,
+                                                           kwargs.get("workload", "workloads/workloada"),
+                                                           kwargs.get("lengthdistribution", "constant"),
+                                                           kwargs.get("distributionparameter", 5),
+                                                           clientID, 
+                                                           "twopl" if use2PL else "hat",
+                                                           cluster.clusterID,
+                                                           kwargs.get("isolation_level", "NO_ISOLATION"),
+                                                           kwargs.get("atomicity_level", "NO_ATOMICITY"),
+                                                           thebesArgString,
+                                                           runType,
+                                                           runType))
 
-    def runYCSB(cluster, client, clientID):
-        hosts = ','.join([host.ip for host in cluster.servers])
-        run_cmd_single(client.ip,
-                'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
-                'rm *.log;' \
-                'bin/ycsb run thebes -p hosts=%s -threads 1 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t ' \
-                ' -p maxexecutiontime=60 -P workloads/workloada ' \
-                ' -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
-                ' 1>run_out.log 2>run_err.log' % (hosts, clientID, "twopl" if use2PL else "hat", cluster.clusterID, thebesArgString))
-
-    ths = []
     cluster = clusters[0]
     pprint("Loading YCSB on single client.")
-    for i,client in enumerate(cluster.clients):
-        t = Thread(target=setupYCSB, args=(cluster, client, i))
-        t.start()
-        ths.append(t)
-        break
-
-    for th in ths:
-        th.join()
+	startYCSB('load', cluster, cluster.clients[0], 0)
     pprint("Done")
 
     ths = []
@@ -489,14 +487,14 @@ def start_clients(clusters, use2PL, thebesArgString):
     
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
-            t = Thread(target=runYCSB, args=(cluster, client, i))
+            t = Thread(target=startYCSB, args=('run', cluster, client, i))
             t.start()
             ths.append(t)
 
     for th in ths:
         th.join()
     pprint("Done")
-
+	
 def fetch_logs(runid, clusters):
     def fetchYCSB(rundir, client):
         client_dir = rundir+"/"+"C"+client.ip
@@ -620,6 +618,16 @@ def pprint(str):
     else:
         print str
 
+def run_ycsb_trial(**kwargs):
+    pprint("Restarting thebes clusters")
+    assign_hosts(regions)
+    stop_thebes_processes(clusters)
+    write_config(clusters, graphiteRegion)
+    restart_graphite(graphiteRegion)
+    start_servers(clusters, use2PL, thebesArgString)
+    start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
+    runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
+    fetch_logs(runid, clusters)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
@@ -663,6 +671,9 @@ if __name__ == "__main__":
                         help='Print with pretty colors, default off.')
     parser.add_argument('-D', dest='thebes_args', action='append', default=[],
                         help='Parameters to pass along to the thebes servers/clients.')
+
+    parser.add_argument('--ycsb_vary_constants_experiment', action='store_true', help='run experiment for varying constants')
+
     args = parser.parse_args()
 
     USE_COLOR = args.color
@@ -694,7 +705,7 @@ if __name__ == "__main__":
         #setup_graphite(graphiteRegion)
         start_graphite(graphiteRegion)
         start_servers(clusters, use2PL, thebesArgString)
-        start_clients(clusters, use2PL, thebesArgString)
+        start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
         runid = str(datetime.now()).replace(' ', '_')
         fetch_logs(runid, clusters)
 
@@ -715,21 +726,30 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        pprint("Restarting thebes clusters")
-        assign_hosts(regions)
-        stop_thebes_processes(clusters)
-        write_config(clusters, graphiteRegion)
-        #setup_graphite(graphiteRegion)
-        restart_graphite(graphiteRegion)
-        start_servers(clusters, use2PL, thebesArgString)
-        start_clients(clusters, use2PL, thebesArgString)
-        runid = str(datetime.now()).replace(' ', '_')
-        fetch_logs(runid, clusters)
+        run_ycsb_trial()
 
     if args.terminate:
         pprint("Terminating thebes clusters")
         terminate_clusters()
 
+    if args.ycsb_vary_constants_experiment:
+        for transaction_length in [4, 8, 100]:
+            for threads in [1, 10, 100]:
+                for isolation_level in ["NO_ISOLATION", "READ_COMMITTED", "REPEATABLE_READ"]:
+                    for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
+                        if isolation_level != "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY":
+                            continue
+                        if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 2:
+                            continue
+                    
+                    run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s" % (transaction_length, 
+                                                                             isolation_level,
+                                                                             atomicity_level)),
+                                   threads=threads,
+                                   distributionparameter=transaction_length,
+                                   atomicity_level=atomicity_level,
+                                   isolation_level=isolation_level)
+                
     if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
 
