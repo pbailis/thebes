@@ -458,7 +458,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                            'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
                            ' -p maxexecutiontime=%d -P %s ' \
-                           ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Disolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
+                           ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
                                                            kwargs.get("threads", 10) if runType != 'load' else 100,
@@ -737,7 +737,7 @@ if __name__ == "__main__":
             for threads in [1, 10, 100]:
                 for isolation_level in ["NO_ISOLATION", "READ_COMMITTED", "REPEATABLE_READ"]:
                     for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
-                        if isolation_level != "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY":
+                        if isolation_level == "NO_ISOLATION" and atomicity_level != "NO_ATOMICITY":
                             continue
                         if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 2:
                             continue
