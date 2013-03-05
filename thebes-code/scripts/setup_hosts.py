@@ -449,9 +449,9 @@ def start_graphite(graphiteRegion):
     pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py start')
     pprint("Done")
-
+	
 def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
-    def startYCSB(isload, cluster, client, clientID, **kwargs):
+    def startYCSB(runType, cluster, client, clientID):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
@@ -459,12 +459,12 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
                            ' -p maxexecutiontime=%d -P %s ' \
                            ' -p transactionLengthDistributionType=%s -p transactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Disolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
-                           ' 1>%s_out.log 2>%s_err.log' % ("load" if isload else "run",
+                           ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
-                                                           kwargs.get("threads", 10) if not isload else 100,
+                                                           kwargs.get("threads", 10) if runType != 'load' else 100,
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
-                                                           kwargs.get("time", 60) if not isload else 100000000000,
+                                                           kwargs.get("time", 60) if runType != 'load' else 10000000000,
                                                            kwargs.get("workload", "workloads/workloada"),
                                                            kwargs.get("lengthdistribution", "constant"),
                                                            kwargs.get("distributionparameter", 5),
@@ -474,26 +474,12 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                                                            kwargs.get("isolation_level", "NO_ISOLATION"),
                                                            kwargs.get("atomicity_level", "NO_ATOMICITY"),
                                                            thebesArgString,
-                                                           "load" if isload else "run",
-                                                           "load" if isload else "run"))
+                                                           runType,
+                                                           runType))
 
-    def setupYCSB(cluster, client, clientID, **kwargs):
-        startYCSB(True, cluster, client, clientID, **kwargs)
-
-    def runYCSB(cluster, client, clientID, **kwargs):
-        startYCSB(False, cluster, client, clientID, **kwargs)
-
-    ths = []
     cluster = clusters[0]
     pprint("Loading YCSB on single client.")
-    for i,client in enumerate(cluster.clients):
-        t = Thread(target=setupYCSB, args=(cluster, client, i))
-        t.start()
-        ths.append(t)
-        break
-
-    for th in ths:
-        th.join()
+	startYCSB('load', cluster, cluster.clients[0], 0)
     pprint("Done")
 
     ths = []
@@ -501,14 +487,14 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
-            t = Thread(target=runYCSB, args=(cluster, client, i))
+            t = Thread(target=startYCSB, args=('run', cluster, client, i))
             t.start()
             ths.append(t)
 
     for th in ths:
         th.join()
     pprint("Done")
-
+	
 def fetch_logs(runid, clusters):
     def fetchYCSB(rundir, client):
         client_dir = rundir+"/"+"C"+client.ip
