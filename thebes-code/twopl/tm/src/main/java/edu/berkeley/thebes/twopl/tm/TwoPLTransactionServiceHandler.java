@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import edu.berkeley.thebes.common.thrift.TTransactionAbortedException;
+import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.Function;
@@ -15,9 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.Iface {
-    private TwoPLTransactionClient client;
+    private ThebesTwoPLTransactionClient client;
 
-    public TwoPLTransactionServiceHandler(TwoPLTransactionClient client) {
+    public TwoPLTransactionServiceHandler(ThebesTwoPLTransactionClient client) {
         this.client = client;
     }
 
