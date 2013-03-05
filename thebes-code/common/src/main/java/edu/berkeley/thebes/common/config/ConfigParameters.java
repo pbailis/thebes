@@ -40,7 +40,8 @@ public enum ConfigParameters {
     TWOPL_TM_CONFIG(Map.class, RequirementLevel.TWOPL_TM),
     TWOPL_CLUSTER_CONFIG(Map.class, RequirementLevel.TWOPL_COMMON),
     SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION),
-    ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY);
+    ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY),
+    LOGGER_LEVEL(String.class, "WARN");
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;

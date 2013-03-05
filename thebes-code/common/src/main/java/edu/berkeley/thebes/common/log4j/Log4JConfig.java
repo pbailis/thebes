@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.common.log4j;
 
+import edu.berkeley.thebes.common.config.Config;
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.FileAppender;
@@ -19,7 +20,7 @@ public class Log4JConfig {
     public static void configureLog4J() {
         
         BasicConfigurator.configure();
-        Logger.getRootLogger().setLevel(Level.TRACE);
+        Logger.getRootLogger().setLevel(Level.toLevel(Config.getLoggerLevel()));
         PatternLayout layout = new PatternLayout("%r [%t] %p %c{2} %x - %m%n");
 
         try {

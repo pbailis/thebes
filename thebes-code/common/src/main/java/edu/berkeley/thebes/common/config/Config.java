@@ -284,6 +284,10 @@ public class Config {
         return getOption(ConfigParameters.ANTIENTROPY_BOOTSTRAP_TIME);
     }
 
+    public static String getLoggerLevel() {
+        return getOption(ConfigParameters.LOGGER_LEVEL);
+    }
+
     /** Returns true if this server is the Master of a 2PL replica set. */
     public static Boolean isMaster() {
         return txnMode == TransactionMode.TWOPL &&
