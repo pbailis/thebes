@@ -14,7 +14,7 @@ import java.util.List;
 /** Helps route traffic to the master of each replica set. */
 public class TwoPLMasterRouter {
     /** Contains the ordered list of master replicas, one per set of replicas. */
-    private static List<TwoPLMasterReplicaService.Client> masterReplicas;
+    private List<TwoPLMasterReplicaService.Client> masterReplicas;
 
     public TwoPLMasterRouter() throws TTransportException {
         List<ServerAddress> serverIPs = Config.getMasterServers();
