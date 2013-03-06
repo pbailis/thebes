@@ -146,9 +146,9 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 
             if(ret == null || ret.array() == null) {
                 if(fields != null)
-                    result.put(fields.iterator().next(), "null".getBytes());
+                    result.put(fields.iterator().next(), new ByteArrayByteIterator("null".getBytes()));
                 else
-                    result.put("value", "null".getBytes());
+                    result.put("value", new ByteArrayByteIterator("null".getBytes()));
                 return OK;
             }
 
