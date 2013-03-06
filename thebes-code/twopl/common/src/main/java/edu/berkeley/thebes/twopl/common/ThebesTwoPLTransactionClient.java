@@ -1,14 +1,9 @@
-package edu.berkeley.thebes.twopl.tm;
-
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-import java.util.Random;
-import java.util.Set;
-
-import javax.naming.ConfigurationException;
+package edu.berkeley.thebes.twopl.common;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+
+import javax.naming.ConfigurationException;
 
 import com.google.common.collect.Sets;
 
@@ -16,14 +11,21 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
+
+import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
+import java.util.Set;
 
 /**
  * Provides a layer of abstraction that manages getting the actual locks from a set of
- * GET/PUT requests. Communicates with the master replicas via a {@link TwoPLMasterRouter}.
+ * GET/PUT requests.
+ * Communicates directly with the master replicas via a {@link TwoPLMasterRouter}.
+ * 
+ * Note: This is used by Thebes clients to talk directly with the 2PL servers;
+ * alternatively, Thebes clients use {@link ThebesTwoPLClient} to talk to TMS,
+ * which use this class to talk to the 2PL servers.
  */
-public class TwoPLTransactionClient implements IThebesClient {
-    private Random randomNumberGen = new Random();
+public class ThebesTwoPLTransactionClient implements IThebesClient {
     private short clientId = Config.getClientID();
     private int sequenceNumber;
     
@@ -32,7 +34,7 @@ public class TwoPLTransactionClient implements IThebesClient {
     private Set<String> lockedKeys;
     private TwoPLMasterRouter masterRouter;
     
-    public TwoPLTransactionClient() {
+    public ThebesTwoPLTransactionClient() {
         sequenceNumber = 0;
     }
     
