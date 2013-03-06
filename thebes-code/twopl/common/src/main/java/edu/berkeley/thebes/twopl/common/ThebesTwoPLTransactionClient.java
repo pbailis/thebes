@@ -2,6 +2,7 @@ package edu.berkeley.thebes.twopl.common;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
 
@@ -11,6 +12,7 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.twopl.server.TwoPLLocalLockManager;
 
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
@@ -27,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * which use this class to talk to the 2PL servers.
  */
 public class ThebesTwoPLTransactionClient implements IThebesClient {
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(ThebesTwoPLTransactionClient.class);
+    
 	private static AtomicInteger NEXT_SEQUENCE_NUMBER = new AtomicInteger(0);
     private short clientId = Config.getClientID();
     
@@ -50,7 +54,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = Long.parseLong("" + (clientId*1000) + NEXT_SEQUENCE_NUMBER.getAndIncrement());
+        sessionId = Long.parseLong("" + (clientId*100000) + NEXT_SEQUENCE_NUMBER.getAndIncrement());
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
         writeLocks = Sets.newHashSet();
@@ -60,7 +64,11 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     @Override
     public boolean endTransaction() throws TException {
     	inTransaction = false;
-        for (String key : lockedKeys) {
+    	logger.info("Transaction ended!");
+        for (String key : readLocks) {
+            masterRouter.getMasterByKey(key).unlock(sessionId, key);
+        }
+        for (String key : writeLocks) {
             masterRouter.getMasterByKey(key).unlock(sessionId, key);
         }
         return true;
