@@ -740,7 +740,7 @@ if __name__ == "__main__":
                        threads=10,
                        distributionparameter=10,
                        atomicity_level="NO_ISOLATION",
-                       isolation_level="NO_ATOMICITY"))
+                       isolation_level="NO_ATOMICITY")
 
     if args.terminate:
         pprint("Terminating thebes clusters")
