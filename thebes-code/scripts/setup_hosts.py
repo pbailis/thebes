@@ -172,8 +172,9 @@ def provision_clusters(regions, use_spot, anti_slow):
         # Note: This number includes graphite, even though we won't start that up until a little later.
         f = raw_input("spinning up %d %s%s instances in %s; okay? " %
                       (region.getTotalNumHosts(), 
-					  "spot" if use_spot else "normal", region.name,
-					  " (+%d)"len(region.clusters) if anti_slow else "")
+					  "spot" if use_spot else "normal",
+					  " (+%d)" % len(region.clusters) if anti_slow else "",
+					  region.name))
 
         if f != "Y" and f != "y":
             exit(-1)
