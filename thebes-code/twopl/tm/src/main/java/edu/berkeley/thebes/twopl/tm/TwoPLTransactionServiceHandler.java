@@ -24,7 +24,7 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
     }
 
     @Override
-    public TwoPLTransactionResult execute(List<String> transaction) throws TException {
+    public synchronized TwoPLTransactionResult execute(List<String> transaction) throws TException {
         SimpleStackOperationInterpreter interpreter =
                 new SimpleStackOperationInterpreter(client);
         
