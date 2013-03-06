@@ -70,6 +70,7 @@ public class DBWrapper extends DB
 	        		long st=System.nanoTime();
 	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
 	        		long en=System.nanoTime();
+	        		System.out.println("INSERT took " + (int)((en-st)/1000));
 	        		_measurements.measure("INSERT",(int)((en-st)/1000));
 	        		_measurements.reportReturnCode("INSERT",res);
 	        		if (res != 0) {
@@ -79,6 +80,7 @@ public class DBWrapper extends DB
 	        		long st=System.nanoTime();
 	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues());
 	        		long en=System.nanoTime();
+	        		System.out.println("UPDATE took " + (int)((en-st)/1000));
 	        		_measurements.measure("UPDATE",(int)((en-st)/1000));
 	        		_measurements.reportReturnCode("UPDATE",res);
 	        		if (res != 0) {
@@ -90,6 +92,7 @@ public class DBWrapper extends DB
         		long st=System.nanoTime();
         		int res=_db.read(req.getTable(), req.getKey(), req.getFields(), req.getResult());
         		long en=System.nanoTime();
+        		System.out.println("READ took " + (int)((en-st)/1000));
         		_measurements.measure("READ",(int)((en-st)/1000));
         		_measurements.reportReturnCode("READ",res);
         		if (res != 0) {

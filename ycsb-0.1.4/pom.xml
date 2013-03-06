@@ -58,7 +58,7 @@
   <modules>
     <!--module>build-tools</module-->
     <module>core</module>
-    <!--<module>hbase</module>
+    <module>hbase</module>
     <module>cassandra</module>
     <module>gemfire</module>
     <module>infinispan</module>
@@ -67,7 +67,7 @@
     <module>mongodb</module>
       <module>nosqldb</module>
     <module>redis</module>
-    <module>voldemort</module> -->
+    <module>voldemort</module>
     <module>distribution</module> 
     <module>thebes</module>
   </modules>
