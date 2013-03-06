@@ -79,7 +79,12 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         		throw new TException("Cannot upgrade locks right now.");
         	}
         	writeLocks.add(key);
-            masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+        	try {
+        		masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+        	} catch (TException e) {
+        		e.printStackTrace();
+        		throw new TException("Obtaining write lock timed out.");
+        	}
         }
         
         long timestamp = System.currentTimeMillis();
@@ -95,7 +100,12 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         
         if (!readLocks.contains(key) && !writeLocks.contains(key)) {
         	readLocks.add(key);
-            masterRouter.getMasterByKey(key).read_lock(sessionId, key);
+        	try {
+                masterRouter.getMasterByKey(key).read_lock(sessionId, key);
+        	} catch (TException e) {
+        		e.printStackTrace();
+        		throw new TException("Obtaining write lock timed out.");
+        	}
         }
         
         DataItem dataItem = DataItem.fromThrift(masterRouter.getMasterByKey(key).get(sessionId, key));
