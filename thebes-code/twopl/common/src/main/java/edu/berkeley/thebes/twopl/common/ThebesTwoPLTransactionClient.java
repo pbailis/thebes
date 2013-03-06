@@ -34,6 +34,8 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     private long sessionId;
     private boolean inTransaction;
     private Set<String> lockedKeys;
+    private Set<String> writeLocks;
+    private Set<String> readLocks;
     private TwoPLMasterRouter masterRouter;
     
     public ThebesTwoPLTransactionClient() {
@@ -53,6 +55,8 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         sessionId = Long.parseLong("" + (clientId*1000) + sequenceNumber);
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
+        writeLocks = Sets.newHashSet();
+        readLocks = Sets.newHashSet();
     }
 
     @Override
@@ -70,6 +74,14 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         
+        if (!writeLocks.contains(key)) {
+        	if (readLocks.contains(key)) {
+        		throw new TException("Cannot upgrade locks right now.");
+        	}
+        	writeLocks.add(key);
+            masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+        }
+        
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version(clientId, timestamp));
         return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
@@ -79,6 +91,11 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     public ByteBuffer get(String key) throws TException {
         if (!inTransaction) {
             throw new TException("Must be in a transaction!");
+        }
+        
+        if (!readLocks.contains(key) && !writeLocks.contains(key)) {
+        	readLocks.add(key);
+            masterRouter.getMasterByKey(key).read_lock(sessionId, key);
         }
         
         DataItem dataItem = DataItem.fromThrift(masterRouter.getMasterByKey(key).get(sessionId, key));
