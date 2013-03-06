@@ -33,8 +33,8 @@ def get_host_ips(hosts):
         
 def sed(file, find, repl):
     iOpt = ''
-    print 'sed -i "" -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file)
-    system('sed -i "" -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file))
+    print 'sed -i -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file)
+    system('sed -i -e %s \'s/%s/%s/g\' %s' % (iOpt, escape(find), escape(repl), file))
 
 def escape(path):
     return path.replace('/', '\/')

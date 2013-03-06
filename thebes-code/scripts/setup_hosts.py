@@ -260,8 +260,8 @@ def assign_hosts(regions):
 
         remaining_hosts = ' '.join([h.instanceid for h in hostsToAssign])
         if remaining_hosts.strip() != '':
-            pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts, regionName)))
-            system("ec2-terminate-instances --region %s %s" % (regionName, remaining_hosts))
+            pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts, region.name)))
+            system("ec2-terminate-instances --region %s %s" % (region.name, remaining_hosts))
         pprint("Done!")
 
     # Finally write the instance files for the regions and everything.
@@ -427,9 +427,13 @@ def start_servers(clusters, use2PL, thebesArgString):
             pprint("Starting kv-server on [%s]" % server.ip)
             run_cmd_single(server.ip, runServerCmd % (cluster.clusterID, sid, thebesArgString), user="root")
 
-        for tm in cluster.tms:
-            pprint("Starting TM on [%s]" % tm.ip)
-            run_cmd_single(tm.ip, runTMCmd % (cluster.clusterID, getNextClientID(), thebesArgString), user="root")
+    if use2PL:
+        sleep(10)
+        pprint('Starting TMs...')
+        for cluster in clusters:
+            for tm in cluster.tms:
+                pprint("Starting TM on [%s]" % tm.ip)
+                run_cmd_single(tm.ip, runTMCmd % (cluster.clusterID, getNextClientID(), thebesArgString), user="root")
 
 
     pprint('Waiting for things to settle down...')

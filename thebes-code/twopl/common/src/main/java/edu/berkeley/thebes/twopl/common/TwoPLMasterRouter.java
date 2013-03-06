@@ -27,7 +27,7 @@ public class TwoPLMasterRouter {
     }
 
     public TwoPLMasterReplicaService.Client getMasterByKey(String key) {
-        return masterReplicas.get(key.hashCode() % masterReplicas.size());
+        return masterReplicas.get(RoutingHash.hashKey(key, masterReplicas.size()));
     }
     
     public ServerAddress getMasterAddressByKey(String key) {

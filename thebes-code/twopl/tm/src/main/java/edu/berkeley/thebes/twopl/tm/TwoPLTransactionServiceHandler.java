@@ -12,6 +12,7 @@ import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.Function;
 import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.StatementNode;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Set;
 
@@ -32,6 +33,18 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
         Set<String> readKeys = Sets.newHashSet();
         Set<String> writeKeys = Sets.newHashSet();
         for (String operation : transaction) {
+        	if (operation.startsWith("put")) {
+        		String key = operation.substring(operation.indexOf(" ")+1, operation.lastIndexOf(" "));
+        		String value = operation.substring(operation.lastIndexOf(" ")+1);
+        		readKeys.remove(key);
+        		writeKeys.add(key);
+        	} else {
+        		String key = operation.substring(operation.indexOf(" ")+1);
+                if (!writeKeys.contains(key)) {
+                    readKeys.add(key);
+                }
+        	}
+        	/*
             StatementNode statement = interpreter.parse(operation);
             String key = statement.getTarget();
             
@@ -45,6 +58,7 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
             }
             
             statements.add(statement);
+            */
         }
         
         // Now actually execute commands, starting by locking everything we need.
@@ -56,10 +70,21 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
             for (String readKey : readKeys) {
                 client.readLock(readKey);
             }
+            for (String operation : transaction) {
+            	if (operation.startsWith("put")) {
+            		String key = operation.substring(operation.indexOf(" ")+1, operation.lastIndexOf(" "));
+            		String value = operation.substring(operation.lastIndexOf(" ")+1);
+            		client.put(key, ByteBuffer.wrap(value.getBytes()));
+            	} else {
+            		String key = operation.substring(operation.indexOf(" ")+1);
+                    client.get(key);
+            	}
+            }
+            /*
             for (StatementNode statement : statements) {
                 // TODO: Clean up interpreter by having it merely evaluate, not execute.
                 interpreter.execute(statement);
-            }
+            }*/
         } catch (AssertionError e) {
             e.printStackTrace();
             throw new TTransactionAbortedException(e.getMessage());
