@@ -486,7 +486,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                                                            runType))
 
     cluster = clusters[0]
-    pprint("Loading YCSB on single client: %s." % (cluster.clients[0].ip)
+    pprint("Loading YCSB on single client: %s." % (cluster.clients[0].ip))
     startYCSB('load', cluster, cluster.clients[0], 0)
     pprint("Done")
 
