@@ -509,8 +509,8 @@ def fetch_logs(runid, clusters):
         system("mkdir -p "+client_dir)
         fetch_file_single(client.ip, "/home/ubuntu/thebes/ycsb-0.1.4/*.log", client_dir)
 
-    def fetchThebes(rundir, server):
-        server_dir = rundir+"/"+"S"+server.ip
+    def fetchThebes(rundir, server, symbol):
+        server_dir = rundir+"/"+symbol+server.ip
         system("mkdir -p "+server_dir)
         fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir) 
 
@@ -534,7 +534,19 @@ def fetch_logs(runid, clusters):
     pprint("Fetching thebes logs from servers.")
     for cluster in clusters:
         for i,server in enumerate(cluster.servers):
-            t = Thread(target=fetchThebes, args=(outroot, server))
+            t = Thread(target=fetchThebes, args=(outroot, server, "S"))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+    ths = []
+    pprint("Fetching thebes logs from TMs.")
+    for cluster in clusters:
+        for i,tm in enumerate(cluster.tms):
+            t = Thread(target=fetchThebes, args=(outroot, tm, "TM"))
             t.start()
             ths.append(t)
 
