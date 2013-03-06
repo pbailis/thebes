@@ -48,7 +48,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = Long.parseLong("" + clientId + sequenceNumber++);
+        sessionId = Long.parseLong("" + (clientId*1000) + sequenceNumber++);
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
     }

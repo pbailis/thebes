@@ -1,15 +1,17 @@
 package edu.berkeley.thebes.hat.server.antientropy.clustering;
 
 
-import com.google.common.collect.Lists;
-import edu.berkeley.thebes.common.config.Config;
-import edu.berkeley.thebes.common.thrift.ServerAddress;
-import edu.berkeley.thebes.hat.common.clustering.RoutingHash;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+
+import edu.berkeley.thebes.common.clustering.RoutingHash;
+import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
+import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 import java.util.List;
 
