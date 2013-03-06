@@ -163,23 +163,27 @@ def check_for_instances(regions):
             exit(-1)
 
 
-def provision_clusters(regions, use_spot):
+def provision_clusters(regions, use_spot, anti_slow):
     global AMIs
 
     for region in regions:
         assert region.name in AMIs, "No AMI for region '%s'" % region.name
 
         # Note: This number includes graphite, even though we won't start that up until a little later.
-        f = raw_input("spinning up %d %s instances in %s; okay? " %
-                      (region.getTotalNumHosts(), "spot" if use_spot else "normal", region.name))
+        f = raw_input("spinning up %d %s%s instances in %s; okay? " %
+                      (region.getTotalNumHosts(), 
+					  "spot" if use_spot else "normal", region.name,
+					  " (+%d)"len(region.clusters) if anti_slow else "")
 
         if f != "Y" and f != "y":
             exit(-1)
 
+		numHosts = region.getTotalNumHostsWithoutGraphite()
+		if anti_slow: numHosts += len(region.clusters)
         if use_spot:
-            provision_spot(region.name, region.getTotalNumHostsWithoutGraphite())
+            provision_spot(region.name, numHosts)
         else:
-            provision_instance(region.name, region.getTotalNumHostsWithoutGraphite())
+            provision_instance(region.name, numHosts)
 
 def provision_graphite(region):
     global AMIs
@@ -209,8 +213,7 @@ def wait_all_hosts_up(regions):
         while True:
             numInstancesInRegion = get_num_running_instances(region.name)
             numInstancesExpected = region.getTotalNumHosts()
-            assert numInstancesInRegion <= numInstancesExpected, "More instances running (%d) than started (%d)!" % (numInstancesInRegion, numInstancesExpected)
-            if numInstancesInRegion == numInstancesExpected:
+            if numInstancesInRegion >= numInstancesExpected:
                 break
             sleep(5)
         pprint("All instances in %s alive!" % region.name)
@@ -254,6 +257,10 @@ def assign_hosts(regions):
             allServers += cluster.servers
             allClients += cluster.clients
 
+        remaining_hosts = ' '.join([h.instanceid for h in hostsToAssign])
+        if remaining_hosts.strip() != '':
+            pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts, regionName)))
+            system("ec2-terminate-instances --region %s %s" % (regionName, remaining_hosts))
         pprint("Done!")
 
     # Finally write the instance files for the regions and everything.
@@ -667,6 +674,8 @@ if __name__ == "__main__":
                         help='Which cluster graphite is hosted on, default=off')
     parser.add_argument('--no_spot', dest='no_spot', action='store_true',
                         help='Don\'t use spot instances, default off.')
+    parser.add_argument('--anti_slow', dest='anti_slow', action='store_true',
+                        help='Spawn an extra instance per cluster (and kill the slowest to start), default off.')
     parser.add_argument('--color', dest='color', action='store_true',
                         help='Print with pretty colors, default off.')
     parser.add_argument('-D', dest='thebes_args', action='append', default=[],
@@ -693,11 +702,11 @@ if __name__ == "__main__":
     if args.launch:
         pprint("Launching thebes clusters")
         check_for_instances(AMIs.keys())
-        provision_clusters(regions, not args.no_spot)
+        provision_clusters(regions, not args.no_spot, args.anti_slow)
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
 
-    if args.launch or args.setup:
+    if args.setup:
         assign_hosts(regions)
         #setup_hosts(clusters)
         jumpstart_hosts(clusters)
@@ -726,12 +735,16 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial()
+        run_ycsb_trial(runid=("DEAULT_RUN",
+					   threads=10,
+                       distributionparameter=10,
+                       atomicity_level="NO_ISOLATION",
+                       isolation_level="NO_ATOMICITY"))
 
     if args.terminate:
         pprint("Terminating thebes clusters")
         terminate_clusters()
-
+	
     if args.ycsb_vary_constants_experiment:
         for transaction_length in [4, 8, 100]:
             for threads in [1, 10, 100]:
