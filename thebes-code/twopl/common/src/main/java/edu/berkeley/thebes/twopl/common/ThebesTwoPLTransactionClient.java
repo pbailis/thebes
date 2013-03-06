@@ -11,7 +11,6 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
-import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
