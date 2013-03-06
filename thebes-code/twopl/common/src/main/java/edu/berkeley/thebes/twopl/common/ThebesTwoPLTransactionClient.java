@@ -15,6 +15,7 @@ import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides a layer of abstraction that manages getting the actual locks from a set of
@@ -26,6 +27,7 @@ import java.util.Set;
  * which use this class to talk to the 2PL servers.
  */
 public class ThebesTwoPLTransactionClient implements IThebesClient {
+	private static AtomicInteger NEXT_SEQUENCE_NUMBER = new AtomicInteger(0);
     private short clientId = Config.getClientID();
     private int sequenceNumber;
     
@@ -35,7 +37,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     private TwoPLMasterRouter masterRouter;
     
     public ThebesTwoPLTransactionClient() {
-        sequenceNumber = 0;
+        sequenceNumber = NEXT_SEQUENCE_NUMBER.getAndIncrement();
     }
     
     @Override
@@ -48,7 +50,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = Long.parseLong("" + (clientId*1000) + sequenceNumber++);
+        sessionId = Long.parseLong("" + (clientId*1000) + sequenceNumber);
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
     }
