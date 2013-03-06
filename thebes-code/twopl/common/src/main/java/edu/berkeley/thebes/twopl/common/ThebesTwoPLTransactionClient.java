@@ -109,7 +109,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
                 masterRouter.getMasterByKey(key).read_lock(sessionId, key);
         	} catch (TException e) {
         		e.printStackTrace();
-        		throw new TException("Obtaining write lock timed out.");
+        		throw new TException("Obtaining read lock timed out.");
         	}
         }
         

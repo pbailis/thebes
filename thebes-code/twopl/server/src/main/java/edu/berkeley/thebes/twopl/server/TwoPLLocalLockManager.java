@@ -34,9 +34,9 @@ public class TwoPLLocalLockManager {
      *   if there's a writer waiting.
      */
     private static class LockState {
-        private boolean held;
-        private LockType mode;
-        private Set<Long> lockers;
+    	public boolean held;
+        public LockType mode;
+        public Set<Long> lockers;
         private int numWritersWaiting;
         
         private Lock lockLock = new ReentrantLock();
@@ -178,6 +178,7 @@ public class TwoPLLocalLockManager {
                 lockMetric.dec();
                 logger.debug("Lock released by [" + sessionId + "] on key '" + key + "'");
             } else {
+            	logger.error("These guys own it: " + lockState.lockers + " / " + lockState.held + " / " + lockState.mode);
                 throw new IllegalArgumentException("[" + sessionId + "] cannot unlock key it does not own: '" + key + "'");
             }
         }
