@@ -21,8 +21,8 @@ public class ThebesTwoPLTransactionManager {
     
     public static void main(String[] args) {
         try {
-            Log4JConfig.configureLog4J();
             Config.initializeTwoPLTransactionManager();
+            Log4JConfig.configureLog4J();
 
             ThebesTwoPLTransactionClient client = new ThebesTwoPLTransactionClient();
             client.open();

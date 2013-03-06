@@ -53,8 +53,8 @@ public class ThebesTwoPLServer {
 
     public static void main(String[] args) {
         try {
-            Log4JConfig.configureLog4J();
             Config.initializeServer(TransactionMode.TWOPL);
+            Log4JConfig.configureLog4J();
 
             IPersistenceEngine engine;
 
