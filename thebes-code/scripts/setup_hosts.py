@@ -170,12 +170,17 @@ def provision_clusters(regions, use_spot):
         assert region.name in AMIs, "No AMI for region '%s'" % region.name
 
         # Note: This number includes graphite, even though we won't start that up until a little later.
-        f = raw_input("spinning up %d %s instances in %s; okay? " %
-                      (region.getTotalNumHosts(), "spot" if use_spot else "normal", region.name))
+        f = raw_input("spinning up %d %s%s instances in %s; okay? " %
+                      (region.getTotalNumHosts(), 
+                      "spot" if use_spot else "normal",
+                      " (+%d)" % len(region.clusters) if anti_slow else "",
+                      region.name))
 
         if f != "Y" and f != "y":
             exit(-1)
 
+        numHosts = region.getTotalNumHostsWithoutGraphite()
+        if anti_slow: numHosts += len(region.clusters)
         if use_spot:
             provision_spot(region.name, region.getTotalNumHostsWithoutGraphite())
         else:
@@ -449,7 +454,7 @@ def start_graphite(graphiteRegion):
     pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py start')
     pprint("Done")
-	
+    
 def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     def startYCSB(runType, cluster, client, clientID):
         hosts = ','.join([host.ip for host in cluster.servers])
@@ -494,7 +499,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     for th in ths:
         th.join()
     pprint("Done")
-	
+    
 def fetch_logs(runid, clusters):
     def fetchYCSB(rundir, client):
         client_dir = rundir+"/"+"C"+client.ip
@@ -726,12 +731,16 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial()
+        run_ycsb_trial(runid=("DEAULT_RUN",
+                       threads=10,
+                       distributionparameter=10,
+                       atomicity_level="NO_ISOLATION",
+                       isolation_level="NO_ATOMICITY"))
 
     if args.terminate:
         pprint("Terminating thebes clusters")
         terminate_clusters()
-
+        
     if args.ycsb_vary_constants_experiment:
         for transaction_length in [4, 8, 100]:
             for threads in [1, 10, 100]:
