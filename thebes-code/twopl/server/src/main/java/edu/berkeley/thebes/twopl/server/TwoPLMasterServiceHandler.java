@@ -41,7 +41,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
         if (lockManager.ownsLock(LockType.READ, key, sessionId)) {
             return DataItem.toThrift(persistenceEngine.get(key));
         } else {
-            throw new TException("Session does not own GET lock on '" + key + "'");
+            throw new TException("Session " + sessionId + "does not own GET lock on '" + key + "'");
         }
     }
 
@@ -54,7 +54,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
             }
             return success;
         } else {
-            throw new TException("Session does not own PUT lock on '" + key + "'");
+            throw new TException("Session " + sessionId + " does not own PUT lock on '" + key + "'");
         }
     }
 }

@@ -2,6 +2,7 @@ package edu.berkeley.thebes.twopl.common;
 
 import org.apache.thrift.transport.TTransportException;
 
+import edu.berkeley.thebes.common.clustering.RoutingHash;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService;
@@ -31,6 +32,6 @@ public class TwoPLMasterRouter {
     
     public ServerAddress getMasterAddressByKey(String key) {
         List<ServerAddress> servers = Config.getMasterServers();
-        return servers.get(key.hashCode() % servers.size());
+        return servers.get(RoutingHash.hashKey(key, servers.size()));
     }
 }
