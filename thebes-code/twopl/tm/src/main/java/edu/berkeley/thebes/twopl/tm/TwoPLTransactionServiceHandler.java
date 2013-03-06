@@ -34,10 +34,9 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
         Set<String> writeKeys = Sets.newHashSet();
         for (String operation : transaction) {
         	if (operation.startsWith("put")) {
-        		String key = operation.substring(operation.indexOf(" ")+1, operation.lastIndexOf(" "));
-        		String value = operation.substring(operation.lastIndexOf(" ")+1);
-        		readKeys.remove(key);
-        		writeKeys.add(key);
+        		String[] x = operation.split(" ");
+        		readKeys.remove(x[1]);
+        		writeKeys.add(x[1]);
         	} else {
         		String key = operation.substring(operation.indexOf(" ")+1);
                 if (!writeKeys.contains(key)) {
@@ -72,12 +71,13 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
             }
             for (String operation : transaction) {
             	if (operation.startsWith("put")) {
-            		String key = operation.substring(operation.indexOf(" ")+1, operation.lastIndexOf(" "));
-            		String value = operation.substring(operation.lastIndexOf(" ")+1);
-            		client.put(key, ByteBuffer.wrap(value.getBytes()));
+            		String[] x = operation.split(" ");
+            		readKeys.remove(x[1]);
+            		writeKeys.add(x[1]);
+            		client.put(x[1], ByteBuffer.wrap(x[2].getBytes()));
             	} else {
-            		String key = operation.substring(operation.indexOf(" ")+1);
-                    client.get(key);
+            		String[] x = operation.split(" ");
+                    client.get(x[1]);
             	}
             }
             /*
