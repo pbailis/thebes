@@ -12,9 +12,12 @@ import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
 import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.Function;
 import edu.berkeley.thebes.twopl.tm.SimpleStackOperationInterpreter.StatementNode;
 
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Set;
+
+import javax.naming.ConfigurationException;
 
 public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.Iface {
     private ThebesTwoPLTransactionClient client;
@@ -25,6 +28,15 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
 
     @Override
     public synchronized TwoPLTransactionResult execute(List<String> transaction) throws TException {
+    	System.out.println("NEW VERSION");
+    	ThebesTwoPLTransactionClient client = new ThebesTwoPLTransactionClient();
+    	try {
+			client.open();
+		} catch (ConfigurationException e1) {
+			e1.printStackTrace();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
         SimpleStackOperationInterpreter interpreter =
                 new SimpleStackOperationInterpreter(client);
         

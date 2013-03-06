@@ -55,10 +55,10 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
 
     @Override
     public boolean endTransaction() throws TException {
+    	inTransaction = false;
         for (String key : lockedKeys) {
             masterRouter.getMasterByKey(key).unlock(sessionId, key);
         }
-        inTransaction = false;
         return true;
     }
 
