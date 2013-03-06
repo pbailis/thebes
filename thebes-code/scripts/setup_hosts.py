@@ -172,15 +172,15 @@ def provision_clusters(regions, use_spot, anti_slow):
         # Note: This number includes graphite, even though we won't start that up until a little later.
         f = raw_input("spinning up %d %s%s instances in %s; okay? " %
                       (region.getTotalNumHosts(), 
-					  "spot" if use_spot else "normal",
-					  " (+%d)" % len(region.clusters) if anti_slow else "",
-					  region.name))
+                      "spot" if use_spot else "normal",
+                      " (+%d)" % len(region.clusters) if anti_slow else "",
+                      region.name))
 
         if f != "Y" and f != "y":
             exit(-1)
 
-		numHosts = region.getTotalNumHostsWithoutGraphite()
-		if anti_slow: numHosts += len(region.clusters)
+        numHosts = region.getTotalNumHostsWithoutGraphite()
+        if anti_slow: numHosts += len(region.clusters)
         if use_spot:
             provision_spot(region.name, numHosts)
         else:
@@ -400,11 +400,11 @@ def rebuild_clients(clusters):
 
 def rebuild_servers(clusters):
     pprint('Rebuilding servers...')
-    run_cmd_in_thebes("all-servers", "git stash", user="ubuntu")
-    run_cmd_in_thebes("all-servers", "git pull", user="ubuntu")
-    run_cmd_in_thebes("all-servers", "mvn package", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
     pprint('Servers re-built!')
-    
+
 CLIENT_ID = 0
 def getNextClientID():
     global CLIENT_ID
@@ -461,26 +461,26 @@ def start_graphite(graphiteRegion):
     pprint("Starting graphite on [%s]..." % graphiteRegion.graphiteHost.ip)
     run_cmd('graphite', 'sudo python /opt/graphite/bin/carbon-cache.py start')
     pprint("Done")
-	
+
 def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     def startYCSB(runType, cluster, client, clientID):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
-                           'rm *.log;' \
+#                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
                            ' -p maxexecutiontime=%d -P %s ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
-                                                           kwargs.get("threads", 10) if runType != 'load' else 100,
+                                                           kwargs.get("threads", 10) if runType != 'load' else 10,
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
-                                                           kwargs.get("time", 60) if runType != 'load' else 10000000000,
+                                                           kwargs.get("time", 60) if runType != 'load' else 10000,
                                                            kwargs.get("workload", "workloads/workloada"),
                                                            kwargs.get("lengthdistribution", "constant"),
                                                            kwargs.get("distributionparameter", 5),
-                                                           clientID, 
+                                                           clientID,
                                                            "twopl" if use2PL else "hat",
                                                            cluster.clusterID,
                                                            kwargs.get("isolation_level", "NO_ISOLATION"),
@@ -490,33 +490,33 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                                                            runType))
 
     cluster = clusters[0]
-    pprint("Loading YCSB on single client.")
+    pprint("Loading YCSB on single client: %s." % (cluster.clients[0].ip))
     startYCSB('load', cluster, cluster.clients[0], 0)
     pprint("Done")
 
     ths = []
     pprint("Running YCSB on all clients.")
-    
+
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
-            t = Thread(target=startYCSB, args=('run', cluster, client, i))
+            t = Thread(target=startYCSB, args=('run', cluster, client, i+1))
             t.start()
             ths.append(t)
 
     for th in ths:
         th.join()
     pprint("Done")
-	
+
 def fetch_logs(runid, clusters):
     def fetchYCSB(rundir, client):
         client_dir = rundir+"/"+"C"+client.ip
         system("mkdir -p "+client_dir)
         fetch_file_single(client.ip, "/home/ubuntu/thebes/ycsb-0.1.4/*.log", client_dir)
 
-    def fetchThebes(rundir, server):
-        server_dir = rundir+"/"+"S"+server.ip
+    def fetchThebes(rundir, server, symbol):
+        server_dir = rundir+"/"+symbol+server.ip
         system("mkdir -p "+server_dir)
-        fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)        
+        fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)
 
     outroot = './output/'+runid
 
@@ -538,7 +538,19 @@ def fetch_logs(runid, clusters):
     pprint("Fetching thebes logs from servers.")
     for cluster in clusters:
         for i,server in enumerate(cluster.servers):
-            t = Thread(target=fetchThebes, args=(outroot, server))
+            t = Thread(target=fetchThebes, args=(outroot, server, "S"))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+    ths = []
+    pprint("Fetching thebes logs from TMs.")
+    for cluster in clusters:
+        for i,tm in enumerate(cluster.tms):
+            t = Thread(target=fetchThebes, args=(outroot, tm, "TM"))
             t.start()
             ths.append(t)
 
@@ -740,16 +752,16 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial(runid=("DEAULT_RUN",
-					   threads=10,
+        run_ycsb_trial(runid="DEAULT_RUN",
+                       threads=10,
                        distributionparameter=10,
                        atomicity_level="NO_ISOLATION",
-                       isolation_level="NO_ATOMICITY"))
+                       isolation_level="NO_ATOMICITY")
 
     if args.terminate:
         pprint("Terminating thebes clusters")
         terminate_clusters()
-	
+
     if args.ycsb_vary_constants_experiment:
         for transaction_length in [4, 8, 100]:
             for threads in [1, 10, 100]:
