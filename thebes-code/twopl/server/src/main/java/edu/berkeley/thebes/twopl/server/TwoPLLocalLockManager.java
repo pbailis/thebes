@@ -178,7 +178,7 @@ public class TwoPLLocalLockManager {
                 lockMetric.dec();
                 logger.debug("Lock released by [" + sessionId + "] on key '" + key + "'");
             } else {
-            	logger.error("[" + sessionId + "] cannot unlock key it does not own: '" + key + "'");
+            	logger.warn("[" + sessionId + "] cannot unlock key it does not own: '" + key + "'");
 //                throw new IllegalArgumentException("[" + sessionId + "] cannot unlock key it does not own: '" + key + "'");
             }
         }
