@@ -31,7 +31,6 @@ import edu.berkeley.thebes.twopl.common.TwoPLMasterRouter;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLThriftUtil;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionResult;
 import edu.berkeley.thebes.twopl.common.thrift.TwoPLTransactionService;
-import edu.berkeley.thebes.twopl.tm.ThebesTwoPLTransactionManager;
 
 /** 
  * This client forwards transactions to an appropriate {@link ThebesTwoPLTransactionManager}.
