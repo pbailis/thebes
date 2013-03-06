@@ -495,7 +495,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
-            t = Thread(target=startYCSB, args=('run', cluster, client, i))
+            t = Thread(target=startYCSB, args=('run', cluster, client, i+1))
             t.start()
             ths.append(t)
 
@@ -512,7 +512,7 @@ def fetch_logs(runid, clusters):
     def fetchThebes(rundir, server):
         server_dir = rundir+"/"+"S"+server.ip
         system("mkdir -p "+server_dir)
-        fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)        
+        fetch_file_single(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir) 
 
     outroot = './output/'+runid
 
