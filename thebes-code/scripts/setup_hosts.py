@@ -400,9 +400,9 @@ def rebuild_clients(clusters):
 
 def rebuild_servers(clusters):
     pprint('Rebuilding servers...')
-    run_cmd_in_thebes("all-servers", "git stash", user="ubuntu")
-    run_cmd_in_thebes("all-servers", "git pull", user="ubuntu")
-    run_cmd_in_thebes("all-servers", "mvn package", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
     pprint('Servers re-built!')
     
 CLIENT_ID = 0
