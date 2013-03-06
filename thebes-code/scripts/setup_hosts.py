@@ -490,7 +490,6 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     startYCSB('load', cluster, cluster.clients[0], 0)
     pprint("Done")
 
-    exit(-1)
     ths = []
     pprint("Running YCSB on all clients.")
     
