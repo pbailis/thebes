@@ -736,7 +736,7 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial(runid=("DEAULT_RUN",
+        run_ycsb_trial(runid="DEAULT_RUN",
                        threads=10,
                        distributionparameter=10,
                        atomicity_level="NO_ISOLATION",
