@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ThebesTwoPLTransactionClient implements IThebesClient {
 	private static AtomicInteger NEXT_SEQUENCE_NUMBER = new AtomicInteger(0);
     private short clientId = Config.getClientID();
-    private int sequenceNumber;
     
     private long sessionId;
     private boolean inTransaction;
@@ -39,7 +38,6 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     private TwoPLMasterRouter masterRouter;
     
     public ThebesTwoPLTransactionClient() {
-        sequenceNumber = NEXT_SEQUENCE_NUMBER.getAndIncrement();
     }
     
     @Override
@@ -52,7 +50,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = Long.parseLong("" + (clientId*1000) + sequenceNumber);
+        sessionId = Long.parseLong("" + (clientId*1000) + NEXT_SEQUENCE_NUMBER.getAndIncrement());
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
         writeLocks = Sets.newHashSet();
