@@ -56,7 +56,7 @@ public class TwoPLSlaveReplicationService {
     // TODO: race condition between serving and when we've connected to neighbors
     public void sendToSlaves(String key, ThriftDataItem value) throws TException {
         for (TwoPLSlaveReplicaService.Client slave : slaveReplicas) {
-            slave.send_put(key, value);
+            slave.put(key, value);
         }
     }
 }

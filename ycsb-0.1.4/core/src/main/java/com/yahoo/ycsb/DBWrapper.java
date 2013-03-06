@@ -17,7 +17,10 @@
 
 package com.yahoo.ycsb;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -30,27 +33,75 @@ import com.yahoo.ycsb.measurements.Measurements;
 public class DBWrapper extends DB
 {
 	DB _db;
-    TransactionFinished _transactionalDB = null;
+	TransactionalDB _transactionalDB = null;
 	Measurements _measurements;
 
-    long txStart = -1;
+    //long txStart = -1;
 
 	public DBWrapper(DB db)
 	{
 		_db=db;
-        if(db instanceof TransactionFinished)
-            _transactionalDB = (TransactionFinished)db;
+        if(db instanceof TransactionalDB)
+            _transactionalDB = (TransactionalDB)db;
 		_measurements=Measurements.getMeasurements();
 	}
 
     private void checkTransaction() {
-        if(txStart == -1)
-            txStart = System.nanoTime();
 
-        if(_transactionalDB != null && _transactionalDB.transactionFinished()) {
+        if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
+        	long txStart = System.nanoTime();
+        	
+        	List<GetReq> getReqs = new ArrayList<GetReq>();
+        	List<PutReq> putReqs = new ArrayList<PutReq>();
+        	for (Req r : requests) {
+        		if (r instanceof GetReq) {
+        			getReqs.add((GetReq) r);
+        		} else {
+        			putReqs.add((PutReq) r);
+        		}
+        	}
+        	
+        	Collections.sort(getReqs);
+        	Collections.sort(putReqs);
+        	
+        	_transactionalDB.beginTransaction();
+        	for (PutReq req : putReqs) {
+        		if (req instanceof InsertReq) {
+	        		long st=System.nanoTime();
+	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
+	        		long en=System.nanoTime();
+	        		_measurements.measure("INSERT",(int)((en-st)/1000));
+	        		_measurements.reportReturnCode("INSERT",res);
+	        		if (res != 0) {
+	        			System.err.println("INSERT failed!");
+	        		}
+        		} else {
+	        		long st=System.nanoTime();
+	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues());
+	        		long en=System.nanoTime();
+	        		_measurements.measure("UPDATE",(int)((en-st)/1000));
+	        		_measurements.reportReturnCode("UPDATE",res);
+	        		if (res != 0) {
+	        			System.err.println("UPDATE failed!");
+	        		}
+        		}
+        	}
+        	for (GetReq req : getReqs) {
+        		long st=System.nanoTime();
+        		int res=_db.read(req.getTable(), req.getKey(), req.getFields(), req.getResult());
+        		long en=System.nanoTime();
+        		_measurements.measure("READ",(int)((en-st)/1000));
+        		_measurements.reportReturnCode("READ",res);
+        		if (res != 0) {
+        			System.err.println("READ failed!");
+        		}
+        	}
+        	_transactionalDB.endTransaction();
+        	
+        	requests.clear();
+        	
             _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
             _measurements.reportReturnCode("TRANSACTION", 1);
-            txStart = -1;
         }
     }
 
@@ -76,6 +127,7 @@ public class DBWrapper extends DB
 	 */
 	public void init() throws DBException
 	{
+		requests = new ArrayList<Req>();
 		_db.init();
 	}
 
@@ -99,14 +151,87 @@ public class DBWrapper extends DB
 	 */
 	public int read(String table, String key, Set<String> fields, HashMap<String,ByteIterator> result)
 	{
-		long st=System.nanoTime();
-        checkTransaction();
-		int res=_db.read(table,key,fields,result);
-        checkTransaction();
-		long en=System.nanoTime();
-		_measurements.measure("READ",(int)((en-st)/1000));
-		_measurements.reportReturnCode("READ",res);
-		return res;
+		requests.add(new GetReq(table, key, fields, result));
+		checkTransaction();
+		return 0;
+	}
+	
+	public List<Req> requests;
+	
+	public static class GetReq extends Req {
+		private final Set<String> fields;
+		private final HashMap<String, ByteIterator> result;
+		
+		public GetReq(String table, String key, Set<String> fields,
+				HashMap<String, ByteIterator> result) {
+			super(table, key);
+			this.fields = fields;
+			this.result = result;
+		}
+		
+		public Set<String> getFields() {
+			return fields;
+		}
+
+		public HashMap<String, ByteIterator> getResult() {
+			return result;
+		}
+	}
+	
+	public static class PutReq extends Req {
+		private final HashMap<String, ByteIterator> values;
+		
+		public PutReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key);
+			this.values = values;
+		}
+
+		public HashMap<String, ByteIterator> getValues() {
+			return values;
+		}
+
+		@Override
+		public int compareTo(Req other) {
+			return getKey().compareTo(other.getKey());
+		}
+	}
+	
+	public static class InsertReq extends PutReq {
+		public InsertReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key, values);
+		}
+	}
+	
+	public static class UpdateReq extends PutReq {
+		public UpdateReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key, values);
+		}
+	}
+	
+	public static abstract class Req implements Comparable<Req> {
+		private final String table;
+		private final String key;
+		
+		public Req(String table, String key) {
+			this.table = table;
+			this.key = key;
+		}
+		
+		public String getTable() {
+			return table;
+		}
+		
+		public String getKey() {
+			return key;
+		}
+
+		@Override
+		public int compareTo(Req other) {
+			return getKey().compareTo(other.getKey());
+		}
 	}
 
 	/**
@@ -142,14 +267,9 @@ public class DBWrapper extends DB
 	 */
 	public int update(String table, String key, HashMap<String,ByteIterator> values)
 	{
-		long st=System.nanoTime();
-        checkTransaction();
-		int res=_db.update(table,key,values);
-        checkTransaction();
-		long en=System.nanoTime();
-		_measurements.measure("UPDATE",(int)((en-st)/1000));
-		_measurements.reportReturnCode("UPDATE",res);
-		return res;
+		requests.add(new UpdateReq(table, key, values));
+		checkTransaction();
+		return 0;
 	}
 
 	/**
@@ -163,14 +283,9 @@ public class DBWrapper extends DB
 	 */
 	public int insert(String table, String key, HashMap<String,ByteIterator> values)
 	{
-		long st=System.nanoTime();
-        checkTransaction();
-		int res=_db.insert(table,key,values);
-        checkTransaction();
-		long en=System.nanoTime();
-		_measurements.measure("INSERT",(int)((en-st)/1000));
-		_measurements.reportReturnCode("INSERT",res);
-		return res;
+		requests.add(new InsertReq(table, key, values));
+		checkTransaction();
+		return 0;
 	}
 
 	/**

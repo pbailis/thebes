@@ -13,7 +13,7 @@ service TwoPLMasterReplicaService {
 }
 
 service TwoPLSlaveReplicaService {
-  bool put(1: string key, 2: dataitem.ThriftDataItem value);
+  oneway void put(1: string key, 2: dataitem.ThriftDataItem value);
 }
 
 struct TwoPLTransactionResult {

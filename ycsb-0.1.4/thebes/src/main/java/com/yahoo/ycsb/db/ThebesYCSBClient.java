@@ -20,10 +20,10 @@ import org.apache.thrift.transport.TTransportException;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
 import com.yahoo.ycsb.ByteIterator;
-import com.yahoo.ycsb.TransactionFinished;
+import com.yahoo.ycsb.TransactionalDB;
 
 
-public class ThebesYCSBClient extends DB implements TransactionFinished {
+public class ThebesYCSBClient extends DB implements TransactionalDB {
 
     ThebesClient client;
 
@@ -52,6 +52,14 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
             currentTransactionLength = 0;
             return true;
         }
+    }
+    
+    @Override
+    public int getNextTransactionLength() {
+    	if (finalTransactionLength == -1) { 
+            finalTransactionLength = transactionLengthGenerator.nextInt();
+    	}
+    	return finalTransactionLength;
     }
 
     public boolean transactionFinished() {
@@ -104,6 +112,7 @@ public class ThebesYCSBClient extends DB implements TransactionFinished {
 
     public int endTransaction() {
         try {
+        	finalTransactionLength = -1;
             client.endTransaction();
         } catch (Exception e) {
             logger.warn(e.getMessage());
