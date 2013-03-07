@@ -65,11 +65,11 @@
     <module>jdbc</module>
     <module>mapkeeper</module>
     <module>mongodb</module>
-      <module>nosqldb</module>
     <module>redis</module>
     <module>voldemort</module>
     <module>distribution</module> 
     <module>thebes</module>
+    <!--  <module>nosqldb</module> -->
   </modules>
 
   <build>
