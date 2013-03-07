@@ -68,8 +68,8 @@ public class DBWrapper extends DB
         	for (PutReq req : putReqs) {
         		if (req instanceof InsertReq) {
 	        		long st=System.nanoTime();
-//	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
-	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
+	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
+//	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
 	        		long en=System.nanoTime();
 	        		System.out.println("INSERT took " + (int)((en-st)/1000));
 	        		_measurements.measure("INSERT",(int)((en-st)/1000));
@@ -79,8 +79,8 @@ public class DBWrapper extends DB
 	        		}
         		} else {
 	        		long st=System.nanoTime();
-//	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues()););
-	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
+	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues());
+//	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
 	        		long en=System.nanoTime();
 	        		System.out.println("UPDATE took " + (int)((en-st)/1000));
 	        		_measurements.measure("UPDATE",(int)((en-st)/1000));

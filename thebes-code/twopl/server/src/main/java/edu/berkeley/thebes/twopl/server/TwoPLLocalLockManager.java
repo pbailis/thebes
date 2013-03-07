@@ -154,7 +154,8 @@ public class TwoPLLocalLockManager {
             logger.debug(lockType + " Lock re-granted for [" + sessionId + "] on key '" + key + "'");
             return;
         }
-        
+
+        logger.debug("[" + sessionId + "] wants to acquire " + lockType + " lock on '" + key + "'");
         boolean acquired = lockState.acquire(lockType, sessionId);
         if (acquired) {
             lockMetric.inc();
