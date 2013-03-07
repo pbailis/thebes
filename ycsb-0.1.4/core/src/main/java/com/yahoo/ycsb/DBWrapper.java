@@ -67,6 +67,7 @@ public class DBWrapper extends DB
 	        		_measurements.reportReturnCode("INSERT",res);
 	        		if (res != 0) {
 	        			System.err.println("INSERT failed!");
+	        			break;
 	        		}
         		} else if (req instanceof UpdateReq) {
         			UpdateReq updReq = (UpdateReq) req;
@@ -79,6 +80,7 @@ public class DBWrapper extends DB
 	        		_measurements.reportReturnCode("UPDATE",res);
 	        		if (res != 0) {
 	        			System.err.println("UPDATE failed!");
+	        			break;
 	        		}
         		} else {
         			GetReq getReq = (GetReq) req;
@@ -90,6 +92,7 @@ public class DBWrapper extends DB
             		_measurements.reportReturnCode("READ",res);
             		if (res != 0) {
             			System.err.println("READ failed!");
+	        			break;
             		}
         		}
         	}
