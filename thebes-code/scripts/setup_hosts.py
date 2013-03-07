@@ -623,7 +623,7 @@ def parseArgs(args):
         newRegion = Region(regionName)
         regions.append(newRegion)
         for j in range(numClustersInRegion):
-            newCluster = Cluster(regionName, clusterID, args.servers, args.clients, args.tms if use2PL else 0)
+            newCluster = Cluster(regionName, clusterID, args.servers, args.clients, args.tms)
             clusterID += 1
             clusters.append(newCluster)
             newRegion.addCluster(newCluster)
@@ -642,7 +642,7 @@ def pprint(str):
     else:
         print str
 
-def run_ycsb_trial(**kwargs):
+def run_ycsb_trial(use2PL, **kwargs):
     pprint("Restarting thebes clusters")
     assign_hosts(regions)
     stop_thebes_processes(clusters)
@@ -752,7 +752,7 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial(runid="DEAULT_RUN",
+        run_ycsb_trial(use2PL, runid="DEAULT_RUN",
                        threads=10,
                        distributionparameter=10,
                        atomicity_level="NO_ISOLATION",
@@ -765,6 +765,11 @@ if __name__ == "__main__":
     if args.ycsb_vary_constants_experiment:
         for transaction_length in [4, 8, 100]:
             for threads in [1, 10, 100]:
+                # 2PL
+                run_ycsb_trial(True, runid=("TWOPL-%d-THREADS%d" % (transaction_length, threads)),
+                               threads=threads, distributionparameter=transaction_length)
+                
+                # HAT
                 for isolation_level in ["NO_ISOLATION", "READ_COMMITTED", "REPEATABLE_READ"]:
                     for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
                         if isolation_level == "NO_ISOLATION" and atomicity_level != "NO_ATOMICITY":
@@ -772,10 +777,10 @@ if __name__ == "__main__":
                         if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 4:
                             continue
                     
-                        run_ycsb_trial(runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
-                                                                                           isolation_level,
-                                                                                           atomicity_level,
-                                                                                           threads)),
+                        run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
+                                                                                                  isolation_level,
+                                                                                                  atomicity_level,
+                                                                                                  threads)),
                                        threads=threads,
                                        distributionparameter=transaction_length,
                                        atomicity_level=atomicity_level,
