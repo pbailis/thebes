@@ -51,7 +51,7 @@ public class DBWrapper extends DB
         if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
         	long txStart = System.nanoTime();
         	
-        	Collections.sort(requests);
+//        	Collections.sort(requests);
         	
         	_transactionalDB.beginTransaction();
         	for (Req req : requests) {
