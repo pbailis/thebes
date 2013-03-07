@@ -51,24 +51,15 @@ public class DBWrapper extends DB
         if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
         	long txStart = System.nanoTime();
         	
-        	List<GetReq> getReqs = new ArrayList<GetReq>();
-        	List<PutReq> putReqs = new ArrayList<PutReq>();
-        	for (Req r : requests) {
-        		if (r instanceof GetReq) {
-        			getReqs.add((GetReq) r);
-        		} else {
-        			putReqs.add((PutReq) r);
-        		}
-        	}
-        	
-        	Collections.sort(getReqs);
-        	Collections.sort(putReqs);
+        	Collections.sort(requests);
         	
         	_transactionalDB.beginTransaction();
-        	for (PutReq req : putReqs) {
+        	for (Req req : requests) {
+        		System.out.println("Req [type=" + req + "] on key=" + req.getKey());
         		if (req instanceof InsertReq) {
+        			InsertReq insReq = (InsertReq) req;
 	        		long st=System.nanoTime();
-	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
+	        		int res=_db.insert(insReq.getTable(), insReq.getKey(), insReq.getValues());
 //	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
 	        		long en=System.nanoTime();
 	        		System.out.println("INSERT took " + (int)((en-st)/1000));
@@ -77,9 +68,10 @@ public class DBWrapper extends DB
 	        		if (res != 0) {
 	        			System.err.println("INSERT failed!");
 	        		}
-        		} else {
+        		} else if (req instanceof UpdateReq) {
+        			UpdateReq updReq = (UpdateReq) req;
 	        		long st=System.nanoTime();
-	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues());
+	        		int res=_db.update(updReq.getTable(), updReq.getKey(), updReq.getValues());
 //	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
 	        		long en=System.nanoTime();
 	        		System.out.println("UPDATE took " + (int)((en-st)/1000));
@@ -88,17 +80,17 @@ public class DBWrapper extends DB
 	        		if (res != 0) {
 	        			System.err.println("UPDATE failed!");
 	        		}
-        		}
-        	}
-        	for (GetReq req : getReqs) {
-        		long st=System.nanoTime();
-        		int res=_db.read(req.getTable(), req.getKey(), req.getFields(), req.getResult());
-        		long en=System.nanoTime();
-        		System.out.println("READ took " + (int)((en-st)/1000));
-        		_measurements.measure("READ",(int)((en-st)/1000));
-        		_measurements.reportReturnCode("READ",res);
-        		if (res != 0) {
-        			System.err.println("READ failed!");
+        		} else {
+        			GetReq getReq = (GetReq) req;
+            		long st=System.nanoTime();
+            		int res=_db.read(getReq.getTable(), getReq.getKey(), getReq.getFields(), getReq.getResult());
+            		long en=System.nanoTime();
+            		System.out.println("READ took " + (int)((en-st)/1000));
+            		_measurements.measure("READ",(int)((en-st)/1000));
+            		_measurements.reportReturnCode("READ",res);
+            		if (res != 0) {
+            			System.err.println("READ failed!");
+            		}
         		}
         	}
         	_transactionalDB.endTransaction();
@@ -181,6 +173,15 @@ public class DBWrapper extends DB
 		public HashMap<String, ByteIterator> getResult() {
 			return result;
 		}
+
+		@Override
+		public int compareTo(Req other) {
+			int cmp = getKey().compareTo(other.getKey());
+			if (cmp == 0) {
+				return (other instanceof GetReq ? 0 : 1);
+			}
+			return cmp;
+		}
 	}
 	
 	public static class PutReq extends Req {
@@ -198,7 +199,11 @@ public class DBWrapper extends DB
 
 		@Override
 		public int compareTo(Req other) {
-			return getKey().compareTo(other.getKey());
+			int cmp = getKey().compareTo(other.getKey());
+			if (cmp == 0) {
+				return (other instanceof PutReq ? 0 : -1);
+			}
+			return cmp;
 		}
 	}
 	
@@ -231,11 +236,6 @@ public class DBWrapper extends DB
 		
 		public String getKey() {
 			return key;
-		}
-
-		@Override
-		public int compareTo(Req other) {
-			return getKey().compareTo(other.getKey());
 		}
 	}
 
