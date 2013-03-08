@@ -273,11 +273,13 @@ def assign_hosts(regions):
             allServers += cluster.servers
             allClients += cluster.clients
 
+        '''
         remaining_hosts = ' '.join([h.instanceid for h in hostsToAssign])
         if remaining_hosts.strip() != '':
             pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts), region.name))
             system("ec2-terminate-instances --region %s %s" % (region.name, remaining_hosts))
         pprint("Done!")
+        '''
 
     # Finally write the instance files for the regions and everything.
     make_instancefile("all-hosts.txt", allHosts)
@@ -720,6 +722,10 @@ if __name__ == "__main__":
     detectScriptsDir()
     (regions, clusters, use2PL, graphiteRegion) = parseArgs(args)
     thebesArgString = ' '.join(['-D%s' % arg for arg in args.thebes_args])
+
+    if args.anti_slow:
+        pprint("ANTI SLOW DISABLED")
+        exit(-1)
 
     if args.fetchlogs:
         pprint("Fetching logs")
