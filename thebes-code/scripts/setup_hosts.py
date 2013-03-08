@@ -110,7 +110,7 @@ def get_instances(regionName):
         elif line[0] == "TAG" and line[3] in tag_blacklist:
             blacklisted_hosts.append(line[2])
     print "Blacklisted instances:", blacklisted_hosts
-    return [host for host in hosts if host not in blacklisted_hosts]
+    return [host for host in hosts if host.instanceid not in blacklisted_hosts]
 
 def get_spot_request_ids(regionName):
     system("rm -f instances.txt")
