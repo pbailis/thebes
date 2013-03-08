@@ -8,9 +8,9 @@ from common_funcs import sed
 from common_funcs import upload_file
 from common_funcs import run_script
 from common_funcs import fetch_file_single
-from threading import Thread
-from datetime import datetime
+from threading import Thread, Lock
 import os
+from datetime import datetime
 from os import system # my pycharm sucks and can't find system by itself...
 from time import sleep
 
@@ -423,10 +423,14 @@ def rebuild_servers(clusters):
     pprint('Servers re-built!')
 
 CLIENT_ID = 0
+CLIENT_ID_LOCK = Lock()
 def getNextClientID():
-    global CLIENT_ID
+    global CLIENT_ID, CLIENT_ID_LOCK
+    CLIENT_ID_LOCK.acquire()
     CLIENT_ID += 1
-    return CLIENT_ID
+    myClientId = CLIENT_ID
+    CLIENT_ID_LOCK.release()
+    return myClientId
 
 def start_servers(clusters, use2PL, thebesArgString):
     baseCmd = "cd /home/ubuntu/thebes/thebes-code; rm *.log; screen -d -m "

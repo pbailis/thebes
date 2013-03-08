@@ -62,6 +62,13 @@ public class DBWrapper extends DB
         		_measurements.reportReturnCode(req.getOperationName(), res);
         		if (res != 0) {
         			System.err.println(req.getOperationName() + " failed on key=" + req.getKey());
+                    System.err.println("[INSTANT REPLAY: " + req.getKey() + "]");
+                    for (Req r : requests) {
+                        System.err.println("[IR on " + req.getKey() + "] " + r.getOperationName() + " " + r.getKey());
+                        if (r == req) {
+                            System.err.println("[IR on " + req.getKey() + "] FAILED HERE");
+                        }
+                    }
         			break;
         		}
         	}
