@@ -35,8 +35,7 @@ public class DBWrapper extends DB
 	DB _db;
 	TransactionalDB _transactionalDB = null;
 	Measurements _measurements;
-
-    //long txStart = -1;
+	public List<Req> requests;
 
 	public DBWrapper(DB db)
 	{
@@ -51,54 +50,19 @@ public class DBWrapper extends DB
         if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
         	long txStart = System.nanoTime();
         	
-        	List<GetReq> getReqs = new ArrayList<GetReq>();
-        	List<PutReq> putReqs = new ArrayList<PutReq>();
-        	for (Req r : requests) {
-        		if (r instanceof GetReq) {
-        			getReqs.add((GetReq) r);
-        		} else {
-        			putReqs.add((PutReq) r);
-        		}
-        	}
-        	
-        	Collections.sort(getReqs);
-        	Collections.sort(putReqs);
+        	// TODO: Decide if we want to order the thingies
+        	Collections.sort(requests);
         	
         	_transactionalDB.beginTransaction();
-        	for (PutReq req : putReqs) {
-        		if (req instanceof InsertReq) {
-	        		long st=System.nanoTime();
-	        		int res=_db.insert(req.getTable(), req.getKey(), req.getValues());
-//	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
-	        		long en=System.nanoTime();
-	        		System.out.println("INSERT took " + (int)((en-st)/1000));
-	        		_measurements.measure("INSERT",(int)((en-st)/1000));
-	        		_measurements.reportReturnCode("INSERT",res);
-	        		if (res != 0) {
-	        			System.err.println("INSERT failed!");
-	        		}
-        		} else {
-	        		long st=System.nanoTime();
-	        		int res=_db.update(req.getTable(), req.getKey(), req.getValues());
-//	        		int res=_db.read(req.getTable(), req.getKey(), (Set<String>) null, req.getValues());
-	        		long en=System.nanoTime();
-	        		System.out.println("UPDATE took " + (int)((en-st)/1000));
-	        		_measurements.measure("UPDATE",(int)((en-st)/1000));
-	        		_measurements.reportReturnCode("UPDATE",res);
-	        		if (res != 0) {
-	        			System.err.println("UPDATE failed!");
-	        		}
-        		}
-        	}
-        	for (GetReq req : getReqs) {
+        	for (Req req : requests) {
         		long st=System.nanoTime();
-        		int res=_db.read(req.getTable(), req.getKey(), req.getFields(), req.getResult());
+        		int res = req.execute(_db);
         		long en=System.nanoTime();
-        		System.out.println("READ took " + (int)((en-st)/1000));
-        		_measurements.measure("READ",(int)((en-st)/1000));
-        		_measurements.reportReturnCode("READ",res);
+        		_measurements.measure(req.getOperationName(),(int)((en-st)/1000));
+        		_measurements.reportReturnCode(req.getOperationName(), res);
         		if (res != 0) {
-        			System.err.println("READ failed!");
+        			System.err.println(req.getOperationName() + " failed on key=" + req.getKey());
+        			break;
         		}
         	}
         	_transactionalDB.endTransaction();
@@ -159,84 +123,6 @@ public class DBWrapper extends DB
 		requests.add(new GetReq(table, key, fields, result));
 		checkTransaction();
 		return 0;
-	}
-	
-	public List<Req> requests;
-	
-	public static class GetReq extends Req {
-		private final Set<String> fields;
-		private final HashMap<String, ByteIterator> result;
-		
-		public GetReq(String table, String key, Set<String> fields,
-				HashMap<String, ByteIterator> result) {
-			super(table, key);
-			this.fields = fields;
-			this.result = result;
-		}
-		
-		public Set<String> getFields() {
-			return fields;
-		}
-
-		public HashMap<String, ByteIterator> getResult() {
-			return result;
-		}
-	}
-	
-	public static class PutReq extends Req {
-		private final HashMap<String, ByteIterator> values;
-		
-		public PutReq(String table, String key, 
-				HashMap<String, ByteIterator> values) {
-			super(table, key);
-			this.values = values;
-		}
-
-		public HashMap<String, ByteIterator> getValues() {
-			return values;
-		}
-
-		@Override
-		public int compareTo(Req other) {
-			return getKey().compareTo(other.getKey());
-		}
-	}
-	
-	public static class InsertReq extends PutReq {
-		public InsertReq(String table, String key, 
-				HashMap<String, ByteIterator> values) {
-			super(table, key, values);
-		}
-	}
-	
-	public static class UpdateReq extends PutReq {
-		public UpdateReq(String table, String key, 
-				HashMap<String, ByteIterator> values) {
-			super(table, key, values);
-		}
-	}
-	
-	public static abstract class Req implements Comparable<Req> {
-		private final String table;
-		private final String key;
-		
-		public Req(String table, String key) {
-			this.table = table;
-			this.key = key;
-		}
-		
-		public String getTable() {
-			return table;
-		}
-		
-		public String getKey() {
-			return key;
-		}
-
-		@Override
-		public int compareTo(Req other) {
-			return getKey().compareTo(other.getKey());
-		}
 	}
 
 	/**
@@ -310,5 +196,124 @@ public class DBWrapper extends DB
 		_measurements.measure("DELETE",(int)((en-st)/1000));
 		_measurements.reportReturnCode("DELETE",res);
 		return res;
+	}
+	
+
+	public static abstract class Req implements Comparable<Req> {
+		private final String table;
+		private final String key;
+		
+		public Req(String table, String key) {
+			this.table = table;
+			this.key = key;
+		}
+		
+		public String getTable() {
+			return table;
+		}
+		
+		public String getKey() {
+			return key;
+		}
+		
+		abstract int execute(DB db);
+		
+		abstract String getOperationName();
+	}
+	
+	public static class GetReq extends Req {
+		private final Set<String> fields;
+		private final HashMap<String, ByteIterator> result;
+		
+		public GetReq(String table, String key, Set<String> fields,
+				HashMap<String, ByteIterator> result) {
+			super(table, key);
+			this.fields = fields;
+			this.result = result;
+		}
+		
+		public Set<String> getFields() {
+			return fields;
+		}
+
+		public HashMap<String, ByteIterator> getResult() {
+			return result;
+		}
+		
+		@Override
+		public int execute(DB db) {
+    		return db.read(getTable(), getKey(), getFields(), getResult());
+		}
+		
+		@Override
+		public String getOperationName() {
+			return "READ";
+		}
+
+		@Override
+		public int compareTo(Req other) {
+			int cmp = getKey().compareTo(other.getKey());
+			if (cmp == 0) {
+				return (other instanceof GetReq ? 0 : 1);
+			}
+			return cmp;
+		}
+	}
+	
+	public static abstract class PutReq extends Req {
+		private final HashMap<String, ByteIterator> values;
+		
+		public PutReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key);
+			this.values = values;
+		}
+
+		public HashMap<String, ByteIterator> getValues() {
+			return values;
+		}
+
+		@Override
+		public int compareTo(Req other) {
+			int cmp = getKey().compareTo(other.getKey());
+			if (cmp == 0) {
+				return (other instanceof PutReq ? 0 : -1);
+			}
+			return cmp;
+		}
+	}
+	
+	public static class InsertReq extends PutReq {
+		public InsertReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key, values);
+		}
+		
+		@Override
+		public int execute(DB db) {
+    		return db.insert(getTable(), getKey(), getValues());
+		}
+		
+		@Override
+		public String getOperationName() {
+			return "INSERT";
+		}
+	}
+	
+	public static class UpdateReq extends PutReq {
+		public UpdateReq(String table, String key, 
+				HashMap<String, ByteIterator> values) {
+			super(table, key, values);
+		}
+		
+		@Override
+		public int execute(DB db) {
+    		return db.update(getTable(), getKey(), getValues());
+		}
+		
+		@Override
+		public String getOperationName() {
+			return "UPDATE";
+		}
 	}
 }

@@ -87,7 +87,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         	try {
         		masterRouter.getMasterByKey(key).write_lock(sessionId, key);
         	} catch (TException e) {
-        		logger.error("Session " + sessionId + " could not obtain W key " + key);
+        		System.err.println("Session " + sessionId + " could not obtain W key " + key);
         		e.printStackTrace();
         		throw new TException("Obtaining write lock timed out.");
         	}
@@ -109,7 +109,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         	try {
                 masterRouter.getMasterByKey(key).read_lock(sessionId, key);
         	} catch (TException e) {
-        		logger.error("Session " + sessionId + " could not obtain R key " + key);
+        		System.err.println("Session " + sessionId + " could not obtain R key " + key);
         		e.printStackTrace();
         		throw new TException("Obtaining read lock timed out.");
         	}
