@@ -725,7 +725,6 @@ if __name__ == "__main__":
 
     if args.anti_slow:
         pprint("ANTI SLOW DISABLED")
-        exit(-1)
 
     if args.fetchlogs:
         pprint("Fetching logs")
