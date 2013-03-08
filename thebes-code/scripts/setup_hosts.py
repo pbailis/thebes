@@ -89,6 +89,9 @@ def run_cmd_in_ycsb(hosts, cmd, user='root'):
 def get_instances(regionName):
     system("rm -f instances.txt")
     hosts = []
+    blacklist = ["ping"]
+    blacklisted_hosts = []
+
     system("ec2-describe-instances --region %s >> instances.txt" % regionName)
 
     for line in open("instances.txt"):
@@ -103,7 +106,10 @@ def get_instances(regionName):
             region = line[10]
             instanceid = line[1]
             hosts.append(Host(ip, region, instanceid))
-    return hosts
+        elif line[0] == "TAG" and line[3] in blacklist:
+            blacklisted_hosts.append(line[2])
+    print "Blacklisted instances; will not terminate:" blacklisted_hosts
+    return hosts-blacklisted_hosts
 
 def get_spot_request_ids(regionName):
     system("rm -f instances.txt")
@@ -202,7 +208,7 @@ def provision_spot(regionName, num):
 def provision_instance(regionName, num):
     global AMIs
     system("ec2-run-instances %s --region %s -t m1.small " \
-           "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
+           "-k thebes -g thebes -n %d > /tmp/instances" % (AMIs[regionName], regionName, num));
     #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
     #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
     #   (AMIs[region], n))
@@ -578,9 +584,6 @@ def terminate_clusters():
             system("ec2-cancel-spot-instance-requests --region %s %s" % (regionName, spot_request_ids))
         else:
             pprint('No spot requests to cancel in %s, skipping...' % regionName)
-
-
-
 
 SCRIPTS_DIR = ''
 def detectScriptsDir():
