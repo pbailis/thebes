@@ -109,7 +109,7 @@ def get_instances(regionName):
             hosts.append(Host(ip, region, instanceid))
         elif line[0] == "TAG" and line[3] in tag_blacklist:
             blacklisted_hosts.append(line[2])
-    print "Blacklisted instances; will not terminate:" blacklisted_hosts
+    print "Blacklisted instances:" blacklisted_hosts
     return hosts-blacklisted_hosts
 
 def get_spot_request_ids(regionName):
