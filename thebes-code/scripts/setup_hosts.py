@@ -773,7 +773,7 @@ if __name__ == "__main__":
                                threads=threads, distributionparameter=transaction_length)
                 
                 # HAT
-                for isolation_level in ["NO_ISOLATION", "READ_COMMITTED", "REPEATABLE_READ"]:
+                for isolation_level in ["NO_ISOLATION", "READ_COMMITTED"]:#, "REPEATABLE_READ"]:
                     for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
                         if isolation_level == "NO_ISOLATION" and atomicity_level != "NO_ATOMICITY":
                             continue
