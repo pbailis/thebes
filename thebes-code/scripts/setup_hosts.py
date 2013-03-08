@@ -20,6 +20,8 @@ from time import sleep
 # Upgraded AMIs
 AMIs = {'us-east-1': 'ami-08188561'}
 
+tag_blacklist = ["ping"]
+
 class Region:
     def __init__(self, name):
         self.name = name
@@ -89,7 +91,6 @@ def run_cmd_in_ycsb(hosts, cmd, user='root'):
 def get_instances(regionName):
     system("rm -f instances.txt")
     hosts = []
-    blacklist = ["ping"]
     blacklisted_hosts = []
 
     system("ec2-describe-instances --region %s >> instances.txt" % regionName)
@@ -106,7 +107,7 @@ def get_instances(regionName):
             region = line[10]
             instanceid = line[1]
             hosts.append(Host(ip, region, instanceid))
-        elif line[0] == "TAG" and line[3] in blacklist:
+        elif line[0] == "TAG" and line[3] in tag_blacklist:
             blacklisted_hosts.append(line[2])
     print "Blacklisted instances; will not terminate:" blacklisted_hosts
     return hosts-blacklisted_hosts
@@ -128,26 +129,34 @@ def get_spot_request_ids(regionName):
 def get_num_running_instances(regionName):
     system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
     num_running = 0
+    blacklisted_hosts = []
 
     for line in open("/tmp/running.txt"):
         line = line.split()
         if line[0] == "INSTANCE" and line[3] == "running":
             num_running = num_running + 1
+        elif line[0] == "TAG" and line[3] in tag_blacklist:
+            if line[2] not in blacklisted_hosts:
+                blacklisted_hosts.append(line[2])
 
     system("rm /tmp/running.txt")
-    return num_running
+    return num_running-len(blacklisted_hosts)
 
 def get_num_nonterminated_instances(regionName):
     system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
     num_nonterminated = 0
+    blacklisted_hosts = []
 
     for line in open("/tmp/running.txt"):
         line = line.split()
         if line[0] == "INSTANCE" and line[3] != "terminated":
             num_nonterminated = num_nonterminated + 1
+        elif line[0] == "TAG" and line[3] in tag_blacklist:
+            if line[2] not in blacklisted_hosts:
+                blacklisted_hosts.append(line[2])
 
     system("rm /tmp/running.txt")
-    return num_nonterminated
+    return num_nonterminated-len(blacklisted_hosts)
 
 def make_instancefile(name, hosts):
     f = open("hosts/" + name, 'w')
