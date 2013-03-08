@@ -275,7 +275,7 @@ def assign_hosts(regions):
 
         remaining_hosts = ' '.join([h.instanceid for h in hostsToAssign])
         if remaining_hosts.strip() != '':
-            pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts, region.name)))
+            pprint('Terminating excess %d instances in %s...' % (len(remaining_hosts), region.name))
             system("ec2-terminate-instances --region %s %s" % (region.name, remaining_hosts))
         pprint("Done!")
 
