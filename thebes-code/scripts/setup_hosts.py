@@ -774,7 +774,7 @@ if __name__ == "__main__":
 
     if args.restart:
         run_ycsb_trial(use2PL, runid="DEAULT_RUN",
-                       threads=100,
+                       threads=50,
                        distributionparameter=8,
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION")
