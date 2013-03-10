@@ -121,6 +121,12 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
                     System.err.println("Session " + sessionId + " failed in obtaining W lock on key " + key);
                     e.printStackTrace();
                 }
+                
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             System.err.println("! Session " + sessionId + " could not obtain W key " + key);
             throw new TException("Obtaining write lock timed out.");
@@ -136,6 +142,12 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
                     return;
                 } catch (TException e) {
                     System.err.println("Session " + sessionId + " failed in obtaining R lock on key " + key);
+                    e.printStackTrace();
+                }
+                
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
