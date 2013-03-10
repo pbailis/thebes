@@ -83,42 +83,21 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (!inTransaction) {
             throw new TException("Must be in a transaction!");
         }
-        
-        if (!writeLocks.contains(key)) {
-        	if (readLocks.contains(key)) {
-        		throw new TException("Cannot upgrade locks right now.");
-        	}
-        	writeLocks.add(key);
-        	try {
-        		masterRouter.getMasterByKey(key).write_lock(sessionId, key);
-        	} catch (TException e) {
-        		System.err.println("Session " + sessionId + " could not obtain W key " + key);
-        		e.printStackTrace();
-        		throw new TException("Obtaining write lock timed out.");
-        	}
-        }
+
+        writeLock(key);
         
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version(clientId, timestamp));
         return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
     }
-
+    
     @Override
     public ByteBuffer get(String key) throws TException {
         if (!inTransaction) {
             throw new TException("Must be in a transaction!");
         }
         
-        if (!readLocks.contains(key) && !writeLocks.contains(key)) {
-        	readLocks.add(key);
-        	try {
-                masterRouter.getMasterByKey(key).read_lock(sessionId, key);
-        	} catch (TException e) {
-        		System.err.println("Session " + sessionId + " could not obtain R key " + key);
-        		e.printStackTrace();
-        		throw new TException("Obtaining read lock timed out.");
-        	}
-        }
+        readLock(key);
         
         DataItem dataItem = DataItem.fromThrift(masterRouter.getMasterByKey(key).get(sessionId, key));
         // Null is returned by 0-length data
@@ -129,13 +108,40 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     }
     
     public void writeLock(String key) throws TException {
-        lockedKeys.add(key);
-        masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+        if (!writeLocks.contains(key)) {
+            if (readLocks.contains(key)) {
+                throw new TException("Cannot upgrade locks right now.");
+            }
+            writeLocks.add(key);
+            for (int i = 0; i < 2; i ++) {
+                try {
+                    masterRouter.getMasterByKey(key).write_lock(sessionId, key);
+                    return;
+                } catch (TException e) {
+                    System.err.println("Session " + sessionId + " failed in obtaining W lock on key " + key);
+                    e.printStackTrace();
+                }
+            }
+            System.err.println("! Session " + sessionId + " could not obtain W key " + key);
+            throw new TException("Obtaining write lock timed out.");
+        }
     }
     
     public void readLock(String key) throws TException {
-        lockedKeys.add(key);
-        masterRouter.getMasterByKey(key).read_lock(sessionId, key);
+        if (!readLocks.contains(key) && !writeLocks.contains(key)) {
+            readLocks.add(key);
+            for (int i = 0; i < 2; i ++) {
+                try {
+                    masterRouter.getMasterByKey(key).read_lock(sessionId, key);
+                    return;
+                } catch (TException e) {
+                    System.err.println("Session " + sessionId + " failed in obtaining R lock on key " + key);
+                    e.printStackTrace();
+                }
+            }
+            System.err.println("! Session " + sessionId + " could not obtain R key " + key);
+            throw new TException("Obtaining read lock timed out.");
+        }
     }
 
     @Override
