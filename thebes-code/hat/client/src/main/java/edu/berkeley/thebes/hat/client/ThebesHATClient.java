@@ -34,6 +34,7 @@ import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.hat.client.clustering.ReplicaRouter;
 import edu.berkeley.thebes.hat.common.data.DataDependency;
 

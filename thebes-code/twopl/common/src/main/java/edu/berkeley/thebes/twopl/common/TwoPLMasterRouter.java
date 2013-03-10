@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.twopl.common;
 
+import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
 import edu.berkeley.thebes.common.clustering.RoutingHash;
@@ -26,8 +27,19 @@ public class TwoPLMasterRouter {
         }
     }
 
-    public TwoPLMasterReplicaService.Client getMasterByKey(String key) {
-        return masterReplicas.get(RoutingHash.hashKey(key, masterReplicas.size()));
+    public TwoPLMasterReplicaService.Client getMasterByKey(String key) throws TTransportException {
+        int index = RoutingHash.hashKey(key, masterReplicas.size());
+        TwoPLMasterReplicaService.Client client = masterReplicas.get(index);
+        TSocket sock = (TSocket) client.getInputProtocol().getTransport();
+        if (!sock.isOpen()) {
+            // TODO: Logger
+            System.err.println("ERROR: Client for key '" + key + "' has closed! Opening new channel.");
+            client = TwoPLThriftUtil.getMasterReplicaServiceClient(
+                    sock.getSocket().getInetAddress().getHostAddress(),
+                    sock.getSocket().getPort());
+            masterReplicas.set(index, client);
+        }
+        return client;
     }
     
     public ServerAddress getMasterAddressByKey(String key) {

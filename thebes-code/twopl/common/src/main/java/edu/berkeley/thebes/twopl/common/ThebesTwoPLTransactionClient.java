@@ -12,6 +12,7 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.twopl.common.thrift.TwoPLMasterReplicaService.Client;
 
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
@@ -53,7 +54,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         if (inTransaction) {
             throw new TException("Currently in a transaction.");
         }
-        sessionId = Long.parseLong("" + (clientId*100000) + NEXT_SEQUENCE_NUMBER.getAndIncrement());
+        sessionId = (clientId*100000) + NEXT_SEQUENCE_NUMBER.getAndIncrement();
         
         // Hack since logger.debug() doesn't seem to print...
         if (logger.isDebugEnabled()) {

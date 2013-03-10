@@ -2,6 +2,7 @@ package edu.berkeley.thebes.client;
 
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
+import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
 import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
@@ -25,6 +26,7 @@ public class ThebesClient implements IThebesClient {
     @Override
     public void open() throws TTransportException, ConfigurationException, IOException {
         Config.initializeClient();
+        Log4JConfig.configureLog4J();
 
         switch (Config.getThebesTxnMode()) {
         case HAT:
