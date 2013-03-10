@@ -512,7 +512,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
 
     cluster = clusters[0]
     pprint("Loading YCSB on single client: %s." % (cluster.clients[0].ip))
-    startYCSB('load', cluster, cluster.clients[0], 0)
+    startYCSB('load', cluster, cluster.clients[0], getNextClientID())
     pprint("Done")
 
     ths = []
@@ -520,7 +520,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
 
     for cluster in clusters:
         for i,client in enumerate(cluster.clients):
-            t = Thread(target=startYCSB, args=('run', cluster, client, i+1))
+            t = Thread(target=startYCSB, args=('run', cluster, client, getNextClientID()))
             t.start()
             ths.append(t)
 
