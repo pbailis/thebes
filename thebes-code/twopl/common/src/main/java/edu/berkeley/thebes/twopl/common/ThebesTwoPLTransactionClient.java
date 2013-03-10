@@ -115,10 +115,11 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
             writeLocks.add(key);
             for (int i = 0; i < 2; i ++) {
                 try {
+                    System.err.println("Session " + sessionId + " attempting W lock on key " + key + " @" + System.currentTimeMillis());
                     masterRouter.getMasterByKey(key).write_lock(sessionId, key);
                     return;
                 } catch (TException e) {
-                    System.err.println("Session " + sessionId + " failed in obtaining W lock on key " + key);
+                    System.err.println("Session " + sessionId + " failed in obtaining W lock on key " + key + " @ " + System.currentTimeMillis());
                     e.printStackTrace();
                 }
                 
@@ -138,10 +139,11 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
             readLocks.add(key);
             for (int i = 0; i < 2; i ++) {
                 try {
+                    System.err.println("Session " + sessionId + " attempting R lock on key " + key + " @" + System.currentTimeMillis());
                     masterRouter.getMasterByKey(key).read_lock(sessionId, key);
                     return;
                 } catch (TException e) {
-                    System.err.println("Session " + sessionId + " failed in obtaining R lock on key " + key);
+                    System.err.println("Session " + sessionId + " failed in obtaining R lock on key " + key + " @" + System.currentTimeMillis());
                     e.printStackTrace();
                 }
                 
