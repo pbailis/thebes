@@ -776,8 +776,8 @@ if __name__ == "__main__":
         run_ycsb_trial(use2PL, runid="DEAULT_RUN",
                        threads=100,
                        distributionparameter=8,
-                       atomicity_level="NO_ISOLATION",
-                       isolation_level="NO_ATOMICITY")
+                       atomicity_level="NO_ATOMICITY",
+                       isolation_level="NO_ISOLATION")
 
     if args.terminate:
         pprint("Terminating thebes clusters")
