@@ -54,6 +54,11 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
             throw new TException("Currently in a transaction.");
         }
         sessionId = Long.parseLong("" + (clientId*100000) + NEXT_SEQUENCE_NUMBER.getAndIncrement());
+        
+        // Hack since logger.debug() doesn't seem to print...
+        if (logger.isDebugEnabled()) {
+            System.err.println("Starting transaction with seqno " + sessionId);
+        }
         inTransaction = true;
         lockedKeys = Sets.newHashSet();
         writeLocks = Sets.newHashSet();
