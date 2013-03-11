@@ -490,15 +490,17 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
 #                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
-                           ' -p maxexecutiontime=%d -P %s ' \
+                           ' -p requestdistribution=%s  -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
                                                            kwargs.get("threads", 10) if runType != 'load' else 10,
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
+                                                           kwargs.get("keydistribution", "uniform"),
                                                            kwargs.get("time", 60) if runType != 'load' else 10000,
                                                            kwargs.get("workload", "workloads/workloada"),
+                                                           kwargs.get("timeout", 10000),
                                                            kwargs.get("lengthdistribution", "constant"),
                                                            kwargs.get("distributionparameter", 5),
                                                            clientID,
@@ -777,7 +779,9 @@ if __name__ == "__main__":
                        threads=50,
                        distributionparameter=8,
                        atomicity_level="NO_ATOMICITY",
-                       isolation_level="NO_ISOLATION")
+                       isolation_level="NO_ISOLATION",
+                       time=10*60,
+                       timeout=30000)
 
     if args.terminate:
         pprint("Terminating thebes clusters")

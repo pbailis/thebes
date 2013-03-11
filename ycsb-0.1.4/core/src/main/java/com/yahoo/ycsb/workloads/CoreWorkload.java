@@ -17,26 +17,32 @@
 
 package com.yahoo.ycsb.workloads;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Properties;
-import com.yahoo.ycsb.*;
+import java.util.Vector;
+
+import com.yahoo.ycsb.ByteIterator;
+import com.yahoo.ycsb.Client;
+import com.yahoo.ycsb.DB;
+import com.yahoo.ycsb.RandomByteIterator;
+import com.yahoo.ycsb.Utils;
+import com.yahoo.ycsb.Workload;
+import com.yahoo.ycsb.WorkloadException;
+import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
 import com.yahoo.ycsb.generator.CounterGenerator;
 import com.yahoo.ycsb.generator.DiscreteGenerator;
 import com.yahoo.ycsb.generator.ExponentialGenerator;
 import com.yahoo.ycsb.generator.Generator;
-import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
-import com.yahoo.ycsb.generator.HotspotIntegerGenerator;
 import com.yahoo.ycsb.generator.HistogramGenerator;
+import com.yahoo.ycsb.generator.HotspotIntegerGenerator;
 import com.yahoo.ycsb.generator.IntegerGenerator;
 import com.yahoo.ycsb.generator.ScrambledZipfianGenerator;
 import com.yahoo.ycsb.generator.SkewedLatestGenerator;
 import com.yahoo.ycsb.generator.UniformIntegerGenerator;
 import com.yahoo.ycsb.generator.ZipfianGenerator;
 import com.yahoo.ycsb.measurements.Measurements;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
 
 /**
  * The core benchmark scenario. Represents a set of clients doing simple CRUD operations. The relative 
@@ -403,6 +409,9 @@ public class CoreWorkload extends Workload
 		{
 			throw new WorkloadException("Unknown request distribution \""+requestdistrib+"\"");
 		}
+		
+		
+		System.err.println("Request distribution: " + requestdistrib + " / " + keychooser);
 
 		fieldchooser=new UniformIntegerGenerator(0,fieldcount-1);
 		

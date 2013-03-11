@@ -69,7 +69,6 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     @Override
     public boolean endTransaction() throws TException {
     	inTransaction = false;
-    	logger.info("Transaction ended!");
         for (String key : readLocks) {
             masterRouter.getMasterByKey(key).unlock(sessionId, key);
         }
