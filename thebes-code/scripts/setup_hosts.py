@@ -490,7 +490,8 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
 #                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
-                           ' -p  -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
+                           # -p requestdistribution=uniform
+                           ' -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
