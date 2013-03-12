@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.twopl.server;
 
+import edu.berkeley.thebes.common.config.Config;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ComparisonChain;
@@ -29,6 +30,8 @@ public class TwoPLLocalLockManager {
 
     private final Counter lockMetric = Metrics.newCounter(TwoPLLocalLockManager.class, "2pl-locks");
 
+    private static final long requestTimeout = Config.getSocketTimeout();
+
     public enum LockType { READ, WRITE }
     
     private static class LockRequest implements Comparable<LockRequest> {
@@ -36,6 +39,7 @@ public class TwoPLLocalLockManager {
         private final long sessionId;
         private final long timestamp;
         private final Condition condition;
+        private final long wallClockCreationTime;
 
         private boolean valid; 
         
@@ -44,6 +48,7 @@ public class TwoPLLocalLockManager {
             this.sessionId = sessionId;
             this.timestamp = timestamp;
             this.condition = condition;
+            this.wallClockCreationTime = System.currentTimeMillis();
             this.valid = true;
         }
         
@@ -83,7 +88,7 @@ public class TwoPLLocalLockManager {
         }
 
         public boolean isValid() {
-            return valid;
+            return valid && (System.currentTimeMillis()-wallClockCreationTime < requestTimeout);
         }
     }
     
