@@ -25,7 +25,7 @@ public class TwoPLLocalLockManagerTest extends TestCase {
     private List<AssertionFailedError> errors;
     
     static {
-        Log4JConfig.configureLog4J();
+//        Log4JConfig.configureLog4J();
     }
     
     @Override
@@ -242,6 +242,119 @@ public class TwoPLLocalLockManagerTest extends TestCase {
             }
             writerThread.join();
             lateReaderThread.join();
+        } catch (InterruptedException e) { fail(); }
+        
+        for (AssertionFailedError e : errors) {
+            throw e;
+        }
+    }
+
+    
+    private AtomicBoolean readersRan = new AtomicBoolean(false);
+    public void testReadersSupercedeWriters() {
+        
+        final int NUM_THREADS = 5;
+        Thread writerThread1 = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    int mySessionId = 100;
+                    assertEquals(0, owners.get());
+                    
+                    lockManager.lock(LockType.WRITE, "abc", mySessionId);
+                    owners.incrementAndGet();
+                    assertTrue(lockManager.ownsLock(LockType.READ, "abc", mySessionId));
+                    assertTrue(lockManager.ownsLock(LockType.WRITE, "abc", mySessionId));
+                    
+                    assertEquals(1, owners.get());
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) { fail(); }
+                    owners.decrementAndGet();
+                    lockManager.unlock("abc", mySessionId);
+                } catch (AssertionFailedError e) {
+                    errors.add(e);
+                }
+            }
+        };
+        writerThread1.start();
+        
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) { fail(); }
+        
+        // READER threads queue for lock.
+        Thread[] threads = new Thread[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i ++) {
+            final int index = i;
+            threads[i] = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        assertEquals(1, owners.get());
+                        lockManager.lock(LockType.READ, "abc", index);
+                        owners.incrementAndGet();
+                        assertTrue(lockManager.ownsLock(LockType.READ, "abc", index));
+                        assertFalse(lockManager.ownsLock(LockType.WRITE, "abc", index));
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) { fail(); }
+                        
+                        assertEquals(NUM_THREADS, owners.get());
+                        readersRan.set(true);
+    
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) { fail(); }
+                        owners.decrementAndGet();
+                        lockManager.unlock("abc", index);
+                    } catch (AssertionFailedError e) {
+                        errors.add(e);
+                    }
+                }
+            };
+            threads[i].start();
+        }
+        
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) { fail(); }
+
+        
+        // WRITER thread should queue behind all readers.
+        Thread writerThread2 = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    int mySessionId = 101;
+                    
+                    lockManager.lock(LockType.WRITE, "abc", mySessionId);
+                    owners.incrementAndGet();
+                    assertTrue(lockManager.ownsLock(LockType.READ, "abc", mySessionId));
+                    assertTrue(lockManager.ownsLock(LockType.WRITE, "abc", mySessionId));
+                    
+                    assertEquals(1, owners.get());
+                    assertTrue(readersRan.get());
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) { fail(); }
+                    owners.decrementAndGet();
+                    lockManager.unlock("abc", mySessionId);
+                } catch (AssertionFailedError e) {
+                    errors.add(e);
+                }
+            }
+        };
+        writerThread2.start();
+        
+        try {
+            for (Thread t : threads) { 
+                t.join();
+            }
+            writerThread1.join();
+            writerThread2.join();
         } catch (InterruptedException e) { fail(); }
         
         for (AssertionFailedError e : errors) {
