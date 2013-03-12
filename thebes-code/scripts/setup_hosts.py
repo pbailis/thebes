@@ -747,7 +747,8 @@ if __name__ == "__main__":
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
 
-    if args.setup:
+    if args.setup or args.launch:
+        pprint("Setting up thebes clusters")
         assign_hosts(regions)
         #setup_hosts(clusters)
         jumpstart_hosts(clusters)
@@ -781,8 +782,8 @@ if __name__ == "__main__":
                        distributionparameter=8,
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION",
-                       time=10*60,
-                       timeout=30000)
+                       recordcount=100000,
+                       timeout=15000)
 
     if args.terminate:
         pprint("Terminating thebes clusters")
