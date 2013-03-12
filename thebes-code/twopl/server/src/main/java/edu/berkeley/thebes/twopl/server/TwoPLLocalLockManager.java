@@ -2,14 +2,19 @@ package edu.berkeley.thebes.twopl.server;
 
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,65 +31,129 @@ public class TwoPLLocalLockManager {
 
     public enum LockType { READ, WRITE }
     
+    private static class LockRequest implements Comparable<LockRequest> {
+        private final LockType type;
+        private final long sessionId;
+        private final long timestamp;
+        private final Condition condition;
+
+        private boolean valid; 
+        
+        public LockRequest(LockType type, long sessionId, long timestamp, Condition condition) {
+            this.type = type;
+            this.sessionId = sessionId;
+            this.timestamp = timestamp;
+            this.condition = condition;
+            this.valid = true;
+        }
+        
+        public void sleep() {
+            try {
+                condition.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        public void wake() {
+            condition.signal();
+        }
+        
+        public void invalidate() {
+            valid = false;
+        }
+        
+        public boolean equals(Object other) {
+            if (!(other instanceof LockRequest)) {
+                return false;
+            }
+            
+            LockRequest otherRequest = (LockRequest) other;
+            return Objects.equals(type, otherRequest.type) &&
+                    Objects.equals(sessionId, otherRequest.sessionId);
+        }
+
+        @Override
+        public int compareTo(LockRequest other) {
+            return ComparisonChain.start()
+                    .compare(timestamp, other.timestamp)
+                    .compare(sessionId, other.sessionId)
+                    .compare(type, other.type)
+                    .result();
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+    }
+    
     /**
      * Contains all the state related to a particular locked object.
      * This class supports multiple readers xor a single writer.
-     * 
-     * Writers are given priority to dequeue before readers, and new readers cannot lock
-     *   if there's a writer waiting.
      */
     private static class LockState {
     	private boolean held;
     	private LockType mode;
         private Set<Long> lockers;
-        private int numWritersWaiting;
         
         private Lock lockLock = new ReentrantLock();
-        private Condition readersWaiting = lockLock.newCondition();
-        private Condition writersWaiting = lockLock.newCondition();
+        private Set<LockRequest> queuedRequests;
+        private AtomicLong logicalTime = new AtomicLong(0);
         
         public LockState() {
             this.held = false;
             this.lockers = new ConcurrentSkipListSet<Long>();
-            this.numWritersWaiting = 0;
+            this.queuedRequests = new ConcurrentSkipListSet<LockRequest>();
         }
         
-        private boolean shouldGrantLock(LockType wantType) {
-            switch (wantType) {
-            case READ:
-                return (!held || mode == LockType.READ) && numWritersWaiting == 0;
-            case WRITE:
-                return !held;
-            default:
-                throw new IllegalArgumentException("Unknown lock type: " + wantType);
+        private boolean shouldGrantLock(LockRequest request) {
+            // Reject all READ requests that come after some queued WRITE, and
+            // reject all WRITE requests that come after ANY queued request.
+            for (LockRequest queued : queuedRequests) {
+                if (request.compareTo(queued) > 0) {
+                    if (request.type == LockType.WRITE || queued.type == LockType.WRITE) {
+                        return false;
+                    }
+                }
             }
+
+            // If no queued requests or no conflicting queued requests, we can 
+            // accept the request if it meshes with our R/W coexistence rules.
+            return !held || (mode == LockType.READ && request.type == LockType.READ);
         }
         
         public boolean acquire(LockType wantType, long sessionId) {
             lockLock.lock();
+            LockRequest request = new LockRequest(wantType, sessionId,
+                    logicalTime.incrementAndGet(), lockLock.newCondition());
+            
+            if (ownsLock(LockType.READ, sessionId) && wantType == LockType.WRITE) {
+                throw new IllegalStateException("Cannot upgrade lock from READ TO WRITE for session " + sessionId);
+            }
+
+            // Requests must be made linearly -- duplicate requests => retries
+            invalidateRequestsBy(sessionId);
+            
             try {
-                while (!shouldGrantLock(wantType)) {
-                    if (wantType == LockType.READ) {
-                        readersWaiting.await();
-                    } else if (wantType == LockType.WRITE) {
-                        if (ownsLock(LockType.READ, sessionId)) {
-                            throw new IllegalStateException("Cannot upgrade lock from READ TO WRITE for session " + sessionId);
-                        }
-                        
-                        numWritersWaiting ++;
-                        writersWaiting.await();
-                        numWritersWaiting --;
+                queuedRequests.add(request);
+                while (request.isValid() && !shouldGrantLock(request)) {
+                    request.sleep();
+                }
+                queuedRequests.remove(request);
+                
+                if (!request.isValid()) {
+                    // Make sure if we're no longer valid, that we wake up other
+                    // (possibly valid) queued requests.
+                    if (!held) {
+                        wakeNextQueuedGroup();
                     }
+                    return false;
                 }
 
-                // We own the lock-lock, let's go to town (and lock stuff)!
                 this.held = true;
                 this.lockers.add(sessionId);
                 this.mode = wantType;
                 return true;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
             } finally {
                 lockLock.unlock();
             }
@@ -96,15 +165,26 @@ public class TwoPLLocalLockManager {
                 lockers.remove(sessionId);
                 if (lockers.isEmpty()) {
                     held = false;
-                    
-                    if (numWritersWaiting > 0) {
-                        writersWaiting.signal();
-                    } else {
-                        readersWaiting.signalAll();
-                    }
+                    wakeNextQueuedGroup();
                 }
             } finally {
                 lockLock.unlock();
+            }
+        }
+        
+        /** Wakes the next queued writer or consecutively queued readers. */
+        private void wakeNextQueuedGroup() {
+            boolean wokeReader = false;
+            for (LockRequest request : queuedRequests) {
+                if (request.type == LockType.READ) {
+                    request.wake();
+                    wokeReader = true;
+                } else if (request.type == LockType.WRITE) {
+                    if (!wokeReader) {
+                        request.wake();
+                    }
+                    break;
+                }
             }
         }
         
@@ -122,6 +202,20 @@ public class TwoPLLocalLockManager {
         
         public boolean ownsAnyLock(long sessionId) {
             return lockers.contains(sessionId);
+        }
+
+        public void invalidateRequestsBy(long sessionId) {
+            lockLock.lock();
+
+            try {
+                for (LockRequest request : queuedRequests) {
+                    if (request.sessionId == sessionId) {
+                        request.invalidate();
+                    }
+                }
+            } finally {
+                lockLock.unlock();
+            }
         }
     }
     
@@ -174,6 +268,7 @@ public class TwoPLLocalLockManager {
     public synchronized void unlock(String key, long sessionId) {
         if (lockTable.containsKey(key)) {
             LockState lockState = lockTable.get(key);
+            lockState.invalidateRequestsBy(sessionId);
             if (lockState.ownsAnyLock(sessionId)) {
                 lockState.release(sessionId);
                 lockMetric.dec();
