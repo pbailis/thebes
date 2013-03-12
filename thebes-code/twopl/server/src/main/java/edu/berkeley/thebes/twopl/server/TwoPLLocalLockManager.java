@@ -1,20 +1,18 @@
 package edu.berkeley.thebes.twopl.server;
 
-import edu.berkeley.thebes.common.config.Config;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 
-import java.util.List;
-import java.util.Objects;
+import edu.berkeley.thebes.common.config.Config;
+
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -74,8 +72,8 @@ public class TwoPLLocalLockManager {
             }
             
             LockRequest otherRequest = (LockRequest) other;
-            return Objects.equals(type, otherRequest.type) &&
-                    Objects.equals(sessionId, otherRequest.sessionId);
+            return Objects.equal(type, otherRequest.type) &&
+                    Objects.equal(sessionId, otherRequest.sessionId);
         }
 
         @Override
