@@ -781,7 +781,7 @@ if __name__ == "__main__":
                        distributionparameter=10,
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION",
-                       recordcount=100000,
+                       recordcount=10000,
                        timeout=15000,
                        keydistribution="uniform")
 
