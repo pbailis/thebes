@@ -60,6 +60,15 @@ public class ThebesClient implements IThebesClient {
     public boolean put(String key, ByteBuffer value) throws TException {
         return internalClient.put(key, value);
     }
+    
+    public boolean unsafe_load(String key, ByteBuffer value) throws TException {
+        if (internalClient instanceof ThebesTwoPLTransactionClient) {
+            return ((ThebesTwoPLTransactionClient) internalClient).unsafe_load(key, value);
+        } else {
+            // Client does not support special behavior
+            return internalClient.put(key, value);
+        }
+    }
 
     @Override
     public ByteBuffer get(String key) throws TException {

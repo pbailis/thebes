@@ -132,7 +132,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 	@Override
 	public int insert(String table, String key, HashMap<String, ByteIterator> values) {
         try {
-            client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+            client.unsafe_load(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
             e.printStackTrace();
@@ -181,7 +181,14 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 	@Override
 	public int update(String table, String key, HashMap<String, ByteIterator> values) {
         //update doesn't pass in the entire record, so we'd need to do read-modify-write
-        return insert(table, key,  values);
+        try {
+            client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            e.printStackTrace();
+            return ERROR;
+        }
+        return OK;
 	}
 	
 	private int checkStore(String table) {

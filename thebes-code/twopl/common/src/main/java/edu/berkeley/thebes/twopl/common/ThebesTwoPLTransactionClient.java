@@ -36,7 +36,6 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     
     private long sessionId;
     private boolean inTransaction;
-    private Set<String> lockedKeys;
     private Set<String> writeLocks;
     private Set<String> readLocks;
     private TwoPLMasterRouter masterRouter;
@@ -61,7 +60,6 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
             System.err.println("Starting transaction with seqno " + sessionId);
         }
         inTransaction = true;
-        lockedKeys = Sets.newHashSet();
         writeLocks = Sets.newHashSet();
         readLocks = Sets.newHashSet();
     }
@@ -89,6 +87,13 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version(clientId, timestamp));
         return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
+    }
+    
+    /** Same as put, but does not acquire or need a lock. */
+    public boolean unsafe_load(String key, ByteBuffer value) throws TException {
+        long timestamp = System.currentTimeMillis();
+        DataItem dataItem = new DataItem(value, new Version(clientId, timestamp));
+        return masterRouter.getMasterByKey(key).unsafe_load(key, DataItem.toThrift(dataItem));
     }
     
     @Override
