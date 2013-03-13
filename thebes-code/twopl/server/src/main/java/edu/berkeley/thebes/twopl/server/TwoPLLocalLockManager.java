@@ -88,6 +88,12 @@ public class TwoPLLocalLockManager {
         public boolean isValid() {
             return valid && (System.currentTimeMillis()-wallClockCreationTime < requestTimeout);
         }
+        
+        public String toString() {
+            return String.format("[type=%s, session=%d, timestamp=%d, age=%d, valid=%b]", 
+                    type, sessionId, timestamp, System.currentTimeMillis()-wallClockCreationTime,
+                    valid);
+        }
     }
     
     /**
@@ -150,6 +156,7 @@ public class TwoPLLocalLockManager {
                     if (!held) {
                         wakeNextQueuedGroup();
                     }
+                    logger.info("Refusing invalidated request: " + request);
                     return false;
                 }
 
@@ -258,8 +265,8 @@ public class TwoPLLocalLockManager {
             lockMetric.inc();
             logger.debug(lockType + " Lock granted for [" + sessionId + "] on key '" + key + "'");
         } else {
-            logger.error(lockType + " Lock unavailable for key '" + key + "'.");
-            throw new IllegalStateException("Unable to acquire lock for key '" + key + "'.");
+            logger.error("[" + sessionId + "] " +lockType + " Lock unavailable for key '" + key + "'.");
+            throw new IllegalStateException("[" + sessionId + "] Unable to acquire lock for key '" + key + "'.");
         }
     }
     
