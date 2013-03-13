@@ -168,7 +168,7 @@ public class ThebesHATClient implements IThebesClient {
 
             doPutSync(key,
                       queuedWrite,
-                      transactionKeys);
+                      new ArrayList<String>());//transactionKeys);
 
             /*
             doPutAsync(key,
