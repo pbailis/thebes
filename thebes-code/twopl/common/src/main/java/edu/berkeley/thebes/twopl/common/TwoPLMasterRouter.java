@@ -46,4 +46,16 @@ public class TwoPLMasterRouter {
         List<ServerAddress> servers = Config.getMasterServers();
         return servers.get(RoutingHash.hashKey(key, servers.size()));
     }
+
+    public void refreshMasterForKey(String key) throws TTransportException {
+        int index = RoutingHash.hashKey(key, masterReplicas.size());
+        TwoPLMasterReplicaService.Client client = masterReplicas.get(index);
+        TSocket sock = (TSocket) client.getInputProtocol().getTransport();
+        // TODO: Logger
+        System.err.println("WARNING: Client for key '" + key + "' may have closed! Opening new channel.");
+        client = TwoPLThriftUtil.getMasterReplicaServiceClient(
+                sock.getSocket().getInetAddress().getHostAddress(),
+                sock.getSocket().getPort());
+        masterReplicas.set(index, client);
+    }
 }

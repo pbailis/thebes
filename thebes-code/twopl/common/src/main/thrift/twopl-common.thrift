@@ -10,6 +10,8 @@ service TwoPLMasterReplicaService {
   void unlock(1: i64 sessionId, 2: string key);
   dataitem.ThriftDataItem get(1: i64 sessionId, 2: string key);
   bool put(1: i64 sessionId, 2: string key, 3: dataitem.ThriftDataItem value);
+  
+  bool unsafe_load(1: string key, 2: dataitem.ThriftDataItem value);
 }
 
 service TwoPLSlaveReplicaService {

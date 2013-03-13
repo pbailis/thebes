@@ -57,4 +57,14 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
             throw new TException("Session " + sessionId + " does not own PUT lock on '" + key + "'");
         }
     }
+
+    @Override
+    public boolean unsafe_load(String key, ThriftDataItem value)
+            throws TException {
+        boolean success = persistenceEngine.put(key, DataItem.fromThrift(value));
+        if (success) {
+            slaveReplicationService.sendToSlaves(key, value);
+        }
+        return success;
+    }
 }

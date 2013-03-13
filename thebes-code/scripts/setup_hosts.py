@@ -18,7 +18,7 @@ from time import sleep
 #        'eu-west-1': 'ami-64636a10'}
 
 # Upgraded AMIs
-AMIs = {'us-east-1': 'ami-08188561'}
+AMIs = {'us-east-1': 'ami-08188561', 'us-west-2': 'ami-b4bb2e84'}
 
 tag_blacklist = ["ping"]
 
@@ -490,15 +490,14 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
 #                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
-                           # -p requestdistribution=uniform
-                           ' -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
+                           ' -p requestdistribution=%s -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
-                                                           kwargs.get("threads", 10) if runType != 'load' else 10,
+                                                           kwargs.get("threads", 10) if runType != 'load' else 50,
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
-                                                           #kwargs.get("keydistribution", "uniform"),
+                                                           kwargs.get("keydistribution", "uniform"),
                                                            kwargs.get("time", 60) if runType != 'load' else 10000,
                                                            kwargs.get("workload", "workloads/workloada"),
                                                            kwargs.get("timeout", 10000),
@@ -747,17 +746,18 @@ if __name__ == "__main__":
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
 
-    if args.setup:
+    if args.setup or args.launch:
+        pprint("Setting up thebes clusters")
         assign_hosts(regions)
         #setup_hosts(clusters)
         jumpstart_hosts(clusters)
-        write_config(clusters, graphiteRegion)
-        #setup_graphite(graphiteRegion)
-        start_graphite(graphiteRegion)
-        start_servers(clusters, use2PL, thebesArgString)
-        start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
-        runid = str(datetime.now()).replace(' ', '_')
-        fetch_logs(runid, clusters)
+        #write_config(clusters, graphiteRegion)
+        ##setup_graphite(graphiteRegion)
+        #start_graphite(graphiteRegion)
+        #start_servers(clusters, use2PL, thebesArgString)
+        #start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
+        #runid = str(datetime.now()).replace(' ', '_')
+        #fetch_logs(runid, clusters)
 
     if args.rebuild:
         pprint("Rebuilding thebes clusters")
@@ -778,11 +778,13 @@ if __name__ == "__main__":
     if args.restart:
         run_ycsb_trial(use2PL, runid="DEAULT_RUN",
                        threads=50,
-                       distributionparameter=8,
+                       distributionparameter=10,
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION",
-                       time=10*60,
-                       timeout=30000)
+                       recordcount=50000,
+                       time=5*60,
+                       timeout=60000,
+                       keydistribution="uniform")
 
     if args.terminate:
         pprint("Terminating thebes clusters")

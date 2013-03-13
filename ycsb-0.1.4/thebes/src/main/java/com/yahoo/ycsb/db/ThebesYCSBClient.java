@@ -1,26 +1,21 @@
 package com.yahoo.ycsb.db;
 
-import java.lang.Exception;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
 
-import com.yahoo.ycsb.ByteArrayByteIterator;
-import com.yahoo.ycsb.StringByteIterator;
-import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
-import com.yahoo.ycsb.generator.IntegerGenerator;
 import org.apache.log4j.Logger;
 
-import edu.berkeley.thebes.client.ThebesClient;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
+import com.yahoo.ycsb.ByteArrayByteIterator;
+import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
-import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.TransactionalDB;
+import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
+import com.yahoo.ycsb.generator.IntegerGenerator;
+
+import edu.berkeley.thebes.client.ThebesClient;
 
 
 public class ThebesYCSBClient extends DB implements TransactionalDB {
@@ -115,6 +110,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         	finalTransactionLength = -1;
             client.endTransaction();
         } catch (Exception e) {
+            e.printStackTrace();
             logger.warn(e.getMessage());
             return ERROR;
         }
@@ -136,7 +132,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 	@Override
 	public int insert(String table, String key, HashMap<String, ByteIterator> values) {
         try {
-            client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+            client.unsafe_load(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
             e.printStackTrace();
@@ -185,7 +181,14 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 	@Override
 	public int update(String table, String key, HashMap<String, ByteIterator> values) {
         //update doesn't pass in the entire record, so we'd need to do read-modify-write
-        return insert(table, key,  values);
+        try {
+            client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            e.printStackTrace();
+            return ERROR;
+        }
+        return OK;
 	}
 	
 	private int checkStore(String table) {
