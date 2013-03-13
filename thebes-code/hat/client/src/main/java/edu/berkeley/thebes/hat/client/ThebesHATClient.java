@@ -157,7 +157,7 @@ public class ThebesHATClient implements IThebesClient {
         Version transactionVersion = new Version(clientID, System.currentTimeMillis());
          List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
 
-        TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
+        //TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
         for(String key : transactionKeys) {
             DataItem queuedWrite = transactionWriteBuffer.get(key);
 
@@ -166,14 +166,20 @@ public class ThebesHATClient implements IThebesClient {
                 queuedWrite.setTransactionKeys(transactionKeys);
             }
 
+            doPutSync(key,
+                      queuedWrite,
+                      transactionKeys);
+
+            /*
             doPutAsync(key,
                        queuedWrite,
                        transactionKeys,
                        callback);
+                       */
 
         }
 
-        callback.blockForWrites();
+        //callback.blockForWrites();
 
         if(atomicityLevel != AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
@@ -278,14 +284,22 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     private boolean doPutSync(String key,
-                              DataItem value) throws TException {
+                              DataItem value) throws TException{
+        return doPutSync(key,
+                         value,
+                         new ArrayList<String>());
+    }
+
+    private boolean doPutSync(String key,
+                              DataItem value,
+                              List<String> transactionKeys) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
 
         try {
             ret = router.getSyncReplicaByKey(key).put(key,
                                                       DataItem.toThrift(value),
-                                                      new ArrayList<String>());
+                                                      transactionKeys);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
