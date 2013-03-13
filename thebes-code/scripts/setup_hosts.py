@@ -490,15 +490,14 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                        'cd /home/ubuntu/thebes/ycsb-0.1.4;' \
 #                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
-                           ' -p requestdistribution=uniform' \
-                           ' -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
+                           ' -p requestdistribution=%s -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
                                                            kwargs.get("threads", 10) if runType != 'load' else 10,
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
-                                                           #kwargs.get("keydistribution", "uniform"),
+                                                           kwargs.get("keydistribution", "uniform"),
                                                            kwargs.get("time", 60) if runType != 'load' else 10000,
                                                            kwargs.get("workload", "workloads/workloada"),
                                                            kwargs.get("timeout", 10000),
@@ -752,13 +751,13 @@ if __name__ == "__main__":
         assign_hosts(regions)
         #setup_hosts(clusters)
         jumpstart_hosts(clusters)
-        write_config(clusters, graphiteRegion)
-        #setup_graphite(graphiteRegion)
-        start_graphite(graphiteRegion)
-        start_servers(clusters, use2PL, thebesArgString)
-        start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
-        runid = str(datetime.now()).replace(' ', '_')
-        fetch_logs(runid, clusters)
+        #write_config(clusters, graphiteRegion)
+        ##setup_graphite(graphiteRegion)
+        #start_graphite(graphiteRegion)
+        #start_servers(clusters, use2PL, thebesArgString)
+        #start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
+        #runid = str(datetime.now()).replace(' ', '_')
+        #fetch_logs(runid, clusters)
 
     if args.rebuild:
         pprint("Rebuilding thebes clusters")
@@ -783,7 +782,8 @@ if __name__ == "__main__":
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION",
                        recordcount=100000,
-                       timeout=15000)
+                       timeout=15000,
+                       keydistribution="uniform")
 
     if args.terminate:
         pprint("Terminating thebes clusters")
