@@ -18,7 +18,7 @@ from time import sleep
 #        'eu-west-1': 'ami-64636a10'}
 
 # Upgraded AMIs
-AMIs = {'us-east-1': 'ami-08188561'}
+AMIs = {'us-east-1': 'ami-08188561', 'us-west-2': 'ami-b4bb2e84'}
 
 tag_blacklist = ["ping"]
 
