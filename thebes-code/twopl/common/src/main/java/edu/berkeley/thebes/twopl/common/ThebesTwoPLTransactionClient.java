@@ -118,12 +118,14 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
                 throw new TException("Cannot upgrade locks right now.");
             }
             writeLocks.add(key);
-            for (int i = 0; i < 2; i ++) {
+            for (int i = 0; i < 1; i ++) {
                 try {
                     System.err.println("Session " + sessionId + " attempting W lock on key " + key + " @" + System.currentTimeMillis());
                     masterRouter.getMasterByKey(key).write_lock(sessionId, key);
                     return;
                 } catch (TException e) {
+                    // TODO: if this helps, make it more universal
+                    masterRouter.refreshMasterForKey(key);
                     System.err.println("Session " + sessionId + " failed in obtaining W lock on key " + key + " @ " + System.currentTimeMillis());
                     e.printStackTrace();
                 }
@@ -142,12 +144,13 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     public void readLock(String key) throws TException {
         if (!readLocks.contains(key) && !writeLocks.contains(key)) {
             readLocks.add(key);
-            for (int i = 0; i < 2; i ++) {
+            for (int i = 0; i < 1; i ++) {
                 try {
                     System.err.println("Session " + sessionId + " attempting R lock on key " + key + " @" + System.currentTimeMillis());
                     masterRouter.getMasterByKey(key).read_lock(sessionId, key);
                     return;
                 } catch (TException e) {
+                    masterRouter.refreshMasterForKey(key);
                     System.err.println("Session " + sessionId + " failed in obtaining R lock on key " + key + " @" + System.currentTimeMillis());
                     e.printStackTrace();
                 }
