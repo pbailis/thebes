@@ -3,6 +3,8 @@ package edu.berkeley.thebes.twopl.common;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
 
+import com.google.common.collect.Lists;
+
 import edu.berkeley.thebes.common.clustering.RoutingHash;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
@@ -15,31 +17,26 @@ import java.util.List;
 /** Helps route traffic to the master of each replica set. */
 public class TwoPLMasterRouter {
     /** Contains the ordered list of master replicas, one per set of replicas. */
-    private List<TwoPLMasterReplicaService.Client> masterReplicas;
+//    private List<TwoPLMasterReplicaService.Client> masterReplicas;
+    private List<ServerAddress> masterReplicas;
 
     public TwoPLMasterRouter() throws TTransportException {
         List<ServerAddress> serverIPs = Config.getMasterServers();
-        masterReplicas = new ArrayList<TwoPLMasterReplicaService.Client>(serverIPs.size());
+        masterReplicas = Lists.newArrayList(serverIPs);
 
+        /*
         for (ServerAddress server : serverIPs) {
             masterReplicas.add(TwoPLThriftUtil.getMasterReplicaServiceClient(
                     server.getIP(), server.getPort()));
         }
+        */
     }
 
     public TwoPLMasterReplicaService.Client getMasterByKey(String key) throws TTransportException {
         int index = RoutingHash.hashKey(key, masterReplicas.size());
-        TwoPLMasterReplicaService.Client client = masterReplicas.get(index);
-        TSocket sock = (TSocket) client.getInputProtocol().getTransport();
-        if (!sock.isOpen()) {
-            // TODO: Logger
-            System.err.println("ERROR: Client for key '" + key + "' has closed! Opening new channel.");
-            client = TwoPLThriftUtil.getMasterReplicaServiceClient(
-                    sock.getSocket().getInetAddress().getHostAddress(),
-                    sock.getSocket().getPort());
-            masterReplicas.set(index, client);
-        }
-        return client;
+        return TwoPLThriftUtil.getMasterReplicaServiceClient(
+                masterReplicas.get(index).getIP(),
+                masterReplicas.get(index).getPort());
     }
     
     public ServerAddress getMasterAddressByKey(String key) {
