@@ -55,7 +55,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         }
         sessionId = (clientId*100000) + NEXT_SEQUENCE_NUMBER.getAndIncrement();
         
-        logger.debug("Starting transaction with seqno " + sessionId);
+        logger.trace("Starting transaction with seqno " + sessionId);
 
         inTransaction = true;
         writeLocks = Sets.newHashSet();
