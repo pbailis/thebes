@@ -18,7 +18,7 @@ from time import sleep
 #        'eu-west-1': 'ami-64636a10'}
 
 # Upgraded AMIs
-AMIs = {'us-east-1': 'ami-08188561'}
+AMIs = {'us-east-1': 'ami-08188561', 'us-west-2': 'ami-b4bb2e84'}
 
 tag_blacklist = ["ping"]
 
@@ -779,7 +779,7 @@ if __name__ == "__main__":
     if args.restart:
         run_ycsb_trial(use2PL, runid="DEAULT_RUN",
                        threads=50,
-                       distributionparameter=25,
+                       distributionparameter=50,
                        atomicity_level="NO_ATOMICITY",
                        isolation_level="NO_ISOLATION",
                        recordcount=100000,
