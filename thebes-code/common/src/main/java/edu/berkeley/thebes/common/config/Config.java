@@ -184,9 +184,6 @@ public class Config {
      * This returns null in HAT mode.
      */
     public static List<ServerAddress> getMasterServers() {
-        if (txnMode == TransactionMode.HAT) {
-            return null;
-        }
         if (masterServers != null) {
             return masterServers;
         }
