@@ -31,6 +31,7 @@ public enum ConfigParameters {
     SERVER_PORT(Integer.class, 8080),
     ANTI_ENTROPY_PORT(Integer.class, 8081),
     STANDALONE(Boolean.class, false),
+    ROUTE_TO_MASTERS(Boolean.class, false),
     TXN_MODE(TransactionMode.class, RequirementLevel.CLIAPP),
     HAT_ISOLATION_LEVEL(IsolationLevel.class, IsolationLevel.NO_ISOLATION),
     ANTIENTROPY_BOOTSTRAP_TIME(Integer.class, 30*1000),

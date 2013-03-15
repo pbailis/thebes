@@ -17,7 +17,13 @@ public class ReplicaRouter {
     private List<ReplicaService.AsyncClient> asyncReplicas;
 
     public ReplicaRouter() throws TTransportException, IOException {
-        List<ServerAddress> serverIPs = Config.getServersInCluster();
+        List<ServerAddress> serverIPs;
+
+        if(Config.shouldRouteToMasters())
+            serverIPs = Config.getMasterServers();
+        else
+            serverIPs = Config.getServersInCluster();
+
         syncReplicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
         asyncReplicas = new ArrayList<ReplicaService.AsyncClient>(serverIPs.size());
 

@@ -297,6 +297,10 @@ public class Config {
         return txnMode == TransactionMode.TWOPL &&
                 masterServers.get(getServerID()).getIP().equals(getServerIP());
     }
+
+    public static Boolean shouldRouteToMasters() {
+        return getOption(ConfigParameters.ROUTE_TO_MASTERS);
+    }
     
     /** Returns the IP for this server, based on our clusterid and serverid. */
     private static String getServerIP() {
