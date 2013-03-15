@@ -1,6 +1,7 @@
 package edu.berkeley.thebes.hat.server.antientropy;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
@@ -24,17 +25,15 @@ public class AntiEntropyServer implements Runnable {
     AntiEntropyServiceRouter router;
     private AntiEntropyServiceHandler serviceHandler;
 
-    List<QueuedAntiEntropyWrite> queuedAntiEntropyWrites;
+    LinkedBlockingQueue<QueuedAntiEntropyWrite> queuedAntiEntropyWrites;
 
     private class QueuedAntiEntropyWrite {
         private String key;
         private ThriftDataItem value;
-        private List<String> transactionKeys;
 
-        public QueuedAntiEntropyWrite(String key, ThriftDataItem value, List<String> transactionKeys) {
+        public QueuedAntiEntropyWrite(String key, ThriftDataItem value) {
             this.key = key;
             this.value = value;
-            this.transactionKeys = transactionKeys;
         }
 
         public String getKey() {
@@ -44,50 +43,40 @@ public class AntiEntropyServer implements Runnable {
         public ThriftDataItem getValue() {
             return value;
         }
-
-        public List<String> getTransactionKeys() {
-            return transactionKeys;
-        }
     }
 
     private class AntiEntropyRunner implements Runnable {
-        List<QueuedAntiEntropyWrite> writeQueue;
+        LinkedBlockingQueue<QueuedAntiEntropyWrite> writeQueue;
 
-        public AntiEntropyRunner(List<QueuedAntiEntropyWrite> writeQueue) {
+        public AntiEntropyRunner(LinkedBlockingQueue<QueuedAntiEntropyWrite> writeQueue) {
             this.writeQueue = writeQueue;
         }
 
         public void run() {
             while(true) {
-                QueuedAntiEntropyWrite queuedAntiEntropyWrite;
-                synchronized (writeQueue) {
-                    if(writeQueue.isEmpty()) {
+                try {
+                    QueuedAntiEntropyWrite queuedAntiEntropyWrite = writeQueue.take();
+
+
+                    for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
+                        logger.trace("sending to neighbor");
                         try {
-                            writeQueue.wait();
-                        } catch(InterruptedException e) {
-                            logger.warn(e.getMessage());
-                            continue;
-                        }
-                    }
-
-                    queuedAntiEntropyWrite = writeQueue.remove(0);
-                }
-
-                for (AntiEntropyService.Client neighbor : router.getNeighborClients()) {
-                    logger.trace("sending to neighbor");
-                    try {
-                        neighbor.put(queuedAntiEntropyWrite.getKey(),
-                                     queuedAntiEntropyWrite.getValue(),
-                                     queuedAntiEntropyWrite.getTransactionKeys());
-                    } catch (RuntimeException e) {
-                        logger.debug("errored: " + e);
-                        e.printStackTrace();
-                    } catch (TException e) {
+                            neighbor.put(queuedAntiEntropyWrite.getKey(),
+                                         queuedAntiEntropyWrite.getValue());
+                        } catch (RuntimeException e) {
                             logger.debug("errored: " + e);
                             e.printStackTrace();
-                            synchronized (writeQueue) { writeQueue.add(queuedAntiEntropyWrite); }
+                        } catch (TException e) {
+                                logger.debug("errored: " + e);
+                                e.printStackTrace();
+                                synchronized (writeQueue) { writeQueue.add(queuedAntiEntropyWrite); }
+                        }
+                        logger.trace("sent to neighbor");
                     }
-                    logger.trace("sent to neighbor");
+
+                } catch(InterruptedException e) {
+                                    logger.warn(e.getMessage());
+                                    continue;
                 }
             }
         }
@@ -95,7 +84,7 @@ public class AntiEntropyServer implements Runnable {
 
     public AntiEntropyServer(AntiEntropyServiceHandler serviceHandler) throws TTransportException {
         router = new AntiEntropyServiceRouter();
-        queuedAntiEntropyWrites = Lists.newArrayList();
+        queuedAntiEntropyWrites = new LinkedBlockingQueue<QueuedAntiEntropyWrite>();
         this.serviceHandler = serviceHandler;
     }
 
@@ -110,11 +99,7 @@ public class AntiEntropyServer implements Runnable {
     //todo: change interface
     //todo: race condition between serving and when we've connected to neighbors
     public void sendToNeighbors(String key,
-                                ThriftDataItem value,
-                                List<String> transactionKeys) {
-        synchronized (queuedAntiEntropyWrites) {
-            queuedAntiEntropyWrites.add(new QueuedAntiEntropyWrite(key, value, transactionKeys));
-            queuedAntiEntropyWrites.notify();
-        }
+                                ThriftDataItem value) {
+        queuedAntiEntropyWrites.add(new QueuedAntiEntropyWrite(key, value));
     }
 }

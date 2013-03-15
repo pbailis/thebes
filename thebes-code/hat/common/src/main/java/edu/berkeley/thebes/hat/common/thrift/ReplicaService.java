@@ -36,7 +36,7 @@ public class ReplicaService {
 
     public edu.berkeley.thebes.common.thrift.ThriftDataItem get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) throws org.apache.thrift.TException;
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys) throws org.apache.thrift.TException;
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
 
   }
 
@@ -44,7 +44,7 @@ public class ReplicaService {
 
     public void get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -92,18 +92,17 @@ public class ReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys) throws org.apache.thrift.TException
+    public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
     {
-      send_put(key, value, transactionKeys);
+      send_put(key, value);
       return recv_put();
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys) throws org.apache.thrift.TException
+    public void send_put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
       args.setValue(value);
-      args.setTransactionKeys(transactionKeys);
       sendBase("put", args);
     }
 
@@ -170,9 +169,9 @@ public class ReplicaService {
       }
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      put_call method_call = new put_call(key, value, transactionKeys, resultHandler, this, ___protocolFactory, ___transport);
+      put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -180,12 +179,10 @@ public class ReplicaService {
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String key;
       private edu.berkeley.thebes.common.thrift.ThriftDataItem value;
-      private List<String> transactionKeys;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, List<String> transactionKeys, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public put_call(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.key = key;
         this.value = value;
-        this.transactionKeys = transactionKeys;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -193,7 +190,6 @@ public class ReplicaService {
         put_args args = new put_args();
         args.setKey(key);
         args.setValue(value);
-        args.setTransactionKeys(transactionKeys);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -261,7 +257,7 @@ public class ReplicaService {
 
       public put_result getResult(I iface, put_args args) throws org.apache.thrift.TException {
         put_result result = new put_result();
-        result.success = iface.put(args.key, args.value, args.transactionKeys);
+        result.success = iface.put(args.key, args.value);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -1092,7 +1088,6 @@ public class ReplicaService {
 
     private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-    private static final org.apache.thrift.protocol.TField TRANSACTION_KEYS_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionKeys", org.apache.thrift.protocol.TType.LIST, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1102,13 +1097,11 @@ public class ReplicaService {
 
     public String key; // required
     public edu.berkeley.thebes.common.thrift.ThriftDataItem value; // required
-    public List<String> transactionKeys; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       KEY((short)1, "key"),
-      VALUE((short)2, "value"),
-      TRANSACTION_KEYS((short)3, "transactionKeys");
+      VALUE((short)2, "value");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1127,8 +1120,6 @@ public class ReplicaService {
             return KEY;
           case 2: // VALUE
             return VALUE;
-          case 3: // TRANSACTION_KEYS
-            return TRANSACTION_KEYS;
           default:
             return null;
         }
@@ -1176,9 +1167,6 @@ public class ReplicaService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
-      tmpMap.put(_Fields.TRANSACTION_KEYS, new org.apache.thrift.meta_data.FieldMetaData("transactionKeys", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -1188,13 +1176,11 @@ public class ReplicaService {
 
     public put_args(
       String key,
-      edu.berkeley.thebes.common.thrift.ThriftDataItem value,
-      List<String> transactionKeys)
+      edu.berkeley.thebes.common.thrift.ThriftDataItem value)
     {
       this();
       this.key = key;
       this.value = value;
-      this.transactionKeys = transactionKeys;
     }
 
     /**
@@ -1207,13 +1193,6 @@ public class ReplicaService {
       if (other.isSetValue()) {
         this.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.value);
       }
-      if (other.isSetTransactionKeys()) {
-        List<String> __this__transactionKeys = new ArrayList<String>();
-        for (String other_element : other.transactionKeys) {
-          __this__transactionKeys.add(other_element);
-        }
-        this.transactionKeys = __this__transactionKeys;
-      }
     }
 
     public put_args deepCopy() {
@@ -1224,7 +1203,6 @@ public class ReplicaService {
     public void clear() {
       this.key = null;
       this.value = null;
-      this.transactionKeys = null;
     }
 
     public String getKey() {
@@ -1275,45 +1253,6 @@ public class ReplicaService {
       }
     }
 
-    public int getTransactionKeysSize() {
-      return (this.transactionKeys == null) ? 0 : this.transactionKeys.size();
-    }
-
-    public java.util.Iterator<String> getTransactionKeysIterator() {
-      return (this.transactionKeys == null) ? null : this.transactionKeys.iterator();
-    }
-
-    public void addToTransactionKeys(String elem) {
-      if (this.transactionKeys == null) {
-        this.transactionKeys = new ArrayList<String>();
-      }
-      this.transactionKeys.add(elem);
-    }
-
-    public List<String> getTransactionKeys() {
-      return this.transactionKeys;
-    }
-
-    public put_args setTransactionKeys(List<String> transactionKeys) {
-      this.transactionKeys = transactionKeys;
-      return this;
-    }
-
-    public void unsetTransactionKeys() {
-      this.transactionKeys = null;
-    }
-
-    /** Returns true if field transactionKeys is set (has been assigned a value) and false otherwise */
-    public boolean isSetTransactionKeys() {
-      return this.transactionKeys != null;
-    }
-
-    public void setTransactionKeysIsSet(boolean value) {
-      if (!value) {
-        this.transactionKeys = null;
-      }
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case KEY:
@@ -1332,14 +1271,6 @@ public class ReplicaService {
         }
         break;
 
-      case TRANSACTION_KEYS:
-        if (value == null) {
-          unsetTransactionKeys();
-        } else {
-          setTransactionKeys((List<String>)value);
-        }
-        break;
-
       }
     }
 
@@ -1350,9 +1281,6 @@ public class ReplicaService {
 
       case VALUE:
         return getValue();
-
-      case TRANSACTION_KEYS:
-        return getTransactionKeys();
 
       }
       throw new IllegalStateException();
@@ -1369,8 +1297,6 @@ public class ReplicaService {
         return isSetKey();
       case VALUE:
         return isSetValue();
-      case TRANSACTION_KEYS:
-        return isSetTransactionKeys();
       }
       throw new IllegalStateException();
     }
@@ -1403,15 +1329,6 @@ public class ReplicaService {
         if (!(this_present_value && that_present_value))
           return false;
         if (!this.value.equals(that.value))
-          return false;
-      }
-
-      boolean this_present_transactionKeys = true && this.isSetTransactionKeys();
-      boolean that_present_transactionKeys = true && that.isSetTransactionKeys();
-      if (this_present_transactionKeys || that_present_transactionKeys) {
-        if (!(this_present_transactionKeys && that_present_transactionKeys))
-          return false;
-        if (!this.transactionKeys.equals(that.transactionKeys))
           return false;
       }
 
@@ -1451,16 +1368,6 @@ public class ReplicaService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetTransactionKeys()).compareTo(typedOther.isSetTransactionKeys());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetTransactionKeys()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionKeys, typedOther.transactionKeys);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -1494,14 +1401,6 @@ public class ReplicaService {
         sb.append("null");
       } else {
         sb.append(this.value);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("transactionKeys:");
-      if (this.transactionKeys == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.transactionKeys);
       }
       first = false;
       sb.append(")");
@@ -1567,24 +1466,6 @@ public class ReplicaService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 3: // TRANSACTION_KEYS
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-                {
-                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.transactionKeys = new ArrayList<String>(_list0.size);
-                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                  {
-                    String _elem2; // required
-                    _elem2 = iprot.readString();
-                    struct.transactionKeys.add(_elem2);
-                  }
-                  iprot.readListEnd();
-                }
-                struct.setTransactionKeysIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1608,18 +1489,6 @@ public class ReplicaService {
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
           struct.value.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.transactionKeys != null) {
-          oprot.writeFieldBegin(TRANSACTION_KEYS_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.transactionKeys.size()));
-            for (String _iter3 : struct.transactionKeys)
-            {
-              oprot.writeString(_iter3);
-            }
-            oprot.writeListEnd();
-          }
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1646,31 +1515,19 @@ public class ReplicaService {
         if (struct.isSetValue()) {
           optionals.set(1);
         }
-        if (struct.isSetTransactionKeys()) {
-          optionals.set(2);
-        }
-        oprot.writeBitSet(optionals, 3);
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetKey()) {
           oprot.writeString(struct.key);
         }
         if (struct.isSetValue()) {
           struct.value.write(oprot);
         }
-        if (struct.isSetTransactionKeys()) {
-          {
-            oprot.writeI32(struct.transactionKeys.size());
-            for (String _iter4 : struct.transactionKeys)
-            {
-              oprot.writeString(_iter4);
-            }
-          }
-        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, put_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.key = iprot.readString();
           struct.setKeyIsSet(true);
@@ -1679,19 +1536,6 @@ public class ReplicaService {
           struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
           struct.value.read(iprot);
           struct.setValueIsSet(true);
-        }
-        if (incoming.get(2)) {
-          {
-            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.transactionKeys = new ArrayList<String>(_list5.size);
-            for (int _i6 = 0; _i6 < _list5.size; ++_i6)
-            {
-              String _elem7; // required
-              _elem7 = iprot.readString();
-              struct.transactionKeys.add(_elem7);
-            }
-          }
-          struct.setTransactionKeysIsSet(true);
         }
       }
     }

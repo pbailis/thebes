@@ -9,10 +9,8 @@ import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.common.thrift.ThriftVersion;
-import edu.berkeley.thebes.hat.common.data.DataDependency;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-import edu.berkeley.thebes.hat.common.thrift.ThriftDataDependency;
-import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
+
 import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServer;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
 import edu.berkeley.thebes.hat.server.dependencies.PendingWrites;
@@ -39,18 +37,15 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
 
     @Override
     public boolean put(String key,
-                       ThriftDataItem value,
-                       List<String> transactionKeys) throws TException {
+                       ThriftDataItem value) throws TException {
         if(logger.isTraceEnabled())
             logger.trace("received PUT request for key: '"+key+
                          "' value: '"+value+
-                         "' transactionKeys: "+transactionKeys);
+                         "' transactionKeys: "+value.getTransactionKeys());
 
-        antiEntropyServer.sendToNeighbors(key, value, transactionKeys);
+        antiEntropyServer.sendToNeighbors(key, value);
 
-        dependencyResolver.asyncApplyNewWrite(key,
-                                              DataItem.fromThrift(value),
-                                              transactionKeys);
+        dependencyResolver.asyncApplyNewWrite(key, DataItem.fromThrift(value));
 
         // todo: remove this return value--it's really not necessary
         return true;

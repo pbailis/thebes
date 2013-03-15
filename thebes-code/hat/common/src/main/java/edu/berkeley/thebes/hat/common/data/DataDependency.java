@@ -18,7 +18,7 @@ public class DataDependency {
 	}
 	
 	public static DataDependency fromThrift(ThriftDataDependency dataDependency) {
-		return new DataDependency(dataDependency.getKey(), 
+		return new DataDependency(dataDependency.getKey(),
 				Version.fromThrift(dataDependency.getVersion()));
 	}
 	

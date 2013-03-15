@@ -31,7 +31,7 @@ public class DataItem {
 		}
 		
 		return new DataItem(
-				dataItem.getData(), 
+				dataItem.getData(),
 				Version.fromThrift(dataItem.getVersion()),
 				dataItem.getTransactionKeys());
 	}

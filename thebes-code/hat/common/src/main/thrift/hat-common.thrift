@@ -10,19 +10,24 @@ struct ThriftDataDependency {
   2: version.ThriftVersion version
 }
 
+struct DataDependencyRequest {
+  1: i32 serverId,
+  2: i64 requestId,
+  3: ThriftDataDependency dependency
+}
+
 service ReplicaService {
   dataitem.ThriftDataItem get(1: string key
                         2: version.ThriftVersion requiredVersion);
 
   bool put(1: string key,
-           2: dataitem.ThriftDataItem value,
-           3: list<string> transactionKeys);
+           2: dataitem.ThriftDataItem value);
 }
 
 service AntiEntropyService {
    oneway void put(1: string key,
-                  2: dataitem.ThriftDataItem value,
-                  3: list<string> transactionKeys);
+                   2: dataitem.ThriftDataItem value);
 
-  void waitForTransactionalDependency(1: ThriftDataDependency dependency);
+  oneway void waitForTransactionalDependencies(1: list<DataDependencyRequest> dependencyRequests);
+  oneway void receiveTransactionalDependencies(1: list<i64> fulfilledRequestIds);
 }

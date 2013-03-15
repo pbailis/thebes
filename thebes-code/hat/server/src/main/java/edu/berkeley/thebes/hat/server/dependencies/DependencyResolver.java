@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.server.dependencies;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -106,41 +107,13 @@ public class DependencyResolver {
 
                     this.wait();
                 } catch (InterruptedException e) {
-                    logger.warn(e.getMessage());
+                    logger.warn("error:", e);
                 }
             }
         }
 
         public boolean isEmpty() {
             return numWaiters == 0;
-        }
-    }
-
-    private class TransactionalDependencyCallback implements
-        AsyncMethodCallback<AntiEntropyService.AsyncClient.waitForTransactionalDependency_call> {
-        String key;
-        AtomicInteger blockFor;
-
-        public TransactionalDependencyCallback(String key,
-                                               AtomicInteger blockFor) {
-            this.key = key;
-            this.blockFor = blockFor;
-        }
-
-        @Override
-        public void onComplete(AntiEntropyService.AsyncClient.waitForTransactionalDependency_call waitForDependency_call) {
-            if(blockFor.decrementAndGet() == 0) {
-                synchronized (blockFor) {
-                    blockFor.notify();
-                }
-            }
-        }
-
-        @Override
-        public void onError(Exception e) {
-            logger.warn(e.getMessage());
-            // todo: rethink this behavior
-            onComplete(null);
         }
     }
 
@@ -193,70 +166,57 @@ public class DependencyResolver {
         removePossiblyEmptyQueueByKey(dependency.getKey());
     }
 
-    private boolean resolveDependencies(String key,
-                                        Version requiredVersion,
-                                        List<String> dependencies) throws TException {
-        if(dependencies.size() > 0) {
-            AtomicInteger waiting = new AtomicInteger(dependencies.size());
+    public class WaitingResolvedDependency {
+        private String key;
+        private DataItem write;
+        private AtomicInteger waitingCount;
 
-            synchronized (waiting) {
-                for(String atomicKey : dependencies) {
-                    AntiEntropyService.AsyncClient client = router.getReplicaByKey(atomicKey);
-
-                    client.waitForTransactionalDependency(DataDependency.toThrift(new DataDependency(atomicKey,
-                                                                                                     requiredVersion)),
-                            new TransactionalDependencyCallback(key, waiting));
-                }
-
-                try {
-                    waiting.wait();
-                } catch (Exception e) {
-                    logger.warn(e.getMessage());
-                    return false;
-                }
-            }
+        public WaitingResolvedDependency(String key,
+                                         DataItem write,
+                                         AtomicInteger waitingCount) {
+            this.key = key;
+            this.write = write;
+            this.waitingCount = waitingCount;
         }
 
-        return true;
+        public void notifyResolved() {
+            if(this.waitingCount.decrementAndGet() == 0) {
+                persistenceEngine.put(key, write);
+                notifyNewLocalWrite(key, write);
+            }
+        }
+    }
+
+    private void asyncResolveDependencies(String key,
+                                          DataItem write) throws TException {
+        if(write.getTransactionKeys().size() > 0) {
+            AtomicInteger waitCount = new AtomicInteger(write.getTransactionKeys().size());
+
+            for(String atomicKey : write.getTransactionKeys()) {
+                router.waitForDependencyRemote(key,
+                                               new DataDependency(atomicKey, write.getVersion()),
+                                               new WaitingResolvedDependency(key,
+                                                                             write,
+                                                                             waitCount));
+            }
+        }
     }
 
     public void asyncApplyNewWrite(final String key,
-                                   final DataItem write,
-                                   final List<String> atomicityDependencies) throws TException {
+                                   final DataItem write) throws TException {
 
-        if(atomicityDependencies == null || atomicityDependencies.isEmpty()) {
+        if(write.getTransactionKeys() == null || write.getTransactionKeys().isEmpty()) {
             persistenceEngine.put(key, write);
             notifyNewLocalWrite(key, write);
             return;
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final TimerContext totalDependencyTime = resolvingDependencyTimerMetric.time();
+        if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
+            return;
 
-                    if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
-                        return;
+        pendingWrites.makeItemPending(key, write);
 
-                    if(!atomicityDependencies.isEmpty())
-                        pendingWrites.makeItemPending(key, write);
-
-                    TimerContext atomicityDependencyTime = resolvingAtomicDependencyTimerMetric.time();
-
-                    if(!resolveDependencies(key, write.getVersion(), atomicityDependencies))
-                        return;
-
-                    persistenceEngine.put(key, write);
-
-                    notifyNewLocalWrite(key, write);
-                    atomicityDependencyTime.stop();
-                    totalDependencyTime.stop();
-                } catch (Exception e) {
-                    logger.warn(e.getMessage());
-                }
-            }
-        } ).start();
+        asyncResolveDependencies(key, write);
     }
 
     public void notifyNewLocalWrite(String key, DataItem newWrite) {

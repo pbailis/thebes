@@ -155,7 +155,7 @@ public class Config {
         return servers;
     }
 
-    private static Integer getServerID() {
+    public static Integer getServerID() {
         return getOption(ConfigParameters.SERVERID);
     }
 

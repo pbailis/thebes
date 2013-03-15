@@ -45,7 +45,7 @@ public class ThebesHATServer {
 
             DependencyResolver dependencyResolver = new DependencyResolver(engine, pendingWrites, router);
 
-            AntiEntropyServiceHandler antiEntropyServiceHandler = new AntiEntropyServiceHandler(dependencyResolver);
+            AntiEntropyServiceHandler antiEntropyServiceHandler = new AntiEntropyServiceHandler(router, dependencyResolver);
             AntiEntropyServer antiEntropyServer = new AntiEntropyServer(antiEntropyServiceHandler);
 
             if (!Config.isStandaloneServer()) {

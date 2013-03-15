@@ -86,6 +86,17 @@ public class ThebesCLIApp {
             if(console == null)
                 inputCommands = new BufferedReader(new InputStreamReader(System.in)).readLine().split(";");
 
+            if(inputCommands.length == 1 && inputCommands[0].matches("BIST")) {
+                for(int iteration = 0; iteration < 10000; ++iteration) {
+                    System.out.println(iteration);
+                    client.beginTransaction();
+                    for(int i = 0; i < 10; ++i) {
+                        client.put(Integer.toString(i), ByteBuffer.wrap("FOOO".getBytes()));
+                    }
+                    client.endTransaction();
+                }
+                doExit();
+            }
 
             while(true) {
                 String command = getNextCommand().trim();

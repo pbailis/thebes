@@ -155,20 +155,23 @@ public class ThebesHATClient implements IThebesClient {
 
     private void applyWritesInBuffer() throws TException {
         Version transactionVersion = new Version(clientID, System.currentTimeMillis());
-         List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
+        List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
 
         //TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
         for(String key : transactionKeys) {
             DataItem queuedWrite = transactionWriteBuffer.get(key);
 
-            if(atomicityLevel == AtomicityLevel.CLIENT) {
+            List<String> transactionalDependencies = null;
+
+            if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
                 queuedWrite.setVersion(transactionVersion);
+            }
+            if(atomicityLevel == AtomicityLevel.CLIENT) {
                 queuedWrite.setTransactionKeys(transactionKeys);
             }
 
             doPutSync(key,
-                      queuedWrite,
-                      new ArrayList<String>());//transactionKeys);
+                      queuedWrite);
 
             /*
             doPutAsync(key,
@@ -284,22 +287,13 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     private boolean doPutSync(String key,
-                              DataItem value) throws TException{
-        return doPutSync(key,
-                         value,
-                         new ArrayList<String>());
-    }
-
-    private boolean doPutSync(String key,
-                              DataItem value,
-                              List<String> transactionKeys) throws TException {
+                              DataItem value) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         boolean ret;
 
         try {
             ret = router.getSyncReplicaByKey(key).put(key,
-                                                      DataItem.toThrift(value),
-                                                      transactionKeys);
+                                                      DataItem.toThrift(value));
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -314,14 +308,12 @@ public class ThebesHATClient implements IThebesClient {
 
     private boolean doPutAsync(String key,
                                DataItem value,
-                               Iterable<String> transactionKeys,
                                TransactionMultiPutCallback callback) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
 
         try {
             router.getAsyncReplicaByKey(key).put(key,
                                                  DataItem.toThrift(value),
-                                                 Lists.newArrayList(transactionKeys),
                                                  callback);
         } catch (RuntimeException e) {
             errorMetric.mark();
