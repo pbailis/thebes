@@ -780,14 +780,14 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial(use2PL, runid="DEFAULT_RUN",
-                       threads=50,
-                       distributionparameter=10,
-                       atomicity_level="NO_ATOMICITY",
-                       isolation_level="NO_ISOLATION",
-                       recordcount=50000,
+        run_ycsb_trial(False, runid="DEFAULT_RUN",
+                       threads=80,
+                       distributionparameter=2,
+                       atomicity_level="READ_COMMITTED",
+                       isolation_level="CLIENT",
+                       recordcount=100000,
                        time=5*60,
-                       timeout=60000,
+                       timeout=120*10000,
                        keydistribution="uniform")
 
     if args.terminate:
