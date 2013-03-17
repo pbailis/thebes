@@ -1,0 +1,118 @@
+
+IV. HATS and ACID (4pg)
+
+We will show what semantics are available in HATS as well as which aren't. Our strategy will be to build up a set of properties until we reach a point of unavailability. We will start with isolation and atomicity since they are well-defined in the literature and most meaty.
+
+A. *What's Available in Isolation and Atomicity?*
+
+* We can prevent Dirty Write phenomena by consistently ordering transactions
+	* This is basically a cross-data item convergency property, as are found in eventually consistent systems!
+* Read Committed
+	* Don't read dirty data by never exposing dirty data to readers!
+* ANSI Repeatable Read => rename to cut isolation
+	* Repeatable Read is a tricky guarantee. In ANSI SQL Spec, rather weak, but in follow-on work, it's pretty strong.
+	* The property that the ANSI SQL spec talks about is about reading a "snapshot" of data items, along with your own writes.
+		* A "snapshot" describes a "consistent cut" across data items; we'll call it "cut isolation"--when paired with below guarantees, makes sense.
+	* This doesn't provide any constraints on writes.
+
+* There are several properties that aren't discussed in the formal literature on isolation guarantees but which are really useful.
+
+* Transactional atomicity: "A" in ACID
+	* Once a transaction reads one of another transactions's writes, its subsequent reads will return the transactions's other writes (or a suitable "later" write).
+	* Be really pedagogical here: "transactional atomicity" versus "distributed linearizability" both called "atomicity"; we actually explore the differences later, in Discussion section.
+	* Talk about implementation here: it's basically uniform eager reliable delivery from distributed systems literature!
+	* Note that this doesn't make recency guarantees (forward reference to later section on "impossibility")
+
+* Session guarantees give useful guarantees within and across transactions
+	* Without them, cut isolation is sort of meaningless: we can always just return NULL!
+	* Several properties: monotonic writes, monotonic reads, writes follow reads, read your writes
+	* We can define them within a transaction only (e.g., transactional monotonic writes) or across subsequent transactions by the same client (e.g., client monotonic writes).
+
+* Session guarantees are tricky
+	* You can implement all but read-your-writes in a R-HA system
+		* Never show a write until all replicas in the system have seen it!
+		* This means that, if a client switches replicas, then the replica will have a satisfying set of writes.
+                * Take S3 as an example of a system where stickiness coudl have helped, but no one really talked about it!
+		* Downside: when do writes become visible? Only when all replicas have seen it!
+		* Side note: assuming that, if replicas can enter and leave, they can only become active once they "catch up" to global lower bound
+			* We leave dynamic replica selection as Future Work (N.B. in APEs!)
+	* Read-your-writes requires S-HA
+		* Example: partition a client from all but one replica, have the client issue a write, which has to commit. Next, lift the partition between the client and the other replicas and partition the client and its previous replica. It can't read it's own write!
+		* This also means that causality, which is MR+MW+WFR+RYW is unavailable!
+		* S-HA is *doable* but it does result in substantially lowered unavailability unless one caches (e.g., bolt-on causal consistency)
+
+* What do we have?
+	* In Adya, we get up to Causal+Cut Isolation for S-HA, and PL-2 for R-HA.
+	* In distributed systems terminology, in S-HA we have causal consistency but each transactions' updates are a cycle in the happens-before graph!
+		* Stress that this is a big unification of the existing models.
+	* Recap, pedagogically, why this is highly available and what this means: no locks, no central coordination, no need for RTTs; bring back to Section II.
+
+B. *What's not available in Isolation?*
+
+Now, at least in terms of the existing literature, we hit the limits.
+
+Let's sketch out a few conditions, then we'll discuss them later:
+* Lost Update
+	* Simple proof: T1 R(x) W(x=x+1) T2 R(x) W(x=x+1); execute on opposite sides 
+* Read Skew
+	* Similar easy proof
+* Write Skew
+	* Similar easy proof
+* Anti-dependency cycles
+	* Serializability
+* Recency guarantees on data items
+	* CAP
+
+Now refer to Adya's chart. No PL-SI, PL-SS, PL-2.99, etc.
+
+C. *What's available in consistency?*
+
+* In general, we can't maintain correctness conditions over arbitrary data items.
+	* This is due to serializability problems.
+	* Uniqueness, for example, is out the window
+
+* We can evaluate locally checkable correctness criteria (e.g., check for null)
+	(QUESTION: should we save this for APEs?)
+
+* However, with semantic knowledge, we can do a little bit better
+	* Commutative updates and logical monotonicity are fine; e.g., write-write conflicts don't matter
+	
+Example: In TPC-C New Order, the new order id assignment isn't commutative, tough. but the inventory checking *is*!
+
+D. Durability
+
+* If you want data to survive *F* failures, you'll have to replicate to *F* replicas.
+	* This is pretty easy.
+
+E. Summary
+
+* Left with a bunch of binary properties: 
+R-HA: Prevent Dirty Write, Read Committed, Cut Isolation, Transactional Atomicity, Transactional Monotonic Reads, Transactional Monotonic Writes, Transactional Writes-Follow-Reads, Client Monotonic Reads, Client Monotonic Writes, Client Writes-Follow-Reads
+S-HA: Client Read Your Writes, Transactional Read Your Writes
+
+* Combining all of the above results in the strongest models we've yet seen. No
+
+*Discussion*
+
+* Composition of Properties can be tricky:
+	* Consider ensuring RR and TA:
+		* If you do this naively, you may end up returning lots of nulls
+		* Give example: T1 w(x1) w(y1) T2 w(x2) w(y2) T3 r(x) r(y) => T3 better read x1, y1 or x2, y2!
+	* Some are more expensive; not likely to achieve causality with less than O(clients) metadata required
+		* Note that making stronger assumption about clusters, like linearizability *can* help (but then not HA!)
+
+* Transactional Atomicity versus Linearizability
+	* What's the difference between our TA and distributed systems linearizability? Is there some sort of mapping?
+		* TA: writes to multiple keys are indivisible to readers
+		* Linearizability: writes to single key on multiple servers are indivisible to readers
+	* The differences are two-fold:
+		* In linearizability (and safe and regular registers), writes are visible to clients immediately after they finish
+			* HATS have no recency requirement
+		* In linearizability, all clients see all writes at the same time!
+			* In TA, clients see writes at different times depending on what replicas they contact
+			* No such analog in traditional distributed systems literature on replica consistency
+	
+* S-HA Monotonic Reads and Monotonic Writes
+	* In the model we discussed, you can get monotonic reads in a R-HA system by waiting until all replicas see a write.
+	* This leads to poor visibility--writes take a long time to show up. Even if you didn't want to read your writes, you might want to read other peoples' writes!
+	* Accordingly, there are valid reasons for S-HA session guarantees, namely, visibility.

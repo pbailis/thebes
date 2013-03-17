@@ -81,6 +81,8 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         try {
             client.open();
         } catch (Exception e) {
+            System.out.println(e);
+            e.printStackTrace();
             throw new DBException(e.getMessage());
         }
 	}

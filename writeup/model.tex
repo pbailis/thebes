@@ -1,0 +1,19 @@
+
+\section{What is High Availability?}
+
+
+* System model
+	* Consider transactions that issue a series of reads and writes, then commit or abort
+	* Each data item is located on one or more servers
+
+* HA Definitions
+	* Straw-man definition: every transaction will recieve a response
+		* Problem: system that always aborts is trivially available!
+
+* Replica-HA
+	* (Handwaving in the outline) If a client can contact at least one replica for each data item in a transaction, then the transaction will eventually commit, even in the presence of infinite network partitions.
+
+* Sticky-HA
+	* If a client continues to contact the same set of replicas across transactions and the client can contact at least one replica for each data item in a transaciton, then the transaction will eventually commit, even in the presence of infinite network partitions.
+	* We will use this definition when it comes to causality and read your writes guarantees!
+	* Can be achieved by either "sticking" clients to the same set of servers or by having the client act as a replica itself, via caching 

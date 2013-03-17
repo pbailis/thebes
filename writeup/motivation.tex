@@ -1,0 +1,72 @@
+
+\section{The Case for HATS}
+
+Why High Availability?
+* Highly available system operation is often desirable; if you can contact one server, you can get a response!
+* As a corrollary, an "AP" system is faster than a "CP" system; see "PACELC" by Abadi.
+	* Look, here are some datapoints we recently measured on EC2. Network times are at least 10x faster, often much more for "AP"
+
+
+Availability examples
+
+Within DC at Microsoft: 40.8 mean link failures per day, 136 at 95th
+percentile, with high variability, median time to repair around 5
+minutes but tail up to one week. Probability of device failing and
+impacting network (per year) is near 10\% for several core components
+like core routers and primary-backup connectors. Network redundancy
+only reduces median impact of failures by up to
+40\%~\cite{sigcomm-dc}. 
+
+HP Labs: WAN, LAN, and connectivity problems account for 28.1\% of all
+customer support tickets, 39\% is network hardware, only 6\% for
+configuration and 15\% for software. Median duration of highest
+priority is on the order of several hours (1:54 for WAN, 2:45 for LAN,
+2:13 for Hardware), going to a full day for all
+incidents.~\cite{turner2012failure}.
+
+Network partitions happen at Google~\cite{dean-keynote}.
+
+Many anecdotes online: Amazon's EC2 and RDS down due to net
+partition~\cite{amazon-netpartition}, as a result of AZ failures full
+site outages like Reddit, Foursquare, and Heroku~\cite{ec2-downsites},
+accounts of network partitions~\cite{netpartition-anecdote1}
+
+Despite speculation over partition
+frequency~\cite{stonebraker2010errors}, many practitioners indicate
+that partitions do indeed occur: in the words of James Hamilton, Vice
+President and Distinguished Engineer on the Amazon Web Services team,
+``network partitions should be rare but net gear continues to cause
+more issues than it should''~\cite{hamilton-partitions}
+
+Many of our discussions with practitioners---especially those
+operating on public cloud infrastructure---confirm that partitions are
+a reality.
+
+Area of active research in networking
+community~\cite{surviving-failures-bodik}
+
+
+Over WAN: 
+
+From 2002 study of Sprint's networks, median time to repair is between 2 and < 1000 seconds, approximately 2000 seconds between router failures and around 8,000 seconds between optical failures. Median failure rate is one every 3000 seconds.~\cite{ip-backbone-failures}.
+
+From 2002 study of VoIP, 50 minute failure caused 100\% packet loss between east and west coasts~\cite{voip-partitions}.
+
+* As an example of a real system going from "CP" to "AP", [PNUTS dropped per-record mastering](\url{http://developer.yahoo.com/blogs/ydn/posts/2010/06/sherpa_update/#4})
+
+What about existing systems?
+* Database technology developed for single-node systems; gold standard: serializability
+	* Serializability is not actually highly available; give an example!
+	* Much of the database literature presumes serializability and does not consider high availability.
+	* For the literature that doesn't presume serializability, it's not presented in a HA context?
+* Consequence: traditional systems are not optimized for high availability
+	* Consider two-phase locking in a distributed environment
+	* As we will see (forward reference to Evaluation), many existing transactional systems encounter similar difficulties
+* Key question in this paper: What transactional semantics are highly available, and which aren't?
+	* Side note: there are infinite incomparable consistency models (e.g., always return 2, always return 3, …)
+	* Our goal is to unify distributed systems literature with ACID transaction model.
+* Argument: Highly Available Transactional Systems (HATS) require rethinking existing models. This work is a first step.
+
+In this sense, HATs are similar to RAID: optimizing for graceful
+handling of a worst-case failure scenario improves average-case
+performance.

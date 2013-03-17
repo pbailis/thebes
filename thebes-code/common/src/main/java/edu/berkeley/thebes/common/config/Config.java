@@ -141,6 +141,10 @@ public class Config {
         return getOption(txnMode.getClusterConfigParam());
     }
 
+    private static Map<Integer, List<String>> getMasterClusterMap() {
+        return getOption(ConfigParameters.TWOPL_CLUSTER_CONFIG);
+    }
+
     private static List<ServerAddress> getServersInCluster(int clusterID) {
         List<String> serverIPs = getClusterMap().get(clusterID);
         List<ServerAddress> servers = Lists.newArrayList();
@@ -184,16 +188,13 @@ public class Config {
      * This returns null in HAT mode.
      */
     public static List<ServerAddress> getMasterServers() {
-        if (txnMode == TransactionMode.HAT) {
-            return null;
-        }
         if (masterServers != null) {
             return masterServers;
         }
 
         Map<Integer, ServerAddress> masterMap = Maps.newHashMap();
 
-        Map<Integer, List<String>> clusterMap = getClusterMap();
+        Map<Integer, List<String>> clusterMap = getMasterClusterMap();
         for (int clusterID : clusterMap.keySet()) {
             for (int serverID = 0; serverID < clusterMap.get(clusterID).size(); serverID ++) {
                 String server = clusterMap.get(clusterID).get(serverID);

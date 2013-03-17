@@ -1,0 +1,40 @@
+
+
+\section{Introduction}
+
+Many recent systems have eschewed ACID guarantees.
+
+CAP Theorem says you can't have consistency and availability and also talks about partitions.
+
+What does CAP have to say about ACID? Recent workshop result on Highly Available Transactions briefly demonstrated that some ACID guarantees are indeed achievable in a highly available manner.
+
+Many ACID systems were designed either i.) for single systems or ii.)
+to provide serializability. The combination of weak isolation and
+distributed systems necessitates further study and
+design. \textit{What is the benefit of high availability and what is
+  the cost?}
+
+Highly Available Transactions are the class of multi-object operations
+and their respective semantics that can be provided with high
+availability.
+
+Weak isolation has a cost: in the words of one database pioneer, you
+``fall off a cliff'' when it comes to reasoning about your
+program. However, it also has a benefit: availability and latency.
+
+Our goal in this paper is to objectively map the space of trade-offs and 
+
+ This paper fills in the remaining gaps.
+
+What does high availability even mean in a transaction environment?
+
+What models are achievable, and which aren't?
+
+In this paper, we make the following contributions:
+
+\begin{itemize}
+\item We present a model for high availability in a transactional environment, including Replica-agnostic High Availability (R-HA) and Sticky High Availability (S-HA).
+\item We analyze the existing literature on ACID properties (particularly, ANSI SQL Spec, Adya, Gray) to show which properties* with a focus on isolation* are achievable in HATS. Achievable properties include transactional atomicity, variants of repeatable read isolation, and session guarantees. We also describe unavailable properties, like preventing Lost Update and Read and Write Skew. We believe that this is the first such characterization in the literature.
+\item We further motivate the study of HATS via the analysis of existing concurrency control algorithms in a highly available environment as well as through deployment of an experimental database prototype on public cloud infrastructure.
+\end{itemize}
+
