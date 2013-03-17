@@ -1,0 +1,35 @@
+
+\section{evaluation}
+
+V. Evaluation (1.5pg)
+
+The goal in this section is twofold:
+1.) Look at existing algorithms and their coordination cost in the abstract
+2.) Perform limited real-world deployments to validate these abstract costs
+
+1.) There are a bunch of existing systems that aren't HATS but provide stronger semantics. What's their cost? (N.B. this is almost a related work survey here, but I think, if done right, it can be very instructive.)
+Not HA, Serializable:
+* Two-phase locking: for transaction size T, T+1 round-trips (directly to each database)
+* Deterministic transaction scheduling: 1 round-trip per partition (to scheduler)
+* Optimistic concurrency control: 1 round-trip per partition (to database cycle checker)
+* MVCC: min 1 round-trip per partition (to partition timestamp manager)
+
+Not HA, not serializable, but "transactional":
+* MDCC: need to check, 1-2 round-trip times because uses Paxos variant
+* Walter: 1 rount-trip time to each preferred site
+* Eiger: Sticky-HA, assumes linearizable clusters, reads/writes stall in presence of coordinator failures
+* Chan and Gray read-only transaction: reads stall in the presence of coordinator failure
+* Bolt-on causal consistency: sticky-HA, could be used to implement TA+RR, uses client cache
+* COPS: Sticky-HA, assumes linearizable clusters
+* Bayou: not HA since client doesn't cache (pretty sure)
+
+2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
+	- Eventual Consistency
+	- Eventual consistency with a "master" for updates--simulates the lower bound on a non-HAT system.
+	- Transactional Atomicity and Read Committed
+	
+	-This is going to look a lot like the ping tests: much higher latency for "non-HATs."
+	-Our Naive 2PL implementation bottlenecks extremely quickly.
+	-On, say, 5 servers, can get hundreds of thousands of TPS
+
+	-Not meant as an exhaustive study, but validates our intuitions. Coordination costs of non-HAT systems are unaccounted for, will only go up, and we haven't even talked about availability.

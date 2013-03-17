@@ -1,0 +1,561 @@
+@inproceedings{cops,
+ author = {Lloyd, Wyatt and Freedman, Michael J. and Kaminsky, Michael and Andersen, David G.},
+ title = {Don't settle for eventual: scalable causal consistency for wide-area storage with {COPS}},
+ booktitle = {SOSP 2011},
+} 
+
+@inproceedings{pnuts,
+  title={PNUTS: {Yahoo!'s} hosted data serving platform},
+  author={Cooper, B.F. and Ramakrishnan, R. and Srivastava, U. and Silberstein, A. and Bohannon, P. and Jacobsen, H.A. and Puz, N. and Weaver, D. and Yerneni, R.},
+  booktitle = {VLDB 2008}
+}
+
+@inproceedings{eiger,
+ author = {Lloyd, Wyatt and Freedman, Michael J. and Kaminsky, Michael and Andersen, David G.},
+ title = {Stronger Semantics for Low-Latency Geo-Replicated Storage},
+ booktitle = {NSDI 2013}
+} 
+
+@article{stonebraker2010errors,
+  title={Errors in Database Systems, Eventual Consistency, and the CAP Theorem},
+  author={Stonebraker, Michael},
+  journal={Comm. ACM},
+  volume={5},
+  year={2010}
+}
+
+@online{ec2-downsites,
+title = {Update: {Amazon Web Services} Down In {North Virginia} — {Reddit, Pinterest, Airbnb, Foursquare, Minecraft} And Others Affected},
+author = {Romain Dillet},
+howpublished = {TechCrunch \url{http://techcrunch.com/2012/10/22/aws-ec2-issues-in-north-virginia-affect-heroku-reddit-and-others-heroku-still-down/}},
+month={October},
+year={2012}}
+
+
+@online{amazon-netpartition,
+title={{Summary of the Amazon EC2 and Amazon RDS Service Disruption in the US East Region}},
+author = {{Amazon Web Services}},
+year = {2011},
+month = {April},
+howpublished={\url{http://aws.amazon.com/message/65648/}}}
+
+@online{netpartition-anecdote1,
+title={network partition ... oops},
+author={{Dukes of Erl}},
+year={2008},
+month={March},
+howpublished={\url{http://dukesoferl.blogspot.com/2008/03/network-partition-oops.html}}}
+
+@inproceedings{dean-keynote,
+title={Designs, Lessons and Advice from Building Large 
+Distributed Systems},
+author={Jeff Dean},
+note={Keynote at LADIS 2009}}
+
+@inproceedings{surviving-failures-bodik,
+ author = {Bod\'{\i}k, Peter and Menache, Ishai and Chowdhury, Mosharaf and Mani, Pradeepkumar and Maltz, David A. and Stoica, Ion},
+ title = {Surviving failures in bandwidth-constrained datacenters},
+ booktitle = {SIGCOMM 2012}
+} 
+
+@online{hamilton-partitions,
+author={James Hamilton},
+title={{Stonebraker on CAP Theorem and Databases}},
+howpublished={\url{http://perspectives.mvdirona.com/2010/04/07/StonebrakerOnCAPTheoremAndDatabases.aspx}},
+year={2010},
+month={April}}
+
+
+@techreport{turner2012failure,
+  title={On Failure in Managed Enterprise Networks},
+  author={Turner, Daniel and Levchenko, Kirill and Mogul, Jeffrey C and Savage, Stefan and Snoeren, Alex C},
+  year={2012},
+  number={HPL-2012-101},
+  institution={HP Laboratories}
+}
+
+@inproceedings{ip-backbone-failures,
+ author = {Markopoulou, Athina and Iannaccone, Gianluca and Bhattacharyya, Supratik and Chuah, Chen-Nee and Ganjali, Yashar and Diot, Christophe},
+ title = {Characterization of failures in an operational IP backbone network},
+journal = {IEEE/ACM Trans. Netw.},
+ issue_date = {August 2008},
+ volume = {16},
+ number = {4}}
+
+@inproceedings{sigcomm-dc,
+ author = {Gill, Phillipa and Jain, Navendu and Nagappan, Nachiappan},
+ title = {Understanding network failures in data centers: measurement, analysis, and implications},
+ booktitle = {SIGCOMM 2011}}
+
+@inproceedings{voip-partitions,
+ author = {Boutremans, Catherine and Iannaccone, Gianluca and Diot, Christophe},
+ title = {Impact of link failures on VoIP performance},
+ booktitle = {NOSSDAV 2002}}
+
+
+@article{mdcc,
+  title={MDCC: Multi-Data Center Consistency},
+  author={Kraska, T. and Pang, G. and Franklin, M.J. and Madden, S.},
+  journal={arXiv preprint arXiv:1203.6049},
+  year={2012}
+}
+
+@TechReport{cac,
+author = {P. Mahajan and L. Alvisi and M. Dahlin}, 
+ title = {Consistency, Availability, Convergence}, 
+ institution = {Computer Science Department, UT Austin}, 
+ year = {2011} , 
+ number = {TR-11-22}, 
+ month = {May}, 
+ pdf = "http://www.cs.utexas.edu/users/dahlin/papers/cac-tr.pdf", 
+ category = "recent,WANrepl,byz,PRACTI,webos" 
+ } 
+
+
+@inproceedings{calm,
+title = {Consistency Analysis in {Bloom}: a {CALM} and Collected Approach},
+author = {Peter Alvaro and Neil Conway and Joseph M. Hellerstein and William R. Marczak},
+booktitle = {CIDR 2011}}
+
+@inproceedings{spanner,
+  title={Spanner: Google’s Globally-Distributed Database},
+ author = {Corbett, James C. and Dean, Jeffrey and Epstein, Michael and Fikes, Andrew and Frost, Christopher and Furman, J. J. and Ghemawat, Sanjay and Gubarev, Andrey and Heiser, Christopher and Hochschild, Peter and Hsieh, Wilson and Kanthak, Sebastian and Kogan, Eugene and Li, Hongyi and Lloyd, Alexander and Melnik, Sergey and Mwaura, David and Nagle, David and Quinlan, Sean and Rao, Rajesh and Rolig, Lindsay and Saito, Yasushi and Szymaniak, Michal and Taylor, Christopher and Wang, Ruth and Woodford, Dale},
+ booktitle = {OSDI 2012}
+}
+
+@article{snapshot-serializable,
+ author = {Fekete, Alan and Liarokapis, Dimitrios and O'Neil, Elizabeth and O'Neil, Patrick and Shasha, Dennis},
+ title = {Making snapshot isolation serializable},
+ journal = {ACM Trans. Database Syst.},
+ issue_date = {June 2005},
+ volume = {30},
+ number = {2},
+ month = jun,
+ year = {2005},
+ issn = {0362-5915},
+ pages = {492--528},
+ numpages = {37},
+ url = {http://doi.acm.org/10.1145/1071610.1071615},
+ doi = {10.1145/1071610.1071615},
+ acmid = {1071615},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Concurrency control, anomaly, consistency, multiversion concurrency, serializability, snapshot isolation, weak isolation},
+} 
+
+@inproceedings{granola,
+  title={Granola: low-overhead distributed transaction coordination},
+  author={Cowling, J. and Liskov, B.},
+  booktitle={USENIX ATC 2012}
+}
+
+@inproceedings{orleans,
+ author = {Bykov, Sergey and Geller, Alan and Kliot, Gabriel and Larus, James R. and Pandya, Ravi and Thelin, Jorgen},
+ title = {Orleans: cloud computing for everyone},
+ booktitle = {SOCC 2011}
+}
+
+@article{sequentialconsistency,
+  title={How to make a multiprocessor computer that correctly executes multiprocess programs},
+  author={Lamport, L.},
+  journal={IEEE Transactions on Computers},
+  volume={100},
+  number={9},
+  pages={690--691},
+  year={1979},
+  publisher={IEEE}
+}
+
+@online{hbase,
+title = {Apache {HBase}},
+note = {\url{http://hbase.apache.org}, January 2013}}
+
+@misc{oraclescn,
+key={Oracle},
+title = {{Oracle Database Administrator's Guide 11g Release 2 (11.2): Managing Read Consistency}},
+note = {\url{http://docs.oracle.com/cd/E11882_01/server.112/e25789/consist.htm}}}
+
+@book{oraclebook,
+title = {Expert Oracle Database Architecture: {Oracle Database 9i, 10g, and 11g} Programming Techniques and Solutions},
+author = {Thomas Kyte},
+edition = {2},
+note = {p. 253},
+year = {2010},
+publisher = {Apress}}
+
+@article{readonly,
+  title={Implementing distributed read-only transactions},
+  author={Chan, A. and Gray, R.},
+  journal={IEEE Transactions on Software Engineering},
+  number={2},
+  pages={205--212},
+  year={1985},
+}
+
+@book{dist-txns-book,
+  title={Transactional information systems: theory, algorithms, and the practice of concurrency control and recovery},
+  author={Weikum, G. and Vossen, G.},
+  year={2001},
+  publisher={Morgan Kaufmann}, 
+  note={18.1: ``Distributed Concurrency Control (Goal and Overview)''}
+}
+
+@article{vogels-defs,
+ author = {Vogels, Werner},
+ title = {Eventually consistent},
+ journal = {Commun. ACM},
+ issue_date = {January 2009},
+ volume = {52},
+ number = {1},
+ month = jan,
+ year = {2009},
+ issn = {0001-0782},
+ pages = {40--44},
+ numpages = {5},
+ url = {http://doi.acm.org/10.1145/1435417.1435432},
+ doi = {10.1145/1435417.1435432},
+ acmid = {1435432},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+@online{actian-docs,
+title = {Actian Documentation: Isolation Levels},
+note={\url{http://docs.actian.com/ingres/10s/database-administrator-guide/2349-isolation-levels}, January 2013}}
+
+@online{aerospike-docs,
+title={{Aerospike: Home $>$ Performance $>$ ACID}},
+note={\url{http://www.aerospike.com/performance/acid-compliance/},
+                  January 2013. Note: ``multi-key operations may not
+                  be serialized with each other''; single-key
+                  immediate consistency roughly translates to Read
+                  Committed isolation.}}
+
+@online{akiban-docs,
+title={{Akiban Documentation: Transactions}},
+note={\url{http://www.akiban.com/ak-docs/admin/persistit/Transactions.html}, January 2013}}
+
+@online{clustrix-docs,
+title = {{Clustrix System Administrator's Guide CLX 4100 Series, Version 4.1}},
+note={\url{http://www.clustrix.com/Portals/146389/docs/Clustrix_System_Administrators_Guide_v4.1.pdf}, January 2013}}
+
+@online{greenplum-docs,
+title={Greenplum Database 4.2 Database Administrator Guide Rev: A01},
+note={\url{http://media.gpadmin.me/wp-content/uploads/2012/11/GPDBAGuide.pdf}, January 2013}}
+
+@online{db2-docs,
+title ={{DB2 10 for z/OS}: Choosing an {ISOLATION} option},
+note={\url{http://publib.boulder.ibm.com/infocenter/dzichelp/v2r2/index.jsp?topic=%2Fcom.ibm.db2z10.doc.perf%2Fsrc%2Ftpc%2Fdb2z_chooseisolationoption.htm}, January 2013. Note: DB2's ``Repeatable Read'' isolation matches serializability---the only instance in which we have found a stronger level than named.}}
+
+@online{informix-docs,
+title={{IBM Informix 11.50: SET ISOLATION statement}},
+note={\url{http://publib.boulder.ibm.com/infocenter/idshelp/v115/index.jsp?topic=%2Fcom.ibm.sqls.doc%2Fids_sqs_1161.htm}, January 2013}}
+
+@online{innodb-docs,
+title={{MySQL 5.6 Reference Manual: 13.3.6 SET TRANSACTION Syntax}},
+note={\url{http://dev.mysql.com/doc/refman/5.0/en/set-transaction.html}, January 2013}}
+
+@online{memsql-docs,
+title={{MemSQL 1b documentation: Transactions and isolation levels}},
+note={\url{http://developers.memsql.com/docs/1b/isolationlevel.html}, January 2013}}
+
+@online{ms-sql-docs,
+title={{Microsoft SQL Server 2012: SET TRANSACTION ISOLATION LEVEL
+                  (Transact-SQL)}},
+note={\url{http://msdn.microsoft.com/en-us/library/ms173763.aspx}, January 2013}}
+
+@online{nuodb-docs,
+title={{NuoDB: Transactions and Isolation Levels}},
+note={\url{http://www.nuodb.com/nuodb-online-documentation/references/r_Lang/r_Transactions.html}, January 2013}}
+
+@online{oracle-docs,
+title={{Oracle Database Concepts 11g Release 1 (11.1): 13 Data Concurrency and Consistency}},
+note={\url{http://docs.oracle.com/cd/B28359_01/server.111/b28318/consist.htm#autoId8}, January 2013. Note: several sources note confirm that Oracle's ``serializable isolation'' is actually Snapshot Isolation~\cite{snapshot-serializable, oraclebook}}}
+
+@online{bdb-je-docs,
+title={{Getting Started with Berkeley DB, Java Edition Transaction Processing: Isolation}},
+note={\url{http://docs.oracle.com/cd/E17277_02/html/TransactionGettingStarted/isolation.html}, January 2013}}
+
+@online{bdb-reg-docs,
+title={{Getting Started with Berkeley DB, Transaction Processing: Isolation}},
+note={\url{http://docs.oracle.com/cd/E17076_02/html/gsg_txn/JAVA/isolation.html}, January 2013}}
+
+@online{postgres-docs,
+title={{PostgreSQL 9.2.2 Documentation: 13.2. Transaction Isolation}},
+note={\url{http://www.postgresql.org/docs/9.2/static/transaction-iso.html}, January 2013}}
+
+@online{hana-docs,
+title={{SAP HANA Reference: SET TRANSACTION}},
+note={\url{http://help.sap.com/hana/html/sql_set_transaction.html}, January 2013. Note: the described ```SERIALIZABLE'' isolation level is actually a description of Snapshot Implementation, like~\cite{oracle-docs}}}
+
+@online{scaledb-docs,
+title={{ScaleDB Cluster Manual: For versions 1,02 and higher}},
+                  note={\url{http://www.scaledb.com/pdfs/ScaleDB_Cluster_Manual.pdf},
+                  23 December 2012.}}
+
+@online{voltdb-docs,
+title={{The VoltDB FAQ}},
+note={\url{http://voltdb.com/dig-deeper/faq.php}, also verified with VoltDB stakeholders, January 2013}}
+
+
+@article{linearizability,
+ author = {Herlihy, Maurice P. and Wing, Jeannette M.},
+ title = {Linearizability: a correctness condition for concurrent objects},
+ journal = {ACM Trans. Program. Lang. Syst.},
+ issue_date = {July 1990},
+ volume = {12},
+ number = {3},
+ month = jul,
+ year = {1990},
+ issn = {0164-0925},
+ pages = {463--492},
+ numpages = {30},
+ url = {http://doi.acm.org/10.1145/78969.78972},
+ doi = {10.1145/78969.78972},
+ acmid = {78972},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+
+@article{davidson-survey,
+  title={Consistency in partitioned networks},
+  author={Davidson, S.B. and Garcia-Molina, H. and Skeen, D.},
+  journal={ACM Computing Surveys},
+  volume={17},
+  number={3},
+  pages={341--370},
+  year={1985}
+}
+
+@inproceedings{daudjee-session,
+  title={Lazy database replication with ordering guarantees},
+  author={Daudjee, K. and Salem, K.},
+  booktitle={ICDE 2004},
+  pages={424--435},
+}
+
+@article{causalmemory,
+    author = {Mustaque Ahamad and Gil Neiger and James E. Burns and Prince Kohli and P.W. Hutto},
+    title = {Causal Memory: Definitions, Implementation and Programming},
+    year = {1995},
+    journal = {Distributed Computing},
+    volume = {9},
+    number = {1}}
+
+
+
+@inproceedings{bernstein-relaxed,
+  title={Relaxed-currency serializability for middle-tier caching and replication},
+  author={Bernstein, P.A. and Fekete, A. and Guo, H. and Ramakrishnan, R. and Tamma, P.},
+  booktitle={SIGMOD 2006},
+  pages={599--610},
+}
+
+@inproceedings{walter,
+author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
+title = {Transactional storage for geo-replicated systems},
+pages = {385--400},
+booktitle={SOSP},
+year = {2011}}
+
+
+@inproceedings{brewer-base,
+  title={Cluster-based scalable network services},
+  author={Fox, A. and Gribble, S.D. and Chawathe, Y. and Brewer, E.A. and Gauthier, P.},
+  booktitle={ACM SIGOPS Operating Systems Review},
+  volume={31},
+  number={5},
+  pages={78--91},
+  year={1997},
+}
+
+@article{acid-define,
+  title={Principles of transaction-oriented database recovery},
+  author={Haerder, T. and Reuter, A.},
+  journal={ACM Computing Surveys (CSUR)},
+  volume={15},
+  number={4},
+  pages={287--317},
+  year={1983},
+}
+
+@misc{ansi-sql,
+key={ansi},
+title = {{ISO/IEC 9075-2:2011} \textit{Information technology -- Database languages -- SQL -- Part 2: Foundation (SQL/Foundation)}}}
+
+@phdthesis{adya,
+  title={Weak consistency: a generalized theory and optimistic implementations for distributed transactions},
+  author={Adya, A.},
+  year={1999},
+  school={Massachusetts Institute of Technology}
+}
+
+@article{optimistic,
+ author = {Saito, Yasushi and Shapiro, Marc},
+ title = {Optimistic replication},
+ journal = {ACM Comput. Surv.},
+ issue_date = {March 2005},
+ volume = {37},
+ number = {1},
+ month = mar,
+ year = {2005},
+ issn = {0360-0300},
+} 
+
+@article{serializability,
+  title={The serializability of concurrent database updates},
+  author={Papadimitriou, C.H.},
+  journal={JACM},
+  volume={26},
+  number={4},
+  pages={631--653},
+  year={1979},
+}
+
+@techreport{pram,
+  title={{PRAM}: A scalable shared memory},
+  author={Lipton, R.J. and Sandberg, J.S.},
+  year={1988},
+  number = {CS-TR-180-88},
+  institution={Princeton University, Department of Computer Science}
+}
+
+@inproceedings{kraska-s3,
+  title={Building a database on {S3}},
+  author={Brantner, M. and Florescu, D. and Graf, D. and Kossmann, D. and Kraska, T.},
+  booktitle={SIGMOD 2008}}
+
+@inproceedings{swift,
+title={Geo-replication all the way to the edge},
+author = {Marek Zawirski and Annette Bieniusa and Valter Balegas and Nuno Preguica and Sergio Duarte and Marc Shapiro and Carlos Baquero},
+note = {Personal communication and draft under submission (\url{http://asc.di.fct.unl.pt/~nmp/swiftcomp/swiftcloud.html})}}
+
+@inproceedings{ansicritique,
+  title={A critique of ANSI SQL isolation levels},
+  author={Berenson, H. and Bernstein, P. and Gray, J. and Melton, J. and O'Neil, E. and O'Neil, P.},
+  booktitle={SIGMOD 1995}}
+
+@article{tact,
+ author = {Yu, Haifeng and Vahdat, Amin},
+title = {Design and Evaluation of a Conit-Based Continuous Consistency Model for Replicated Services},
+journal = {ACM Transactions on Computer Systems},
+volume = {20(3)},
+year = {2002},
+pages = {239-–282}}
+
+@techreport{gray-isolation,
+  title={Granularity of locks and degrees of consistency in a shared data base},
+  author={Gray, J.N. and Lorie, R.A. and Putzolu, G.R. and Traiger, I.L.},
+  year={1976},
+  institution={IBM Research Division}
+}
+
+
+@article{gilbert-cap,
+  title={Brewer's conjecture and the feasibility of consistent, available, partition-tolerant web services},
+  author={Gilbert, S. and Lynch, N.},
+  journal={ACM SIGACT News},
+  volume={33},
+  number={2},
+  pages={51--59},
+  year={2002},
+}
+
+@article{datacaching,
+ author = {Alonso, Rafael and Barbara, Daniel and Garcia-Molina, Hector},
+ title = {Data caching issues in an information retrieval system},
+ journal = {ACM Trans. Database Syst.},
+ issue_date = {Sept. 1990},
+ volume = {15},
+ number = {3},
+ pages = {359--384},
+} 
+
+@inproceedings{transaction-liveness,
+  title={On transaction liveness in replicated databases},
+  author={Pedone, F. and Guerraoui, R.},
+  booktitle={Pacific Rim International Symposium on Fault-Tolerant Systems},
+  pages={104--109},
+  year={1997},
+  organization={IEEE}
+}
+
+@phdthesis{externalconsistency,
+ author = {Gifford, David Kenneth},
+ title = {Information storage in a decentralized computer system},
+ year = {1981},
+ publisher = {Stanford University},
+} 
+
+@INPROCEEDINGS{sessiontocausal,
+author={Brzezinski, J. and Sobaniec, C. and Wawrzyniak, D.},
+title={From session causality to causal consistency},
+booktitle={PDP 2004}}
+
+
+@inproceedings{calvin,
+  title={Calvin: Fast distributed transactions for partitioned database systems},
+  author={Thomson, A. and Diamond, T. and Weng, S.C. and Ren, K. and Shao, P. and Abadi, D.J.},
+  booktitle={SIGMOD 2012}
+}
+
+
+@inproceedings{redblue,
+  title={Making Geo-Replicated Systems Fast as Possible, Consistent when Necessary},
+  author={Li, C. and Porto, D. and Clement, A. and Gehrke, J. and Pregui{\c{c}}a, N. and Rodrigues, R.},
+  booktitle={OSDI 2012},
+}
+
+@inproceedings{gstore,
+  title={G-store: a scalable data store for transactional multi key access in the cloud},
+  author={Das, S. and Agrawal, D. and El Abbadi, A.},
+  booktitle={SOCC 2010},
+  pages={163--174}
+}
+
+@inproceedings{explicit-socc,
+ author   = {Peter Bailis and Alan Fekete and Ali Ghodsi and Joseph M. Hellerstein and Ion Stoica},
+ title    = {The Potential Dangers of Causal Consistency and an Explicit Solution},
+ booktitle  = {ACM SOCC 2012},
+}
+
+@inproceedings{entitygroup,
+  title={Life beyond distributed transactions: an apostate's opinion},
+  author={Helland, P.},
+  booktitle = {CIDR 2007}
+}
+
+@inproceedings{megastore,
+  title={Megastore: Providing scalable, highly available storage for interactive services},
+  author={Baker, J. and Bond, C. and Corbett, J.C. and Furman, JJ and Khorlin, A. and Larson, J. and L{\'e}on, J.M. and Li, Y. and Lloyd, A. and Yushprakh, V.},
+  booktitle={CIDR 2011}, 
+  pages={223--234},
+}
+
+@INPROCEEDINGS{sessionguarantees,
+    author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
+    title = {Session Guarantees for Weakly Consistent Replicated Data},
+    pages = {140--149},
+    booktitle = {PDIS 1994},
+}
+
+@book{bernstein-book,
+  title={Concurrency control and recovery in database systems},
+  author={Bernstein, P.A. and Hadzilacos, V. and Goodman, N.},
+  volume={370},
+  year={1987},
+  chapter = {8 (Replicated Data)},
+  publisher={Addison-wesley New York}
+}
+
+@article{bernstein-concurrency,
+  title={Concurrency control in distributed database systems},
+  author={Bernstein, P.A. and Goodman, N.},
+  journal={ACM Computing Surveys (CSUR)},
+  volume={13},
+  number={2},
+  pages={185--221},
+  year={1981},
+  publisher={ACM}
+}
