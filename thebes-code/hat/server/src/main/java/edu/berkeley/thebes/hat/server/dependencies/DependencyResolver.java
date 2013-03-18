@@ -1,7 +1,12 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,12 +18,15 @@ import org.apache.thrift.async.AsyncMethodCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
@@ -56,188 +64,77 @@ waitInQueueForDependency() need to be notified and so
 notifyNewLocalWrite() is called.
 */
 
-public class DependencyResolver {
-
-    private final Timer waitingDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
-                                                                        "hat-dependencies-check-waiting",
-                                                                        TimeUnit.MILLISECONDS,
-                                                                        TimeUnit.SECONDS);
-
-    private final Timer resolvingDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
-                                                                          "hat-dependencies-resolving",
-                                                                          TimeUnit.MILLISECONDS,
-                                                                          TimeUnit.SECONDS);
-
-    private final Timer resolvingAtomicDependencyTimerMetric = Metrics.newTimer(DependencyResolver.class,
-                                                                          "hat-dependencies-resolving-atomic",
-                                                                          TimeUnit.MILLISECONDS,
-                                                                          TimeUnit.SECONDS);
-
-    private class DependencyWaitingQueue {
-        private Version lastWrittenVersion;
-        private int numWaiters;
-
-        public DependencyWaitingQueue(Version lastWrittenVersion) {
-            this.lastWrittenVersion = lastWrittenVersion;
-        }
-
-        public DependencyWaitingQueue() {
-            this(Version.NULL_VERSION);
-        }
-
-        public synchronized void setLastWrittenVersion(Version newVersion) {
-            if (newVersion.compareTo(lastWrittenVersion) > 0)
-                this.lastWrittenVersion = newVersion;
-        }
-
-        public synchronized void incrementQueueReferenceCount() {
-            numWaiters++;
-        }
-
-        public synchronized void waitInQueueForDependency(DataDependency dependency) {
-            TimerContext startTime = waitingDependencyTimerMetric.time();
-            while(true) {
-                try {
-                    if (lastWrittenVersion.compareTo(dependency.getVersion()) >= 0 ||
-                    		pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null) {
-                        numWaiters--;
-                        startTime.stop();
-                        return;
-                    }
-
-                    this.wait();
-                } catch (InterruptedException e) {
-                    logger.warn("error:", e);
-                }
-            }
-        }
-
-        public boolean isEmpty() {
-            return numWaiters == 0;
-        }
-    }
-
-    private Map<String, DependencyWaitingQueue> blocked = Maps.newHashMap();
-    private Lock blockedLock = new ReentrantLock();
-
-    private IPersistenceEngine persistenceEngine;
-    private PendingWrites pendingWrites;
-    private static Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
-
-    private AntiEntropyServiceRouter router;
-
-    public DependencyResolver(IPersistenceEngine persistenceEngine,
-                              PendingWrites pendingWrites,
-                              AntiEntropyServiceRouter router) {
+public class DependencyResolver implements PendingWrite.WriteReadyCallback {
+    
+    private final AntiEntropyServiceRouter router;
+    private final IPersistenceEngine persistenceEngine;
+    private final ConcurrentMap<String, Set<PendingWrite>> pendingWritesMap;
+    private final ConcurrentMap<String, Set<String>> unresolvedAcksMap;
+    
+    public DependencyResolver(AntiEntropyServiceRouter router,
+            IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
-        this.pendingWrites = pendingWrites;
         this.router = router;
+        this.pendingWritesMap = Maps.newConcurrentMap();
+        this.unresolvedAcksMap = Maps.newConcurrentMap();
     }
 
-    private void removePossiblyEmptyQueueByKey(String key) {
-        blockedLock.lock();
-        DependencyWaitingQueue queue = blocked.get(key);
-        if(queue != null && queue.isEmpty()) {
-            blocked.remove(key);
-        }
-        blockedLock.unlock();
-    }
-
-    public void blockForAtomicDependency(DataDependency dependency) {
-        DataItem storedItem = persistenceEngine.get(dependency.getKey());
+    public void addPendingWrite(String key, DataItem value) {
+        pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
         
-        if((storedItem != null && storedItem.getVersion().compareTo(dependency.getVersion()) >= 0) ||
-                (pendingWrites.getMatchingItem(dependency.getKey(), dependency.getVersion()) != null)) {
-                 removePossiblyEmptyQueueByKey(dependency.getKey());
-            return;
-        }
-
-        blockedLock.lock();
-
-        DependencyWaitingQueue queue = blocked.get(dependency.getKey());
-        if(queue == null) {
-            queue = new DependencyWaitingQueue();
-            blocked.put(dependency.getKey(), queue);
-        }
-
-        queue.incrementQueueReferenceCount();
-        blockedLock.unlock();
-        queue.waitInQueueForDependency(dependency);
-        removePossiblyEmptyQueueByKey(dependency.getKey());
-    }
-
-    public class WaitingResolvedDependency {
-        private String key;
-        private DataItem write;
-        private AtomicInteger waitingCount;
-
-        public WaitingResolvedDependency(String key,
-                                         DataItem write,
-                                         AtomicInteger waitingCount) {
-            this.key = key;
-            this.write = write;
-            this.waitingCount = waitingCount;
-        }
-
-        public void notifyResolved() {
-            logger.debug("Resolved!: " + waitingCount.get());
-            if(this.waitingCount.decrementAndGet() == 0) {
-                persistenceEngine.put(key, write);
-                notifyNewLocalWrite(key, write);
-            }
-        }
-    }
-
-    private void asyncResolveDependencies(String key,
-                                          DataItem write) throws TException {
-        if(write.getTransactionKeys().size() > 0) {
-            AtomicInteger waitCount = new AtomicInteger(write.getTransactionKeys().size());
-
-            for(String atomicKey : write.getTransactionKeys()) {
-                if (atomicKey.equals(key)) {
-                    logger.debug("Waiting on self");
+        PendingWrite newPendingWrite = new PendingWrite(key, value, this); 
+        pendingWritesMap.get(key).add(newPendingWrite);
+        router.announcePendingWrite(newPendingWrite);
+        // TODO: if it's still there after a while, can resend
+        
+        // Check any unresolved acks associated with this key
+        if (unresolvedAcksMap.containsKey(key)) {
+            Iterator<String> unresolvedAcksIterator = unresolvedAcksMap.get(key).iterator();
+            while (unresolvedAcksIterator.hasNext()) {
+                String ackedKey = unresolvedAcksIterator.next();
+                if (informPendingWriteOfAck(newPendingWrite, ackedKey)) {
+                    unresolvedAcksIterator.remove();
                 }
-                router.waitForDependencyRemote(key,
-                                               new DataDependency(atomicKey, write.getVersion()),
-                                               new WaitingResolvedDependency(key,
-                                                                             write,
-                                                                             waitCount));
             }
         }
     }
-
-    public void asyncApplyNewWrite(final String key,
-                                   final DataItem write) throws TException {
-
-        if(write.getTransactionKeys() == null || write.getTransactionKeys().isEmpty()) {
-            logger.debug("Autoresolve!");
-            persistenceEngine.put(key, write);
-            notifyNewLocalWrite(key, write);
-            return;
+    
+    public DataItem retrievePendingItem(String key, Version version) {
+        for (PendingWrite pendingWrite : pendingWritesMap.get(key)) {
+            DataItem value = pendingWrite.getValue();
+            if (version.equals(value.getVersion())) {
+                return value;
+            }
         }
-
-        if(persistenceEngine.get(key).getVersion().compareTo(write.getVersion()) >= 0)
-            return;
-
-        pendingWrites.makeItemPending(key, write);
-
-        asyncResolveDependencies(key, write);
+        return null;
     }
-
-    public void notifyNewLocalWrite(String key, DataItem newWrite) {
-        blockedLock.lock();
-        DependencyWaitingQueue waiting = blocked.get(key);
-        blockedLock.unlock();
-
-        if(waiting == null)
-            return;
-
-        waiting.setLastWrittenVersion(newWrite.getVersion());
-
-        synchronized (waiting) {
-            waiting.notifyAll();
+    
+    @Override
+    public void writeReady(PendingWrite write) {
+        persistenceEngine.put(write.getKey(), write.getValue());
+        pendingWritesMap.get(write.getKey()).remove(write);
+    }
+    
+    public void dependentWriteAcked(String myKey, String ackedKey) {
+        Set<PendingWrite> pendingWritesForKey = pendingWritesMap.get(myKey);
+        for (PendingWrite pendingWrite : pendingWritesForKey) {
+            if (informPendingWriteOfAck(pendingWrite, ackedKey)) {
+                return;
+            }
         }
 
-        pendingWrites.removeDominatedItems(key, newWrite);
+        // No currently known PendingWrites wanted our ack!
+        // Hopefully we'll soon have one that does, so keep it around.
+        unresolvedAcksMap.putIfAbsent(myKey, new ConcurrentSkipListSet<String>());
+        unresolvedAcksMap.get(myKey).add(ackedKey);
+    }
+    
+    /** Returns true if the PendingWrite accepted our acked key! */
+    private boolean informPendingWriteOfAck(PendingWrite pendingWrite, String ackedKey) {
+        if (pendingWrite.isWaitingFor(ackedKey)) {
+            pendingWrite.keyAcked(ackedKey);
+            return true;
+        }
+        return false;
     }
 }

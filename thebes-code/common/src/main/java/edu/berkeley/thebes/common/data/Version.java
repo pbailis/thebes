@@ -1,6 +1,7 @@
 package edu.berkeley.thebes.common.data;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.Shorts;
 
@@ -9,6 +10,7 @@ import edu.berkeley.thebes.common.thrift.ThriftVersion;
 public class Version implements Comparable<Version> {
     public static final Version NULL_VERSION = new Version((short) -1, -1);
     
+    // TODO: Add logical clock so we can send multiple puts at the same physical timestamp
 	private final short clientID;
 	private final long timestamp;
 	
@@ -38,9 +40,10 @@ public class Version implements Comparable<Version> {
 
 	@Override
 	public int compareTo(Version other) {
-		int timestampCompare = Longs.compare(timestamp, other.getTimestamp());
-		int clientIdCompare = Shorts.compare(clientID, other.getClientID());
-		return timestampCompare != 0 ? timestampCompare : clientIdCompare; 
+	    return ComparisonChain.start()
+	            .compare(timestamp, other.getTimestamp())
+	            .compare(clientID, other.getClientID())
+	            .result();
 	}
 	
 	@Override

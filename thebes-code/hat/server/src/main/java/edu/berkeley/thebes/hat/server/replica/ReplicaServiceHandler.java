@@ -1,8 +1,8 @@
 package edu.berkeley.thebes.hat.server.replica;
 
-import java.util.List;
-
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
@@ -10,58 +10,59 @@ import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.common.thrift.ThriftVersion;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-
-import edu.berkeley.thebes.hat.server.antientropy.AntiEntropyServer;
+import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
-import edu.berkeley.thebes.hat.server.dependencies.PendingWrites;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ReplicaServiceHandler implements ReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;
-    private AntiEntropyServer antiEntropyServer;
+    private AntiEntropyServiceRouter antiEntropyRouter;
     private DependencyResolver dependencyResolver;
-    private PendingWrites pendingWrites;
     private static Logger logger = LoggerFactory.getLogger(ReplicaServiceHandler.class);
 
 
     public ReplicaServiceHandler(IPersistenceEngine persistenceEngine,
-                                 PendingWrites pendingWrites,
-                                 AntiEntropyServer antiEntropyServer,
+                                 AntiEntropyServiceRouter antiEntropyRouter,
                                  DependencyResolver dependencyResolver) {
         this.persistenceEngine = persistenceEngine;
-        this.pendingWrites = pendingWrites;
-        this.antiEntropyServer = antiEntropyServer;
+        this.antiEntropyRouter = antiEntropyRouter;
         this.dependencyResolver = dependencyResolver;
     }
 
     @Override
     public boolean put(String key,
-                       ThriftDataItem value) throws TException {
+                       ThriftDataItem valueThrift) throws TException {
+        DataItem value = DataItem.fromThrift(valueThrift);
         if(logger.isTraceEnabled())
             logger.trace("received PUT request for key: '"+key+
                          "' value: '"+value+
                          "' transactionKeys: "+value.getTransactionKeys());
 
-        antiEntropyServer.sendToNeighbors(key, value);
+        antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
 
-        dependencyResolver.asyncApplyNewWrite(key, DataItem.fromThrift(value));
+        // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
+        if (value.getTransactionKeys().isEmpty()) {
+            persistenceEngine.put(key, value);
+        } else {
+            dependencyResolver.addPendingWrite(key, value);
+        }
 
         // todo: remove this return value--it's really not necessary
         return true;
     }
 
     @Override
-    public ThriftDataItem get(String key, ThriftVersion requiredVersion) throws TException {
+    public ThriftDataItem get(String key, ThriftVersion requiredVersionThrift) throws TException {
+        DataItem ret = persistenceEngine.get(key);
+        Version requiredVersion = Version.fromThrift(requiredVersionThrift);
+        
         if(logger.isTraceEnabled())
             logger.trace("received GET request for key: '"+key+
-                         "' requiredVersion: "+requiredVersion);
-
-        DataItem ret = persistenceEngine.get(key);
+                         "' requiredVersion: "+ requiredVersion+
+                         ", found verison: " + (ret == null ? null : ret.getVersion()));
 
         if (requiredVersion != null &&
-           (ret == null || ret.getVersion().compareTo(Version.fromThrift(requiredVersion)) <= 0)) {
-            ret = pendingWrites.getMatchingItem(key, Version.fromThrift(requiredVersion));
+                (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
+            ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
             if (ret == null)
                 throw new TException(String.format("suitable version was not found! time: %d clientID: %d",

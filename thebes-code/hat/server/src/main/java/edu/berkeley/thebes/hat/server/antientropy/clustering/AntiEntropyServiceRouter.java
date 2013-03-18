@@ -1,251 +1,148 @@
 package edu.berkeley.thebes.hat.server.antientropy.clustering;
 
 
-import com.google.common.collect.Maps;
-import edu.berkeley.thebes.hat.common.data.DataDependency;
-import edu.berkeley.thebes.hat.common.thrift.DataDependencyRequest;
-import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import edu.berkeley.thebes.common.clustering.RoutingHash;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
+import edu.berkeley.thebes.hat.server.dependencies.PendingWrite;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class AntiEntropyServiceRouter {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceRouter.class);
 
+    /** Siblings replicate the same data. */
+    private static List<AntiEntropyService.Client> siblingClients = Lists.newArrayList();
+    /** Neighbors live in the same cluster. Includes self! */
     private static List<AntiEntropyService.Client> neighborClients = Lists.newArrayList();
-    private static List<AntiEntropyService.Client> waitClusterClients = Lists.newArrayList();
-    private static List<AntiEntropyService.Client> notifyClusterClients = Lists.newArrayList();
     private static int numServersInCluster;
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
             logger.debug("Server marked as standalone; not starting anti-entropy!");
-            return;
+            // TODO: Fix this.
+            throw new IllegalArgumentException("Standalone mode disabled: Need anti-entropy for TA");
         }
 
-        try {
-            Thread.sleep(Config.getAntiEntropyBootstrapTime());
-        } catch (Exception e) {
-        }
+        Uninterruptibles.sleepUninterruptibly(Config.getAntiEntropyBootstrapTime(),
+                TimeUnit.MILLISECONDS);
 
         logger.debug("Bootstrapping anti-entropy...");
 
         numServersInCluster = Config.getServersInCluster().size();
-
-        for (ServerAddress neighbor : Config.getSiblingServers()) {
-            while (true) {
-                try {
-                    neighborClients.add(
-                            ThriftUtil.getAntiEntropyServiceClient(neighbor.getIP(),
-                                                                   Config.getAntiEntropyServerPort()));
-                    break;
-                } catch (Exception e) {
-                    logger.error("Exception while bootstrapping connection with neighbor: " +
-                                 neighbor.getIP() + ":" + Config.getAntiEntropyServerPort());
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        for (ServerAddress neighbor : Config.getServersInCluster()) {
-            while (true) {
-                try {
-                    notifyClusterClients.add(
-                            ThriftUtil.getAntiEntropyServiceClient(neighbor.getIP(),
-                                                                   Config.getAntiEntropyServerPort()));
-                    waitClusterClients.add(
-                            ThriftUtil.getAntiEntropyServiceClient(neighbor.getIP(),
-                                                                   Config.getAntiEntropyServerPort()));
-                    break;
-                } catch (Exception e) {
-                    logger.error("Exception while bootstrapping connection with cluster server: " +
-                                 neighbor.getIP() + ":" + Config.getAntiEntropyServerPort());
-                    e.printStackTrace();
-                }
-            }
-        }
+        siblingClients = createClientsFromAddresses(Config.getSiblingServers());
+        neighborClients = createClientsFromAddresses(Config.getServersInCluster());
 
         logger.debug("...anti-entropy bootstrapped");
 
-        startDependencyResolverSendingThread();
-        startDependencyResolvedResponseThread();
-    }
-
-    /*
-    public AntiEntropyService.AsyncClient getAsyncClient(String key) throws TTransportException, IOException {
-        return clientPool.getClientByKey(key);
-    }
-
-    public void returnAsyncClient(String key, AntiEntropyService.AsyncClient client) {
-        clientPool.returnClient(key, client);
-    }
-    */
-
-    private class QueuedDependency {
-        private String key;
-        private DataDependency dependency;
-        private DependencyResolver.WaitingResolvedDependency waiting;
-
-        public QueuedDependency(String key, DataDependency dependency, DependencyResolver.WaitingResolvedDependency waiting) {
-            this.key = key;
-            this.dependency = dependency;
-            this.waiting = waiting;
-        }
-
-        public DataDependency getDependency() {
-            return dependency;
-        }
-
-        public void notifyFinished() {
-            waiting.notifyResolved();
-        }
-
-        public String getKey() {
-            return key;
-        }
-    }
-
-
-    /*
-     Code to handle dependency request responses
-     server with data item -> requestor
-     */
-
-    private LinkedBlockingQueue<DataDependencyRequest> completedRequests = new LinkedBlockingQueue
-            <DataDependencyRequest>();
-
-    public void sendDependencyResolved(DataDependencyRequest request) {
-        completedRequests.add(request);
-    }
-
-    private void startDependencyResolvedResponseThread() {
-        Map<Integer, List<Long>> toSend = Maps.newHashMap();
-
-        new Thread(new Runnable() {
-           @Override
-           public void run() {
-               while(true) {
-                   Map<Integer, List<Long>> toSend = Maps.newHashMap();
-                   for(int i = 0; i < numServersInCluster; ++i) {
-                       toSend.put(i, new ArrayList<Long>());
-                   }
-
-                   try {
-                       DataDependencyRequest dependency = completedRequests.take();
-                       toSend.get(dependency.getServerId()).add(dependency.getRequestId());
-
-                       int dqSize = completedRequests.size();
-
-                       logger.debug("Sending "+dqSize+" dependency responses");
-
-                       for(int i = 0; i < dqSize; ++i) {
-                           dependency = completedRequests.take();
-                           toSend.get(dependency.getServerId()).add(dependency.getRequestId());
-                       }
-
-                       for(int i = 0; i < numServersInCluster; ++i) {
-                           List<Long> queuedDependencies = toSend.get(i);
-
-                           if(queuedDependencies.size() > 0)
-                               notifyClusterClients.get(i).receiveTransactionalDependencies(queuedDependencies);
-                       }
-
-                   } catch (Exception e) {
-                       logger.warn("error: ", e);
-                   }
-               }
-
-           }
-       }).start();
-   }
-    /*
-      Code to handle outgoing dependency requests
-      requestor -> server with data item
-     */
-
-    private LinkedBlockingQueue<QueuedDependency> dependencyQueue = new LinkedBlockingQueue<QueuedDependency>();
-
-    public void waitForDependencyRemote(String key, DataDependency dependency, DependencyResolver.WaitingResolvedDependency waiting) {
-        dependencyQueue.add(new QueuedDependency(key, dependency,  waiting));
-    }
-
-    private Map<Long, QueuedDependency> waitingRequests = Maps.newConcurrentMap();
-
-    public void resolvedDependencyArrived(long resolvedRequestId) {
-        if(!waitingRequests.containsKey(resolvedRequestId))
-            logger.error("Got resolved request with ID "+resolvedRequestId+" but not present!");
-
-        waitingRequests.remove(resolvedRequestId).notifyFinished();
-    }
-
-    private void startDependencyResolverSendingThread() {
-        new Thread(new Runnable() {
-            @Override
+        logger.trace("Starting thread to forward writes to siblings...");
+        new Thread() {
             public void run() {
-                long seqNo = 0;
-                final int myServerId = Config.getServerID();
-
-                while(true) {
-                    Map<Integer, List<DataDependencyRequest>> toSend = Maps.newHashMap();
-                    for(int i = 0; i < numServersInCluster; ++i) {
-                        toSend.put(i, new ArrayList<DataDependencyRequest>());
-                    }
-
-                    try {
-                        QueuedDependency dependency = dependencyQueue.take();
-                        toSend.get(RoutingHash.hashKey(dependency.key, numServersInCluster))
-                              .add(new DataDependencyRequest(myServerId,
-                                                             seqNo,
-                                                             DataDependency.toThrift(dependency.getDependency())));
-
-                        waitingRequests.put(seqNo, dependency);
-                        seqNo++;
-
-                        int dqSize = dependencyQueue.size();
-
-                        logger.debug("Sending "+dqSize+" dependency requests (waitingSize=" + waitingRequests.size() + ")");
-
-                        for(int i = 0; i < dqSize; ++i) {
-                            dependency = dependencyQueue.take();
-                            toSend.get(RoutingHash.hashKey(dependency.key, numServersInCluster))
-                                  .add(new DataDependencyRequest(myServerId,
-                                                                 seqNo,
-                                                                 DataDependency.toThrift(dependency.getDependency())));
-                            waitingRequests.put(seqNo, dependency);
-                            seqNo++;
-                        }
-
-                        for(int i = 0; i < numServersInCluster; ++i) {
-                            List<DataDependencyRequest> queuedDependencies = toSend.get(i);
-
-                            if(queuedDependencies.size() > 0)
-                                waitClusterClients.get(i).waitForTransactionalDependencies(queuedDependencies);
-                        }
-
-                    } catch (Exception e) {
-                        logger.warn("error: ", e);
-                    }
+                while (true) {
+                    forwardNextQueuedWriteToSiblings();
                 }
-
             }
-        }).start();
+        }.start();
+
+        logger.trace("Starting thread to announce new pending writes...");
+        new Thread() {
+            public void run() {
+                while (true) {
+                    announceNextQueuedPendingWrite();
+                }
+            }
+        }.start();
     }
 
-    public List<AntiEntropyService.Client> getNeighborClients() {
-        return neighborClients;
+    /** Stores the writes we receive and need to forward to all siblings */
+    private final LinkedBlockingQueue<QueuedWrite> writesToForwardSiblings;
+    /** Stores the writes we've put into pending, and need to notify all dependent neighbors. */
+    private final LinkedBlockingQueue<PendingWrite> pendingWritesToAnnounce;
+    
+    public AntiEntropyServiceRouter() {
+        this.writesToForwardSiblings = Queues.newLinkedBlockingQueue();
+        this.pendingWritesToAnnounce = Queues.newLinkedBlockingQueue();
+    }
+    
+    public void sendWriteToSiblings(String key, ThriftDataItem value) {
+        writesToForwardSiblings.add(new QueuedWrite(key, value));
+    }
+
+    /** Actually does the forwarding! Called in its own thread. */
+    private void forwardNextQueuedWriteToSiblings() {
+        try {
+            QueuedWrite writeToForward = 
+                    Uninterruptibles.takeUninterruptibly(writesToForwardSiblings);
+            for (AntiEntropyService.Client sibling : siblingClients) {
+                sibling.put(writeToForward.key, writeToForward.value);
+            }
+        } catch (TException e) {
+            logger.error("Failure while announcing queued pending write: ", e);
+        }
+    }
+    
+    public void announcePendingWrite(PendingWrite write) {
+        pendingWritesToAnnounce.add(write);
+    }
+    
+    /** Actually does the announcement! Called in its own thread. */
+    private void announceNextQueuedPendingWrite() {
+        try {
+            PendingWrite writeToAnnounce = 
+                    Uninterruptibles.takeUninterruptibly(pendingWritesToAnnounce);
+            String writeKey = writeToAnnounce.getKey();
+            
+            // TODO: Efficiency! Group keys, take multiple writes at a time.
+            for (String dependentKey : writeToAnnounce.getValue().getTransactionKeys()) {
+                AntiEntropyService.Client neighborClient = neighborClients.get(
+                        RoutingHash.hashKey(dependentKey, numServersInCluster));
+                neighborClient.ackDependentWriteInPending(dependentKey, writeKey);
+            }
+        } catch (TException e) {
+            logger.error("Failure while announcing queued pending write: ", e);
+        }
+    }
+    
+    private List<AntiEntropyService.Client> createClientsFromAddresses(
+            List<ServerAddress> addresses) {
+        
+        List<AntiEntropyService.Client> clients = Lists.newArrayList(); 
+        for (ServerAddress address : addresses) {
+            while (true) {
+                try {
+                    clients.add(ThriftUtil.getAntiEntropyServiceClient(
+                            address.getIP(), Config.getAntiEntropyServerPort()));
+                    break;
+                } catch (Exception e) {
+                    logger.error("Exception while bootstrapping connection with cluster server: " +
+                                 address);
+                    e.printStackTrace();
+                }
+            }
+        }
+        return clients;
+    }
+    
+    private static class QueuedWrite {
+        public final String key;
+        public final ThriftDataItem value;
+        public QueuedWrite(String key, ThriftDataItem value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 }

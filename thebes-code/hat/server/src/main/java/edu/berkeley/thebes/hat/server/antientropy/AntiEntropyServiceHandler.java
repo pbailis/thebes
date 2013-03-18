@@ -9,7 +9,9 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.data.DataDependency;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
@@ -20,52 +22,30 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     
     DependencyResolver dependencyResolver;
     AntiEntropyServiceRouter router;
+    IPersistenceEngine persistenceEngine;
 
-    public AntiEntropyServiceHandler(AntiEntropyServiceRouter router, DependencyResolver dependencyResolver) {
+    public AntiEntropyServiceHandler(AntiEntropyServiceRouter router,
+            DependencyResolver dependencyResolver, IPersistenceEngine persistenceEngine) {
         this.dependencyResolver = dependencyResolver;
         this.router = router;
-        startFulfillRequestThread();
+        this.persistenceEngine = persistenceEngine;
     }
 
     @Override
     public void put(String key,
-                    ThriftDataItem value) throws TException{
-    	logger.trace("Received anti-entropy put for key!");
-        dependencyResolver.asyncApplyNewWrite(key,
-                                              DataItem.fromThrift(value));
-    }
-
-    private LinkedBlockingQueue<DataDependencyRequest> requestsToFulfill = new LinkedBlockingQueue<DataDependencyRequest>();
-
-    // todo: make this multi-threaded/not stupid
-    private void startFulfillRequestThread() {
-        (new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(true) {
-                    try {
-                        DataDependencyRequest request = requestsToFulfill.take();
-//                        logger.debug("Waiting for atomic dependency...");
-                        dependencyResolver.blockForAtomicDependency(DataDependency.fromThrift(request.getDependency()));
-//                        logger.debug("Waiting FULFILLED for atomic dependency...");
-                        router.sendDependencyResolved(request);
-                    } catch(Exception e) {
-                        logger.error("error: ", e);
-                    }
-                }
-            }
-        })).start();
-    }
-
-    @Override
-    public void waitForTransactionalDependencies(List<DataDependencyRequest> requestList) {
-       requestsToFulfill.addAll(requestList);
-    }
-
-    @Override
-    public void receiveTransactionalDependencies(List<Long> fulfilledRequestIds) {
-        for(long id : fulfilledRequestIds) {
-            router.resolvedDependencyArrived(id);
+                    ThriftDataItem valueThrift) throws TException{
+    	logger.trace("Received anti-entropy put for key " + key);
+        DataItem value = DataItem.fromThrift(valueThrift);
+        if (value.getTransactionKeys().isEmpty()) {
+            persistenceEngine.put(key, value);
+        } else {
+            dependencyResolver.addPendingWrite(key, value);
         }
+    }
+
+    @Override
+    public void ackDependentWriteInPending(String myKey, String ackedKey)
+            throws TException {
+        dependencyResolver.dependentWriteAcked(myKey, ackedKey);
     }
 }
