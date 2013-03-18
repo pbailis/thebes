@@ -5,7 +5,7 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
-\usepackage{graphicx, url}
+\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
 
@@ -37,16 +37,6 @@ foo bar baz
 \input{futurework.tex}
 
 \input{conclusion.tex}
-
-VIII. Conclusion (.5pg)
-
-HATS represent a new class of database system:
-* Can't get serializability, but can get other properties
-* Key challenge: designing distributed algorithms and architectures for partial failure, asynchrony
-* Rearchitecture of DBMSs and better understanding of applications are key
-
-References (1pg)
-
 
 
 foo~\cite{adya}

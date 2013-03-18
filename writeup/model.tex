@@ -1,5 +1,30 @@
 
-\section{What is High Availability?}
+\section{High Availability}
+\label{sec:availability}
+
+
+
+
+highly available algorithms guaranteeing
+``always on'' operation are applicable in modern distributed
+contexts. This is because, a high level, a highly available system
+(which we formally define in Section~\ref{sec:availabilty}) guarantees
+two useful properties: during network partitions, the system responds
+to requests without blocking, and, during normal, partition-free
+operation, it provides guaranteed one round-trip-time (RTT) latency.
+
+In this section, we survey evidence regarding the prevalence of
+network partitions as well as quantify the cost of round-trip times
+over public cloud infrastructure. These results are independent of
+algorithms employed and, while they reflect state-of-the-art
+technology, they are
+
+
+
+Why High Availability?
+* Highly available system operation is often desirable; if you can contact one server, you can get a response!
+* As a corrollary, an "AP" system is faster than a "CP" system; see "PACELC" by Abadi.
+	* Look, here are some datapoints we recently measured on EC2. Network times are at least 10x faster, often much more for "AP"
 
 
 * System model
@@ -17,3 +42,25 @@
 	* If a client continues to contact the same set of replicas across transactions and the client can contact at least one replica for each data item in a transaciton, then the transaction will eventually commit, even in the presence of infinite network partitions.
 	* We will use this definition when it comes to causality and read your writes guarantees!
 	* Can be achieved by either "sticking" clients to the same set of servers or by having the client act as a replica itself, via caching 
+
+
+
+
+* As an example of a real system going from "CP" to "AP", [PNUTS dropped per-record mastering](\url{http://developer.yahoo.com/blogs/ydn/posts/2010/06/sherpa_update/#4})
+
+What about existing systems?
+* Database technology developed for single-node systems; gold standard: serializability
+	* Serializability is not actually highly available; give an example!
+	* Much of the database literature presumes serializability and does not consider high availability.
+	* For the literature that doesn't presume serializability, it's not presented in a HA context?
+* Consequence: traditional systems are not optimized for high availability
+	* Consider two-phase locking in a distributed environment
+	* As we will see (forward reference to Evaluation), many existing transactional systems encounter similar difficulties
+* Key question in this paper: What transactional semantics are highly available, and which aren't?
+	* Side note: there are infinite incomparable consistency models (e.g., always return 2, always return 3, …)
+	* Our goal is to unify distributed systems literature with ACID transaction model.
+* Argument: Highly Available Transactional Systems (HATS) require rethinking existing models. This work is a first step.
+
+In this sense, HATs are similar to RAID: optimizing for graceful
+handling of a worst-case failure scenario improves average-case
+performance.
