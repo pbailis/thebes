@@ -45,9 +45,9 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
                 while(true) {
                     try {
                         DataDependencyRequest request = requestsToFulfill.take();
-                        logger.debug("Waiting for atomic dependency...");
-                        dependencyResolver.blockForAtomicDependency(DataDependency.fromThrift(request.getDependency()));
-                        logger.debug("Waiting FULFILLED for atomic dependency...");
+//                        logger.debug("Waiting for atomic dependency...");
+//                        dependencyResolver.blockForAtomicDependency(DataDependency.fromThrift(request.getDependency()));
+//                        logger.debug("Waiting FULFILLED for atomic dependency...");
                         router.sendDependencyResolved(request);
                     } catch(Exception e) {
                         logger.error("error: ", e);
