@@ -180,7 +180,7 @@ public class DependencyResolver {
         }
 
         public void notifyResolved() {
-            System.out.println("Resolved!: " + waitingCount.get());
+            logger.debug("Resolved!: " + waitingCount.get());
             if(this.waitingCount.decrementAndGet() == 0) {
                 persistenceEngine.put(key, write);
                 notifyNewLocalWrite(key, write);
@@ -207,6 +207,7 @@ public class DependencyResolver {
                                    final DataItem write) throws TException {
 
         if(write.getTransactionKeys() == null || write.getTransactionKeys().isEmpty()) {
+            logger.debug("Autoresolve!");
             persistenceEngine.put(key, write);
             notifyNewLocalWrite(key, write);
             return;
