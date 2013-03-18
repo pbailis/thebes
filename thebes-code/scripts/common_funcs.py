@@ -6,11 +6,11 @@ from time import sleep
 
 def run_cmd(hosts, cmd, user="root"):
     print("parallel-ssh -t 1000 -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt \"%s\"" % (user, hosts, cmd))
-    system("parallel-ssh -t 1000 -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt \"%s\"" % (user, hosts, cmd))
+    system("parallel-ssh -t 1000 -O StrictHostKeyChecking=no -l %s -h hosts/%s.txt \"ulimit -u unlimited; %s\"" % (user, hosts, cmd))
 
 def run_cmd_single(host, cmd, user="root"):
     print("ssh -o StrictHostKeyChecking=no %s@%s \"%s\"" % (user, host, cmd))
-    system("ssh -o StrictHostKeyChecking=no %s@%s \"%s\"" % (user, host, cmd))
+    system("ssh -o StrictHostKeyChecking=no %s@%s \"ulimit -u unlimited; %s\"" % (user, host, cmd))
 
 def run_process_single(host, cmd, user="root", stdout=None, stderr=None):
     subprocess.call("ssh %s@%s \"%s\"" % (user, host, cmd),
@@ -26,6 +26,9 @@ def run_script(hosts, script, user="root"):
     run_cmd(hosts, "bash /tmp/%s" % (script.split("/")[-1]), user)
 
 def fetch_file_single(host, remote, local, user="root"):
+    system("scp %s@%s:%s '%s'" % (user, host, remote, local))
+
+def fetch_file_single_compressed(host, remote, local, user="root"):
     system("scp %s@%s:%s '%s'" % (user, host, remote, local))
 
 def get_host_ips(hosts):

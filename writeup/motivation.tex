@@ -3,20 +3,21 @@
 
 Peter Deutsch begins his list of ``Fallacies of Distributed
 Computing'' with two concerns: ``\textit{1.)}  The network is
-reliable. \textit{2.)} Latency is zero.'' On a single-node system,
-communication systems are robust and relatively fast, and most systems
-do not need to prepare for partial component failure. However, as
-Deutsch points out, these assumptions are no longer valid in a
-distributed setting. To extend Jim Gray's storage latency analogy, if
-memory is around 1.5 hours from San Francisco and disk is as ``far
-away'' as Pluto (2 years), in a distributed context, another computer
-can be even farther---nearing or even worse than Gray's location of
-tape access near Andromeda (2,000 years)---with the added concern that
-messages can be lost in transit, destroyed by ``black holes'' in the
-form of network partitions. Accordingly, accounting for partial
-failure and communication expense is core to distributed systems and
-algorithm design; ignoring them ``cause[s] big trouble and painful
-learning experiences.''
+reliable. \textit{2.)} Latency is zero''~\cite{fallacies-deutsch}. On
+a single-node system, communication systems are robust and relatively
+fast, and most systems do not need to prepare for partial component
+failure. However, as Deutsch points out, these assumptions are no
+longer valid in a distributed setting. To extend Jim Gray's storage
+latency analogy, if memory is the distance from San Diego to Olympia
+(1.5 hours), and disk is as ``far away'' as Pluto (2 years), in a
+distributed context, another computer can be even farther---nearing or
+even worse than Gray's location of tape access near Andromeda (2,000
+years)---with the added concern that messages can be lost in transit,
+destroyed by ``black holes'' in the form of network
+partitions. Accordingly, accounting for partial failure and
+communication expense is core to distributed systems and algorithm
+design; ignoring them ``cause[s] big trouble and painful learning
+experiences''~\cite{fallacies-deutsch}.
 
 While prominent members of the database community have publicly
 speculated about the unimportance of network partitions in distributed
@@ -134,8 +135,9 @@ transit RTT of 106.7 ms but, on average, incurs a 362.8 ms RTT (95th
 percentile: 649ms). This is perhaps unsurprising due to modern
 Internet topologies, but this three-fold overhead is
 non-negligible. As shown in Figure~\ref{fig:rtt}, the distribution of
-latencies varies between links, but the trend is clear: remote
-communication has a substantial cost.
+latencies varies between links, but the trend---in line with other
+recent studies~\cite{redblue, mdcc}---is clear: remote communication
+has a substantial cost.
 
 \definecolor{min-lat-color}{HTML}{B2FF99}
 \definecolor{max-lat-color}{HTML}{FF7F7F}
@@ -185,23 +187,3 @@ H2 &  & \colorbox{min-lat-color}{0.50}  \\
 \label{fig:rtt}
 \end{figure}
 
-
-
-* As an example of a real system going from "CP" to "AP", [PNUTS dropped per-record mastering](\url{http://developer.yahoo.com/blogs/ydn/posts/2010/06/sherpa_update/#4})
-
-What about existing systems?
-* Database technology developed for single-node systems; gold standard: serializability
-	* Serializability is not actually highly available; give an example!
-	* Much of the database literature presumes serializability and does not consider high availability.
-	* For the literature that doesn't presume serializability, it's not presented in a HA context?
-* Consequence: traditional systems are not optimized for high availability
-	* Consider two-phase locking in a distributed environment
-	* As we will see (forward reference to Evaluation), many existing transactional systems encounter similar difficulties
-* Key question in this paper: What transactional semantics are highly available, and which aren't?
-	* Side note: there are infinite incomparable consistency models (e.g., always return 2, always return 3, …)
-	* Our goal is to unify distributed systems literature with ACID transaction model.
-* Argument: Highly Available Transactional Systems (HATS) require rethinking existing models. This work is a first step.
-
-In this sense, HATs are similar to RAID: optimizing for graceful
-handling of a worst-case failure scenario improves average-case
-performance.

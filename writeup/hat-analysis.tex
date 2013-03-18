@@ -1,5 +1,6 @@
 
 \section{Highly Available Transactions}
+\label{sec:hats}
 
 \begin{quote}
 ``...one should not throw out the C so quickly, since there are real
@@ -7,6 +8,27 @@
   tradeoff in many of the other situations.''---Michael
   Stonebraker~\cite{stonebraker2010errors}
 \end{quote}
+
+While $1$-available and $1$-sticky available systems provide several
+benefits, they come with a cost: the semantic guarantees that they are
+able to offer are reduced as a result of their coordination penalty.
+
+What about existing systems?
+* Database technology developed for single-node systems; gold standard: serializability
+	* Serializability is not actually highly available; give an example!
+	* Much of the database literature presumes serializability and does not consider high availability.
+	* For the literature that doesn't presume serializability, it's not presented in a HA context?
+* Consequence: traditional systems are not optimized for high availability
+	* Consider two-phase locking in a distributed environment
+	* As we will see (forward reference to Evaluation), many existing transactional systems encounter similar difficulties
+* Key question in this paper: What transactional semantics are highly available, and which aren't?
+	* Side note: there are infinite incomparable consistency models (e.g., always return 2, always return 3, …)
+	* Our goal is to unify distributed systems literature with ACID transaction model.
+* Argument: Highly Available Transactional Systems (HATS) require rethinking existing models. This work is a first step.
+
+In this sense, HATs are similar to RAID: optimizing for graceful
+handling of a worst-case failure scenario improves average-case
+performance.
 
 IV. HATS and ACID (4pg)
 
@@ -102,6 +124,10 @@ S-HA: Client Read Your Writes, Transactional Read Your Writes
 * Combining all of the above results in the strongest models we've yet seen. No
 
 *Discussion*
+
+Stickiness and PNUTS
+* As an example of a real system going from "CP" to "AP", [PNUTS dropped per-record mastering](\url{http://developer.yahoo.com/blogs/ydn/posts/2010/06/sherpa_update/#4})
+
 
 * Composition of Properties can be tricky:
 	* Consider ensuring RR and TA:

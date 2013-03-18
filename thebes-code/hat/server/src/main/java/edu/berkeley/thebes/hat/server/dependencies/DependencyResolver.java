@@ -180,6 +180,7 @@ public class DependencyResolver {
         }
 
         public void notifyResolved() {
+            logger.debug("Resolved!: " + waitingCount.get());
             if(this.waitingCount.decrementAndGet() == 0) {
                 persistenceEngine.put(key, write);
                 notifyNewLocalWrite(key, write);
@@ -193,6 +194,9 @@ public class DependencyResolver {
             AtomicInteger waitCount = new AtomicInteger(write.getTransactionKeys().size());
 
             for(String atomicKey : write.getTransactionKeys()) {
+                if (atomicKey.equals(key)) {
+                    logger.debug("Waiting on self");
+                }
                 router.waitForDependencyRemote(key,
                                                new DataDependency(atomicKey, write.getVersion()),
                                                new WaitingResolvedDependency(key,
@@ -206,6 +210,7 @@ public class DependencyResolver {
                                    final DataItem write) throws TException {
 
         if(write.getTransactionKeys() == null || write.getTransactionKeys().isEmpty()) {
+            logger.debug("Autoresolve!");
             persistenceEngine.put(key, write);
             notifyNewLocalWrite(key, write);
             return;
