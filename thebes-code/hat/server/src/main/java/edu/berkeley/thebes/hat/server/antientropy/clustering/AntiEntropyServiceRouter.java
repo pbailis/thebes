@@ -217,7 +217,7 @@ public class AntiEntropyServiceRouter {
 
                         int dqSize = dependencyQueue.size();
 
-                        logger.debug("Sending "+dqSize+" dependency requests");
+                        logger.debug("Sending "+dqSize+" dependency requests (waitingSize=" + waitingRequests.size() + ")");
 
                         for(int i = 0; i < dqSize; ++i) {
                             dependency = dependencyQueue.take();
