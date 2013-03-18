@@ -12,6 +12,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 
 import edu.berkeley.thebes.common.clustering.RoutingHash;
 import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
@@ -26,9 +27,9 @@ public class AntiEntropyServiceRouter {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceRouter.class);
 
     /** Siblings replicate the same data. */
-    private static List<AntiEntropyService.Client> siblingClients = Lists.newArrayList();
+    private static List<AntiEntropyService.Client> replicaSiblingClients;
     /** Neighbors live in the same cluster. Includes self! */
-    private static List<AntiEntropyService.Client> neighborClients = Lists.newArrayList();
+    private static List<AntiEntropyService.Client> neighborClients;
     private static int numServersInCluster;
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
@@ -44,7 +45,7 @@ public class AntiEntropyServiceRouter {
         logger.debug("Bootstrapping anti-entropy...");
 
         numServersInCluster = Config.getServersInCluster().size();
-        siblingClients = createClientsFromAddresses(Config.getSiblingServers());
+        replicaSiblingClients = createClientsFromAddresses(Config.getSiblingServers());
         neighborClients = createClientsFromAddresses(Config.getServersInCluster());
 
         logger.debug("...anti-entropy bootstrapped");
@@ -78,6 +79,7 @@ public class AntiEntropyServiceRouter {
         this.pendingWritesToAnnounce = Queues.newLinkedBlockingQueue();
     }
     
+    /** Our cluster got a new write, forward to the replicas in other clusters. */
     public void sendWriteToSiblings(String key, ThriftDataItem value) {
         writesToForwardSiblings.add(new QueuedWrite(key, value));
     }
@@ -87,14 +89,15 @@ public class AntiEntropyServiceRouter {
         try {
             QueuedWrite writeToForward = 
                     Uninterruptibles.takeUninterruptibly(writesToForwardSiblings);
-            for (AntiEntropyService.Client sibling : siblingClients) {
+            for (AntiEntropyService.Client sibling : replicaSiblingClients) {
                 sibling.put(writeToForward.key, writeToForward.value);
             }
         } catch (TException e) {
             logger.error("Failure while announcing queued pending write: ", e);
         }
     }
-    
+
+    /** Our replica got a write, announce it to others in this cluster who depend on it. */
     public void announcePendingWrite(PendingWrite write) {
         pendingWritesToAnnounce.add(write);
     }
@@ -105,12 +108,14 @@ public class AntiEntropyServiceRouter {
             PendingWrite writeToAnnounce = 
                     Uninterruptibles.takeUninterruptibly(pendingWritesToAnnounce);
             String writeKey = writeToAnnounce.getKey();
+            Version writeVersion = writeToAnnounce.getVersion();
             
             // TODO: Efficiency! Group keys, take multiple writes at a time.
             for (String dependentKey : writeToAnnounce.getValue().getTransactionKeys()) {
                 AntiEntropyService.Client neighborClient = neighborClients.get(
                         RoutingHash.hashKey(dependentKey, numServersInCluster));
-                neighborClient.ackDependentWriteInPending(dependentKey, writeKey);
+                neighborClient.ackDependentWriteInPending(dependentKey, writeKey,
+                        Version.toThrift(writeVersion));
             }
         } catch (TException e) {
             logger.error("Failure while announcing queued pending write: ", e);

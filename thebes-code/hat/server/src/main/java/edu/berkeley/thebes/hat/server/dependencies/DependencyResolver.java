@@ -1,38 +1,16 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Timer;
-import com.yammer.metrics.core.TimerContext;
 
-import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
-import edu.berkeley.thebes.hat.common.data.DataDependency;
-import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /*
 The following class does most of the heavy lifting for the HAT
@@ -69,7 +47,7 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
     private final ConcurrentMap<String, Set<PendingWrite>> pendingWritesMap;
-    private final ConcurrentMap<String, Set<String>> unresolvedAcksMap;
+    private final ConcurrentMap<String, Set<Ack>> unresolvedAcksMap;
     
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
@@ -89,10 +67,10 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
         
         // Check any unresolved acks associated with this key
         if (unresolvedAcksMap.containsKey(key)) {
-            Iterator<String> unresolvedAcksIterator = unresolvedAcksMap.get(key).iterator();
+            Iterator<Ack> unresolvedAcksIterator = unresolvedAcksMap.get(key).iterator();
             while (unresolvedAcksIterator.hasNext()) {
-                String ackedKey = unresolvedAcksIterator.next();
-                if (informPendingWriteOfAck(newPendingWrite, ackedKey)) {
+                Ack ack = unresolvedAcksIterator.next();
+                if (informPendingWriteOfAck(newPendingWrite, ack)) {
                     unresolvedAcksIterator.remove();
                 }
             }
@@ -115,26 +93,37 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
         pendingWritesMap.get(write.getKey()).remove(write);
     }
     
-    public void dependentWriteAcked(String myKey, String ackedKey) {
+    public void dependentWriteAcked(String myKey, String ackedKey, Version version) {
+        Ack ack = new Ack(ackedKey, version);
         Set<PendingWrite> pendingWritesForKey = pendingWritesMap.get(myKey);
         for (PendingWrite pendingWrite : pendingWritesForKey) {
-            if (informPendingWriteOfAck(pendingWrite, ackedKey)) {
+            if (informPendingWriteOfAck(pendingWrite, ack)) {
                 return;
             }
         }
 
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        unresolvedAcksMap.putIfAbsent(myKey, new ConcurrentSkipListSet<String>());
-        unresolvedAcksMap.get(myKey).add(ackedKey);
+        unresolvedAcksMap.putIfAbsent(myKey, new ConcurrentSkipListSet<Ack>());
+        unresolvedAcksMap.get(myKey).add(ack);
     }
     
     /** Returns true if the PendingWrite accepted our acked key! */
-    private boolean informPendingWriteOfAck(PendingWrite pendingWrite, String ackedKey) {
-        if (pendingWrite.isWaitingFor(ackedKey)) {
-            pendingWrite.keyAcked(ackedKey);
+    private boolean informPendingWriteOfAck(PendingWrite pendingWrite, Ack ack) {
+        if (pendingWrite.isWaitingFor(ack.key, ack.version)) {
+            pendingWrite.keyAcked(ack.key);
             return true;
         }
         return false;
+    }
+    
+    private static class Ack {
+        public String key;
+        public Version version;
+        
+        public Ack(String ackedKey, Version version) {
+            this.key = ackedKey;
+            this.version = version;
+        } 
     }
 }

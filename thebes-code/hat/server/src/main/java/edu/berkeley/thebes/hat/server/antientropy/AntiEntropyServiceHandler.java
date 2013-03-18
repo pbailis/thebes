@@ -11,8 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
+import edu.berkeley.thebes.common.thrift.ThriftVersion;
 import edu.berkeley.thebes.hat.common.data.DataDependency;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
@@ -44,8 +46,9 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     }
 
     @Override
-    public void ackDependentWriteInPending(String myKey, String ackedKey)
-            throws TException {
-        dependencyResolver.dependentWriteAcked(myKey, ackedKey);
+    public void ackDependentWriteInPending(String myKey, String ackedKey,
+            ThriftVersion version) throws TException {
+        dependencyResolver.dependentWriteAcked(myKey, ackedKey, 
+                Version.fromThrift(version));
     }
 }
