@@ -180,6 +180,7 @@ public class DependencyResolver {
         }
 
         public void notifyResolved() {
+            System.out.println("Resolved!: " + waitingCount.get());
             if(this.waitingCount.decrementAndGet() == 0) {
                 persistenceEngine.put(key, write);
                 notifyNewLocalWrite(key, write);
