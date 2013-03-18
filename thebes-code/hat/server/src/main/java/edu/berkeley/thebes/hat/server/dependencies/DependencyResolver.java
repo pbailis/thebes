@@ -194,6 +194,9 @@ public class DependencyResolver {
             AtomicInteger waitCount = new AtomicInteger(write.getTransactionKeys().size());
 
             for(String atomicKey : write.getTransactionKeys()) {
+                if (atomicKey.equals(key)) {
+                    logger.debug("Waiting on self");
+                }
                 router.waitForDependencyRemote(key,
                                                new DataDependency(atomicKey, write.getVersion()),
                                                new WaitingResolvedDependency(key,
