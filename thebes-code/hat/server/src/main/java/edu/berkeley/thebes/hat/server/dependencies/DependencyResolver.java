@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Maps;
 
 import edu.berkeley.thebes.common.data.DataItem;
@@ -60,7 +61,7 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
     public void addPendingWrite(String key, DataItem value) {
         pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
         
-        PendingWrite newPendingWrite = new PendingWrite(key, value, this); 
+        PendingWrite newPendingWrite = new PendingWrite(key, value, this);
         pendingWritesMap.get(key).add(newPendingWrite);
         router.announcePendingWrite(newPendingWrite);
         // TODO: if it's still there after a while, can resend
@@ -78,6 +79,10 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
     }
     
     public DataItem retrievePendingItem(String key, Version version) {
+        if (!pendingWritesMap.containsKey(key)) {
+            return null;
+        }
+        
         for (PendingWrite pendingWrite : pendingWritesMap.get(key)) {
             DataItem value = pendingWrite.getValue();
             if (version.equals(value.getVersion())) {
@@ -95,10 +100,13 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
     
     public void dependentWriteAcked(String myKey, String ackedKey, Version version) {
         Ack ack = new Ack(ackedKey, version);
+        
         Set<PendingWrite> pendingWritesForKey = pendingWritesMap.get(myKey);
-        for (PendingWrite pendingWrite : pendingWritesForKey) {
-            if (informPendingWriteOfAck(pendingWrite, ack)) {
-                return;
+        if (pendingWritesForKey != null) {
+            for (PendingWrite pendingWrite : pendingWritesForKey) {
+                if (informPendingWriteOfAck(pendingWrite, ack)) {
+                    return;
+                }
             }
         }
 
@@ -117,13 +125,21 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
         return false;
     }
     
-    private static class Ack {
+    private static class Ack implements Comparable<Ack> {
         public String key;
         public Version version;
         
         public Ack(String ackedKey, Version version) {
             this.key = ackedKey;
             this.version = version;
+        }
+
+        @Override
+        public int compareTo(Ack o) {
+            return ComparisonChain.start()
+                    .compare(key, o.key)
+                    .compare(version, o.version)
+                    .result();
         } 
     }
 }

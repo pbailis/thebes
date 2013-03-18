@@ -91,8 +91,8 @@ public class DataItem implements Comparable<DataItem> {
     @Override
     public int compareTo(DataItem o) {
         return ComparisonChain.start()
-                .compare(version, version)
-                .compare(data, data)
+                .compare(version, o.getVersion())
+                .compare(data, o.getData())
                 .result();
     }
 }
