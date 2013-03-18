@@ -786,7 +786,7 @@ if __name__ == "__main__":
                        isolation_level="READ_COMMITTED",
                        atomicity_level="CLIENT",
                        recordcount=100000,
-                       time=5*60,
+                       time=2*60,
                        timeout=120*10000,
                        keydistribution="uniform")
 
