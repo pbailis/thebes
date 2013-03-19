@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.ConfigurationException;
 
@@ -70,6 +71,8 @@ public class ThebesHATClient implements IThebesClient {
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact",
                                                                      TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
     private final Timer latencyPerOperationMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-op", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    
+    private static final AtomicInteger LOGICAL_CLOCK = new AtomicInteger(0);
 
     private ReplicaRouter router;
 
@@ -154,7 +157,8 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     private void applyWritesInBuffer() throws TException {
-        Version transactionVersion = new Version(clientID, System.currentTimeMillis());
+        Version transactionVersion = new Version(clientID, LOGICAL_CLOCK.incrementAndGet(),
+                System.currentTimeMillis());
         List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
 
         //TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
@@ -215,7 +219,8 @@ public class ThebesHATClient implements IThebesClient {
         operationMetric.mark();
 
         long timestamp = System.currentTimeMillis();
-        DataItem dataItem = new DataItem(value, new Version(clientID,  timestamp));
+        DataItem dataItem = new DataItem(value,
+                new Version(clientID, LOGICAL_CLOCK.incrementAndGet(), timestamp));
 
         if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION) || atomicityLevel != AtomicityLevel.NO_ATOMICITY) {
             if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
