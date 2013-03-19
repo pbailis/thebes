@@ -15,9 +15,15 @@ import org.apache.log4j.spi.LoggingEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Log4JConfig {
+    private static AtomicBoolean configured = new AtomicBoolean(false);
+    
     public static void configureLog4J() {
+        if (configured.getAndSet(true)) {
+            return;
+        }
         
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.toLevel(Config.getLoggerLevel()));
