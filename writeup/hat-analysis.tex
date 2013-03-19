@@ -440,6 +440,189 @@ application-defined partial orders, as in explicit
 causality~\cite{explicit-socc}, if dependencies are specified at
 commit time.
 
+Read your writes is unavailable in a highly available system. Consider
+a client that executes the following two transactions in succession:
+\vspace{-.5em}
+\begin{align*}
+\small
+T_1 &: w_x(1)
+\\T_2 &: r_x(a)
+\end{align*}
+If the client executes $T_1$ against a server that is partitioned from
+the rest of the other servers, the server must allow $T_1$ to
+commit. If the client executes $T_2$ against the same (partitioned)
+server, then it will be able to read its writes. However, if the
+network topology shifts and the client can only contact a different
+server which is partitioned from the rest of the cluster, then the
+client will not be able to read its own writes and the system will
+have to either stall indefinitely to allow the client to read her
+writes (violating transactional availability) or will have to
+sacrifice read your writes. Accordingly, read your writes requires
+stickiness, and, because causal consistency requires read your writes,
+causal consistency also requires stickiness.
+
+Read-your-writes can be accomplished via client-side caching and
+alternatively comes ``for free'' when requests are routed to a sticky
+set of servers. Achieving causal consistency requires maintaining
+read-your-writes along with the prior session guarantees. Both are
+reasonable strategies often employed in real-world
+systems~\cite{vogels-defs}, albeit at the cost of true high
+availability or client-side storage.
+
+We discuss additional uses for stickiness in Section~\ref{sec:discussion}.
+
+\subsubsection{Additional Guarantees}
+
+A HAT system can make \textbf{limited consistency} guarantees. It can
+execute commutative and logically monotonic~\cite{needed} operations
+without the risk of invalidating (also monotonic) application-level
+integrity constraints. Our goal in this paper is not to sketch the
+entire space of consistency models that are achievable (see
+Section~\ref{sec:futurework}, however we specifically evaluate TPC-C
+transaction semantics under HAT consistency guarantees in
+Section~\ref{sec:Evaluation}.
+
+As we briefly discussed in Section~\ref{sec:availabile}, a client
+requiring \textbf{durability} of surviving $F$ server faults requires
+at least $F+1$-availability.
+
+Finally, to require that servers propagate writes between replicas, we
+can require \textbf{convergence}, or eventual consistency for each
+data item: in the absence of new mutations to a data item, in the
+absence of partitions, all servers eventually agree on the value for
+each item. This is typically accomplished by any number of
+anti-entropy protocols, which periodically update neighboring servers
+with the latest value for each data item.
+
+\subsection{Unachievable HAT Semantics}
+\label{sec:unachievable-hat}
+
+While there are infinitely many HAT models
+(Section~\ref{sec:futurework}), at this point, we have exhausted our
+range of achievable, previously defined (useful) HAT semantics. Before
+summarizing our possibility results, we will present impossibility
+results for HATs, also defined in terms of previously identified isolation and consistency anomalies.
+
+\subsubsection{Unachievable ACID Isolation}
+
+* Lost Update
+	* Simple proof: T1 R(x) W(x=x+1) T2 R(x) W(x=x+1); execute on opposite sides 
+* Read Skew
+	* Similar easy proof
+* Write Skew
+	* Similar easy proof
+* Anti-dependency cycles
+	* Serializability
+* Recency guarantees on data items
+	* CAP
+
+
+
+\subsection{Summary}
+\label{sec:hat-summary}
+
+ \newcommand{\lostupdate}{$^\dagger$}
+ \newcommand{\rwskew}{$^\ddagger$}
+ \newcommand{\mphantom}{$^\star$}
+ \newcommand{\linearizable}{$^\oplus$}
+
+\begin{table}
+\begin{tabular}{| c | p{6cm} | }\hline
+HA & Transactional Atomicity (TA), Read Uncommitted (RU), Read
+Committed (RC), Cut Isolation (CI), Monotonic Reads (MR), Monotonic
+Writes (MW), Writes Follow Reads (WFR)\\\hline Sticky-HA & Read Your
+Writes (RYW), Causal Consistency\\\hline Unavailable & Cursor
+Stability (CS)\lostupdate, Read Consistency (CR)\lostupdate, Snapshot
+Isolation (SI)\lostupdate, Repeatable Read (RR)\lostupdate\rwskew,
+Serializability (S)\lostupdate\rwskew\mphantom, Causal
+Serializability\lostupdate\rwskew\mphantom, Strict
+Serializability\lostupdate\rwskew\mphantom\linearizable \\\hline
+\end{tabular}
+\caption{Summary of highly available, sticky highly available, and
+  unavailable models considered in this paper. Unavailable models are
+  labeled by cause of unavailability: preventing lost
+  update\lostupdate, preventing read/write skew\rwskew, preventing
+  phantoms\mphantom, and requiring linearizability\linearizable.}
+\label{table:hatcompared}
+\end{table}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=0.8]
+  \tikzstyle{sticky}=[rectangle,draw=blue!50,fill=blue!20,thick]
+  \tikzstyle{noha}=[ellipse,draw=red!50,fill=red!20,thick, inner sep=0pt,minimum size=12pt]
+
+  \tikzstyle{every node}=[font=\small]
+
+ \node[draw=none,fill=none] (ci) at (1.2, 1.6) {\underline{CI}};
+ \node[draw=none,fill=none] (rc) at (1.2, .8) {\underline{RC}};
+ \node[draw=none,fill=none] (ru) at (1.2, 0) {\underline{RU}};
+
+ \node[draw=none,fill=none] (ta) at (0, 0) {\underline{TA}};
+ \node[draw=none,fill=none] (mr) at (2.4, 0) {\underline{MR}};
+ \node[draw=none,fill=none] (mw) at (3.6, 0) {\underline{MW}};
+ \node[draw=none,fill=none] (wfr) at (4.8,0) {\underline{WFR}};
+ \node at (6,0) [sticky] (ryw) {RYW};
+
+ \node at (3.6, 2) [sticky] (causal) {Causal};
+ \node[noha] (cs) at (1.7, 2.4) {CS};
+ \node[noha] (rr) at (.7, 2.6) {RR};
+ \node[noha] (si) at (-.4, 2.2) {SI};
+ \node[noha] (cr) at (-.4, 1.2) {CR};
+ \node[noha] (s) at (.5, 3.5) {S};
+ \node[noha] (causal-s) at (3.6, 3.5) {Causal S};
+ \node[noha] (strict-s) at (6, 3.5) {Strict S};
+
+
+ \draw [->] (ru) -- (rc);
+ \draw [->] (rc) -- (ci);
+
+ \draw [->, blue] (mr) -- (causal);
+ \draw [->, blue] (mw) -- (causal);
+ \draw [->, blue] (wfr) -- (causal);
+ \draw [->, blue] (ryw) -- (causal);
+
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (mr);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (ta);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ci) -- (ta);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (mr);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ci) -- (mr);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ta) -- (ru);
+ \draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (causal);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (mr) -- (mw);
+ \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (mw);
+ \draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (ryw);
+
+ \draw [->, red] (ci) -- (cs);
+ \draw [->, red] (cs) -- (rr);
+ \draw [->, red] (ci) -- (si);
+ \draw [->, red] (rr) -- (s);
+ \draw [->, red] (si) -- (s);
+ \draw [->, red] (ta) -- (cr);
+ \draw [->, red] (rc) -- (cr);
+ \draw [->, red] (cr) -- (si);
+ \draw [->, red] (ta) -- (rr);
+ \draw [->, red] (s) -- (causal-s);
+ \draw [->, red] (causal) -- (causal-s);
+ \draw [->, red] (causal-s) -- (strict-s);
+
+\end{tikzpicture}
+\label{fig:hat-order}
+\caption{HAT, sticky HAT (in boxes), and unavailable models (circled)
+  from Table~\protect\ref{table:hatcompared} compared graphically. Directed
+  edges represent ordering by model strength, squiggle edges represent
+  (transitive) compatible models, while absence of edges represents
+  incomparable models. The combination of all underlined models
+  represents maximum ACID HAT semantics, while the combination of
+  underlined and boxed models represents maximum ACID sticky HAT
+  models.}
+\label{fig:hatcompared}
+\end{figure}
+
+
+\subsection{Discussion}
+\label{sec:discussion}
+
 
 
 
@@ -464,8 +647,6 @@ log-shipping approach~\cite{causalmemory, cops, eiger, swift}.
 
 
 
-\subsection{Unachievable HAT Semantics}
-\label{sec:unachievable-hat}
 
 What about existing systems?
 * Database technology developed for single-node systems; gold standard: serializability
@@ -549,16 +730,6 @@ B. *What's not available in Isolation?*
 Now, at least in terms of the existing literature, we hit the limits.
 
 Let's sketch out a few conditions, then we'll discuss them later:
-* Lost Update
-	* Simple proof: T1 R(x) W(x=x+1) T2 R(x) W(x=x+1); execute on opposite sides 
-* Read Skew
-	* Similar easy proof
-* Write Skew
-	* Similar easy proof
-* Anti-dependency cycles
-	* Serializability
-* Recency guarantees on data items
-	* CAP
 
 Now refer to Adya's chart. No PL-SI, PL-SS, PL-2.99, etc.
 
