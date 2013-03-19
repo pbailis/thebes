@@ -4,11 +4,12 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
-public class DataItem {
+public class DataItem implements Comparable<DataItem> {
 	private final ByteBuffer data;
 	private Version version;
 	private List<String> transactionKeys;
@@ -86,4 +87,12 @@ public class DataItem {
 				Objects.equal(getVersion(), di.getVersion()) &&
 				Objects.equal(getTransactionKeys(), di.getTransactionKeys());
 	}
+
+    @Override
+    public int compareTo(DataItem o) {
+        return ComparisonChain.start()
+                .compare(version, o.getVersion())
+                .compare(data, o.getData())
+                .result();
+    }
 }
