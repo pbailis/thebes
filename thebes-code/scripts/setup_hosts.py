@@ -784,7 +784,7 @@ if __name__ == "__main__":
                        threads=80,
                        distributionparameter=2,
                        isolation_level="READ_COMMITTED",
-                       atomicity_level="NO_ATOMICITY",
+                       atomicity_level="CLIENT",
                        recordcount=100000,
                        time=60,
                        timeout=120*10000,
