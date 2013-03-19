@@ -18,7 +18,14 @@ public class Version implements Comparable<Version> {
 	}
 	
 	public static Version fromThrift(ThriftVersion version) {
+<<<<<<< Updated upstream
 		return new Version(version.getClientID(), version.getTimestamp());
+=======
+	    if (version == null)
+	        return null;
+		return new Version(version.getClientID(), version.getLogicalTime(),
+		        version.getTimestamp());
+>>>>>>> Stashed changes
 	}
 	
 	public static ThriftVersion toThrift(Version version) {
