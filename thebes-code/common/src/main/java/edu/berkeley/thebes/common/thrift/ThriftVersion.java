@@ -34,6 +34,7 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftVersion");
 
   private static final org.apache.thrift.protocol.TField CLIENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("clientID", org.apache.thrift.protocol.TType.I16, (short)1);
+  private static final org.apache.thrift.protocol.TField LOGICAL_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("logicalTime", org.apache.thrift.protocol.TType.I64, (short)2);
   private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -43,11 +44,13 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   }
 
   public short clientID; // required
+  public long logicalTime; // required
   public long timestamp; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     CLIENT_ID((short)1, "clientID"),
+    LOGICAL_TIME((short)2, "logicalTime"),
     TIMESTAMP((short)3, "timestamp");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -65,6 +68,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       switch(fieldId) {
         case 1: // CLIENT_ID
           return CLIENT_ID;
+        case 2: // LOGICAL_TIME
+          return LOGICAL_TIME;
         case 3: // TIMESTAMP
           return TIMESTAMP;
         default:
@@ -108,13 +113,16 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   // isset id assignments
   private static final int __CLIENTID_ISSET_ID = 0;
-  private static final int __TIMESTAMP_ISSET_ID = 1;
+  private static final int __LOGICALTIME_ISSET_ID = 1;
+  private static final int __TIMESTAMP_ISSET_ID = 2;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.CLIENT_ID, new org.apache.thrift.meta_data.FieldMetaData("clientID", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
+    tmpMap.put(_Fields.LOGICAL_TIME, new org.apache.thrift.meta_data.FieldMetaData("logicalTime", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -126,11 +134,14 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   public ThriftVersion(
     short clientID,
+    long logicalTime,
     long timestamp)
   {
     this();
     this.clientID = clientID;
     setClientIDIsSet(true);
+    this.logicalTime = logicalTime;
+    setLogicalTimeIsSet(true);
     this.timestamp = timestamp;
     setTimestampIsSet(true);
   }
@@ -141,6 +152,7 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   public ThriftVersion(ThriftVersion other) {
     __isset_bitfield = other.__isset_bitfield;
     this.clientID = other.clientID;
+    this.logicalTime = other.logicalTime;
     this.timestamp = other.timestamp;
   }
 
@@ -152,6 +164,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   public void clear() {
     setClientIDIsSet(false);
     this.clientID = 0;
+    setLogicalTimeIsSet(false);
+    this.logicalTime = 0;
     setTimestampIsSet(false);
     this.timestamp = 0;
   }
@@ -177,6 +191,29 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   public void setClientIDIsSet(boolean value) {
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __CLIENTID_ISSET_ID, value);
+  }
+
+  public long getLogicalTime() {
+    return this.logicalTime;
+  }
+
+  public ThriftVersion setLogicalTime(long logicalTime) {
+    this.logicalTime = logicalTime;
+    setLogicalTimeIsSet(true);
+    return this;
+  }
+
+  public void unsetLogicalTime() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __LOGICALTIME_ISSET_ID);
+  }
+
+  /** Returns true if field logicalTime is set (has been assigned a value) and false otherwise */
+  public boolean isSetLogicalTime() {
+    return EncodingUtils.testBit(__isset_bitfield, __LOGICALTIME_ISSET_ID);
+  }
+
+  public void setLogicalTimeIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __LOGICALTIME_ISSET_ID, value);
   }
 
   public long getTimestamp() {
@@ -212,6 +249,14 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       }
       break;
 
+    case LOGICAL_TIME:
+      if (value == null) {
+        unsetLogicalTime();
+      } else {
+        setLogicalTime((Long)value);
+      }
+      break;
+
     case TIMESTAMP:
       if (value == null) {
         unsetTimestamp();
@@ -227,6 +272,9 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     switch (field) {
     case CLIENT_ID:
       return Short.valueOf(getClientID());
+
+    case LOGICAL_TIME:
+      return Long.valueOf(getLogicalTime());
 
     case TIMESTAMP:
       return Long.valueOf(getTimestamp());
@@ -244,6 +292,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     switch (field) {
     case CLIENT_ID:
       return isSetClientID();
+    case LOGICAL_TIME:
+      return isSetLogicalTime();
     case TIMESTAMP:
       return isSetTimestamp();
     }
@@ -269,6 +319,15 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       if (!(this_present_clientID && that_present_clientID))
         return false;
       if (this.clientID != that.clientID)
+        return false;
+    }
+
+    boolean this_present_logicalTime = true;
+    boolean that_present_logicalTime = true;
+    if (this_present_logicalTime || that_present_logicalTime) {
+      if (!(this_present_logicalTime && that_present_logicalTime))
+        return false;
+      if (this.logicalTime != that.logicalTime)
         return false;
     }
 
@@ -307,6 +366,16 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetLogicalTime()).compareTo(typedOther.isSetLogicalTime());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetLogicalTime()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.logicalTime, typedOther.logicalTime);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
       return lastComparison;
@@ -339,6 +408,10 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
     sb.append("clientID:");
     sb.append(this.clientID);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("logicalTime:");
+    sb.append(this.logicalTime);
     first = false;
     if (!first) sb.append(", ");
     sb.append("timestamp:");
@@ -397,6 +470,14 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 2: // LOGICAL_TIME
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.logicalTime = iprot.readI64();
+              struct.setLogicalTimeIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           case 3: // TIMESTAMP
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
               struct.timestamp = iprot.readI64();
@@ -423,6 +504,9 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       oprot.writeFieldBegin(CLIENT_ID_FIELD_DESC);
       oprot.writeI16(struct.clientID);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(LOGICAL_TIME_FIELD_DESC);
+      oprot.writeI64(struct.logicalTime);
+      oprot.writeFieldEnd();
       oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
       oprot.writeI64(struct.timestamp);
       oprot.writeFieldEnd();
@@ -447,12 +531,18 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       if (struct.isSetClientID()) {
         optionals.set(0);
       }
-      if (struct.isSetTimestamp()) {
+      if (struct.isSetLogicalTime()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetTimestamp()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetClientID()) {
         oprot.writeI16(struct.clientID);
+      }
+      if (struct.isSetLogicalTime()) {
+        oprot.writeI64(struct.logicalTime);
       }
       if (struct.isSetTimestamp()) {
         oprot.writeI64(struct.timestamp);
@@ -462,12 +552,16 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.clientID = iprot.readI16();
         struct.setClientIDIsSet(true);
       }
       if (incoming.get(1)) {
+        struct.logicalTime = iprot.readI64();
+        struct.setLogicalTimeIsSet(true);
+      }
+      if (incoming.get(2)) {
         struct.timestamp = iprot.readI64();
         struct.setTimestampIsSet(true);
       }

@@ -36,9 +36,7 @@ public class AntiEntropyService {
 
     public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
 
-    public void waitForTransactionalDependencies(List<DataDependencyRequest> dependencyRequests) throws org.apache.thrift.TException;
-
-    public void receiveTransactionalDependencies(List<Long> fulfilledRequestIds) throws org.apache.thrift.TException;
+    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException;
 
   }
 
@@ -46,9 +44,7 @@ public class AntiEntropyService {
 
     public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void waitForTransactionalDependencies(List<DataDependencyRequest> dependencyRequests, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.waitForTransactionalDependencies_call> resultHandler) throws org.apache.thrift.TException;
-
-    public void receiveTransactionalDependencies(List<Long> fulfilledRequestIds, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.receiveTransactionalDependencies_call> resultHandler) throws org.apache.thrift.TException;
+    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -85,28 +81,18 @@ public class AntiEntropyService {
       sendBase("put", args);
     }
 
-    public void waitForTransactionalDependencies(List<DataDependencyRequest> dependencyRequests) throws org.apache.thrift.TException
+    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
     {
-      send_waitForTransactionalDependencies(dependencyRequests);
+      send_ackDependentWriteInPending(myKey, ackedKey, version);
     }
 
-    public void send_waitForTransactionalDependencies(List<DataDependencyRequest> dependencyRequests) throws org.apache.thrift.TException
+    public void send_ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
     {
-      waitForTransactionalDependencies_args args = new waitForTransactionalDependencies_args();
-      args.setDependencyRequests(dependencyRequests);
-      sendBase("waitForTransactionalDependencies", args);
-    }
-
-    public void receiveTransactionalDependencies(List<Long> fulfilledRequestIds) throws org.apache.thrift.TException
-    {
-      send_receiveTransactionalDependencies(fulfilledRequestIds);
-    }
-
-    public void send_receiveTransactionalDependencies(List<Long> fulfilledRequestIds) throws org.apache.thrift.TException
-    {
-      receiveTransactionalDependencies_args args = new receiveTransactionalDependencies_args();
-      args.setFulfilledRequestIds(fulfilledRequestIds);
-      sendBase("receiveTransactionalDependencies", args);
+      ackDependentWriteInPending_args args = new ackDependentWriteInPending_args();
+      args.setMyKey(myKey);
+      args.setAckedKey(ackedKey);
+      args.setVersion(version);
+      sendBase("ackDependentWriteInPending", args);
     }
 
   }
@@ -161,55 +147,30 @@ public class AntiEntropyService {
       }
     }
 
-    public void waitForTransactionalDependencies(List<DataDependencyRequest> dependencyRequests, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependencies_call> resultHandler) throws org.apache.thrift.TException {
+    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      waitForTransactionalDependencies_call method_call = new waitForTransactionalDependencies_call(dependencyRequests, resultHandler, this, ___protocolFactory, ___transport);
+      ackDependentWriteInPending_call method_call = new ackDependentWriteInPending_call(myKey, ackedKey, version, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class waitForTransactionalDependencies_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private List<DataDependencyRequest> dependencyRequests;
-      public waitForTransactionalDependencies_call(List<DataDependencyRequest> dependencyRequests, org.apache.thrift.async.AsyncMethodCallback<waitForTransactionalDependencies_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+    public static class ackDependentWriteInPending_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String myKey;
+      private String ackedKey;
+      private edu.berkeley.thebes.common.thrift.ThriftVersion version;
+      public ackDependentWriteInPending_call(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
-        this.dependencyRequests = dependencyRequests;
+        this.myKey = myKey;
+        this.ackedKey = ackedKey;
+        this.version = version;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("waitForTransactionalDependencies", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        waitForTransactionalDependencies_args args = new waitForTransactionalDependencies_args();
-        args.setDependencyRequests(dependencyRequests);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public void getResult() throws org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-      }
-    }
-
-    public void receiveTransactionalDependencies(List<Long> fulfilledRequestIds, org.apache.thrift.async.AsyncMethodCallback<receiveTransactionalDependencies_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      receiveTransactionalDependencies_call method_call = new receiveTransactionalDependencies_call(fulfilledRequestIds, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class receiveTransactionalDependencies_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private List<Long> fulfilledRequestIds;
-      public receiveTransactionalDependencies_call(List<Long> fulfilledRequestIds, org.apache.thrift.async.AsyncMethodCallback<receiveTransactionalDependencies_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, true);
-        this.fulfilledRequestIds = fulfilledRequestIds;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("receiveTransactionalDependencies", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        receiveTransactionalDependencies_args args = new receiveTransactionalDependencies_args();
-        args.setFulfilledRequestIds(fulfilledRequestIds);
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("ackDependentWriteInPending", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        ackDependentWriteInPending_args args = new ackDependentWriteInPending_args();
+        args.setMyKey(myKey);
+        args.setAckedKey(ackedKey);
+        args.setVersion(version);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -237,8 +198,7 @@ public class AntiEntropyService {
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
       processMap.put("put", new put());
-      processMap.put("waitForTransactionalDependencies", new waitForTransactionalDependencies());
-      processMap.put("receiveTransactionalDependencies", new receiveTransactionalDependencies());
+      processMap.put("ackDependentWriteInPending", new ackDependentWriteInPending());
       return processMap;
     }
 
@@ -261,40 +221,21 @@ public class AntiEntropyService {
       }
     }
 
-    public static class waitForTransactionalDependencies<I extends Iface> extends org.apache.thrift.ProcessFunction<I, waitForTransactionalDependencies_args> {
-      public waitForTransactionalDependencies() {
-        super("waitForTransactionalDependencies");
+    public static class ackDependentWriteInPending<I extends Iface> extends org.apache.thrift.ProcessFunction<I, ackDependentWriteInPending_args> {
+      public ackDependentWriteInPending() {
+        super("ackDependentWriteInPending");
       }
 
-      public waitForTransactionalDependencies_args getEmptyArgsInstance() {
-        return new waitForTransactionalDependencies_args();
-      }
-
-      protected boolean isOneway() {
-        return true;
-      }
-
-      public org.apache.thrift.TBase getResult(I iface, waitForTransactionalDependencies_args args) throws org.apache.thrift.TException {
-        iface.waitForTransactionalDependencies(args.dependencyRequests);
-        return null;
-      }
-    }
-
-    public static class receiveTransactionalDependencies<I extends Iface> extends org.apache.thrift.ProcessFunction<I, receiveTransactionalDependencies_args> {
-      public receiveTransactionalDependencies() {
-        super("receiveTransactionalDependencies");
-      }
-
-      public receiveTransactionalDependencies_args getEmptyArgsInstance() {
-        return new receiveTransactionalDependencies_args();
+      public ackDependentWriteInPending_args getEmptyArgsInstance() {
+        return new ackDependentWriteInPending_args();
       }
 
       protected boolean isOneway() {
         return true;
       }
 
-      public org.apache.thrift.TBase getResult(I iface, receiveTransactionalDependencies_args args) throws org.apache.thrift.TException {
-        iface.receiveTransactionalDependencies(args.fulfilledRequestIds);
+      public org.apache.thrift.TBase getResult(I iface, ackDependentWriteInPending_args args) throws org.apache.thrift.TException {
+        iface.ackDependentWriteInPending(args.myKey, args.ackedKey, args.version);
         return null;
       }
     }
@@ -760,22 +701,28 @@ public class AntiEntropyService {
 
   }
 
-  public static class waitForTransactionalDependencies_args implements org.apache.thrift.TBase<waitForTransactionalDependencies_args, waitForTransactionalDependencies_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("waitForTransactionalDependencies_args");
+  public static class ackDependentWriteInPending_args implements org.apache.thrift.TBase<ackDependentWriteInPending_args, ackDependentWriteInPending_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ackDependentWriteInPending_args");
 
-    private static final org.apache.thrift.protocol.TField DEPENDENCY_REQUESTS_FIELD_DESC = new org.apache.thrift.protocol.TField("dependencyRequests", org.apache.thrift.protocol.TType.LIST, (short)1);
+    private static final org.apache.thrift.protocol.TField MY_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("myKey", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField ACKED_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("ackedKey", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new waitForTransactionalDependencies_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new waitForTransactionalDependencies_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new ackDependentWriteInPending_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new ackDependentWriteInPending_argsTupleSchemeFactory());
     }
 
-    public List<DataDependencyRequest> dependencyRequests; // required
+    public String myKey; // required
+    public String ackedKey; // required
+    public edu.berkeley.thebes.common.thrift.ThriftVersion version; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      DEPENDENCY_REQUESTS((short)1, "dependencyRequests");
+      MY_KEY((short)1, "myKey"),
+      ACKED_KEY((short)2, "ackedKey"),
+      VERSION((short)3, "version");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -790,8 +737,12 @@ public class AntiEntropyService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // DEPENDENCY_REQUESTS
-            return DEPENDENCY_REQUESTS;
+          case 1: // MY_KEY
+            return MY_KEY;
+          case 2: // ACKED_KEY
+            return ACKED_KEY;
+          case 3: // VERSION
+            return VERSION;
           default:
             return null;
         }
@@ -835,91 +786,151 @@ public class AntiEntropyService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.DEPENDENCY_REQUESTS, new org.apache.thrift.meta_data.FieldMetaData("dependencyRequests", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataDependencyRequest.class))));
+      tmpMap.put(_Fields.MY_KEY, new org.apache.thrift.meta_data.FieldMetaData("myKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.ACKED_KEY, new org.apache.thrift.meta_data.FieldMetaData("ackedKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(waitForTransactionalDependencies_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ackDependentWriteInPending_args.class, metaDataMap);
     }
 
-    public waitForTransactionalDependencies_args() {
+    public ackDependentWriteInPending_args() {
     }
 
-    public waitForTransactionalDependencies_args(
-      List<DataDependencyRequest> dependencyRequests)
+    public ackDependentWriteInPending_args(
+      String myKey,
+      String ackedKey,
+      edu.berkeley.thebes.common.thrift.ThriftVersion version)
     {
       this();
-      this.dependencyRequests = dependencyRequests;
+      this.myKey = myKey;
+      this.ackedKey = ackedKey;
+      this.version = version;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public waitForTransactionalDependencies_args(waitForTransactionalDependencies_args other) {
-      if (other.isSetDependencyRequests()) {
-        List<DataDependencyRequest> __this__dependencyRequests = new ArrayList<DataDependencyRequest>();
-        for (DataDependencyRequest other_element : other.dependencyRequests) {
-          __this__dependencyRequests.add(new DataDependencyRequest(other_element));
-        }
-        this.dependencyRequests = __this__dependencyRequests;
+    public ackDependentWriteInPending_args(ackDependentWriteInPending_args other) {
+      if (other.isSetMyKey()) {
+        this.myKey = other.myKey;
+      }
+      if (other.isSetAckedKey()) {
+        this.ackedKey = other.ackedKey;
+      }
+      if (other.isSetVersion()) {
+        this.version = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.version);
       }
     }
 
-    public waitForTransactionalDependencies_args deepCopy() {
-      return new waitForTransactionalDependencies_args(this);
+    public ackDependentWriteInPending_args deepCopy() {
+      return new ackDependentWriteInPending_args(this);
     }
 
     @Override
     public void clear() {
-      this.dependencyRequests = null;
+      this.myKey = null;
+      this.ackedKey = null;
+      this.version = null;
     }
 
-    public int getDependencyRequestsSize() {
-      return (this.dependencyRequests == null) ? 0 : this.dependencyRequests.size();
+    public String getMyKey() {
+      return this.myKey;
     }
 
-    public java.util.Iterator<DataDependencyRequest> getDependencyRequestsIterator() {
-      return (this.dependencyRequests == null) ? null : this.dependencyRequests.iterator();
-    }
-
-    public void addToDependencyRequests(DataDependencyRequest elem) {
-      if (this.dependencyRequests == null) {
-        this.dependencyRequests = new ArrayList<DataDependencyRequest>();
-      }
-      this.dependencyRequests.add(elem);
-    }
-
-    public List<DataDependencyRequest> getDependencyRequests() {
-      return this.dependencyRequests;
-    }
-
-    public waitForTransactionalDependencies_args setDependencyRequests(List<DataDependencyRequest> dependencyRequests) {
-      this.dependencyRequests = dependencyRequests;
+    public ackDependentWriteInPending_args setMyKey(String myKey) {
+      this.myKey = myKey;
       return this;
     }
 
-    public void unsetDependencyRequests() {
-      this.dependencyRequests = null;
+    public void unsetMyKey() {
+      this.myKey = null;
     }
 
-    /** Returns true if field dependencyRequests is set (has been assigned a value) and false otherwise */
-    public boolean isSetDependencyRequests() {
-      return this.dependencyRequests != null;
+    /** Returns true if field myKey is set (has been assigned a value) and false otherwise */
+    public boolean isSetMyKey() {
+      return this.myKey != null;
     }
 
-    public void setDependencyRequestsIsSet(boolean value) {
+    public void setMyKeyIsSet(boolean value) {
       if (!value) {
-        this.dependencyRequests = null;
+        this.myKey = null;
+      }
+    }
+
+    public String getAckedKey() {
+      return this.ackedKey;
+    }
+
+    public ackDependentWriteInPending_args setAckedKey(String ackedKey) {
+      this.ackedKey = ackedKey;
+      return this;
+    }
+
+    public void unsetAckedKey() {
+      this.ackedKey = null;
+    }
+
+    /** Returns true if field ackedKey is set (has been assigned a value) and false otherwise */
+    public boolean isSetAckedKey() {
+      return this.ackedKey != null;
+    }
+
+    public void setAckedKeyIsSet(boolean value) {
+      if (!value) {
+        this.ackedKey = null;
+      }
+    }
+
+    public edu.berkeley.thebes.common.thrift.ThriftVersion getVersion() {
+      return this.version;
+    }
+
+    public ackDependentWriteInPending_args setVersion(edu.berkeley.thebes.common.thrift.ThriftVersion version) {
+      this.version = version;
+      return this;
+    }
+
+    public void unsetVersion() {
+      this.version = null;
+    }
+
+    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    public boolean isSetVersion() {
+      return this.version != null;
+    }
+
+    public void setVersionIsSet(boolean value) {
+      if (!value) {
+        this.version = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case DEPENDENCY_REQUESTS:
+      case MY_KEY:
         if (value == null) {
-          unsetDependencyRequests();
+          unsetMyKey();
         } else {
-          setDependencyRequests((List<DataDependencyRequest>)value);
+          setMyKey((String)value);
+        }
+        break;
+
+      case ACKED_KEY:
+        if (value == null) {
+          unsetAckedKey();
+        } else {
+          setAckedKey((String)value);
+        }
+        break;
+
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
         }
         break;
 
@@ -928,8 +939,14 @@ public class AntiEntropyService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case DEPENDENCY_REQUESTS:
-        return getDependencyRequests();
+      case MY_KEY:
+        return getMyKey();
+
+      case ACKED_KEY:
+        return getAckedKey();
+
+      case VERSION:
+        return getVersion();
 
       }
       throw new IllegalStateException();
@@ -942,8 +959,12 @@ public class AntiEntropyService {
       }
 
       switch (field) {
-      case DEPENDENCY_REQUESTS:
-        return isSetDependencyRequests();
+      case MY_KEY:
+        return isSetMyKey();
+      case ACKED_KEY:
+        return isSetAckedKey();
+      case VERSION:
+        return isSetVersion();
       }
       throw new IllegalStateException();
     }
@@ -952,21 +973,39 @@ public class AntiEntropyService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof waitForTransactionalDependencies_args)
-        return this.equals((waitForTransactionalDependencies_args)that);
+      if (that instanceof ackDependentWriteInPending_args)
+        return this.equals((ackDependentWriteInPending_args)that);
       return false;
     }
 
-    public boolean equals(waitForTransactionalDependencies_args that) {
+    public boolean equals(ackDependentWriteInPending_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_dependencyRequests = true && this.isSetDependencyRequests();
-      boolean that_present_dependencyRequests = true && that.isSetDependencyRequests();
-      if (this_present_dependencyRequests || that_present_dependencyRequests) {
-        if (!(this_present_dependencyRequests && that_present_dependencyRequests))
+      boolean this_present_myKey = true && this.isSetMyKey();
+      boolean that_present_myKey = true && that.isSetMyKey();
+      if (this_present_myKey || that_present_myKey) {
+        if (!(this_present_myKey && that_present_myKey))
           return false;
-        if (!this.dependencyRequests.equals(that.dependencyRequests))
+        if (!this.myKey.equals(that.myKey))
+          return false;
+      }
+
+      boolean this_present_ackedKey = true && this.isSetAckedKey();
+      boolean that_present_ackedKey = true && that.isSetAckedKey();
+      if (this_present_ackedKey || that_present_ackedKey) {
+        if (!(this_present_ackedKey && that_present_ackedKey))
+          return false;
+        if (!this.ackedKey.equals(that.ackedKey))
+          return false;
+      }
+
+      boolean this_present_version = true && this.isSetVersion();
+      boolean that_present_version = true && that.isSetVersion();
+      if (this_present_version || that_present_version) {
+        if (!(this_present_version && that_present_version))
+          return false;
+        if (!this.version.equals(that.version))
           return false;
       }
 
@@ -978,20 +1017,40 @@ public class AntiEntropyService {
       return 0;
     }
 
-    public int compareTo(waitForTransactionalDependencies_args other) {
+    public int compareTo(ackDependentWriteInPending_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      waitForTransactionalDependencies_args typedOther = (waitForTransactionalDependencies_args)other;
+      ackDependentWriteInPending_args typedOther = (ackDependentWriteInPending_args)other;
 
-      lastComparison = Boolean.valueOf(isSetDependencyRequests()).compareTo(typedOther.isSetDependencyRequests());
+      lastComparison = Boolean.valueOf(isSetMyKey()).compareTo(typedOther.isSetMyKey());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetDependencyRequests()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dependencyRequests, typedOther.dependencyRequests);
+      if (isSetMyKey()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.myKey, typedOther.myKey);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetAckedKey()).compareTo(typedOther.isSetAckedKey());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAckedKey()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ackedKey, typedOther.ackedKey);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetVersion()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1013,14 +1072,30 @@ public class AntiEntropyService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("waitForTransactionalDependencies_args(");
+      StringBuilder sb = new StringBuilder("ackDependentWriteInPending_args(");
       boolean first = true;
 
-      sb.append("dependencyRequests:");
-      if (this.dependencyRequests == null) {
+      sb.append("myKey:");
+      if (this.myKey == null) {
         sb.append("null");
       } else {
-        sb.append(this.dependencyRequests);
+        sb.append(this.myKey);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ackedKey:");
+      if (this.ackedKey == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ackedKey);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("version:");
+      if (this.version == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.version);
       }
       first = false;
       sb.append(")");
@@ -1030,6 +1105,9 @@ public class AntiEntropyService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
+      if (version != null) {
+        version.validate();
+      }
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -1048,15 +1126,15 @@ public class AntiEntropyService {
       }
     }
 
-    private static class waitForTransactionalDependencies_argsStandardSchemeFactory implements SchemeFactory {
-      public waitForTransactionalDependencies_argsStandardScheme getScheme() {
-        return new waitForTransactionalDependencies_argsStandardScheme();
+    private static class ackDependentWriteInPending_argsStandardSchemeFactory implements SchemeFactory {
+      public ackDependentWriteInPending_argsStandardScheme getScheme() {
+        return new ackDependentWriteInPending_argsStandardScheme();
       }
     }
 
-    private static class waitForTransactionalDependencies_argsStandardScheme extends StandardScheme<waitForTransactionalDependencies_args> {
+    private static class ackDependentWriteInPending_argsStandardScheme extends StandardScheme<ackDependentWriteInPending_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, waitForTransactionalDependencies_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, ackDependentWriteInPending_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -1066,21 +1144,27 @@ public class AntiEntropyService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // DEPENDENCY_REQUESTS
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-                {
-                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.dependencyRequests = new ArrayList<DataDependencyRequest>(_list0.size);
-                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                  {
-                    DataDependencyRequest _elem2; // required
-                    _elem2 = new DataDependencyRequest();
-                    _elem2.read(iprot);
-                    struct.dependencyRequests.add(_elem2);
-                  }
-                  iprot.readListEnd();
-                }
-                struct.setDependencyRequestsIsSet(true);
+            case 1: // MY_KEY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.myKey = iprot.readString();
+                struct.setMyKeyIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // ACKED_KEY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.ackedKey = iprot.readString();
+                struct.setAckedKeyIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // VERSION
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+                struct.version.read(iprot);
+                struct.setVersionIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -1096,20 +1180,23 @@ public class AntiEntropyService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, waitForTransactionalDependencies_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, ackDependentWriteInPending_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.dependencyRequests != null) {
-          oprot.writeFieldBegin(DEPENDENCY_REQUESTS_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.dependencyRequests.size()));
-            for (DataDependencyRequest _iter3 : struct.dependencyRequests)
-            {
-              _iter3.write(oprot);
-            }
-            oprot.writeListEnd();
-          }
+        if (struct.myKey != null) {
+          oprot.writeFieldBegin(MY_KEY_FIELD_DESC);
+          oprot.writeString(struct.myKey);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ackedKey != null) {
+          oprot.writeFieldBegin(ACKED_KEY_FIELD_DESC);
+          oprot.writeString(struct.ackedKey);
+          oprot.writeFieldEnd();
+        }
+        if (struct.version != null) {
+          oprot.writeFieldBegin(VERSION_FIELD_DESC);
+          struct.version.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1118,456 +1205,55 @@ public class AntiEntropyService {
 
     }
 
-    private static class waitForTransactionalDependencies_argsTupleSchemeFactory implements SchemeFactory {
-      public waitForTransactionalDependencies_argsTupleScheme getScheme() {
-        return new waitForTransactionalDependencies_argsTupleScheme();
+    private static class ackDependentWriteInPending_argsTupleSchemeFactory implements SchemeFactory {
+      public ackDependentWriteInPending_argsTupleScheme getScheme() {
+        return new ackDependentWriteInPending_argsTupleScheme();
       }
     }
 
-    private static class waitForTransactionalDependencies_argsTupleScheme extends TupleScheme<waitForTransactionalDependencies_args> {
+    private static class ackDependentWriteInPending_argsTupleScheme extends TupleScheme<ackDependentWriteInPending_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, waitForTransactionalDependencies_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, ackDependentWriteInPending_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetDependencyRequests()) {
+        if (struct.isSetMyKey()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetDependencyRequests()) {
-          {
-            oprot.writeI32(struct.dependencyRequests.size());
-            for (DataDependencyRequest _iter4 : struct.dependencyRequests)
-            {
-              _iter4.write(oprot);
-            }
-          }
+        if (struct.isSetAckedKey()) {
+          optionals.set(1);
+        }
+        if (struct.isSetVersion()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
+        if (struct.isSetMyKey()) {
+          oprot.writeString(struct.myKey);
+        }
+        if (struct.isSetAckedKey()) {
+          oprot.writeString(struct.ackedKey);
+        }
+        if (struct.isSetVersion()) {
+          struct.version.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, waitForTransactionalDependencies_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, ackDependentWriteInPending_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
-          {
-            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.dependencyRequests = new ArrayList<DataDependencyRequest>(_list5.size);
-            for (int _i6 = 0; _i6 < _list5.size; ++_i6)
-            {
-              DataDependencyRequest _elem7; // required
-              _elem7 = new DataDependencyRequest();
-              _elem7.read(iprot);
-              struct.dependencyRequests.add(_elem7);
-            }
-          }
-          struct.setDependencyRequestsIsSet(true);
+          struct.myKey = iprot.readString();
+          struct.setMyKeyIsSet(true);
         }
-      }
-    }
-
-  }
-
-  public static class receiveTransactionalDependencies_args implements org.apache.thrift.TBase<receiveTransactionalDependencies_args, receiveTransactionalDependencies_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("receiveTransactionalDependencies_args");
-
-    private static final org.apache.thrift.protocol.TField FULFILLED_REQUEST_IDS_FIELD_DESC = new org.apache.thrift.protocol.TField("fulfilledRequestIds", org.apache.thrift.protocol.TType.LIST, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new receiveTransactionalDependencies_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new receiveTransactionalDependencies_argsTupleSchemeFactory());
-    }
-
-    public List<Long> fulfilledRequestIds; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FULFILLED_REQUEST_IDS((short)1, "fulfilledRequestIds");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
+        if (incoming.get(1)) {
+          struct.ackedKey = iprot.readString();
+          struct.setAckedKeyIsSet(true);
         }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // FULFILLED_REQUEST_IDS
-            return FULFILLED_REQUEST_IDS;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.FULFILLED_REQUEST_IDS, new org.apache.thrift.meta_data.FieldMetaData("fulfilledRequestIds", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(receiveTransactionalDependencies_args.class, metaDataMap);
-    }
-
-    public receiveTransactionalDependencies_args() {
-    }
-
-    public receiveTransactionalDependencies_args(
-      List<Long> fulfilledRequestIds)
-    {
-      this();
-      this.fulfilledRequestIds = fulfilledRequestIds;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public receiveTransactionalDependencies_args(receiveTransactionalDependencies_args other) {
-      if (other.isSetFulfilledRequestIds()) {
-        List<Long> __this__fulfilledRequestIds = new ArrayList<Long>();
-        for (Long other_element : other.fulfilledRequestIds) {
-          __this__fulfilledRequestIds.add(other_element);
-        }
-        this.fulfilledRequestIds = __this__fulfilledRequestIds;
-      }
-    }
-
-    public receiveTransactionalDependencies_args deepCopy() {
-      return new receiveTransactionalDependencies_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.fulfilledRequestIds = null;
-    }
-
-    public int getFulfilledRequestIdsSize() {
-      return (this.fulfilledRequestIds == null) ? 0 : this.fulfilledRequestIds.size();
-    }
-
-    public java.util.Iterator<Long> getFulfilledRequestIdsIterator() {
-      return (this.fulfilledRequestIds == null) ? null : this.fulfilledRequestIds.iterator();
-    }
-
-    public void addToFulfilledRequestIds(long elem) {
-      if (this.fulfilledRequestIds == null) {
-        this.fulfilledRequestIds = new ArrayList<Long>();
-      }
-      this.fulfilledRequestIds.add(elem);
-    }
-
-    public List<Long> getFulfilledRequestIds() {
-      return this.fulfilledRequestIds;
-    }
-
-    public receiveTransactionalDependencies_args setFulfilledRequestIds(List<Long> fulfilledRequestIds) {
-      this.fulfilledRequestIds = fulfilledRequestIds;
-      return this;
-    }
-
-    public void unsetFulfilledRequestIds() {
-      this.fulfilledRequestIds = null;
-    }
-
-    /** Returns true if field fulfilledRequestIds is set (has been assigned a value) and false otherwise */
-    public boolean isSetFulfilledRequestIds() {
-      return this.fulfilledRequestIds != null;
-    }
-
-    public void setFulfilledRequestIdsIsSet(boolean value) {
-      if (!value) {
-        this.fulfilledRequestIds = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case FULFILLED_REQUEST_IDS:
-        if (value == null) {
-          unsetFulfilledRequestIds();
-        } else {
-          setFulfilledRequestIds((List<Long>)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case FULFILLED_REQUEST_IDS:
-        return getFulfilledRequestIds();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case FULFILLED_REQUEST_IDS:
-        return isSetFulfilledRequestIds();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof receiveTransactionalDependencies_args)
-        return this.equals((receiveTransactionalDependencies_args)that);
-      return false;
-    }
-
-    public boolean equals(receiveTransactionalDependencies_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_fulfilledRequestIds = true && this.isSetFulfilledRequestIds();
-      boolean that_present_fulfilledRequestIds = true && that.isSetFulfilledRequestIds();
-      if (this_present_fulfilledRequestIds || that_present_fulfilledRequestIds) {
-        if (!(this_present_fulfilledRequestIds && that_present_fulfilledRequestIds))
-          return false;
-        if (!this.fulfilledRequestIds.equals(that.fulfilledRequestIds))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(receiveTransactionalDependencies_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      receiveTransactionalDependencies_args typedOther = (receiveTransactionalDependencies_args)other;
-
-      lastComparison = Boolean.valueOf(isSetFulfilledRequestIds()).compareTo(typedOther.isSetFulfilledRequestIds());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetFulfilledRequestIds()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fulfilledRequestIds, typedOther.fulfilledRequestIds);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("receiveTransactionalDependencies_args(");
-      boolean first = true;
-
-      sb.append("fulfilledRequestIds:");
-      if (this.fulfilledRequestIds == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.fulfilledRequestIds);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-      // check for sub-struct validity
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class receiveTransactionalDependencies_argsStandardSchemeFactory implements SchemeFactory {
-      public receiveTransactionalDependencies_argsStandardScheme getScheme() {
-        return new receiveTransactionalDependencies_argsStandardScheme();
-      }
-    }
-
-    private static class receiveTransactionalDependencies_argsStandardScheme extends StandardScheme<receiveTransactionalDependencies_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, receiveTransactionalDependencies_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // FULFILLED_REQUEST_IDS
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-                {
-                  org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
-                  struct.fulfilledRequestIds = new ArrayList<Long>(_list8.size);
-                  for (int _i9 = 0; _i9 < _list8.size; ++_i9)
-                  {
-                    long _elem10; // required
-                    _elem10 = iprot.readI64();
-                    struct.fulfilledRequestIds.add(_elem10);
-                  }
-                  iprot.readListEnd();
-                }
-                struct.setFulfilledRequestIdsIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, receiveTransactionalDependencies_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.fulfilledRequestIds != null) {
-          oprot.writeFieldBegin(FULFILLED_REQUEST_IDS_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.fulfilledRequestIds.size()));
-            for (long _iter11 : struct.fulfilledRequestIds)
-            {
-              oprot.writeI64(_iter11);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class receiveTransactionalDependencies_argsTupleSchemeFactory implements SchemeFactory {
-      public receiveTransactionalDependencies_argsTupleScheme getScheme() {
-        return new receiveTransactionalDependencies_argsTupleScheme();
-      }
-    }
-
-    private static class receiveTransactionalDependencies_argsTupleScheme extends TupleScheme<receiveTransactionalDependencies_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, receiveTransactionalDependencies_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetFulfilledRequestIds()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetFulfilledRequestIds()) {
-          {
-            oprot.writeI32(struct.fulfilledRequestIds.size());
-            for (long _iter12 : struct.fulfilledRequestIds)
-            {
-              oprot.writeI64(_iter12);
-            }
-          }
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, receiveTransactionalDependencies_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          {
-            org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-            struct.fulfilledRequestIds = new ArrayList<Long>(_list13.size);
-            for (int _i14 = 0; _i14 < _list13.size; ++_i14)
-            {
-              long _elem15; // required
-              _elem15 = iprot.readI64();
-              struct.fulfilledRequestIds.add(_elem15);
-            }
-          }
-          struct.setFulfilledRequestIdsIsSet(true);
+        if (incoming.get(2)) {
+          struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+          struct.version.read(iprot);
+          struct.setVersionIsSet(true);
         }
       }
     }
