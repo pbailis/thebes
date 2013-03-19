@@ -9,9 +9,463 @@
   Stonebraker~\cite{stonebraker2010errors}
 \end{quote}
 
-While $1$-available and $1$-sticky available systems provide several
-benefits, they come with a cost: the semantic guarantees that they are
-able to offer are reduced as a result of their coordination penalty.
+HAT systems offer substantial latency and availability benefits, yet
+they come with a cost. In the distributed systems community, there is
+a host of results that taxonomize the relationships between various
+distributed consistency models. Perhaps most famously, Brewer's CAP
+Theorem---as formally proven by Gilbert and
+Lynch~\cite{needed}---states that it is impossible to maintain
+linearizability (``C,'' or ``consistency''---albeit poorly named), or
+the ability to read the last completed write, and replica availability
+in the presence of failures~\cite{needed}. While the CAP Theorem has
+has roots in decades of distributed system designs~\cite{needed}, it
+has had large scale impact on the design and development of
+distributed systems, particularly for Internet
+services---unsurprisingly, the context in which Brewer formulated his
+finding.
+
+\subsection{ACID and Modern Databases}
+
+While linearizability is a useful property to consider, there are
+several other guarantees that are perhaps more relevant to a database
+system. In particular, the database tradition of providing ACID
+guarantees: atomicity, consistency, isolation, and durability are,
+with few exceptions, not addressed by the distributed systems
+literature. There are several factors behind this occurrence, the
+least of which is that distributed systems rarely consider
+multi-object guarantees, whereas ACID transactions are frequently used
+to provide semantic guarantees across multiple operations on multiple
+objects. While linearizability (unfortunately often called
+``atomicity'') ``composes'' across multiple objects, a linearizable
+system does not provide ACID ``atomicity'' (which we will call
+``transactional atomicity'' for clarity): just because two writes are
+visible to all writers immediately after they complete does not, on
+its own, provide any guarantees about the mutual visibility of the two
+writes.
+
+Database designers and researchers have long realized that
+serializability---the gold standard of ACID isolation, which
+guarantees application-level consistency---is not achievable in a
+highly available system. Indeed, decades of research on
+semantics-based concurrency control and coordination-reducing
+techniques such as escrow transactions and sagas allow serializability
+in the presence of partial system knowledge or otherwise reduce
+coordination cost. However, the majority of these algorithms are
+intended to preserve application-level consistency, which, for
+arbitrary applications and arbitrary sequence of operations, cannot be
+ensured with high availability in the presence of partitions.
+
+Of course, database systems offer a range of ACID properties besides
+serializability. Even on a single-node system, the coordination
+penalties associated with ensuring equivalence with a serial execution
+can be severe and manifest themselves in the form of concurrency
+control contention (and, subsequently, performance degradation,
+scalability limitations, and, often, external aborts like
+deadlocks). Instead, databases offer a host of so-called \textit{weak
+  isolation} models that allow varying restrictions on the space of
+schedules that are allowable by the system. None of these weak
+isolation models guarantees serializability, but the benefits of these
+models can outweigh the costs of possible application-level
+consistency anomalies that arise from their use.
+
+To understand the prevalence of these weak isolation models, we
+surveyed the default and maximum isolation models provided by 18
+relational databases, often claiming to provide ``ACID'' or ``NewSQL''
+functionality. As shown in Table~\ref{table:existing}, only three out
+of 18 databases provides serializability by default, and at least
+eight do not provide serializability as an option at all. This is
+particularly surprising when we consider the widespread deployment of
+many of these databases, like Oracle 11g, which are known to power
+major businesses and product functionality. We might view the use of
+weak consistency is somewhat of an ``arms race'': anecdotally, one
+major RDBMS vendor was forced to lower their default isolation level
+in order to compare favorably in out-of-the-box performance
+comparisons with its major competitor, which had already lowered its
+default setting. Applications can guard against inconsistency in a
+weakly isolated environment by performing their own locking external
+to the database or by performing ad-hoc concurrency control within the
+database. However, this appears error-prone and, without further
+evidence, it remains somewhat puzzling why this is indeed favorable to
+providing serializability with in the database itself.
+
+\begin{table}
+\begin{small}
+\begin{tabular}{|l|c|c|}
+\hline
+Database & Default & Maximum\\\hline
+Actian Ingres 10.0/10S~\cite{actian-docs} & S & S\\
+Aerospike~\cite{aerospike-docs} & RC & RC\\
+Akiban Persistit~\cite{akiban-docs} & SI & SI\\
+Clustrix CLX 4100~\cite{clustrix-docs} & RR & ?\\
+Greenplum 4.1~\cite{greenplum-docs} & RC & S \\
+IBM DB2 10 for z/OS~\cite{db2-docs} & CS & S\\
+IBM Informix 11.50~\cite{informix-docs} & Depends & RR\\
+MySQL 5.6~\cite{innodb-docs} & RR & S \\
+MemSQL 1b~\cite{memsql-docs} & RC & RC\\
+MS SQL Server 2012~\cite{ms-sql-docs} & RC & S \\
+NuoDB~\cite{nuodb-docs} & CR & CR\\
+Oracle 11g~\cite{oracle-docs} & RC & SI\\
+Oracle Berkeley DB~\cite{bdb-reg-docs} & S & S\\
+Oracle Berkeley DB JE~\cite{bdb-je-docs} & RR & S\\
+Postgres 9.2.2~\cite{postgres-docs} & RC & S\\
+SAP HANA~\cite{hana-docs} & RC & SI\\
+ScaleDB 1.02~\cite{scaledb-docs} & RC & RC\\
+VoltDB~\cite{voltdb-docs} & S & S\\
+\hline
+\multicolumn{3}{|p{7cm}|}{{\footnotesize RC: read committed, RR: repeatable read, SI: snapshot isolation, S: serializability, CS: cursor stability, CR: consistent read}}\\\hline
+
+\end{tabular}
+\caption{Default and maximum isolation levels for ACID and NewSQL
+  databases as of January 2013 (from
+  \protect\cite{needed-hotos}).}\vspace{-1.5em}
+\label{table:existing}
+\end{small}
+\end{table}
+
+Given that these transactional models are frequently used, our
+inability to provide serializability to provide general-purpose HATs
+appears not to be a show-stopper. If applications cope with
+inconsistency or, on a single node server, have already decided that
+the benefits of weak isolation outweigh potential application
+inconsistencies, then perhaps, in a highly available environment, some
+may make a similar decision given the appropriate choice of semantic
+guarantees.
+
+The primary challenge in providing weak isolation in a HAT context is
+that, unfortunately, it is unclear \textit{which} isolation guarantees
+can be provided with high availability. Standard discussions of weak
+isolation are presented in a single-node context---a possible
+consequence of their original context: a lock-based (and therefore
+unavailable, even in a distributed context) single-server
+deployment~\cite{needed}. We are not aware of any prior literature
+that provides guidance as to the relationship between weak isolation
+and high availability. Prior work has examined the relationship
+between serializability and high availability and weak isolation on a
+single-server but never weak isolation and high availability taken
+together. This apparent gap in the database literature is a possible
+contributing factor to the often-apparent attitude that
+general-purpose transactional semantics are either too expensive or
+too lacking in availability guarantees to provide in modern
+distributed databases---except under special circumstances, such as
+operations over groups of co-located data items.
+
+\subsection{Achievable HAT Semantics}
+
+In this paper, we will describe which ACID semantics are achievable in
+HATs as well as which are not. Our strategy is to explore successively
+more powerful models until we reach a frontier of semantic guarantees
+which are unavailable to HATs. To begin, we present achievable
+semantics, offering proof-of-concept algorithms to demonstrate
+feasibility. When possible, we draw on existing properties and
+definitions from the database and distributed systems literature,
+providing a brief, informal explanation of each guarantee and
+illustrate it with an example. For our ACID guarantees, we draw
+largely on Adya's thesis work on defining weak isolation
+models~\cite{needed} and, where appropriate, supplement with
+definitions and discussion from Berenson et al.'s SIGMOD 1995 critique
+of the ANSI SQL Specification~\cite{needed} (hereafter, Berenson) as
+well as the ANSI SQL specification~\cite{needed} (hereafter, ANSI)
+itself. For other guarantees, such as session properties, we draw on
+both the database and distributed systems literature. We provide a set
+of formal definitions and semantics in the Appendix.
+
+\subsubsection{ACID Isolation Guarantees}
+
+To begin, Adya's \textit{Read Uncommitted} isolation requires that
+transactions are totally ordered and that writes within transactions
+are ordered consistently with this order (prohibiting ``Dirty
+Writes,'' or $G0$)~\cite{adya}. If two transactions write to the same
+set of data items, then the final database state cannot contain the
+``earlier'' transaction's writes to the data items. For example, in
+the below example, $T_3$ should eventually only read $a=b=1$ or
+$a=b=2$ but not $a=2, b=1$:
+\begin{align*}
+\small
+T_1 &: w_x(1)~w_y(1)
+\\T_2 &: w_x(2)~w_y(2)
+\\T_3 &: r_x(a)~r_y(b)\\[-2em]
+\end{align*}
+The difference between this total order on transactions and the total
+order required by serializability is that the Read Uncommitted total
+order is completely arbitrary (i.e., an order must exist), whereas a
+serializable total order must be equivalent to a serial
+execution. Interestingly, Read Uncommitted is a close analog with
+eventually consistent systems's concept of replica convergence, in
+which all replicas for a data item must end up with the same data
+item. This convergence is usually achieved by picking a ``winning''
+update---which requires ordering---or by maintaining a growing a set
+of updates---whose cardinality implicitly defines an order (with
+convergence achieved when all updates are in the set); we can see Read
+Uncommitted as a cross-item convergence property. It is easily
+achieved via applying the same logical timestamp to each update in a
+transaction.
+
+\textit{Read Committed} isolation requires that transactions do not
+read uncommitted versions of data items (prohibiting both ``Dirty
+Writes''---as above---and ``Dirty Reads'' phenomena; captured by
+Adya's $G1\{a,b,c\}$, ANSI's $P1$, and Berenson's ``broad'' $P1$
+(2.2)). For instance, in the example below, $T_3$ should never see
+$a=1$, and, if $T_2$ aborts, $T_3$ should never read $a=3$:
+\vspace{-.5em}
+\begin{align*}
+\small
+T_1 &: w_x(1)~w_x(2)
+\\T_2 &: w_x(3)\\
+T_3 &: r_x(a)\\[-2em]
+\end{align*}
+It is fairly easy to prvent ``Dirty Reads'': if transactions never
+write uncommitted data to the database, then transactions will never
+read dirty data. Clients can buffer their writes until they commit,
+or, alternatively, can send them to servers, who will not serve writes
+until clients notify that they have been committed.
+
+\textit{Repeatable Read} isolation is a contentious property. As
+Berenson et al. point out, Gray's original Repeatable Read lock-based
+implementation provides substantially richer guarantees than those
+that are promised by the ANSI SQL specification. Gray, Berenson, and
+Adya effectively preclude all serializability anomalies but the
+Phantom Problem (which we have explicitly not yet considered and will
+do so in Section~\ref{sec:unachievable-hat}). Nevertheless, the ANSI
+SQL specification provides a useful property which, although is not
+true to Gray's spirit of Repeatable Read, is used in distributed
+consistency models. The ANSI Repeatable Read guarantee requires that,
+along with observing Read Committed isolation, each transaction can
+only read only version of each data item that it did not itself
+produce. In the example below, $T_3$'s must see $a=1$:
+\begin{align*}
+\small
+T_1 &: w_x(1)
+\\T_2 &: w_x(2)
+\\T_3 &: r_x(1)~r_x(a)
+\end{align*}
+This isolation property is much weaker than serializability, but it is
+a good faith literal interpretation of the phrase ``Repeatable Read'':
+transactions see their own writes. By itself, this property can be
+implemented trivially---always read \texttt{null} for each
+key. However, when coupled with additional properties, like
+transactional atomicity, it becomes stronger: the repeated reads must
+also obey some additional ordering properties. Distributed systems
+describe a ``consistent snapshot'' across a set of related events as a
+\textit{cut} across a set of participants or, in our case, data
+items. Accordingly, to capture the notion that the transaction should
+read from a consistent cut, and to disambiguate from the
+aforementioned stronger Repeatable Read properties, we call ANSI SQL
+Repeatable Read \textit{cut isolation}. In the absence of additional
+guarantees, it is possible to satisfy cut isolation with high
+availability by caching each transaction's reads or, alternatively,
+using multi-versioning on the server and ensuring that each
+transaction's successive reads return the same version of each data
+item.
+
+\subsubsection{ACID Atomicity Guarantees}
+
+Transactional atomicity is core to ACID guarantees. Although, at least
+by the acronym, not an ``isolation'' property, transactional atomicity
+restricts transactions' ability to view the effects of partially
+completed transactions: within a transactions, either all effects of
+another transaction are observed, or none are (equivalently, once some
+of the effects of a transaction are observed, all effects are
+observed). This is a strictly stronger guarantee than Read Committed
+isolation because, in Read Committed, we can read a subset of
+committed writes whereas, with Transactional Atomicity, we must read
+all of them. For example, if $T_1$ commits, then, given Transactional
+Atomicity, $T_2$ must observe $b=c=1$ (or later versions):
+\vspace{-.5em}
+\begin{align*}
+\small
+T_1 &: w_x(1)~w_y(1)~w_z(1)
+\\T_2 &: r_x(a)~r_y(1)~r_x(b)~r_z(c)~\\[-1.5em]
+\end{align*}
+$T_2$ can also observe $a=\bot$ or $a=1$.
+
+Perhaps perplexingly, discussions of Transactional Atomicity are
+absent from existing discussions of weak isolation levels. This is
+perhaps again due to the single-node context in which prior work was
+developed: on a single server, atomicity is near-trivial to achieve
+via lightweight locking and/or local concurrency control over data
+items. (In this spirit, multi-item atomicity is common in so-called
+``entity groups,'' which logically represent groups of co-located
+items.) In contrast, in a distributed environment, atomicity over
+arbitrary groups of items is considerably more difficult to achieve
+with high availability. The key challenge is that different servers
+responsible for subsets of a transaction's updates must coordinate
+regarding when to reveal their writes to a transaction---without
+violating availability due to, say, locking, or a missing
+transactional write.
+
+(MORE HERE FROM MY NOTES)
+
+Transactional atomicity is achievable in a HAT environment. To ensure
+transactional atomicity, servers only need to know when all of a
+transaction's updates are present on their respective servers but do
+not need to know when all respective servers know when all of a
+transaction's updates are present on their respective servers. This
+subtle distinction corresponds to the difference between the
+distributed systems concepts of consensus and uniform reliable
+broadcast. The former requires explicit agreement across servers,
+while the latter simply requires that, if one server reveals a write,
+then all servers reveal the write.
+
+(TODO: fix me--HotOS copy!)
+
+Nonetheless, Coordinating transactional atomicity across replicas is
+challenging. For example, if, as is common~\cite{readonly, eiger}, we
+use a master to determine the correct set of updates to read, then the
+system will not be available when clients are partitioned from the
+master. Instead, we rely on decentralized \textit{background}
+agreement to decide when to show new values, which can safely stall in
+the presence of partitions. Each server keeps a known good value for
+each data item $d$ it is assigned, $d_{good}$ and a set of pending
+updates to $d$, $d_{pending}$. We use asynchronous agreement to move
+updates from $d_{pending}$ to $d_{good}$: all of $d_{good}$'s
+transactional siblings (or later values) are guaranteed present on all
+replicas. Without aborts, this requires only one synchronous round
+trip time (RTT).
+
+\noindent\textit{Writes:} First, consider the case where transactions
+do not internally abort. On commit, for each written data item $d$, we
+send the last written value of $d$ ($d_v$) with the transaction ID and
+$L_v$, a list of all data items and values written in the transaction,
+to available replicas for $d$. The replicas immediately reply with a
+response to \textit{commit}, place $d_v$ it in their respective
+$d_{pending}$, and send a receipt to all replicas for items in
+$L_v$. Once a server receives receipts from all replicas for all items
+in $L_v$, the server sets $d_{good} = d_v$ if $d_v$'s ID is greater
+than $d_{good}$'s ID. Accordingly, a new value will only appear in
+$d_{good}$ when the other values written with $d_{good}$ ($L_v$) are
+resident on every respective replica (though possibly in their
+$d_{pending}$).\vspace{.5em}
+
+\noindent\textit{Reads:} Each client maintains a vector of transaction
+IDs $V$, with one entry per data item ($V(d)$). When a client reads a
+new data item $d_i$, the server returns both $d_i$ and $L_v$, and, for
+all data items $k \in L_v$, the client sets $V(k)$ to $d_i$'s ID. When
+a client sends a read request for item $x$, it also sends $V(x)$, and
+the replica returns \textit{either} $x_{good}$ if it matches $V(x)$ or
+occurs after $V(x)$ in the transaction order or, if $x_{good}$ is
+unsatisfactory, $V(x)$ from $x_{pending}$. If $V(x)$ is empty, the
+server returns $x_{good}$.\vspace{.5em}
+
+\noindent\textit{Aborts:} If we allow internal aborts, writes require
+2 RTTs: one to check constraints and one to execute the above. Write
+propagation and update visibility are achieved asynchronously, as in
+the no-abort case.\vspace{.5em}
+
+This implementation is entirely masterless and both reads and writes
+do not block for coordination. One key property is that we do not, in general,
+dictate when writes become visible (see: session guarantees,
+\S\ref{sec:impossible}). Accordingly, it is highly available.\vspace{.5em}
+
+\subsubsection{Session Guarantees}
+
+So far, our models have not considered guarantees across transactions,
+but, in the distributed systems context, many useful \textit{safety}
+guarantees span multiple operations. There is no guarantee of forward
+progression between transactions or any guarantees on the ordering
+between transactions (other than that there exists some arbitrary
+ordering).
+
+\textit{Session guarantees} are used to describe continuity between
+groups of transactions. Informally, a \textit{session} is a form of
+context that consists of logical state that should persist between
+operations. Users accessing a web site may want to experience a notion
+of ``forward progress'' for the duration that they are logged in, and
+the duration of the ``log in'' to ``log out'' period forms a
+session. We can define session guarantees at several granularities
+(e.g., per-transaction, per-client, per-hour) but we choose to operate
+under a client-centric model.
+
+There are several guarantees that we can make with high availability:
+
+\vspace{.25em}\noindent\textit{\textbf{Monotonic reads}} stipulates
+that a client's subsequent reads to a given object ``never return any
+previous values''; reads from each item progress forward in a total
+order. Under Read Uncommitted, the ordering of reads should respect the
+total ordering on transactions.
+
+\vspace{.25em}\noindent\textit{\textbf{Monotonic writes}} requires
+that transactions from each individual client be serialized. Under
+Read Uncommitted, the transaction order should also respect the order
+in which each client submitted transactions.
+
+\vspace{.25em}\noindent\textit{\textbf{Writes Follow Reads}} requires
+that, if a client reads a write originating from transaction $T_1$
+then performs transaction $T_2$, then a client can only read $T_2$'s
+writes if it can also read $T_1$'s prior write (or overwritten values
+for $T_1$'s write). This requirement forms the basis for potential
+causality: writes follow reads obeys the ``reads-from'' relation that
+captures all events that influenced each
+transaction~\cite{causalmemory}. Under Read Uncommitted, the
+transaction order should respect the reads-from order (note that the
+total order on transactions precludes reads-from cycles).
+
+We can achieve the above guarantees by forcing servers to wait to
+reveal new writes until their respect dependencies are fulfilled on
+all replicas. In the case of Monotonic Reads, servers should only
+reveal new writes to a data item when all other servers responsible
+for the item have also seen them. Otherwise, a client might read a
+newer version, subsequently become partitioned from its prior server,
+and contact a comparatively out-of-date server. In the case of
+Monotonic Writes, each new write should become visible only when each
+client's prior write is visible everywhere, along with Monotonic Reads
+guarantees. For Writes Follow Reads, a servers should similarly wait
+to reveal items until their dependencies are present
+everywhere.
+
+Effectively, this mechanism requires that clients only read from a
+globally agreed upon lower bound on the writes in the system. This is
+indeed highly available as a client will never block due to inability
+to find a server with a sufficiently up-to-date version of a data
+item. However, it does not imply that transactions will read their own
+writes or provide much confidence in making forward progress through
+the version history in the presence of partitions. The problem is
+that, if a server is partitioned, under the highly available model, we
+cannot discount the possibility that an unfortunate client will be
+forced to issue her next requests against the partitioned server!
+
+The solution to this conundrum is to give up high availability in
+favor of sticky availability. Sticky availability permits two
+additional models, which we first define and then prove are
+unachievable in a generic highly available system:
+
+\noindent\textit{\textbf{Read your writes}} requires
+that whenever a client reads a given data item after updating it, the
+read returns the updated value (or a value with a higher ID).
+
+\vspace{.25em}\noindent\textit{\textbf{Causal consistency}} is the
+combination of all of the prior session
+guarantees~\cite{daudjee-session} and is also referred to as PL-2L
+isolation~\cite{adya}). We can also consider arbitrary
+application-defined partial orders, as in explicit
+causality~\cite{explicit-socc}, if dependencies are specified at
+commit time.
+
+
+
+
+
+TRASH
+
+We can accomplish these three requirements in two ways. First, clients
+can locally cache their reads and writes, updating caches when they
+read admissible replacements from
+replicas~\cite{sessionguarantees}. Second, clients can ensure
+\textit{stickiness} with groups~\cite{vogels-defs} (subject to the
+same groups caveat as before).  For monotonic writes, clients should
+generate increasing IDs for each transaction they perform. Caching and
+ID generation are both available.
+
+To provide writes follow reads,
+severs (or clients) can buffer transaction writes until the
+transactions the writes depend on have been written to all
+replicas~\cite{cops}. If we consider a group model, each group can
+independently apply transactions in order via a (possibly sharded)
+log-shipping approach~\cite{causalmemory, cops, eiger, swift}.
+
+
+
+\subsection{Unachievable HAT Semantics}
+\label{sec:unachievable-hat}
 
 What about existing systems?
 * Database technology developed for single-node systems; gold standard: serializability
@@ -71,6 +525,18 @@ A. *What's Available in Isolation and Atomicity?*
 		* Example: partition a client from all but one replica, have the client issue a write, which has to commit. Next, lift the partition between the client and the other replicas and partition the client and its previous replica. It can't read it's own write!
 		* This also means that causality, which is MR+MW+WFR+RYW is unavailable!
 		* S-HA is *doable* but it does result in substantially lowered unavailability unless one caches (e.g., bolt-on causal consistency)
+
+\noindent\textit{Groups:} We can optimize write visibility delay by
+partitioning servers and clients into groups, such that each group
+contains a fully replicated set of data items and all clients within a
+group contact only the servers in the group. Once all transaction
+values are present within a group, values can be installed as
+$d_{good}$ (as opposed to once they are present on all replicas). For
+example, in a multi-datacenter setting, all clients and servers within
+a datacenter may form a group. However, group-based atomicity is not
+highly available according to our definition unless clients and
+servers in a group fail together, as is often assumed in a
+geo-replicated context~\cite{cops, eiger}.
 
 * What do we have?
 	* In Adya, we get up to Causal+Cut Isolation for S-HA, and PL-2 for R-HA.
