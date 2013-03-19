@@ -231,7 +231,8 @@ true to Gray's spirit of Repeatable Read, is used in distributed
 consistency models. The ANSI Repeatable Read guarantee requires that,
 along with observing Read Committed isolation, each transaction can
 only read only version of each data item that it did not itself
-produce. In the example below, $T_3$'s must see $a=1$:
+produce (Berenson et al. call this preventing ``Fuzzy Read,'' or
+P2). In the example below, $T_3$'s must see $a=1$:
 \begin{align*}
 \small
 T_1 &: w_x(1)
@@ -250,12 +251,20 @@ describe a ``consistent snapshot'' across a set of related events as a
 items. Accordingly, to capture the notion that the transaction should
 read from a consistent cut, and to disambiguate from the
 aforementioned stronger Repeatable Read properties, we call ANSI SQL
-Repeatable Read \textit{cut isolation}. In the absence of additional
+Repeatable Read \textbf{Cut Isolation}. In the absence of additional
 guarantees, it is possible to satisfy cut isolation with high
 availability by caching each transaction's reads or, alternatively,
 using multi-versioning on the server and ensuring that each
 transaction's successive reads return the same version of each data
 item.
+
+We can consider two variants of Cut Isolation. The first is relatively
+straightforward, and reasons about cuts over discrete data items. We
+will call this \textit{Item Cut Isolation}. The second is known as
+preventing the \textit{Phantom Problem}, whereby two successive
+predicate-based reads return different data. We call predicate-based
+cut isolation, which prevents Phansoms, \textbf{Phantom Cut
+  Isolation}.
 
 \subsubsection{ACID Atomicity Guarantees}
 
@@ -292,6 +301,9 @@ responsible for subsets of a transaction's updates must coordinate
 regarding when to reveal their writes to a transaction---without
 violating availability due to, say, locking, or a missing
 transactional write.
+
+Together with Cut Isolation, Transactional Atomicity prevents Read
+Skew (Berenson et al.'s A5A).
 
 (MORE HERE FROM MY NOTES)
 
@@ -492,7 +504,12 @@ data item: in the absence of new mutations to a data item, in the
 absence of partitions, all servers eventually agree on the value for
 each item. This is typically accomplished by any number of
 anti-entropy protocols, which periodically update neighboring servers
-with the latest value for each data item.
+with the latest value for each data item. This convergence property
+should be considered mandatory given the spirit of existing literature
+on isolation protocols: in all models we have encountered, the
+database should behave as if there is some total order over
+transactions. Indeed, non-convergent systems are remarkably difficult
+to reason about.
 
 \subsection{Unachievable HAT Semantics}
 \label{sec:unachievable-hat}
@@ -501,18 +518,69 @@ While there are infinitely many HAT models
 (Section~\ref{sec:futurework}), at this point, we have exhausted our
 range of achievable, previously defined (useful) HAT semantics. Before
 summarizing our possibility results, we will present impossibility
-results for HATs, also defined in terms of previously identified isolation and consistency anomalies.
+results for HATs, also defined in terms of previously identified
+isolation and consistency anomalies.
 
 \subsubsection{Unachievable ACID Isolation}
 
-* Lost Update
-	* Simple proof: T1 R(x) W(x=x+1) T2 R(x) W(x=x+1); execute on opposite sides 
-* Read Skew
-	* Similar easy proof
-* Write Skew
-	* Similar easy proof
-* Anti-dependency cycles
-	* Serializability
+The simplest way to describe which isolation properties are achievable
+with high availability is in terms of preventing different isolation
+anomalies. We have already shown that it is possible prevent several
+anomalies, like Dirty Read, Dirty Write, Fuzzy Read, and atomicity
+violations. In this section, we demonstrate that preventing Lost
+Update, Write Skew, and Phantoms requires unavailability.
+
+In the words of Berenson et al., \textbf{Lost Update} occurs when one
+transaction $T1$ reads a given data item, a second transaction $T2$
+updates the same data item, then $T1$ modifies the data item based on
+its original read of the data item, ``missing'' or ``losing'' $T2$'s
+newer update. Consider the following transactions:
+\begin{align*}
+\small
+T_1 &: r_x(a) w_x(a+1)
+\\T_2 &: w_x(2)
+\end{align*}
+If $T_1$'s read from $x$ precedes $T_2$'s write to $x$ but $T_2$'s
+write to $x$ precedes $T_1$'s write to $x$, then a database containing
+only these two transactions will end in a state that could not have
+resulted in a serial execution.
+
+It is impossible to prevent Lost Update in a highly available
+environment. Consider two clients who submit the following $T_1$ and
+$T_2$ on opposite sides of a network partition:
+\begin{align*}
+\small
+T_1 &: r_x(100)~w_x(100+20=120)
+\\T_2 &: r_x(100)~w_x(100+30=130)
+\end{align*}
+The final state of the database will converge to an execution that
+could not have resulted from a serial excecution. To prevent this from
+happening, either $T_1$ or $T_2$ should not have committed. Each
+client's respective server might try to detect that another write
+occurred, but this requires knowing the version of the latest write to
+$x$. In this example, this reduces to a requirement for
+linearizability, which is, via Gilbert and Lynch's proof of the CAP
+Theorem, provably unachievable with high availabilty.
+
+\textbf{Write Skew} is a generalization of Lost Update to multiple
+keys. It occurs when one transaction $T1$ reads a given data item $x$,
+a second transaction $T2$ reads a different data item $y$, then $T1$
+writes to $y$ and commits and $T2$ writes to $x$ and commits. As an
+example of Write Skew, consider the following two transactions:
+\begin{align*}
+\small
+T_1 &: r_y(0)~w_x(1)
+\\T_2 &: r_x(0)~w_y(1)
+\end{align*}
+As Berenson et al. describe, if there was an integrity constraint
+between $x$ and $y$ such that only one of $x$ or $y$ should be one at
+any given time, then this write skew would lead to a non-serializable
+execution. Write skew in particular is a somewhat esoteric
+anomaly---for example, it does not appear in TPC-C---but, as a
+generalization of Lost Update, is also unavailable.
+
+\textbf{} 
+
 * Recency guarantees on data items
 	* CAP
 
@@ -523,26 +591,26 @@ results for HATs, also defined in terms of previously identified isolation and c
 
  \newcommand{\lostupdate}{$^\dagger$}
  \newcommand{\rwskew}{$^\ddagger$}
- \newcommand{\mphantom}{$^\star$}
  \newcommand{\linearizable}{$^\oplus$}
 
 \begin{table}
 \begin{tabular}{| c | p{6cm} | }\hline
 HA & Transactional Atomicity (TA), Read Uncommitted (RU), Read
-Committed (RC), Cut Isolation (CI), Monotonic Reads (MR), Monotonic
-Writes (MW), Writes Follow Reads (WFR)\\\hline Sticky-HA & Read Your
-Writes (RYW), Causal Consistency\\\hline Unavailable & Cursor
-Stability (CS)\lostupdate, Read Consistency (CR)\lostupdate, Snapshot
-Isolation (SI)\lostupdate, Repeatable Read (RR)\lostupdate\rwskew,
-Serializability (S)\lostupdate\rwskew\mphantom, Causal
-Serializability\lostupdate\rwskew\mphantom, Strict
-Serializability\lostupdate\rwskew\mphantom\linearizable \\\hline
+Committed (RC), Item Cut Isolation (P-CI), Phantom Cut Isolation
+(P-CI), Monotonic Reads (MR), Monotonic Writes (MW), Writes Follow
+Reads (WFR)\\\hline Sticky-HA & Read Your Writes (RYW), Causal
+Consistency\\\hline Unavailable & Cursor Stability (CS)\lostupdate,
+Read Consistency (CR)\lostupdate, Snapshot Isolation (SI)\lostupdate,
+Repeatable Read (RR)\lostupdate\rwskew, Serializability
+(S)\lostupdate\rwskew, Causal
+Serializability\lostupdate\rwskew, Strict
+Serializability\lostupdate\rwskew\linearizable \\\hline
 \end{tabular}
 \caption{Summary of highly available, sticky highly available, and
   unavailable models considered in this paper. Unavailable models are
   labeled by cause of unavailability: preventing lost
-  update\lostupdate, preventing read/write skew\rwskew, preventing
-  phantoms\mphantom, and requiring linearizability\linearizable.}
+  update\lostupdate, preventing write skew\rwskew, and requiring
+  linearizability\linearizable.}
 \label{table:hatcompared}
 \end{table}
 
@@ -554,7 +622,8 @@ Serializability\lostupdate\rwskew\mphantom\linearizable \\\hline
 
   \tikzstyle{every node}=[font=\small]
 
- \node[draw=none,fill=none] (ci) at (1.2, 1.6) {\underline{CI}};
+ \node[draw=none,fill=none] (ici) at (1.2, 1.6) {\underline{I-CI}};
+ \node[draw=none,fill=none] (pci) at (1.2, 2.4) {\underline{P-CI}};
  \node[draw=none,fill=none] (rc) at (1.2, .8) {\underline{RC}};
  \node[draw=none,fill=none] (ru) at (1.2, 0) {\underline{RU}};
 
@@ -562,40 +631,43 @@ Serializability\lostupdate\rwskew\mphantom\linearizable \\\hline
  \node[draw=none,fill=none] (mr) at (2.4, 0) {\underline{MR}};
  \node[draw=none,fill=none] (mw) at (3.6, 0) {\underline{MW}};
  \node[draw=none,fill=none] (wfr) at (4.9,0) {\underline{WFR}};
- \node at (6.3,0) [sticky] (ryw) {RYW};
+ \node at (6.3,0) [sticky] (ryw) {\underline{RYW}};
 
- \node at (3.6, 2) [sticky] (causal) {Causal};
- \node[noha] (cs) at (1.7, 2.4) {CS};
- \node[noha] (rr) at (.7, 2.6) {RR};
- \node[noha] (si) at (-.4, 2.2) {SI};
+ \node at (3.6, 2) [sticky] (causal) {\underline{Causal}};
+ \node[noha] (cs) at (2, 2.8) {CS};
+ \node[noha] (rr) at (.6, 3.0) {RR};
+ \node[noha] (si) at (-.4, 2.4) {SI};
  \node[noha] (cr) at (-.4, 1.2) {CR};
- \node[noha] (s) at (.5, 3.5) {S};
+ \node[noha] (s) at (-.4, 3.5) {S};
  \node[noha] (causal-s) at (3.6, 3.5) {Causal S};
  \node[noha] (strict-s) at (6, 3.5) {Strict S};
 
 
  \draw [->] (ru) -- (rc);
- \draw [->] (rc) -- (ci);
+ \draw [->] (rc) -- (ici);
+ \draw [->] (ici) -- (pci);
 
  \draw [->, blue] (mr) -- (causal);
  \draw [->, blue] (mw) -- (causal);
  \draw [->, blue] (wfr) -- (causal);
  \draw [->, blue] (ryw) -- (causal);
 
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (mr);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (ta);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ci) -- (ta);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (mr);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ci) -- (mr);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ta) -- (ru);
- \draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (causal);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (mr) -- (mw);
- \draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (mw);
- \draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (ryw);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (mr);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (ta);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ici) -- (ta);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (pci) -- (ta);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (rc) -- (mr);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (pci) -- (mr);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ici) -- (mr);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ta) -- (ru);
+ %\draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (ru) -- (causal);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (mr) -- (mw);
+ %\draw[snake=coil, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (mw);
+ %\draw[snake=coil, blue, segment aspect=0, segment amplitude=.75pt, segment length=2pt] (wfr) -- (ryw);
 
- \draw [->, red] (ci) -- (cs);
+ \draw [->, red] (ici) -- (cs);
  \draw [->, red] (cs) -- (rr);
- \draw [->, red] (ci) -- (si);
+ \draw [->, red] (pci) -- (si);
  \draw [->, red] (rr) -- (s);
  \draw [->, red] (si) -- (s);
  \draw [->, red] (ta) -- (cr);
@@ -609,13 +681,13 @@ Serializability\lostupdate\rwskew\mphantom\linearizable \\\hline
 \end{tikzpicture}
 \label{fig:hat-order}
 \caption{HAT, sticky HAT (in boxes), and unavailable models (circled)
-  from Table~\protect\ref{table:hatcompared} compared graphically. Directed
-  edges represent ordering by model strength, squiggle edges represent
-  (transitive) compatible models, while absence of edges represents
-  incomparable models. The combination of all underlined models
-  represents maximum ACID HAT semantics, while the combination of
-  underlined and boxed models represents maximum ACID sticky HAT
-  models.}
+  from Table~\protect\ref{table:hatcompared} compared
+  graphically. Directed edges represent ordering by model strength,
+  while all underlined models can be combined (e.g., the powerset of
+  the set of underlined models are all valid models). The combination
+  of all underlined, non-boxed models represents maximum ACID HAT
+  semantics, while the combination of underlined and boxed models
+  represents maximum ACID sticky HAT models.}
 \label{fig:hatcompared}
 \end{figure}
 
