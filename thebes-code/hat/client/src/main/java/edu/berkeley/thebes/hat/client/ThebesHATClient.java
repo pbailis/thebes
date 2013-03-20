@@ -336,7 +336,7 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ret = DataItem.fromThrift(router.getSyncReplicaByKey(key).get(key,
+            ret = new DataItem(router.getSyncReplicaByKey(key).get(key,
             		Version.toThrift(atomicityVersionVector.getVersion(key))));
         } catch (RuntimeException e) {
             errorMetric.mark();
