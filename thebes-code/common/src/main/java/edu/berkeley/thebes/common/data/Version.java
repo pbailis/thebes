@@ -75,7 +75,7 @@ public class Version implements Comparable<Version> {
 	    // If the timestamps are more than half the period (2^numBitsTimestamp) apart,
 	    // then we assume we've wrapped around, so the lower is actually higher!
 	    if (Math.abs(timestamp - other.getTimestamp()) > pow2Less1(numBitsTimestamp-1)) {
-	        return Long.compare(other.getTimestamp(), timestamp);
+	        return new Long(other.getTimestamp()).compareTo(timestamp);
 	    }
 	    
 	    return ComparisonChain.start()
