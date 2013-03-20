@@ -20,9 +20,9 @@ public class Version implements Comparable<Version> {
 	private final long timestamp;
 	
 	public Version(short clientID, long logicalTime, long timestamp) {
-		this.clientID = clientID;
-		this.logicalTime = logicalTime;
-		this.timestamp = timestamp;
+		this.clientID = (short) (pow2Less1(numBitsClientID) & clientID);
+		this.logicalTime = pow2Less1(numBitsLogicalTime) & logicalTime;
+		this.timestamp = pow2Less1(numBitsTimestamp) & timestamp;
 	}
 	
 	public static Version fromThrift(ThriftVersion thriftVersion) {
