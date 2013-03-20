@@ -298,7 +298,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             ret = router.getSyncReplicaByKey(key).put(key,
-                                                      DataItem.toThrift(value));
+                                                      value.toThrift());
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -318,7 +318,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             router.getAsyncReplicaByKey(key).put(key,
-                                                 DataItem.toThrift(value),
+                                                 value.toThrift(),
                                                  callback);
         } catch (RuntimeException e) {
             errorMetric.mark();

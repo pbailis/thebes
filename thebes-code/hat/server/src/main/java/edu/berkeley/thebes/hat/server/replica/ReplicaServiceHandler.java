@@ -31,7 +31,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     @Override
     public boolean put(String key,
                        ThriftDataItem valueThrift) throws TException {
-        DataItem value = DataItem.fromThrift(valueThrift);
+        DataItem value = new DataItem(valueThrift);
         if(logger.isTraceEnabled())
             logger.trace("received PUT request for key: '"+key+
                          "' value: '"+value+
@@ -73,6 +73,6 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
             return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
         }
 
-        return DataItem.toThrift(ret);
+        return ret.toThrift();
     }
 }
