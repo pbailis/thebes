@@ -1,5 +1,8 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Maps;
 
@@ -44,6 +47,7 @@ notifyNewLocalWrite() is called.
 */
 
 public class DependencyResolver implements PendingWrite.WriteReadyCallback {
+    private static Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
     
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
@@ -75,6 +79,14 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
                     unresolvedAcksIterator.remove();
                 }
             }
+        }
+        
+        if (Math.random() < .001) {
+            int numPendingWrites = 0;
+            for (Set<PendingWrite> pendingWrites : pendingWritesMap.values()) {
+                numPendingWrites += pendingWrites.size();
+            }
+            logger.debug("Currently have " + numPendingWrites + " pending writes!");
         }
     }
     

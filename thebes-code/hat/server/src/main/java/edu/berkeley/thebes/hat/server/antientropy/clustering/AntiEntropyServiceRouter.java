@@ -87,13 +87,14 @@ public class AntiEntropyServiceRouter {
     /** Actually does the forwarding! Called in its own thread. */
     private void forwardNextQueuedWriteToSiblings() {
         try {
-            QueuedWrite writeToForward = 
-                    Uninterruptibles.takeUninterruptibly(writesToForwardSiblings);
+            QueuedWrite writeToForward = writesToForwardSiblings.take();
             for (AntiEntropyService.Client sibling : replicaSiblingClients) {
                 sibling.put(writeToForward.key, writeToForward.value);
             }
         } catch (TException e) {
             logger.error("Failure while announcing queued pending write: ", e);
+        } catch (InterruptedException e) {
+            logger.error("Interrupted: ", e);
         }
     }
 
@@ -105,8 +106,7 @@ public class AntiEntropyServiceRouter {
     /** Actually does the announcement! Called in its own thread. */
     private void announceNextQueuedPendingWrite() {
         try {
-            PendingWrite writeToAnnounce = 
-                    Uninterruptibles.takeUninterruptibly(pendingWritesToAnnounce);
+            PendingWrite writeToAnnounce = pendingWritesToAnnounce.take();
             String writeKey = writeToAnnounce.getKey();
             Version writeVersion = writeToAnnounce.getVersion();
             
@@ -119,6 +119,8 @@ public class AntiEntropyServiceRouter {
             }
         } catch (TException e) {
             logger.error("Failure while announcing queued pending write: ", e);
+        } catch (InterruptedException e) {
+            logger.error("Interrupted: ", e);
         }
     }
     
