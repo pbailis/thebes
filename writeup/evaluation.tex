@@ -62,7 +62,9 @@ before committing.
 \end{itemize}
 
 There are several mechanisms that do not provide serializability (and
-often provide HAT semantics) but which are not available:
+often provide HAT semantics) but which are not
+available. Non-serializability can but does not necessarily imply high
+availability and low latency:
 
 \begin{itemize}
 \item \textbf{Lock-based protocols} such as those used to provide weak
