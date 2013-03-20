@@ -25,24 +25,79 @@ deployment or the requirement for serializability. As a consequence,
 traditional transaction processing systems are not well-optimized for
 a HAT context.
 
- designed for either single-node deployments or
-to achieve the are designed for
+We begin by considering several existing algorithms that provide
+serializability but are not highly available. In summary, all
+algorithms in this class require at least one round trip time (RTT)
+before committing.
 
-1.) There are a bunch of existing systems that aren't HATS but provide stronger semantics. What's their cost? (N.B. this is almost a related work survey here, but I think, if done right, it can be very instructive.)
-Not HA, Serializable:
-* Two-phase locking: for transaction size T, T+1 round-trips (directly to each database)
-* Deterministic transaction scheduling: 1 round-trip per partition (to scheduler)
-* Optimistic concurrency control: 1 round-trip per partition (to database cycle checker)
-* MVCC: min 1 round-trip per partition (to partition timestamp manager)
+\begin{itemize}
+\item \textbf{Two-phase locking} (ignoring deadlocks) requires $T$
+  lock operations and 1 unlock operation for a transaction of length
+  $T$. If all items are located on a single master server, this
+  requires one RTT (for requests originating from servers other than
+  the master). If items are located on $S$ ($S \leq T$) different
+  servers, two-phase locking requires, at minimum, $2(S-1)$ RTTs---one
+  for lock and another for unlock.
 
-Not HA, not serializable, but "transactional":
-* MDCC: need to check, 1-2 round-trip times because uses Paxos variant
-* Walter: 1 rount-trip time to each preferred site
-* Eiger: Sticky-HA, assumes linearizable clusters, reads/writes stall in presence of coordinator failures
-* Chan and Gray read-only transaction: reads stall in the presence of coordinator failure
-* Bolt-on causal consistency: sticky-HA, could be used to implement TA+RR, uses client cache
-* COPS: Sticky-HA, assumes linearizable clusters
-* Bayou: not HA since client doesn't cache (pretty sure)
+\item \textbf{Optimistic concurrency control} allows reads from any
+  server but transactions must be checked by a scheduler before
+  commit. With one scheduler per database, this requires one RTT for
+  concurrency control. If schedulers are sharded by database
+  partition, a multi-partition transaction may require contacting
+  several different schedulers and, possibly, an atomic commit
+  protocol, which becomes substantially more expensive.
+
+\item \textbf{Deterministic transaction scheduling} is effecitvely the
+  inverse of optimistic concurrency control: a scheduler first orders
+  the transactions, then sends them to database replicas for in-order
+  execution. These techniques, pioneered in the context of totally
+  ordered atomic broadcast systems, have recently seen increased
+  attention and effectively require communication overhead similar to
+  optimistic concurrency control.
+
+\item\textbf{Multiversion concurrency control} allows readers to read
+  older versions of data items but, like OCC, must eventually be
+  checked for write-write conflicts, requiring a scheduler.
+
+\end{itemize}
+
+There are several mechanisms that do not provide serializability (and
+often provide HAT semantics) but which are not available:
+
+\begin{itemize}
+\item \textbf{Lock-based protocols} such as those used to provide weak
+  isolation in Gray's original paper require at least one RTT to the a
+  lock server (or, alternatively, a majority quorum). In the presence
+  of failure, distributed locking can be challenging.
+\item The \textbf{MDCC} commit protocol uses a Paxos variant and escrow
+  transactions to provide Repeatable Read isolation with 1-2 RTTs. (TODO: CHECK)
+\item \textbf{Parallel Snapshot Isolation} as developed by the Walter
+  system provides (unavailable) snapshot isolation variant and, even
+  when writes commute, requires 1 RTT to enforce read
+  recency. However, PSI without recency requirements could be made
+  highly available.
+\item \textbf{Eiger} provides read-only and write-only transactions
+  with item cut isolation and causal consistency. It relies on sticky
+  high availability and groups within a datacenter with linearizable
+  clusters. In the presence of server failure during write
+  transactions, reads and writes may become unavailable. \textbf{COPS}
+  provides similar semantics for read-only transactions but does not
+  suffer from unavailability as it does not have a coordinator.
+\item \textbf{Chan and Gray read-only transactions} use a similar
+  algorithm to Eiger to provide read-only transactions with item cut
+  isolation and causal consistency but coordinate on reads instead of
+  writes.
+\item \textbf{Bolt-on Causal Consistency} and \textbf{Swift} can
+  provide read-only and write-only transactions with item cut
+  isolation and causal consistency with sticky high availability and
+  both rely on client-side caching.
+\item \textbf{Bayou} provides several session guarantees but, without
+  client-side caching, actually faces unavailability in the presence
+  of failure. (TODO: CHECK)
+\item \textbf{Brantner's S3 Database} uses caching to provide several
+  guarantees such as XX and YY but is unavailable during failures
+  (TODO: CHECK).
+\end{itemize}
 
 \subsection{Application Requirements}
 
