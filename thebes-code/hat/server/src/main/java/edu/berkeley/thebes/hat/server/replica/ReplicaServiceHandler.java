@@ -58,15 +58,19 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         if(logger.isTraceEnabled())
             logger.trace("received GET request for key: '"+key+
                          "' requiredVersion: "+ requiredVersion+
-                         ", found verison: " + (ret == null ? null : ret.getVersion()));
+                         ", found version: " + (ret == null ? null : ret.getVersion()));
 
-        if (requiredVersion != null &&
+        if (requiredVersion != null && requiredVersion != Version.NULL_VERSION &&
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
             if (ret == null)
                 throw new TException(String.format("suitable version was not found! time: %d clientID: %d",
                                                    requiredVersion.getTimestamp(), requiredVersion.getClientID()));
+        }
+
+        if(ret == null) {
+            return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
         }
 
         return DataItem.toThrift(ret);

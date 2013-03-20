@@ -27,7 +27,7 @@ public class Version implements Comparable<Version> {
 	
 	public static Version fromThrift(ThriftVersion thriftVersion) {
 	    if (thriftVersion == null)
-	        return NULL_VERSION;
+	        return null;
 	    
 	    long version = thriftVersion.getVersion();
 	    

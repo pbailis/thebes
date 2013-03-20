@@ -250,7 +250,7 @@ public class ThebesHATClient implements IThebesClient {
         DataItem ret = doGet(key);
 
         if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            if(ret != null) {
+            if(ret != null && ret.getTransactionKeys() != null) {
                 /*
                   If the value we just read was part of a transaction that i.) wrote to a key
                   we've already read and ii.) is ordered after the transaction that wrote to

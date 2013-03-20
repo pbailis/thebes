@@ -36,7 +36,7 @@ public class AntiEntropyServiceRouter {
         if (Config.isStandaloneServer()) {
             logger.debug("Server marked as standalone; not starting anti-entropy!");
             // TODO: Fix this.
-            throw new IllegalArgumentException("Standalone mode disabled: Need anti-entropy for TA");
+            return;
         }
 
         Uninterruptibles.sleepUninterruptibly(Config.getAntiEntropyBootstrapTime(),

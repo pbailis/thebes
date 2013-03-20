@@ -15,7 +15,10 @@ public class DataItem implements Comparable<DataItem> {
 	private List<String> transactionKeys;
 
 	public DataItem(byte[] data, Version version, List<String> transactionKeys) {
-		this.data = ByteBuffer.wrap(data);
+        if(data != null)
+		    this.data = ByteBuffer.wrap(data);
+        else
+            this.data = null;
 		this.version = version;
 		this.transactionKeys = transactionKeys;
 	}

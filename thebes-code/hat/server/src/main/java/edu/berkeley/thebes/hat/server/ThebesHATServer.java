@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.server;
 
+import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
@@ -32,6 +33,9 @@ public class ThebesHATServer {
             switch (engineType) {
             case MEMORY:
                 engine = new MemoryPersistenceEngine();
+                break;
+            case LEVELDB:
+                engine = new LevelDBPersistenceEngine();
                 break;
             default:
                 throw new ConfigurationException("unexpected persistency type: " + engineType);

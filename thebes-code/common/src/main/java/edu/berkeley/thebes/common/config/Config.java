@@ -293,6 +293,14 @@ public class Config {
         return getOption(ConfigParameters.LOGGER_LEVEL);
     }
 
+    public static String getDiskDatabaseFile() {
+        return getOption(ConfigParameters.DISK_DATABASE_FILE);
+    }
+
+    public static boolean doCleanDatabaseFile() {
+        return getOption(ConfigParameters.DO_CLEAN_DATABASE_FILE);
+    }
+
     /** Returns true if this server is the Master of a 2PL replica set. */
     public static Boolean isMaster() {
         return txnMode == TransactionMode.TWOPL &&
