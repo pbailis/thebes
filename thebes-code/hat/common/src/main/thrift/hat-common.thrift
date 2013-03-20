@@ -25,9 +25,10 @@ service ReplicaService {
 }
 
 service AntiEntropyService {
-   oneway void put(1: string key,
-                   2: dataitem.ThriftDataItem value);
+  oneway void put(1: string key,
+                  2: dataitem.ThriftDataItem value);
 
-  oneway void waitForTransactionalDependencies(1: list<DataDependencyRequest> dependencyRequests);
-  oneway void receiveTransactionalDependencies(1: list<i64> fulfilledRequestIds);
+  oneway void ackDependentWriteInPending(1: string myKey     # our key, which depends on
+                                         #2: string ackedKey, # this key, which is now in pending
+                                         3: version.ThriftVersion version)
 }

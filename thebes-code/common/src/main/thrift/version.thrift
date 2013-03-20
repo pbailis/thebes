@@ -3,6 +3,5 @@
 namespace java edu.berkeley.thebes.common.thrift
 
 struct ThriftVersion {
-  1: i16 clientID,
-  3: i64 timestamp,
+  1: required i64 version,
 }

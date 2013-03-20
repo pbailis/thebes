@@ -33,8 +33,7 @@ import org.slf4j.LoggerFactory;
 public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, ThriftVersion._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ThriftVersion");
 
-  private static final org.apache.thrift.protocol.TField CLIENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("clientID", org.apache.thrift.protocol.TType.I16, (short)1);
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -42,13 +41,11 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     schemes.put(TupleScheme.class, new ThriftVersionTupleSchemeFactory());
   }
 
-  public short clientID; // required
-  public long timestamp; // required
+  public long version; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    CLIENT_ID((short)1, "clientID"),
-    TIMESTAMP((short)3, "timestamp");
+    VERSION((short)1, "version");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,10 +60,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // CLIENT_ID
-          return CLIENT_ID;
-        case 3: // TIMESTAMP
-          return TIMESTAMP;
+        case 1: // VERSION
+          return VERSION;
         default:
           return null;
       }
@@ -107,15 +102,12 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   }
 
   // isset id assignments
-  private static final int __CLIENTID_ISSET_ID = 0;
-  private static final int __TIMESTAMP_ISSET_ID = 1;
+  private static final int __VERSION_ISSET_ID = 0;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.CLIENT_ID, new org.apache.thrift.meta_data.FieldMetaData("clientID", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
-    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ThriftVersion.class, metaDataMap);
@@ -125,14 +117,11 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
   }
 
   public ThriftVersion(
-    short clientID,
-    long timestamp)
+    long version)
   {
     this();
-    this.clientID = clientID;
-    setClientIDIsSet(true);
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
+    this.version = version;
+    setVersionIsSet(true);
   }
 
   /**
@@ -140,8 +129,7 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
    */
   public ThriftVersion(ThriftVersion other) {
     __isset_bitfield = other.__isset_bitfield;
-    this.clientID = other.clientID;
-    this.timestamp = other.timestamp;
+    this.version = other.version;
   }
 
   public ThriftVersion deepCopy() {
@@ -150,73 +138,40 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   @Override
   public void clear() {
-    setClientIDIsSet(false);
-    this.clientID = 0;
-    setTimestampIsSet(false);
-    this.timestamp = 0;
+    setVersionIsSet(false);
+    this.version = 0;
   }
 
-  public short getClientID() {
-    return this.clientID;
+  public long getVersion() {
+    return this.version;
   }
 
-  public ThriftVersion setClientID(short clientID) {
-    this.clientID = clientID;
-    setClientIDIsSet(true);
+  public ThriftVersion setVersion(long version) {
+    this.version = version;
+    setVersionIsSet(true);
     return this;
   }
 
-  public void unsetClientID() {
-    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __CLIENTID_ISSET_ID);
+  public void unsetVersion() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __VERSION_ISSET_ID);
   }
 
-  /** Returns true if field clientID is set (has been assigned a value) and false otherwise */
-  public boolean isSetClientID() {
-    return EncodingUtils.testBit(__isset_bitfield, __CLIENTID_ISSET_ID);
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersion() {
+    return EncodingUtils.testBit(__isset_bitfield, __VERSION_ISSET_ID);
   }
 
-  public void setClientIDIsSet(boolean value) {
-    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __CLIENTID_ISSET_ID, value);
-  }
-
-  public long getTimestamp() {
-    return this.timestamp;
-  }
-
-  public ThriftVersion setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
-    return this;
-  }
-
-  public void unsetTimestamp() {
-    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __TIMESTAMP_ISSET_ID);
-  }
-
-  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
-  public boolean isSetTimestamp() {
-    return EncodingUtils.testBit(__isset_bitfield, __TIMESTAMP_ISSET_ID);
-  }
-
-  public void setTimestampIsSet(boolean value) {
-    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __TIMESTAMP_ISSET_ID, value);
+  public void setVersionIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __VERSION_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case CLIENT_ID:
+    case VERSION:
       if (value == null) {
-        unsetClientID();
+        unsetVersion();
       } else {
-        setClientID((Short)value);
-      }
-      break;
-
-    case TIMESTAMP:
-      if (value == null) {
-        unsetTimestamp();
-      } else {
-        setTimestamp((Long)value);
+        setVersion((Long)value);
       }
       break;
 
@@ -225,11 +180,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case CLIENT_ID:
-      return Short.valueOf(getClientID());
-
-    case TIMESTAMP:
-      return Long.valueOf(getTimestamp());
+    case VERSION:
+      return Long.valueOf(getVersion());
 
     }
     throw new IllegalStateException();
@@ -242,10 +194,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     }
 
     switch (field) {
-    case CLIENT_ID:
-      return isSetClientID();
-    case TIMESTAMP:
-      return isSetTimestamp();
+    case VERSION:
+      return isSetVersion();
     }
     throw new IllegalStateException();
   }
@@ -263,21 +213,12 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     if (that == null)
       return false;
 
-    boolean this_present_clientID = true;
-    boolean that_present_clientID = true;
-    if (this_present_clientID || that_present_clientID) {
-      if (!(this_present_clientID && that_present_clientID))
+    boolean this_present_version = true;
+    boolean that_present_version = true;
+    if (this_present_version || that_present_version) {
+      if (!(this_present_version && that_present_version))
         return false;
-      if (this.clientID != that.clientID)
-        return false;
-    }
-
-    boolean this_present_timestamp = true;
-    boolean that_present_timestamp = true;
-    if (this_present_timestamp || that_present_timestamp) {
-      if (!(this_present_timestamp && that_present_timestamp))
-        return false;
-      if (this.timestamp != that.timestamp)
+      if (this.version != that.version)
         return false;
     }
 
@@ -297,22 +238,12 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     int lastComparison = 0;
     ThriftVersion typedOther = (ThriftVersion)other;
 
-    lastComparison = Boolean.valueOf(isSetClientID()).compareTo(typedOther.isSetClientID());
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetClientID()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.clientID, typedOther.clientID);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetTimestamp()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -337,12 +268,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     StringBuilder sb = new StringBuilder("ThriftVersion(");
     boolean first = true;
 
-    sb.append("clientID:");
-    sb.append(this.clientID);
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("timestamp:");
-    sb.append(this.timestamp);
+    sb.append("version:");
+    sb.append(this.version);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -350,6 +277,7 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
+    // alas, we cannot check 'version' because it's a primitive and you chose the non-beans generator.
     // check for sub-struct validity
   }
 
@@ -389,18 +317,10 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
           break;
         }
         switch (schemeField.id) {
-          case 1: // CLIENT_ID
-            if (schemeField.type == org.apache.thrift.protocol.TType.I16) {
-              struct.clientID = iprot.readI16();
-              struct.setClientIDIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 3: // TIMESTAMP
+          case 1: // VERSION
             if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.timestamp = iprot.readI64();
-              struct.setTimestampIsSet(true);
+              struct.version = iprot.readI64();
+              struct.setVersionIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -413,6 +333,9 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       iprot.readStructEnd();
 
       // check for required fields of primitive type, which can't be checked in the validate method
+      if (!struct.isSetVersion()) {
+        throw new org.apache.thrift.protocol.TProtocolException("Required field 'version' was not found in serialized data! Struct: " + toString());
+      }
       struct.validate();
     }
 
@@ -420,11 +343,8 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(CLIENT_ID_FIELD_DESC);
-      oprot.writeI16(struct.clientID);
-      oprot.writeFieldEnd();
-      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-      oprot.writeI64(struct.timestamp);
+      oprot.writeFieldBegin(VERSION_FIELD_DESC);
+      oprot.writeI64(struct.version);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -443,34 +363,14 @@ public class ThriftVersion implements org.apache.thrift.TBase<ThriftVersion, Thr
     @Override
     public void write(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
-      BitSet optionals = new BitSet();
-      if (struct.isSetClientID()) {
-        optionals.set(0);
-      }
-      if (struct.isSetTimestamp()) {
-        optionals.set(1);
-      }
-      oprot.writeBitSet(optionals, 2);
-      if (struct.isSetClientID()) {
-        oprot.writeI16(struct.clientID);
-      }
-      if (struct.isSetTimestamp()) {
-        oprot.writeI64(struct.timestamp);
-      }
+      oprot.writeI64(struct.version);
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, ThriftVersion struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
-      if (incoming.get(0)) {
-        struct.clientID = iprot.readI16();
-        struct.setClientIDIsSet(true);
-      }
-      if (incoming.get(1)) {
-        struct.timestamp = iprot.readI64();
-        struct.setTimestampIsSet(true);
-      }
+      struct.version = iprot.readI64();
+      struct.setVersionIsSet(true);
     }
   }
 
