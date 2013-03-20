@@ -1,13 +1,32 @@
 
-\section{evaluation}
-
+\section{Analysis}
 \label{sec:evaluation}
 
-V. Evaluation (1.5pg)
+With a firm understanding of which of several ACID and distributed
+consistency properties are available and not, we perform analysis of
+their implications for existing algorithms, applications, and
+deployments. Specifically:
 
-The goal in this section is twofold:
-1.) Look at existing algorithms and their coordination cost in the abstract
-2.) Perform limited real-world deployments to validate these abstract costs
+\begin{enumerate}
+\item We revisit traditional database concurrency control with a focus
+  on coordination costs and on high availability.
+\item We examine the properties required by a realistic OLTP
+  application patterned on TPC-C.
+\item We perform a brief experimental evaluation of HAT versus non-HAT
+  properties on public cloud infrastructure.
+\end{enumerate}
+
+\subsection{Existing Algorithms}
+
+As we have discussed, many existing database transaction and
+concurrency control algorithms are not designed for high
+availability. These algorithms often presume a single-server
+deployment or the requirement for serializability. As a consequence,
+traditional transaction processing systems are not well-optimized for
+a HAT context.
+
+ designed for either single-node deployments or
+to achieve the are designed for
 
 1.) There are a bunch of existing systems that aren't HATS but provide stronger semantics. What's their cost? (N.B. this is almost a related work survey here, but I think, if done right, it can be very instructive.)
 Not HA, Serializable:
@@ -25,6 +44,8 @@ Not HA, not serializable, but "transactional":
 * COPS: Sticky-HA, assumes linearizable clusters
 * Bayou: not HA since client doesn't cache (pretty sure)
 
+\subsection{Application Requirements}
+
 2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
 	- Eventual Consistency
 	- Eventual consistency with a "master" for updates--simulates the lower bound on a non-HAT system.
@@ -35,3 +56,8 @@ Not HA, not serializable, but "transactional":
 	-On, say, 5 servers, can get hundreds of thousands of TPS
 
 	-Not meant as an exhaustive study, but validates our intuitions. Coordination costs of non-HAT systems are unaccounted for, will only go up, and we haven't even talked about availability.
+
+\subsection{Experimental Costs}
+
+
+

@@ -34,7 +34,7 @@ In this paper, we make the following contributions:
 
 \begin{itemize}
 \item We present a model for high availability in a transactional environment, including Replica-agnostic High Availability (R-HA) and Sticky High Availability (S-HA).
-\item We analyze the existing literature on ACID properties (particularly, ANSI SQL Spec, Adya, Gray) to show which properties* with a focus on isolation* are achievable in HATS. Achievable properties include transactional atomicity, variants of repeatable read isolation, and session guarantees. We also describe unavailable properties, like preventing Lost Update and Read and Write Skew. We believe that this is the first such characterization in the literature.
+\item We analyze the existing literature on ACID properties (particularly, ANSI SQL Spec, Adya, Gray) to show which properties* with a focus on isolation* are achievable in HATS. Achievable properties include transactional atomicity, variants of repeatable read isolation, and session guarantees. We also describe unavailable properties, like preventing Lost Update and Write Skew. We believe that this is the first such characterization in the literature.
 \item We further motivate the study of HATS via the analysis of existing concurrency control algorithms in a highly available environment as well as through deployment of an experimental database prototype on public cloud infrastructure.
 \end{itemize}
 
