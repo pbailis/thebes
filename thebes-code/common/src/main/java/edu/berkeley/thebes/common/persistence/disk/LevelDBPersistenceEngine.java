@@ -9,11 +9,15 @@ import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.iq80.leveldb.*;
+import org.slf4j.*;
+
 import static org.fusesource.leveldbjni.JniDBFactory.*;
 import java.io.*;
 
 public class LevelDBPersistenceEngine implements IPersistenceEngine {
     DB db;
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(LevelDBPersistenceEngine.class);
+
 
     ThreadLocal<TSerializer> serializer = new ThreadLocal<TSerializer>() {
         @Override
@@ -45,7 +49,12 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     }
 
     public boolean put(String key, DataItem value) throws TException {
-        db.put(key.getBytes(), serializer.get().serialize(DataItem.toThrift(value)));
+        if(value == null) {
+            logger.warn("NULL write to key "+key);
+            return true;
+        }
+
+        db.put(key.getBytes(), serializer.get().serialize(value.toThrift()));
         return true;
     }
 
@@ -57,7 +66,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
         ThriftDataItem tdrRet = new ThriftDataItem();
         deserializer.get().deserialize(tdrRet, byteRet);
-        return DataItem.fromThrift(tdrRet);
+        return new DataItem(tdrRet);
     }
 
     public void close() throws IOException {
