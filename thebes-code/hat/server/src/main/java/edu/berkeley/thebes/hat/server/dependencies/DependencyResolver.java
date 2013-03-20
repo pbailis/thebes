@@ -110,6 +110,7 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
         pendingWritesMap.get(write.getKey()).remove(write);
     }
     
+    // NB: null is a valid ackedKey... only used for efficieny reasons
     public void dependentWriteAcked(String myKey, String ackedKey, Version version) {
         Ack ack = new Ack(ackedKey, version);
         

@@ -18,23 +18,36 @@ public class PendingWrite implements Comparable<PendingWrite> {
     private final DataItem value;
     private final Version transactionVersion;
     private final Set<String> pendingAckedKeys;
+    private int numUnnamedAcks; // TODO: Remove either this code back or the one above.
     private final WriteReadyCallback callback;
     
     public PendingWrite(String key, DataItem value, WriteReadyCallback callback) {
+        if (value.getTransactionKeys().isEmpty()) {
+            throw new IllegalStateException("Pending writes must be waiting on at least one other key.");
+        }
+        
         this.key = key;
         this.value = value;
         this.transactionVersion = value.getVersion();
         this.pendingAckedKeys = Sets.newHashSet(value.getTransactionKeys());
         this.callback = callback;
+        this.numUnnamedAcks = 0;
+        
     }
 
     public boolean isWaitingFor(String ackedKey, Version version) {
-        return version.equals(transactionVersion) && pendingAckedKeys.contains(ackedKey);
+        return version.equals(transactionVersion) &&
+                (ackedKey == null || pendingAckedKeys.contains(ackedKey));
     }
 
     public void keyAcked(String ackedKey) {
-        pendingAckedKeys.remove(ackedKey);
-        if (pendingAckedKeys.isEmpty()) {
+        if (ackedKey != null) {
+            pendingAckedKeys.remove(ackedKey);
+        } else {
+            numUnnamedAcks ++;
+        }
+        
+        if (numUnnamedAcks == pendingAckedKeys.size() || pendingAckedKeys.isEmpty()) {
             callback.writeReady(this);
         }
     }

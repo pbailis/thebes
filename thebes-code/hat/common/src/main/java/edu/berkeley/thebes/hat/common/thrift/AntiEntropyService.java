@@ -36,7 +36,7 @@ public class AntiEntropyService {
 
     public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
 
-    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException;
+    public void ackDependentWriteInPending(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException;
 
   }
 
@@ -44,7 +44,7 @@ public class AntiEntropyService {
 
     public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException;
+    public void ackDependentWriteInPending(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -81,16 +81,15 @@ public class AntiEntropyService {
       sendBase("put", args);
     }
 
-    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
+    public void ackDependentWriteInPending(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
     {
-      send_ackDependentWriteInPending(myKey, ackedKey, version);
+      send_ackDependentWriteInPending(myKey, version);
     }
 
-    public void send_ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
+    public void send_ackDependentWriteInPending(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version) throws org.apache.thrift.TException
     {
       ackDependentWriteInPending_args args = new ackDependentWriteInPending_args();
       args.setMyKey(myKey);
-      args.setAckedKey(ackedKey);
       args.setVersion(version);
       sendBase("ackDependentWriteInPending", args);
     }
@@ -147,21 +146,19 @@ public class AntiEntropyService {
       }
     }
 
-    public void ackDependentWriteInPending(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException {
+    public void ackDependentWriteInPending(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      ackDependentWriteInPending_call method_call = new ackDependentWriteInPending_call(myKey, ackedKey, version, resultHandler, this, ___protocolFactory, ___transport);
+      ackDependentWriteInPending_call method_call = new ackDependentWriteInPending_call(myKey, version, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class ackDependentWriteInPending_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String myKey;
-      private String ackedKey;
       private edu.berkeley.thebes.common.thrift.ThriftVersion version;
-      public ackDependentWriteInPending_call(String myKey, String ackedKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public ackDependentWriteInPending_call(String myKey, edu.berkeley.thebes.common.thrift.ThriftVersion version, org.apache.thrift.async.AsyncMethodCallback<ackDependentWriteInPending_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
         this.myKey = myKey;
-        this.ackedKey = ackedKey;
         this.version = version;
       }
 
@@ -169,7 +166,6 @@ public class AntiEntropyService {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("ackDependentWriteInPending", org.apache.thrift.protocol.TMessageType.CALL, 0));
         ackDependentWriteInPending_args args = new ackDependentWriteInPending_args();
         args.setMyKey(myKey);
-        args.setAckedKey(ackedKey);
         args.setVersion(version);
         args.write(prot);
         prot.writeMessageEnd();
@@ -235,7 +231,7 @@ public class AntiEntropyService {
       }
 
       public org.apache.thrift.TBase getResult(I iface, ackDependentWriteInPending_args args) throws org.apache.thrift.TException {
-        iface.ackDependentWriteInPending(args.myKey, args.ackedKey, args.version);
+        iface.ackDependentWriteInPending(args.myKey, args.version);
         return null;
       }
     }
@@ -705,7 +701,6 @@ public class AntiEntropyService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ackDependentWriteInPending_args");
 
     private static final org.apache.thrift.protocol.TField MY_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("myKey", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField ACKED_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("ackedKey", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -715,13 +710,11 @@ public class AntiEntropyService {
     }
 
     public String myKey; // required
-    public String ackedKey; // required
     public edu.berkeley.thebes.common.thrift.ThriftVersion version; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       MY_KEY((short)1, "myKey"),
-      ACKED_KEY((short)2, "ackedKey"),
       VERSION((short)3, "version");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -739,8 +732,6 @@ public class AntiEntropyService {
         switch(fieldId) {
           case 1: // MY_KEY
             return MY_KEY;
-          case 2: // ACKED_KEY
-            return ACKED_KEY;
           case 3: // VERSION
             return VERSION;
           default:
@@ -788,8 +779,6 @@ public class AntiEntropyService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.MY_KEY, new org.apache.thrift.meta_data.FieldMetaData("myKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.ACKED_KEY, new org.apache.thrift.meta_data.FieldMetaData("ackedKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -801,12 +790,10 @@ public class AntiEntropyService {
 
     public ackDependentWriteInPending_args(
       String myKey,
-      String ackedKey,
       edu.berkeley.thebes.common.thrift.ThriftVersion version)
     {
       this();
       this.myKey = myKey;
-      this.ackedKey = ackedKey;
       this.version = version;
     }
 
@@ -816,9 +803,6 @@ public class AntiEntropyService {
     public ackDependentWriteInPending_args(ackDependentWriteInPending_args other) {
       if (other.isSetMyKey()) {
         this.myKey = other.myKey;
-      }
-      if (other.isSetAckedKey()) {
-        this.ackedKey = other.ackedKey;
       }
       if (other.isSetVersion()) {
         this.version = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.version);
@@ -832,7 +816,6 @@ public class AntiEntropyService {
     @Override
     public void clear() {
       this.myKey = null;
-      this.ackedKey = null;
       this.version = null;
     }
 
@@ -857,30 +840,6 @@ public class AntiEntropyService {
     public void setMyKeyIsSet(boolean value) {
       if (!value) {
         this.myKey = null;
-      }
-    }
-
-    public String getAckedKey() {
-      return this.ackedKey;
-    }
-
-    public ackDependentWriteInPending_args setAckedKey(String ackedKey) {
-      this.ackedKey = ackedKey;
-      return this;
-    }
-
-    public void unsetAckedKey() {
-      this.ackedKey = null;
-    }
-
-    /** Returns true if field ackedKey is set (has been assigned a value) and false otherwise */
-    public boolean isSetAckedKey() {
-      return this.ackedKey != null;
-    }
-
-    public void setAckedKeyIsSet(boolean value) {
-      if (!value) {
-        this.ackedKey = null;
       }
     }
 
@@ -918,14 +877,6 @@ public class AntiEntropyService {
         }
         break;
 
-      case ACKED_KEY:
-        if (value == null) {
-          unsetAckedKey();
-        } else {
-          setAckedKey((String)value);
-        }
-        break;
-
       case VERSION:
         if (value == null) {
           unsetVersion();
@@ -941,9 +892,6 @@ public class AntiEntropyService {
       switch (field) {
       case MY_KEY:
         return getMyKey();
-
-      case ACKED_KEY:
-        return getAckedKey();
 
       case VERSION:
         return getVersion();
@@ -961,8 +909,6 @@ public class AntiEntropyService {
       switch (field) {
       case MY_KEY:
         return isSetMyKey();
-      case ACKED_KEY:
-        return isSetAckedKey();
       case VERSION:
         return isSetVersion();
       }
@@ -988,15 +934,6 @@ public class AntiEntropyService {
         if (!(this_present_myKey && that_present_myKey))
           return false;
         if (!this.myKey.equals(that.myKey))
-          return false;
-      }
-
-      boolean this_present_ackedKey = true && this.isSetAckedKey();
-      boolean that_present_ackedKey = true && that.isSetAckedKey();
-      if (this_present_ackedKey || that_present_ackedKey) {
-        if (!(this_present_ackedKey && that_present_ackedKey))
-          return false;
-        if (!this.ackedKey.equals(that.ackedKey))
           return false;
       }
 
@@ -1031,16 +968,6 @@ public class AntiEntropyService {
       }
       if (isSetMyKey()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.myKey, typedOther.myKey);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetAckedKey()).compareTo(typedOther.isSetAckedKey());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetAckedKey()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ackedKey, typedOther.ackedKey);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1080,14 +1007,6 @@ public class AntiEntropyService {
         sb.append("null");
       } else {
         sb.append(this.myKey);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("ackedKey:");
-      if (this.ackedKey == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.ackedKey);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -1152,14 +1071,6 @@ public class AntiEntropyService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // ACKED_KEY
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.ackedKey = iprot.readString();
-                struct.setAckedKeyIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
             case 3: // VERSION
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
                 struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
@@ -1189,11 +1100,6 @@ public class AntiEntropyService {
           oprot.writeString(struct.myKey);
           oprot.writeFieldEnd();
         }
-        if (struct.ackedKey != null) {
-          oprot.writeFieldBegin(ACKED_KEY_FIELD_DESC);
-          oprot.writeString(struct.ackedKey);
-          oprot.writeFieldEnd();
-        }
         if (struct.version != null) {
           oprot.writeFieldBegin(VERSION_FIELD_DESC);
           struct.version.write(oprot);
@@ -1220,18 +1126,12 @@ public class AntiEntropyService {
         if (struct.isSetMyKey()) {
           optionals.set(0);
         }
-        if (struct.isSetAckedKey()) {
+        if (struct.isSetVersion()) {
           optionals.set(1);
         }
-        if (struct.isSetVersion()) {
-          optionals.set(2);
-        }
-        oprot.writeBitSet(optionals, 3);
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetMyKey()) {
           oprot.writeString(struct.myKey);
-        }
-        if (struct.isSetAckedKey()) {
-          oprot.writeString(struct.ackedKey);
         }
         if (struct.isSetVersion()) {
           struct.version.write(oprot);
@@ -1241,16 +1141,12 @@ public class AntiEntropyService {
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, ackDependentWriteInPending_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.myKey = iprot.readString();
           struct.setMyKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.ackedKey = iprot.readString();
-          struct.setAckedKeyIsSet(true);
-        }
-        if (incoming.get(2)) {
           struct.version = new edu.berkeley.thebes.common.thrift.ThriftVersion();
           struct.version.read(iprot);
           struct.setVersionIsSet(true);

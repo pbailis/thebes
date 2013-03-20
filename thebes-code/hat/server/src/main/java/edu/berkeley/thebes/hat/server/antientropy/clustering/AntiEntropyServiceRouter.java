@@ -114,7 +114,7 @@ public class AntiEntropyServiceRouter {
             for (String dependentKey : writeToAnnounce.getValue().getTransactionKeys()) {
                 AntiEntropyService.Client neighborClient = neighborClients.get(
                         RoutingHash.hashKey(dependentKey, numServersInCluster));
-                neighborClient.ackDependentWriteInPending(dependentKey, writeKey,
+                neighborClient.ackDependentWriteInPending(dependentKey,
                         Version.toThrift(writeVersion));
             }
         } catch (TException e) {

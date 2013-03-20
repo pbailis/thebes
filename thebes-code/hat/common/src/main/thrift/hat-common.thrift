@@ -29,6 +29,6 @@ service AntiEntropyService {
                   2: dataitem.ThriftDataItem value);
 
   oneway void ackDependentWriteInPending(1: string myKey     # our key, which depends on
-                                         2: string ackedKey, # this key, which is now in pending
+                                         #2: string ackedKey, # this key, which is now in pending
                                          3: version.ThriftVersion version)
 }
