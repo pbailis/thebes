@@ -40,7 +40,7 @@ public class Version implements Comparable<Version> {
 	}
 	
 	public static ThriftVersion toThrift(Version version) {
-        if(version == null)
+        if (version == null || version == NULL_VERSION)
             return null;
         
         long l = 0;
