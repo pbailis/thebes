@@ -46,9 +46,7 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     }
 
     @Override
-    public void ackDependentWriteInPending(String myKey,// String ackedKey,
-            ThriftVersion version) throws TException {
-        dependencyResolver.dependentWriteAcked(myKey, null /* ackedKey */,
-                Version.fromThrift(version));
+    public void ackTransactionPending(ThriftVersion transactionId) throws TException {
+        dependencyResolver.ackTransactionPending(Version.fromThrift(transactionId));
     }
 }

@@ -3,7 +3,6 @@ package edu.berkeley.thebes.hat.server.dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Maps;
 
 import edu.berkeley.thebes.common.data.DataItem;
@@ -11,10 +10,11 @@ import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /*
 The following class does most of the heavy lifting for the HAT
@@ -46,39 +46,49 @@ waitInQueueForDependency() need to be notified and so
 notifyNewLocalWrite() is called.
 */
 
-public class DependencyResolver implements PendingWrite.WriteReadyCallback {
+public class DependencyResolver {
     private static Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
     
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
     private final ConcurrentMap<String, Set<PendingWrite>> pendingWritesMap;
-    private final ConcurrentMap<String, Set<Ack>> unresolvedAcksMap;
+    private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
+    private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
         this.pendingWritesMap = Maps.newConcurrentMap();
+        this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
     }
 
     public void addPendingWrite(String key, DataItem value) {
-        pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
+        Version version = value.getVersion();
         
-        PendingWrite newPendingWrite = new PendingWrite(key, value, this);
+        pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
+        pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
+        
+        PendingWrite newPendingWrite = new PendingWrite(key, value);
         pendingWritesMap.get(key).add(newPendingWrite);
-        router.announcePendingWrite(newPendingWrite);
+        
+        TransactionQueue transQueue = pendingTransactionsMap.get(version);
+        transQueue.add(newPendingWrite);
+        
+        if (transQueue.shouldAnnounceTransactionReady()) {
+            router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
+        }
         // TODO: if it's still there after a while, can resend
         
         // Check any unresolved acks associated with this key
-        if (unresolvedAcksMap.containsKey(key)) {
-            Iterator<Ack> unresolvedAcksIterator = unresolvedAcksMap.get(key).iterator();
-            while (unresolvedAcksIterator.hasNext()) {
-                Ack ack = unresolvedAcksIterator.next();
-                if (informPendingWriteOfAck(newPendingWrite, ack)) {
-                    unresolvedAcksIterator.remove();
-                }
+        // TODO: Examine the implications of this!
+        if (unresolvedAcksMap.containsKey(version)) {
+            AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
+            for (int i = 0; i < numAcksForTransaction.get(); i ++) {
+                ackAndMaybeCommit(transQueue);
             }
+            unresolvedAcksMap.remove(version);
         }
         
         if (Math.random() < .001) {
@@ -87,6 +97,23 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
                 numPendingWrites += pendingWrites.size();
             }
             logger.debug("Currently have " + numPendingWrites + " pending writes!");
+        }
+    }
+    
+    private void ackAndMaybeCommit(TransactionQueue queue) {
+        if (!queue.serverAcked()) {
+            // Not enough acks to commit yet.
+            return;
+        }
+        
+        try {
+            for (PendingWrite write : queue.pendingWrites) {
+                persistenceEngine.put(write.getKey(), write.getValue());
+                pendingWritesMap.get(write.getKey()).remove(write);
+            }
+            pendingTransactionsMap.remove(queue.version);
+        } catch (TException e) {
+            logger.error("error in writeReady: ", e);
         }
     }
     
@@ -104,59 +131,53 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
         return null;
     }
     
-    @Override
-    public void writeReady(PendingWrite write) {
-        persistenceEngine.put(write.getKey(), write.getValue());
-        pendingWritesMap.get(write.getKey()).remove(write);
-    }
-    
-    // NB: null is a valid ackedKey... only used for efficieny reasons
-    public void dependentWriteAcked(String myKey, String ackedKey, Version version) {
-        Ack ack = new Ack(ackedKey, version);
-        
-        Set<PendingWrite> pendingWritesForKey = pendingWritesMap.get(myKey);
-        if (pendingWritesForKey != null) {
-            for (PendingWrite pendingWrite : pendingWritesForKey) {
-                if (informPendingWriteOfAck(pendingWrite, ack)) {
-                    return;
-                }
-            }
+    public void ackTransactionPending(Version transactionId) {
+        TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
+        if (transactionQueue != null) {
+            ackAndMaybeCommit(transactionQueue);
+            return;
         }
-
+        
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        unresolvedAcksMap.putIfAbsent(myKey, new ConcurrentSkipListSet<Ack>());
-        unresolvedAcksMap.get(myKey).add(ack);
+        unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
+        unresolvedAcksMap.get(transactionId).incrementAndGet();
     }
     
-    /** Returns true if the PendingWrite accepted our acked key! */
-    private boolean informPendingWriteOfAck(PendingWrite pendingWrite, Ack ack) {
-        if (pendingWrite.isWaitingFor(ack.key, ack.version)) {
-            pendingWrite.keyAcked(ack.key);
-            return true;
-        }
-        return false;
-    }
-    
-    private static class Ack implements Comparable<Ack> {
-        public String key;
-        public Version version;
+    private static class TransactionQueue {
+        private final Version version;
+        private int numKeysForThisReplica;
+        private int numReplicasInvolved; 
+        private Set<Integer> replicaIndicesInvolved;
+        private final Set<PendingWrite> pendingWrites;
+        private AtomicBoolean alreadySentAnnouncement = new AtomicBoolean(false);
+        private AtomicInteger numReplicasAcked;
         
-        public Ack(String ackedKey, Version version) {
-            this.key = ackedKey;
+        public TransactionQueue(Version version) {
             this.version = version;
+            this.pendingWrites = new ConcurrentSkipListSet<PendingWrite>();
+            this.numReplicasAcked = new AtomicInteger(0);
         }
-
-        @Override
-        public int compareTo(Ack o) {
-            if (key != null && o.key != null) {
-                return ComparisonChain.start()
-                        .compare(key, o.key)
-                        .compare(version, o.version)
-                        .result();
-            } else {
-                return version.compareTo(o.version);
-            }
-        } 
+        
+        public void add(PendingWrite write) {
+            pendingWrites.add(write);
+            assert (numKeysForThisReplica == 0 ||
+                    numKeysForThisReplica == write.getNumKeysForThisReplica());
+            assert (numReplicasInvolved == 0 ||
+                    numReplicasInvolved == write.getReplicaIndicesInvolved().size());
+            
+            this.numKeysForThisReplica = write.getNumKeysForThisReplica();
+            this.numReplicasInvolved = write.getReplicaIndicesInvolved().size();
+            this.replicaIndicesInvolved = write.getReplicaIndicesInvolved();
+        }
+        
+        public boolean serverAcked() {
+            return numReplicasAcked.incrementAndGet() == numReplicasInvolved; 
+        }
+        
+        public boolean shouldAnnounceTransactionReady() {
+            return pendingWrites.size() == numKeysForThisReplica
+                    && !alreadySentAnnouncement.getAndSet(true);
+        }
     }
 }

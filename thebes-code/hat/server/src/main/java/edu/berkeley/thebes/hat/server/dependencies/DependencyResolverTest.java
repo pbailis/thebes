@@ -11,8 +11,10 @@ import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceR
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 public class DependencyResolverTest extends TestCase {
@@ -33,40 +35,74 @@ public class DependencyResolverTest extends TestCase {
     
     public void testBasic() {
         Version xact1 = getTransactionId();
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
+        router.expect(null);
         assertPending("hello", "World!", xact1);
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
         assertPending("hello", "World!", xact1);
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
         assertGood("hello", "World!", xact1);
+    }
+
+    public void testWaitForAllSelf() {
+        Version xact1 = getTransactionId();
+        router.expect(xact1);
+        resolver.addPendingWrite("hello",
+                makeDataItem(xact1, "World!", "hello", "depKey0", "depKey1", "depKey2"));
+        
+        try {
+            router.expect(null);
+            fail();
+        } catch (AssertionFailedError e) { /* ok */ }
+        
+        assertPending("hello", "World!", xact1);
+        
+        resolver.ackTransactionPending(xact1);
+        assertPending("hello", "World!", xact1);
+
+        resolver.addPendingWrite("depKey0",
+                makeDataItem(xact1, "Worldz!", "hello", "depKey0", "depKey1", "depKey2"));
+        router.expect(null);
+
+        assertPending("hello", "World!", xact1);
+        assertPending("depKey0", "Worldz!", xact1);
+        
+        resolver.ackTransactionPending(xact1);
+        assertPending("hello", "World!", xact1);
+        assertPending("depKey0", "Worldz!", xact1);
+        
+        resolver.ackTransactionPending(xact1);
+        assertGood("hello", "World!", xact1);
+        assertGood("depKey0", "Worldz!", xact1);
+
     }
     
     public void testPrematureAck() {
         Version xact1 = getTransactionId();
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
 
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
         assertPending("hello", "World!", xact1);
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
         assertGood("hello", "World!", xact1);
     }
     
     public void testPrematureAckAll() {
         Version xact1 = getTransactionId();
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
 
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
         assertGood("hello", "World!", xact1);
@@ -75,28 +111,28 @@ public class DependencyResolverTest extends TestCase {
     public void testUnrelated() {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
-        router.expect("other");
+        router.expect(xact2);
         resolver.addPendingWrite("other",
                 makeDataItem(xact2, "value!", "depKey3", "depKey4"));
         assertPending("hello", "World!", xact1);
         assertPending("other", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
         assertPending("hello", "World!", xact1);
         assertPending("other", "value!", xact2);
         
-        resolver.dependentWriteAcked("other", "depKey3", xact2);
+        resolver.ackTransactionPending(xact2);
         assertPending("hello", "World!", xact1);
         assertPending("other", "value!", xact2);
         
-        resolver.dependentWriteAcked("other", "depKey4", xact2);
+        resolver.ackTransactionPending(xact2);
         assertPending("hello", "World!", xact1);
         assertGood("other", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
         assertGood("hello", "World!", xact1);
         assertGood("other", "value!", xact2);
     }
@@ -104,28 +140,28 @@ public class DependencyResolverTest extends TestCase {
     public void testSameKey() {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
-        router.expect("hello");
+        router.expect(xact2);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact2, "value!", "depKey3", "depKey4"));
         assertPending("hello", "World!", xact1);
         assertPending("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
         assertPending("hello", "World!", xact1);
         assertPending("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey3", xact2);
+        resolver.ackTransactionPending(xact2);
         assertPending("hello", "World!", xact1);
         assertPending("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey4", xact2);
+        resolver.ackTransactionPending(xact2);
         assertPending("hello", "World!", xact1);
         assertGood("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
         assertGood("hello", "value!", xact1);
         assertGood("hello", "value!", xact2);
     }
@@ -134,24 +170,24 @@ public class DependencyResolverTest extends TestCase {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
         
-        resolver.dependentWriteAcked("hello", "depKey2", xact1);
+        resolver.ackTransactionPending(xact1);
         
-        resolver.dependentWriteAcked("hello", "depKey3", xact2);
+        resolver.ackTransactionPending(xact2);
 
-        router.expect("hello");
+        router.expect(xact1);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact1, "World!", "depKey1", "depKey2"));
-        router.expect("hello");
+        router.expect(xact2);
         resolver.addPendingWrite("hello",
                 makeDataItem(xact2, "value!", "depKey3", "depKey4"));
         assertPending("hello", "World!", xact1);
         assertPending("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey4", xact2);
+        resolver.ackTransactionPending(xact2);
         assertPending("hello", "World!", xact1);
         assertGood("hello", "value!", xact2);
         
-        resolver.dependentWriteAcked("hello", "depKey1", xact1);
+        resolver.ackTransactionPending(xact1);
         assertGood("hello", "value!", xact1);
         assertGood("hello", "value!", xact2);
     }
@@ -187,10 +223,10 @@ public class DependencyResolverTest extends TestCase {
     
     
     private static class MockRouter extends AntiEntropyServiceRouter {
-        private String expectAnnounceKey;
-        public void expect(String key) {
-            assertNull(expectAnnounceKey);
-            expectAnnounceKey = key;
+        private Version expectAnnounceID;
+        public void expect(Version key) {
+            assertNull(expectAnnounceID);
+            expectAnnounceID = key;
         }
         
         @Override
@@ -198,10 +234,11 @@ public class DependencyResolverTest extends TestCase {
 
         }
         
-        @Override
-        public void announcePendingWrite(PendingWrite write) {
-            assertEquals(write.getKey(), expectAnnounceKey);
-            expectAnnounceKey = null;
+       @Override
+        public void announceTransactionReady(Version transactionID,
+                Set<Integer> servers) {
+           assertEquals(transactionID, expectAnnounceID);
+           expectAnnounceID = null;
         }
     }
     

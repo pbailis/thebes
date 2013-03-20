@@ -254,7 +254,9 @@ public class Config {
     }
 
     public static List<ServerAddress> getServersInCluster() {
-        return clusterServers;
+        return Lists.<ServerAddress>newArrayList(new ServerAddress(1, 1, "host1", 123),new ServerAddress(1, 1, "host2", 123),new ServerAddress(1, 1, "host3", 123));
+        // TODODODO
+//        return clusterServers;
     }
 
     public static List<ServerAddress> getSiblingServers() {

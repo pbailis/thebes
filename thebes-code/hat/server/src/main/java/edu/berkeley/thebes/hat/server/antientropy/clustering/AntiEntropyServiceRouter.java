@@ -20,6 +20,7 @@ import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.dependencies.PendingWrite;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -72,11 +73,11 @@ public class AntiEntropyServiceRouter {
     /** Stores the writes we receive and need to forward to all siblings */
     private final LinkedBlockingQueue<QueuedWrite> writesToForwardSiblings;
     /** Stores the writes we've put into pending, and need to notify all dependent neighbors. */
-    private final LinkedBlockingQueue<PendingWrite> pendingWritesToAnnounce;
+    private final LinkedBlockingQueue<QueuedTransactionAnnouncement> pendingTransactionAnnouncements;
     
     public AntiEntropyServiceRouter() {
         this.writesToForwardSiblings = Queues.newLinkedBlockingQueue();
-        this.pendingWritesToAnnounce = Queues.newLinkedBlockingQueue();
+        this.pendingTransactionAnnouncements = Queues.newLinkedBlockingQueue();
     }
     
     /** Our cluster got a new write, forward to the replicas in other clusters. */
@@ -98,24 +99,20 @@ public class AntiEntropyServiceRouter {
         }
     }
 
-    /** Our replica got a write, announce it to others in this cluster who depend on it. */
-    public void announcePendingWrite(PendingWrite write) {
-        pendingWritesToAnnounce.add(write);
+    /** Announce that a transaction is ready to some set of servers. */
+    public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
+        pendingTransactionAnnouncements.add(
+                new QueuedTransactionAnnouncement(transactionID, servers));
     }
     
     /** Actually does the announcement! Called in its own thread. */
     private void announceNextQueuedPendingWrite() {
         try {
-            PendingWrite writeToAnnounce = pendingWritesToAnnounce.take();
-            String writeKey = writeToAnnounce.getKey();
-            Version writeVersion = writeToAnnounce.getVersion();
+            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
             
-            // TODO: Efficiency! Group keys, take multiple writes at a time.
-            for (String dependentKey : writeToAnnounce.getValue().getTransactionKeys()) {
-                AntiEntropyService.Client neighborClient = neighborClients.get(
-                        RoutingHash.hashKey(dependentKey, numServersInCluster));
-                neighborClient.ackDependentWriteInPending(dependentKey,
-                        Version.toThrift(writeVersion));
+            for (Integer serverIndex : announcement.servers) {
+                AntiEntropyService.Client neighborClient = neighborClients.get(serverIndex);
+                neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
         } catch (TException e) {
             logger.error("Failure while announcing queued pending write: ", e);
@@ -150,6 +147,15 @@ public class AntiEntropyServiceRouter {
         public QueuedWrite(String key, ThriftDataItem value) {
             this.key = key;
             this.value = value;
+        }
+    }
+    
+    private static class QueuedTransactionAnnouncement {
+        public final Version transactionID;
+        public final Set<Integer> servers;
+        public QueuedTransactionAnnouncement(Version transactionID, Set<Integer> servers) {
+            this.transactionID = transactionID;
+            this.servers = servers;
         }
     }
 }
