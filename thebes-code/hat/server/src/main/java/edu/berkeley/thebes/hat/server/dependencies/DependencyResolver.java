@@ -149,10 +149,14 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
 
         @Override
         public int compareTo(Ack o) {
-            return ComparisonChain.start()
-                    .compare(key, o.key)
-                    .compare(version, o.version)
-                    .result();
+            if (key != null && o.key != null) {
+                return ComparisonChain.start()
+                        .compare(key, o.key)
+                        .compare(version, o.version)
+                        .result();
+            } else {
+                return version.compareTo(o.version);
+            }
         } 
     }
 }
