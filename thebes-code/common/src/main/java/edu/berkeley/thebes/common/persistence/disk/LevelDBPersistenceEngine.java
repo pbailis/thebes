@@ -15,8 +15,19 @@ import java.io.*;
 public class LevelDBPersistenceEngine implements IPersistenceEngine {
     DB db;
 
-    TSerializer serializer = new TSerializer();
-    TDeserializer deserializer = new TDeserializer();
+    ThreadLocal<TSerializer> serializer = new ThreadLocal<TSerializer>() {
+        @Override
+        protected TSerializer initialValue() {
+            return new TSerializer();
+        }
+    };
+
+    ThreadLocal<TDeserializer> deserializer = new ThreadLocal<TDeserializer>() {
+        @Override
+        protected TDeserializer initialValue() {
+            return new TDeserializer();
+        }
+    };
 
     public void open() throws IOException {
         Options options = new Options();
@@ -34,7 +45,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     }
 
     public boolean put(String key, DataItem value) throws TException {
-        db.put(key.getBytes(), serializer.serialize(DataItem.toThrift(value)));
+        db.put(key.getBytes(), serializer.get().serialize(DataItem.toThrift(value)));
         return true;
     }
 
@@ -45,7 +56,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
             return null;
 
         ThriftDataItem tdrRet = new ThriftDataItem();
-        deserializer.deserialize(tdrRet, byteRet);
+        deserializer.get().deserialize(tdrRet, byteRet);
         return DataItem.fromThrift(tdrRet);
     }
 
