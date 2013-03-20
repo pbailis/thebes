@@ -27,5 +27,11 @@
             <version>1.2</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+          <groupId>org.fusesource.leveldbjni</groupId>
+          <artifactId>leveldbjni-all</artifactId>
+          <version>1.5</version>
+          <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

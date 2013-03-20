@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +107,12 @@ public class DependencyResolver implements PendingWrite.WriteReadyCallback {
     
     @Override
     public void writeReady(PendingWrite write) {
-        persistenceEngine.put(write.getKey(), write.getValue());
-        pendingWritesMap.get(write.getKey()).remove(write);
+        try {
+            persistenceEngine.put(write.getKey(), write.getValue());
+            pendingWritesMap.get(write.getKey()).remove(write);
+        } catch (TException e) {
+            logger.error("error in writeReady: ", e);
+        }
     }
     
     // NB: null is a valid ackedKey... only used for efficieny reasons
