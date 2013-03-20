@@ -24,8 +24,10 @@ public class DataItem implements Comparable<DataItem> {
     }
 	
 	public DataItem(ByteBuffer data, Version version) {
-        this(data.array(), version,  null);
-	}
+        thriftDataItem = new ThriftDataItem();
+        thriftDataItem.setData(data);
+        thriftDataItem.setVersion(version.getThriftVersion());
+    }
 	
 	public ThriftDataItem toThrift() {
 		return thriftDataItem;

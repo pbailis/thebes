@@ -56,18 +56,8 @@ public class ThebesTwoPLServer {
             Config.initializeServer(TransactionMode.TWOPL);
             Log4JConfig.configureLog4J();
 
-            IPersistenceEngine engine;
-
-            PersistenceEngine engineType = Config.getPersistenceType();
-            switch (engineType) {
-            case MEMORY:
-                engine = new MemoryPersistenceEngine();
-                break;
-            default:
-                throw new ConfigurationException("unexpected persistency type: " + engineType);
-            }
+            IPersistenceEngine engine = Config.getPersistenceEngine();
             engine.open();
-            
 
             TwoPLLocalLockManager lockManager = new TwoPLLocalLockManager();
             slaveReplicationService = new TwoPLSlaveReplicationService();

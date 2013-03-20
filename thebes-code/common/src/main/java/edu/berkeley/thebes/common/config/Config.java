@@ -21,6 +21,10 @@ import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
+import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 
 public class Config {
@@ -299,6 +303,20 @@ public class Config {
 
     public static boolean doCleanDatabaseFile() {
         return getOption(ConfigParameters.DO_CLEAN_DATABASE_FILE);
+    }
+
+    public static IPersistenceEngine getPersistenceEngine() throws ConfigurationException {
+        PersistenceEngine engineType = Config.getPersistenceType();
+        switch (engineType) {
+            case MEMORY:
+                return new MemoryPersistenceEngine();
+            case LEVELDB:
+                return new LevelDBPersistenceEngine();
+            case BDB:
+                return new BDBPersistenceEngine();
+            default:
+                throw new ConfigurationException("unexpected persistency type: " + engineType);
+            }
     }
 
     /** Returns true if this server is the Master of a 2PL replica set. */
