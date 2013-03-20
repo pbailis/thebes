@@ -21,7 +21,19 @@
 \maketitle
 
 \begin{abstract}
-foo bar baz
+Given the presence of network latency and the possibility of partial
+failure and network partitions, many systems eschew transactional
+functionality providing strong semantic guarantees on groups of
+multiple operations over multiple data items. In this work, we
+consider the problem of providing transactional guarantees that are
+highly available, or do not suffer from network latency or system
+partitions.  We introduce a new taxonomy of highly available
+algorithms and analyze a combination of ACID and distributed
+consistency guarantees to identify which can and cannot be achieved by
+Highly Available Transaction (HAT) systems. In doing so, we
+analytically and experimentally quantify the cost of violating high
+availability as well as the cost of providing necessarily relaxed
+semantics.
 \end{abstract}
 
 \input{intro.tex}
@@ -48,6 +60,7 @@ foo~\cite{adya}
 % produce the bibliography for the citations in your paper.
 \bibliographystyle{abbrv}
 % vldb_sample.bib is the name of the Bibliography in this case
+\footnotesize
 \bibliography{hat-vldb}  
 % You must have a proper ".bib" file
 %  and remember to run:
@@ -59,8 +72,8 @@ foo~\cite{adya}
 % Example of an appendix; typically would start on a new page
 %pagebreak
 
-\begin{appendix}
+%\begin{appendix}
 
-\end{appendix}
+%\end{appendix}
 
 \end{document}

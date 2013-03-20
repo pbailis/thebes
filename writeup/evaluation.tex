@@ -1,29 +1,168 @@
 
-\section{evaluation}
-
+\section{Analysis}
 \label{sec:evaluation}
 
-V. Evaluation (1.5pg)
+With a firm understanding of which of several ACID and distributed
+consistency properties are available and not, we perform analysis of
+their implications for existing algorithms, applications, and
+deployments. Specifically:
 
-The goal in this section is twofold:
-1.) Look at existing algorithms and their coordination cost in the abstract
-2.) Perform limited real-world deployments to validate these abstract costs
+\begin{enumerate}
+\item We revisit traditional database concurrency control with a focus
+  on coordination costs and on high availability.
+\item We examine the properties required by a realistic OLTP
+  application patterned on TPC-C.
+\item We perform a brief experimental evaluation of HAT versus non-HAT
+  properties on public cloud infrastructure.
+\end{enumerate}
 
-1.) There are a bunch of existing systems that aren't HATS but provide stronger semantics. What's their cost? (N.B. this is almost a related work survey here, but I think, if done right, it can be very instructive.)
-Not HA, Serializable:
-* Two-phase locking: for transaction size T, T+1 round-trips (directly to each database)
-* Deterministic transaction scheduling: 1 round-trip per partition (to scheduler)
-* Optimistic concurrency control: 1 round-trip per partition (to database cycle checker)
-* MVCC: min 1 round-trip per partition (to partition timestamp manager)
+\subsection{Existing Algorithms}
 
-Not HA, not serializable, but "transactional":
-* MDCC: need to check, 1-2 round-trip times because uses Paxos variant
-* Walter: 1 rount-trip time to each preferred site
-* Eiger: Sticky-HA, assumes linearizable clusters, reads/writes stall in presence of coordinator failures
-* Chan and Gray read-only transaction: reads stall in the presence of coordinator failure
-* Bolt-on causal consistency: sticky-HA, could be used to implement TA+RR, uses client cache
-* COPS: Sticky-HA, assumes linearizable clusters
-* Bayou: not HA since client doesn't cache (pretty sure)
+As we have discussed, many existing database transaction and
+concurrency control algorithms are not designed for high
+availability. These algorithms often presume a single-server
+deployment or the requirement for serializability. As a consequence,
+traditional transaction processing systems are not well-optimized for
+a HAT context.
+
+We begin by considering several existing algorithms that provide
+serializability but are not highly available. In summary, all
+algorithms in this class require at least one round trip time (RTT)
+before committing.
+
+\begin{itemize}
+\item \textbf{Two-phase locking} (ignoring deadlocks) requires $T$
+  lock operations and 1 unlock operation for a transaction of length
+  $T$. If all items are located on a single master server, this
+  requires one RTT (for requests originating from servers other than
+  the master). If items are located on $S$ ($S \leq T$) different
+  servers, two-phase locking requires, at minimum, $2(S-1)$ RTTs---one
+  for lock and another for unlock.
+
+\item \textbf{Optimistic concurrency control} allows reads from any
+  server but transactions must be checked by a scheduler before
+  commit. With one scheduler per database, this requires one RTT for
+  concurrency control. If schedulers are sharded by database
+  partition, a multi-partition transaction may require contacting
+  several different schedulers and, possibly, an atomic commit
+  protocol, which becomes substantially more expensive.
+
+\item \textbf{Deterministic transaction scheduling} is effecitvely the
+  inverse of optimistic concurrency control: a scheduler first orders
+  the transactions, then sends them to database replicas for in-order
+  execution. These techniques, pioneered in the context of totally
+  ordered atomic broadcast systems, have recently seen increased
+  attention and effectively require communication overhead similar to
+  optimistic concurrency control.
+
+\item\textbf{Multiversion concurrency control} allows readers to read
+  older versions of data items but, like OCC, must eventually be
+  checked for write-write conflicts, requiring a scheduler.
+
+\end{itemize}
+
+There are several mechanisms that do not provide serializability (and
+often provide HAT semantics) but which are not
+available. Non-serializability can but does not necessarily imply high
+availability and low latency:
+
+\begin{itemize}
+\item \textbf{Lock-based protocols} such as those used to provide weak
+  isolation in Gray's original paper require at least one RTT to the a
+  lock server (or, alternatively, a majority quorum). In the presence
+  of failure, distributed locking can be challenging.
+\item The \textbf{MDCC} commit protocol uses a Paxos variant and escrow
+  transactions to provide Repeatable Read isolation with 1-2 RTTs. (TODO: CHECK)
+\item \textbf{Parallel Snapshot Isolation} as developed by the Walter
+  system provides (unavailable) snapshot isolation variant and, even
+  when writes commute, requires 1 RTT to enforce read
+  recency. However, PSI without recency requirements could be made
+  highly available.
+\item \textbf{Eiger} provides read-only and write-only transactions
+  with item cut isolation and causal consistency. It relies on sticky
+  high availability and groups within a datacenter with linearizable
+  clusters. In the presence of server failure during write
+  transactions, reads and writes may become unavailable. \textbf{COPS}
+  provides similar semantics for read-only transactions but does not
+  suffer from unavailability as it does not have a coordinator.
+\item \textbf{Chan and Gray read-only transactions} use a similar
+  algorithm to Eiger to provide read-only transactions with item cut
+  isolation and causal consistency but coordinate on reads instead of
+  writes.
+\item \textbf{Bolt-on Causal Consistency} and \textbf{Swift} can
+  provide read-only and write-only transactions with item cut
+  isolation and causal consistency with sticky high availability and
+  both rely on client-side caching.
+\item \textbf{Bayou} provides several session guarantees but, without
+  client-side caching, actually faces unavailability in the presence
+  of failure. (TODO: CHECK)
+\item \textbf{Brantner's S3 Database} uses caching to provide several
+  guarantees such as XX and YY but is unavailable during failures
+  (TODO: CHECK).
+\end{itemize}
+
+\subsection{Application Requirements}
+
+Thus far, we have largely ignored the question of which applications
+actually require HAT semantics versus traditional ACID guarantees. As
+we summarized in Section~\ref{needed}, the main cost of providing HAT
+updates is the inability to prevent Lost Update, Write Skew, and
+provide recency bounds. In this Section, we attempt to understand when
+these guarantees matter both abstractly and by the use of a
+representative customer order transaction application patterned off of
+TPC-C.
+
+Recent work on the CALM Theorem, Lattice-based state update, and
+Commutative and Replicated Data Types demonstrates that, if updates
+logically commute, then they can be performed in different orders at
+different locations in a distributed system. Accordingly, as long as
+all writes are delivered to all replicas, then a system executing
+monotonic logic with commutative operators should not suffer from
+application-level consistency anomalies as a result of Lost Update or
+Write Skew anomalies. However, applications with non-monotonic state
+mutation will not, in general, be able to maintain application-level
+consistency constraints. Similarly, applications requiring
+write visibility between clients should opt for unavailability instead
+of possibly missing a write visibility deadline.
+
+Absent a necessary and sufficient result describing exactly which
+application logics can be achieved with high availability and to make
+these requirements more concrete, we consider an example application:
+the TPC-C benchmark. Our goal is \textit{not} to provide a performance
+analysis, as any HAT configuration will be non-compliant. Rather, we
+examine the five queries contained in the benchmarks---ostensibly
+representative of a standard transaction processing application---to
+understand which are achievable in a HAT context.
+
+Integrity constraints:
+--Mostly SUM, AVG, COUNT
+--This is okay and foreign key constraints are provided by TA
+
+New Order:
+--Lookup of warehouse codes is fine, are not mutated
+--Assigning a version order is not okay, but we can still get uniqueness
+--Stock adjustment is monotonic and can't go below zero due to replenish. However, might overstock!
+
+Payment:
+--Monotonic, simply increase the number of each respective field
+
+Delivery:
+--Problematic; is non-monotonic, removing from the order table
+--Without additional semantics, have to block
+--CALM analysis would catch this, enforce coordination
+--Does \textit{not} block new New Order transactions
+
+Order Status:
+--Non-monotonic
+--Read your writes may be problematic
+
+While TPC-C isolation tests are for lock-based models (and HATs are,
+by requirement, non-locking), consider TPC-E tests. Modifying the
+description and image together is fine, etc.
+
+
+\subsection{Experimental Costs}
+
 
 2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
 	- Eventual Consistency

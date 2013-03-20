@@ -2,23 +2,57 @@
 \section{Future Work}
 \label{sec:futurework}
 
-VII. Future Work (.75pg)
+\textbf{What is the space of consistency and isolation properties?} In
+this work, we have taxonomized several well-defined and
+well-documented consistency properties. This is useful as it
+contextualizes decades of existing database design and algorithmic
+techniques but does not provide guidance as to what consistency models
+are necessarily the ``strongest''---or admit the fewest number of
+executions---within each availability class. While a recent report
+shows that no model stronger than causal consistency can be achieved
+in a sticky highly available, one-way convergent system~\cite{cac},
+there are infinite highly available and sticky highly available models
+to consider. For example, always returning the value $1$ in response
+to reads to any data item is incomparable to (neither stronger nor
+weaker than) causal consistency: returning $1$ does not respect
+causality, and causal consistency returns values other than
+$1$. Always returning the value $2$ is similarly incomparable, and, as
+an example, we can enumerate models that return all integers and real
+numbers--an uncountably infinite set--along with models that respond
+to every tenth reply and so on.
 
-* What properties are available?
-	* We've focused on ACID Isolation, but there are lots of other models to consider?
-	* Which consistency criteria? Which models? There are infinite, so how do we choose?
-	* Set ourselves up for APEs
+The current state of the art places several useful models within
+various categories in the availability space. This is still a
+practical result---take, for instance, CAP's impact on distributed
+systems of the last decade. But what property defines the boundaries
+between classes of highly available systems? Is there a meta-property
+that exactly characterizes what properties are achievable with high
+availability or sticky high availability? This is an area of ongoing
+research within the HAT project.
 
-* Full exploration of HAT space
-	* Many parameters; $2^10$ models at the least
-	* Need to mitigate the cost of tracking causality with high availability
-		* The cost moving from S-HA (like Eiger) to truly HA (R-HA) seems to be high
-		* e.g., Eiger relies on metadata GC to keep writes small; is O(|keys|) in limit
-			* Not meant as a fault--it's optimized for a particular scenario--but curious to consider
+\textbf{What are the costs and benefits within HAT designs?} There are
+many possible combinations of HAT guarantees, and the performance and
+ease of implementation of a HAT system will likely vary depending on
+which guarantees it attempts to provide. As we have alluded to, the
+cost in moving from a sticky high available system to a truly highly
+available system seems expensive. As a concrete example, the Eiger and
+COPS systems use metadata garbage collection and assume linearizable
+clients within each datacenter in order to keep the overhead of
+providing causal consistency small. Without performing extensive
+client-side caching, these techniques do not seem applicable to a
+highly available implementation. This is not intended as a fault of
+the prior systems---they perform well for the task at hand---but hint
+at the complexity of moving between sticky and truly highly available
+systems.
 
-* Revisit semantics-based concurrency control
-	* Could taxonomize properties like escrow
-	* Can also consider models with SLAs and bounded messaging asynchrony
-	* Our focus is on "classic" distributed systems trade-off
-		* However, lots of interesting hybrids (maybe cite Doug Terry's recent stuff)
-
+\textbf{Where do semantics-based concurrency control lie in the HAT
+  landscape?} The vast amount of literature on semantics-based
+concurrency control provides hints as to when coordination can be
+avoided but still providing ``strongly consistent'' outcomes. We have
+performed a narrow case study in this work, but a general
+taxonomization of techniques such as escrow transactions and Sagas
+could help answer the challenge of programming in a weakly consistent
+environment. These techniques might be aided by considering models
+with service-level agreements or bounded messaging asynchrony. While
+our focus is on ``classic'' distributed systems trade-offs, there are
+several interesting hybrids to consider.

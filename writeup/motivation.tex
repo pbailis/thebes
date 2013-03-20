@@ -50,8 +50,17 @@ be rare but net gear continues to cause more issues than it
 should''~\cite{hamilton-partitions}. Anecdotal evidence from companies
 such as Google~\cite{dean-keynote} confirm Hamilton's statement, while
 a host of recent and highly public cloud computing incidents highlight
-partition behavior. In April 2011, a network misconfiguration led to a
-twelve-hour long series of outages across the Amazon EC2 and RDS
+partition behavior. As an example of an actual system rearchitecture,
+less than one year after its announcement, Yahoo!'s PNUTS developers
+explicitly added a support for weaker, highly available operation,
+explaining that ``strict adherence [to strong consistency] leads to
+difficult situations under network partitioning or server
+failures...in many circumstances, applications need a relaxed
+approach''~\cite{pnuts-update}.
+
+Provider outages are often publicly observable. In April 2011, a
+network misconfiguration led to a twelve-hour long series of outages
+across the Amazon EC2 and RDS
 services~\cite{amazon-netpartition}. Subsequent misconfigurations and
 partial failures such as another EC2 failure in October 2012 have led
 to full site outages for web services like Reddit, Foursquare, and
