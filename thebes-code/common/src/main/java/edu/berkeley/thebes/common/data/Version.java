@@ -7,7 +7,9 @@ import edu.berkeley.thebes.common.thrift.ThriftVersion;
 
 public class Version implements Comparable<Version> {
     public static final Version NULL_VERSION = new Version((short) -1, -1, -1);
-    
+
+    private ThriftVersion thriftVersion;
+
     private static final int numBitsTimestamp = 29;   // ~3 days
     private static final int numBitsLogicalTime = 27; // ~128 million operations per client (2-hour run)
     private static final int numBitsClientID = 8;     // 256 clients
@@ -23,11 +25,16 @@ public class Version implements Comparable<Version> {
 		this.clientID = (short) (pow2Less1(numBitsClientID) & clientID);
 		this.logicalTime = pow2Less1(numBitsLogicalTime) & logicalTime;
 		this.timestamp = pow2Less1(numBitsTimestamp) & timestamp;
+        thriftVersion = Version.toThrift(this);
 	}
+
+    public ThriftVersion getThriftVersion() {
+        return thriftVersion;
+    }
 	
 	public static Version fromThrift(ThriftVersion thriftVersion) {
 	    if (thriftVersion == null)
-	        return NULL_VERSION;
+	        return null;
 	    
 	    long version = thriftVersion.getVersion();
 	    
@@ -57,11 +64,11 @@ public class Version implements Comparable<Version> {
 	private static long pow2Less1(int b) {
 	    return Math.round(Math.pow(2, b)) - 1;
 	}
-	
+
 	public short getClientID() {
 		return clientID;
 	}
-	
+
     public long getLogicalTime() {
         return logicalTime;
     }

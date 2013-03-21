@@ -16,6 +16,6 @@ public class TwoPLSlaveServiceHandler implements TwoPLSlaveReplicaService.Iface 
 
     @Override
     public void put(String key, ThriftDataItem value) throws TException {
-        persistenceEngine.put(key, DataItem.fromThrift(value));
+        persistenceEngine.put(key, new DataItem(value));
     }
 }

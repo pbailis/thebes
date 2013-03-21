@@ -215,12 +215,12 @@ def provision_graphite(region):
 def provision_spot(regionName, num):
     global AMIs
     system("ec2-request-spot-instances %s --region %s -t m1.xlarge -price 0.50 " \
-           "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
+           "-b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1 -k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
 
 def provision_instance(regionName, num):
     global AMIs
     system("ec2-run-instances %s --region %s -t m1.xlarge " \
-           "-k thebes -g thebes -n %d > /tmp/instances" % (AMIs[regionName], regionName, num));
+           "-b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1 -k thebes -g thebes -n %d > /tmp/instances" % (AMIs[regionName], regionName, num));
     #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
     #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
     #   (AMIs[region], n))
@@ -330,6 +330,10 @@ def jumpstart_hosts(clusters):
     pprint("Exporting keys...")
     run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /root/.bashrc", user="root")
     run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /home/ubuntu/.bashrc", user="root")
+    pprint("Done")
+
+    pprint("Setting up ephemeral RAID0")
+    run_script("all-hosts", SCRIPTS_DIR+"/resources/setup_raid0_ephemeral.sh")
     pprint("Done")
 
     pprint("Resetting git...")

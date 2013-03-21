@@ -39,7 +39,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public ThriftDataItem get(long sessionId, String key) throws TException {
         if (lockManager.ownsLock(LockType.READ, key, sessionId)) {
-            return DataItem.toThrift(persistenceEngine.get(key));
+            return persistenceEngine.get(key).toThrift();
         } else {
             throw new TException("Session " + sessionId + "does not own GET lock on '" + key + "'");
         }
@@ -48,7 +48,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public boolean put(long sessionId, String key, ThriftDataItem value) throws TException {
         if (lockManager.ownsLock(LockType.WRITE, key, sessionId)) {
-            boolean success = persistenceEngine.put(key, DataItem.fromThrift(value));
+            boolean success = persistenceEngine.put(key, new DataItem(value));
             if (success) {
                 slaveReplicationService.sendToSlaves(key, value);
             }
@@ -61,7 +61,7 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public boolean unsafe_load(String key, ThriftDataItem value)
             throws TException {
-        boolean success = persistenceEngine.put(key, DataItem.fromThrift(value));
+        boolean success = persistenceEngine.put(key, new DataItem(value));
         if (success) {
             slaveReplicationService.sendToSlaves(key, value);
         }

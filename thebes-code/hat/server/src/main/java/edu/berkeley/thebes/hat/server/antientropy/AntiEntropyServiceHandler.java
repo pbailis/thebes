@@ -37,7 +37,7 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     public void put(String key,
                     ThriftDataItem valueThrift) throws TException{
     	logger.trace("Received anti-entropy put for key " + key);
-        DataItem value = DataItem.fromThrift(valueThrift);
+        DataItem value = new DataItem(valueThrift);
         if (value.getTransactionKeys().isEmpty()) {
             persistenceEngine.put(key, value);
         } else {

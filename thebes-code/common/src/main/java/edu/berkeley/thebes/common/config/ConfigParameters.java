@@ -43,7 +43,9 @@ public enum ConfigParameters {
     TWOPL_USE_TM(Boolean.class, true),
     SESSION_LEVEL(SessionLevel.class, SessionLevel.NO_SESSION),
     ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY),
-    LOGGER_LEVEL(String.class, "WARN");
+    LOGGER_LEVEL(String.class, "WARN"),
+    DISK_DATABASE_FILE(String.class, "/tmp/thebes.db"),
+    DO_CLEAN_DATABASE_FILE(Boolean.class, true);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;
