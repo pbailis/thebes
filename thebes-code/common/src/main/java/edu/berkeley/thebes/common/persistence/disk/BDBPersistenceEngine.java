@@ -18,6 +18,7 @@ import org.apache.thrift.TSerializer;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class BDBPersistenceEngine implements IPersistenceEngine {
@@ -43,9 +44,11 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
     public void open() throws IOException {
         if(Config.doCleanDatabaseFile()) {
             try {
-                //not proud, but damn Guava for removing removeRecursively
                 FileUtils.forceDelete(new File(Config.getDiskDatabaseFile()));
-            } catch(Exception e) { logger.warn("error: ", e) ;}
+            } catch(Exception e) {
+                if (!(e instanceof FileNotFoundException))
+                    logger.warn("error: ", e) ;
+            }
         }
 
         new File(Config.getDiskDatabaseFile()).mkdirs();

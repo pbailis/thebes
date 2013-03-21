@@ -40,11 +40,12 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
         if(Config.doCleanDatabaseFile()) {
             try {
-                //not proud, but damn Guava for removing removeRecursively
                 FileUtils.forceDelete(new File(Config.getDiskDatabaseFile()));
-            } catch(Exception e) {}
+            } catch(Exception e) {
+                if (!(e instanceof FileNotFoundException))
+                    logger.warn("error: ", e) ;
+            }
         }
-
 
         db = factory.open(new File(Config.getDiskDatabaseFile()), options);
     }
