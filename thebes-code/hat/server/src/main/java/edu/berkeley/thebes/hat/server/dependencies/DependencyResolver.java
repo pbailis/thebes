@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /*
 The following class does most of the heavy lifting for the HAT
@@ -56,6 +58,8 @@ public class DependencyResolver {
     private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
+    private final Lock unresolvedAcksLock;
+    
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
@@ -63,6 +67,7 @@ public class DependencyResolver {
         this.pendingWritesMap = Maps.newConcurrentMap();
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
+        this.unresolvedAcksLock = new ReentrantLock();
     }
 
     public void addPendingWrite(String key, DataItem value) {
@@ -84,13 +89,18 @@ public class DependencyResolver {
         
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
-        if (unresolvedAcksMap.containsKey(version)) {
-            AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
-            for (int i = 0; i < numAcksForTransaction.get(); i ++) {
-                ackAndMaybeCommit(transQueue);
+        unresolvedAcksLock.lock();
+        try {
+            if (unresolvedAcksMap.containsKey(version)) {
+                AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
+                for (int i = 0; i < numAcksForTransaction.get(); i ++) {
+                    ackAndMaybeCommit(transQueue);
+                }
+                unresolvedAcksMap.remove(version);
             }
-            unresolvedAcksMap.remove(version);
-        }
+        } finally {
+            unresolvedAcksLock.unlock();
+        }            
         
         if (Math.random() < .001) {
             int numPendingWrites = 0;
@@ -137,9 +147,13 @@ public class DependencyResolver {
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
-        logger.debug("Hi: " + unresolvedAcksMap.get(transactionId));
-        unresolvedAcksMap.get(transactionId).incrementAndGet();
+        unresolvedAcksLock.lock();
+        try {
+            unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
+            unresolvedAcksMap.get(transactionId).incrementAndGet();
+        } finally {
+            unresolvedAcksLock.unlock();
+        }
     }
     
     private static class TransactionQueue {
