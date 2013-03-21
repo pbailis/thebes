@@ -45,9 +45,10 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
             try {
                 //not proud, but damn Guava for removing removeRecursively
                 FileUtils.forceDelete(new File(Config.getDiskDatabaseFile()));
-                new File(Config.getDiskDatabaseFile()).mkdirs();
             } catch(Exception e) { logger.warn("error: ", e) ;}
         }
+
+        new File(Config.getDiskDatabaseFile()).mkdirs();
 
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
