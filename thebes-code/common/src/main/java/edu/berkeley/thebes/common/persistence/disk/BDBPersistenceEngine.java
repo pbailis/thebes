@@ -43,7 +43,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
         if(Config.doCleanDatabaseFile()) {
             try {
                 //not proud, but damn Guava for removing removeRecursively
-                Runtime.getRuntime().exec("rm -rf "+Config.getDiskDatabaseFile()+" mkdir "+Config.getDiskDatabaseFile());
+                Runtime.getRuntime().exec("rm -rf "+Config.getDiskDatabaseFile()+"; mkdir "+Config.getDiskDatabaseFile());
                 new File(Config.getDiskDatabaseFile()).mkdirs();
             } catch(Exception e) {}
         }
