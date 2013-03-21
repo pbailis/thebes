@@ -34,6 +34,9 @@ public class DataItem implements Comparable<DataItem> {
 	}
 
 	public ByteBuffer getData() {
+        if(thriftDataItem.getData() == null)
+            return null;
+
 		return ByteBuffer.wrap(thriftDataItem.getData());
 	}
 
