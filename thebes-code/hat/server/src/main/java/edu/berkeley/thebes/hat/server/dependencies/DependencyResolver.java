@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,15 +107,11 @@ public class DependencyResolver {
             return;
         }
         
-        try {
-            for (PendingWrite write : queue.pendingWrites) {
-                persistenceEngine.put(write.getKey(), write.getValue());
-                pendingWritesMap.get(write.getKey()).remove(write);
-            }
-            pendingTransactionsMap.remove(queue.version);
-        } catch (TException e) {
-            logger.error("error in writeReady: ", e);
+        for (PendingWrite write : queue.pendingWrites) {
+            persistenceEngine.put(write.getKey(), write.getValue());
+            pendingWritesMap.get(write.getKey()).remove(write);
         }
+        pendingTransactionsMap.remove(queue.version);
     }
     
     public DataItem retrievePendingItem(String key, Version version) {
