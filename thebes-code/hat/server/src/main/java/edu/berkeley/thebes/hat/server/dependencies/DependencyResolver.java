@@ -70,7 +70,7 @@ public class DependencyResolver {
         this.unresolvedAcksLock = new ReentrantLock();
     }
 
-    public void addPendingWrite(String key, DataItem value) {
+    public void addPendingWrite(String key, DataItem value) throws TException {
         Version version = value.getVersion();
         
         pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
@@ -111,7 +111,7 @@ public class DependencyResolver {
         }
     }
     
-    private void ackAndMaybeCommit(TransactionQueue queue) {
+    private void ackAndMaybeCommit(TransactionQueue queue) throws TException {
         if (!queue.serverAcked()) {
             // Not enough acks to commit yet.
             return;
@@ -137,8 +137,8 @@ public class DependencyResolver {
         }
         return null;
     }
-    
-    public void ackTransactionPending(Version transactionId) {
+
+    public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
         if (transactionQueue != null) {
             ackAndMaybeCommit(transactionQueue);

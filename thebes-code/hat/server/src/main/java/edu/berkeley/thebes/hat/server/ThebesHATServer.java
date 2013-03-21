@@ -1,5 +1,7 @@
 package edu.berkeley.thebes.hat.server;
 
+import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
@@ -26,16 +28,7 @@ public class ThebesHATServer {
             Config.initializeServer(TransactionMode.HAT);
             Log4JConfig.configureLog4J();
 
-            IPersistenceEngine engine;
-
-            PersistenceEngine engineType = Config.getPersistenceType();
-            switch (engineType) {
-            case MEMORY:
-                engine = new MemoryPersistenceEngine();
-                break;
-            default:
-                throw new ConfigurationException("unexpected persistency type: " + engineType);
-            }
+            IPersistenceEngine engine = Config.getPersistenceEngine();
             engine.open();
 
             AntiEntropyServiceRouter router = new AntiEntropyServiceRouter();

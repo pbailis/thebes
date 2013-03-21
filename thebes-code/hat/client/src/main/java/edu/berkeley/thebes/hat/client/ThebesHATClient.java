@@ -250,7 +250,7 @@ public class ThebesHATClient implements IThebesClient {
         DataItem ret = doGet(key);
 
         if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            if(ret != null) {
+            if(ret != null && ret.getTransactionKeys() != null) {
                 /*
                   If the value we just read was part of a transaction that i.) wrote to a key
                   we've already read and ii.) is ordered after the transaction that wrote to
@@ -298,7 +298,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             ret = router.getSyncReplicaByKey(key).put(key,
-                                                      DataItem.toThrift(value));
+                                                      value.toThrift());
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -318,7 +318,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             router.getAsyncReplicaByKey(key).put(key,
-                                                 DataItem.toThrift(value),
+                                                 value.toThrift(),
                                                  callback);
         } catch (RuntimeException e) {
             errorMetric.mark();
@@ -336,7 +336,7 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ret = DataItem.fromThrift(router.getSyncReplicaByKey(key).get(key,
+            ret = new DataItem(router.getSyncReplicaByKey(key).get(key,
             		Version.toThrift(atomicityVersionVector.getVersion(key))));
         } catch (RuntimeException e) {
             errorMetric.mark();

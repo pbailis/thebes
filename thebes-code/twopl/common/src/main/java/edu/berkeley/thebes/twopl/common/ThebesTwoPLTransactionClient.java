@@ -84,14 +84,14 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version(clientId, sessionId, timestamp));
-        return masterRouter.getMasterByKey(key).put(sessionId, key, DataItem.toThrift(dataItem));
+        return masterRouter.getMasterByKey(key).put(sessionId, key, dataItem.toThrift());
     }
     
     /** Same as put, but does not acquire or need a lock. */
     public boolean unsafe_load(String key, ByteBuffer value) throws TException {
         long timestamp = System.currentTimeMillis();
         DataItem dataItem = new DataItem(value, new Version(clientId, sessionId, timestamp));
-        return masterRouter.getMasterByKey(key).unsafe_load(key, DataItem.toThrift(dataItem));
+        return masterRouter.getMasterByKey(key).unsafe_load(key, dataItem.toThrift());
     }
     
     @Override
@@ -102,7 +102,7 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
         
         readLock(key);
         
-        DataItem dataItem = DataItem.fromThrift(masterRouter.getMasterByKey(key).get(sessionId, key));
+        DataItem dataItem = new DataItem(masterRouter.getMasterByKey(key).get(sessionId, key));
         // Null is returned by 0-length data
         if (dataItem.getData().limit() == 0) {
             return null;

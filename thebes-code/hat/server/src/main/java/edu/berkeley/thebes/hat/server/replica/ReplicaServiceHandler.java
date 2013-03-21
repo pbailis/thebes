@@ -31,7 +31,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     @Override
     public boolean put(String key,
                        ThriftDataItem valueThrift) throws TException {
-        DataItem value = DataItem.fromThrift(valueThrift);
+        DataItem value = new DataItem(valueThrift);
         if(logger.isTraceEnabled())
             logger.trace("received PUT request for key: '"+key+
                          "' value: '"+value+
@@ -58,9 +58,9 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         if(logger.isTraceEnabled())
             logger.trace("received GET request for key: '"+key+
                          "' requiredVersion: "+ requiredVersion+
-                         ", found verison: " + (ret == null ? null : ret.getVersion()));
+                         ", found version: " + (ret == null ? null : ret.getVersion()));
 
-        if (requiredVersion != null &&
+        if (requiredVersion != null && requiredVersion != Version.NULL_VERSION &&
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
@@ -69,6 +69,10 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                                                    requiredVersion.getTimestamp(), requiredVersion.getClientID()));
         }
 
-        return DataItem.toThrift(ret);
+        if(ret == null) {
+            return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
+        }
+
+        return ret.toThrift();
     }
 }
