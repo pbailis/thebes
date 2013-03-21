@@ -4,6 +4,7 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
+import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
@@ -40,7 +41,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         if(Config.doCleanDatabaseFile()) {
             try {
                 //not proud, but damn Guava for removing removeRecursively
-                Runtime.getRuntime().exec("rm -rf "+Config.getDiskDatabaseFile());
+                FileUtils.forceDelete(new File(Config.getDiskDatabaseFile()));
             } catch(Exception e) {}
         }
 
