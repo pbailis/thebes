@@ -103,6 +103,67 @@ availability and low latency:
 
 \subsection{Application Requirements}
 
+Thus far, we have largely ignored the question of which applications
+actually require HAT semantics versus traditional ACID guarantees. As
+we summarized in Section~\ref{needed}, the main cost of providing HAT
+updates is the inability to prevent Lost Update, Write Skew, and
+provide recency bounds. In this Section, we attempt to understand when
+these guarantees matter both abstractly and by the use of a
+representative customer order transaction application patterned off of
+TPC-C.
+
+Recent work on the CALM Theorem, Lattice-based state update, and
+Commutative and Replicated Data Types demonstrates that, if updates
+logically commute, then they can be performed in different orders at
+different locations in a distributed system. Accordingly, as long as
+all writes are delivered to all replicas, then a system executing
+monotonic logic with commutative operators should not suffer from
+application-level consistency anomalies as a result of Lost Update or
+Write Skew anomalies. However, applications with non-monotonic state
+mutation will not, in general, be able to maintain application-level
+consistency constraints. Similarly, applications requiring
+write visibility between clients should opt for unavailability instead
+of possibly missing a write visibility deadline.
+
+Absent a necessary and sufficient result describing exactly which
+application logics can be achieved with high availability and to make
+these requirements more concrete, we consider an example application:
+the TPC-C benchmark. Our goal is \textit{not} to provide a performance
+analysis, as any HAT configuration will be non-compliant. Rather, we
+examine the five queries contained in the benchmarks---ostensibly
+representative of a standard transaction processing application---to
+understand which are achievable in a HAT context.
+
+Integrity constraints:
+--Mostly SUM, AVG, COUNT
+--This is okay and foreign key constraints are provided by TA
+
+New Order:
+--Lookup of warehouse codes is fine, are not mutated
+--Assigning a version order is not okay, but we can still get uniqueness
+--Stock adjustment is monotonic and can't go below zero due to replenish. However, might overstock!
+
+Payment:
+--Monotonic, simply increase the number of each respective field
+
+Delivery:
+--Problematic; is non-monotonic, removing from the order table
+--Without additional semantics, have to block
+--CALM analysis would catch this, enforce coordination
+--Does \textit{not} block new New Order transactions
+
+Order Status:
+--Non-monotonic
+--Read your writes may be problematic
+
+While TPC-C isolation tests are for lock-based models (and HATs are,
+by requirement, non-locking), consider TPC-E tests. Modifying the
+description and image together is fine, etc.
+
+
+\subsection{Experimental Costs}
+
+
 2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
 	- Eventual Consistency
 	- Eventual consistency with a "master" for updates--simulates the lower bound on a non-HAT system.
@@ -113,8 +174,3 @@ availability and low latency:
 	-On, say, 5 servers, can get hundreds of thousands of TPS
 
 	-Not meant as an exhaustive study, but validates our intuitions. Coordination costs of non-HAT systems are unaccounted for, will only go up, and we haven't even talked about availability.
-
-\subsection{Experimental Costs}
-
-
-
