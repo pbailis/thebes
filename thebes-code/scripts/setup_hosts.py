@@ -796,7 +796,7 @@ if __name__ == "__main__":
 
     if args.ycsb_vary_constants_experiment:
         for transaction_length in [2, 8, 16]:
-            for threads in [20, 40, 80, 100]:
+            for threads in [1, 10, 20, 40, 80, 100]:
                 isolation_level = "READ_COMMITTED"
                 atomicity_level = "NO_ATOMICITY"
                 run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
@@ -827,6 +827,59 @@ if __name__ == "__main__":
                                timeout=120*10000,
                                keydistribution="uniform")
 
+                isolation_level = "NO_ISOLATION"
+                atomicity_level = "NO_ATOMICITY"
+                run_ycsb_trial(False, runid=("MASTERED_EVENTUAL-%d-THREADS%d" % (transaction_length, 
+                                                                                       threads)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform",
+                               route_to_masters="true")
+
+                isolation_level = "NO_ISOLATION"
+                atomicity_level = "NO_ATOMICITY"
+                run_ycsb_trial(False, runid=("EVENTUAL-%d-THREADS%d" % (transaction_length, 
+                                                                                       threads)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform")
+                
+                # 2PL
+                run_ycsb_trial(True, runid=("TWOPL-%d-THREADS%d" % (transaction_length, threads)),
+                               threads=threads, distributionparameter=transaction_length)
+
+                continue
+
+                # HAT
+                for isolation_level in ["NO_ISOLATION", "READ_COMMITTED"]:#, "REPEATABLE_READ"]:
+                    for atomicity_level in ["NO_ATOMICITY", "CLIENT"]:
+                        if isolation_level == "NO_ISOLATION" and atomicity_level != "NO_ATOMICITY":
+                            continue
+                        if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 4:
+                            continue
+                    
+                        run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
+                                                                                                  isolation_level,
+                                                                                                  atomicity_level,
+                                                                                                  threads)),
+                                       threads=threads,
+                                       distributionparameter=transaction_length,
+                                       atomicity_level=atomicity_level,
+                                       isolation_level=isolation_level,
+                                       recordcount=100000,
+                                       time=120,
+                                       timeout=120*10000,
+                                       keydistribution="uniform")
                 
     if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
