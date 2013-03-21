@@ -138,6 +138,7 @@ public class DependencyResolver {
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
         unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
+        logger.debug("Hi: " + unresolvedAcksMap.get(transactionId));
         unresolvedAcksMap.get(transactionId).incrementAndGet();
     }
     
