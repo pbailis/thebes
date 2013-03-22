@@ -75,24 +75,22 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
         Transaction putTxn = env.beginTransaction(null, null);
 
         try {
-            for(int i = 0; i < 10; ++i) {
-                DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
-                DatabaseEntry existingEntry = new DatabaseEntry();
-                db.get(putTxn, keyEntry, existingEntry, LockMode.RMW);
+            DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
+            DatabaseEntry existingEntry = new DatabaseEntry();
+            db.get(putTxn, keyEntry, existingEntry, LockMode.RMW);
 
-                if(existingEntry.getData() != null) {
-                    ThriftDataItem existingThriftItem = new ThriftDataItem();
-                    deserializer.get().deserialize(existingThriftItem, existingEntry.getData());
-                    DataItem existingDataItem = new DataItem(existingThriftItem);
+            if(existingEntry.getData() != null) {
+                ThriftDataItem existingThriftItem = new ThriftDataItem();
+                deserializer.get().deserialize(existingThriftItem, existingEntry.getData());
+                DataItem existingDataItem = new DataItem(existingThriftItem);
 
-                    if (existingDataItem.getVersion().compareTo(value.getVersion()) <= 0) {
-                        return false;
-                    }
+                if (existingDataItem.getVersion().compareTo(value.getVersion()) <= 0) {
+                    return false;
                 }
-
-                DatabaseEntry newDataEntry = new DatabaseEntry(serializer.get().serialize(value.toThrift()));
-                db.put(putTxn,  keyEntry, newDataEntry);
             }
+
+            DatabaseEntry newDataEntry = new DatabaseEntry(serializer.get().serialize(value.toThrift()));
+            db.put(putTxn,  keyEntry, newDataEntry);
         } catch(Exception e) {
             logger.warn("error: ", e);
 
@@ -100,6 +98,8 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 putTxn.abort();
                 putTxn = null;
             }
+
+            return false;
         } finally {
             if(putTxn != null)
             putTxn.commit();
