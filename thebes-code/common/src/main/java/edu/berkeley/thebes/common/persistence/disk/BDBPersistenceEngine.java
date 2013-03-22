@@ -62,6 +62,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
 
         DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setAllowCreate(true);
+        dbConfig.setTransactional(true);
         db = env.openDatabase(null, "thebesDB", dbConfig);
 
     }
