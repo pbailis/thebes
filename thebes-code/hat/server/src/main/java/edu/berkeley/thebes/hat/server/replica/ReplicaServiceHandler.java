@@ -64,7 +64,11 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
-            if (ret == null)
+            // race?
+            if(ret == null)
+                ret = persistenceEngine.get(key);
+
+            if(ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)
                 throw new TException(String.format("suitable version was not found! time: %d clientID: %d",
                                                    requiredVersion.getTimestamp(), requiredVersion.getClientID()));
         }
