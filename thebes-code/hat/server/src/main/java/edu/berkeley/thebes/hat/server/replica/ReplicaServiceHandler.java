@@ -40,7 +40,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
 
         // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
-        if (value.getTransactionKeys().isEmpty()) {
+        if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
             persistenceEngine.put(key, value);
         } else {
             dependencyResolver.addPendingWrite(key, value);
