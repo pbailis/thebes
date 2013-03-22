@@ -134,32 +134,99 @@ examine the five queries contained in the benchmarks---ostensibly
 representative of a standard transaction processing application---to
 understand which are achievable in a HAT context.
 
-Integrity constraints:
---Mostly SUM, AVG, COUNT
---This is okay and foreign key constraints are provided by TA
+TPC-C consists of five transactions, capturing operation of a
+real-world warehouse, including sales, payments, and deliveries. We
+analyze each transaction and its interactions below.
 
-New Order:
---Lookup of warehouse codes is fine, are not mutated
---Assigning a version order is not okay, but we can still get uniqueness
---Stock adjustment is monotonic and can't go below zero due to replenish. However, might overstock!
+\begin{itemize}
+\item \textbf{New-Order} places an order for a variable quantity of
+  data items, updating warehouse stock as needed. The New-Order
+  transaction selects a sales district, assigns the new order an order
+  ID number, adjusts the remaining warehouse stock, and writes a
+  placeholder entry for the pending order. There are two mutations in
+  this transaction which we must be careful of.
 
-Payment:
---Monotonic, simply increase the number of each respective field
+  First, assigning an order ID number is challenging. We can easily
+  assign a \textit{unique} order ID, by, say, concatenating the user
+  ID with a timestamp and server ID. However, the TPC-C specification
+  requires that order numbers be sequentially assigned, which we
+  cannot guarantee in HATs due to Lost Update. Accordingly, while HATs
+  cannot provide compliant TPC-C execution due to a non-monotonic
+  counter increase, they can allow placement of new orders, which is a
+  commutative and monotonic operation
 
-Delivery:
---Problematic; is non-monotonic, removing from the order table
---Without additional semantics, have to block
---CALM analysis would catch this, enforce coordination
---Does \textit{not} block new New Order transactions
+  Second, decrementing inventory counts is a potentially risky
+  operation as, without coordination, inventory counts may become
+  negative. However, TPC-C automatically ``refills'' inventory counts
+  (by 91 items) when there are 10 or fewer items
+  remaining. Accordingly, even in the presence of concurrent new
+  orders to the same item, the stock will never fall below
+  zero. However, if the system propagates ``refill'' operations
+  between replicas, then an $R$ replica system might end up with
+  $91(R-1)$ more stock than a single-site implementation.
 
-Order Status:
---Non-monotonic
---Read your writes may be problematic
+\item \textbf{Payment} updates running balances for warehouses,
+  districts, and customer records as well as providing an audit
+  trail. All balance operations can be made commutative, so the
+  transaction can execute under HATs.
 
-While TPC-C isolation tests are for lock-based models (and HATs are,
-by requirement, non-locking), consider TPC-E tests. Modifying the
-description and image together is fine, etc.
+\item \textbf{Order-Status} is a read-only transaction and can be
+  safely executed under HATs. The TPC-C specification does not require
+  recency bounds but, in practice, they may be useful. If a client is
+  sticky with her replica set, she will read her own writes, which may
+  be sufficient.
 
+\item \textbf{Delivery} represents the fulfillment of a pending order
+  created by a New Order transaction: it deletes the order from the
+  pending list, updates the customer's balance, updates the order's
+  carrier ID and delivery time, and updates the customer balance. The
+  challenge in delivery comes in deletion, which is non-monotonic: an
+  item might be removed twice from the pending table. If delivery can
+  be made idempotent---that is, if multiple Delivery transactions have
+  the same effect as one---then multiple clients can execute the same
+  Deliveries without fatal consequences.
+
+  In practice, given that a physical shipment is likely only delivered
+  once, it is unlikely that multiple agents will attempt a Delivery
+  transaction for the same order simultaneously. However, in this
+  case, we have simply moved the non-monotonicity to the real world:
+  the carrier that picks up the package for an order must ensure that
+  she is the only carrier who has done so. While we can program around
+  the other operations in the order, HATs cannot--without the help of
+  business-specific processes--serve Delivery transactions. That said,
+  New Orders may be placed.
+
+\item \textbf{Stock-Level} is another read-only transaction and can be
+  executed without any non-HAT guarantees, with the same caveats
+  regarding recency.
+\end{itemize}
+
+Throughout execution, TPC-C requires the maintainence of several
+integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
+requires that each warehouse's sales count must reflect the sum of its
+subordinate sales districts. This integrity constraint spans two
+tables but, given the ability to update both tables atomically via
+transactional atomicity, can be easily maintained. Consistency
+Conditions 4 through 12 (3.3.2.4-12) can similarly be satisfied by
+applying updates atomically across tables. Consistency Conditions 2
+and 3 (3.3.2.2-3) concern order ID assignment and are more
+problematic: effectively, each New Order placed by a customer in a
+district must have an ID that is one the prior order in that
+district. This requires preventing Lost Update within each district's
+table. However, as we have seen, the required transactions can execute
+without these two conditions.
+
+In summary, many---but not all---TPC-C transactions are well-served by
+HATs. The two problematic transactions---New Order and Payment---rely
+on non-monotonic state updates. The former transaction can be modified
+to ensure ID uniqueness at the expense of dense ID ordering, while the
+latter is an inherently non-monotonic action requiring external
+compensation or stronger consistency protocols. We expect that,
+especially for read-dominated workloads found in many online services,
+HAT guarantees may suffice for many applications. Finally, while TPC-C
+is not subject to write skew anomalies, we note that many TPC-E
+isolation tests, such as one that requires simultaneously modifying a
+product description and its image, are satisfied by HATs.
 
 \subsection{Experimental Costs}
 
