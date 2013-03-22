@@ -7,9 +7,11 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import com.sleepycat.je.Transaction;
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.util.LockManager;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TDeserializer;
@@ -55,6 +57,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
 
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
+        envConfig.setTransactional(true);
         env = new Environment(new File(Config.getDiskDatabaseFile()), envConfig);
 
         DatabaseConfig dbConfig = new DatabaseConfig();
@@ -69,10 +72,38 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
             return true;
         }
 
-        DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
-        DatabaseEntry dataEntry = new DatabaseEntry(serializer.get().serialize(value.toThrift()));
+        Transaction putTxn = env.beginTransaction(null, null);
 
-        db.put(null, keyEntry, dataEntry);
+        try {
+            for(int i = 0; i < 10; ++i) {
+                DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
+                DatabaseEntry existingEntry = new DatabaseEntry();
+                db.get(putTxn, keyEntry, existingEntry, LockMode.RMW);
+
+                if(existingEntry.getData() != null) {
+                    ThriftDataItem existingThriftItem = new ThriftDataItem();
+                    deserializer.get().deserialize(existingThriftItem, existingEntry.getData());
+                    DataItem existingDataItem = new DataItem(existingThriftItem);
+
+                    if (existingDataItem.getVersion().compareTo(value.getVersion()) <= 0) {
+                        return false;
+                    }
+                }
+
+                DatabaseEntry newDataEntry = new DatabaseEntry(serializer.get().serialize(value.toThrift()));
+                db.put(putTxn,  keyEntry, newDataEntry);
+            }
+        } catch(Exception e) {
+            logger.warn("error: ", e);
+
+            if (putTxn != null) {
+                putTxn.abort();
+                putTxn = null;
+            }
+        } finally {
+            if(putTxn != null)
+            putTxn.commit();
+        }
         return true;
     }
 
