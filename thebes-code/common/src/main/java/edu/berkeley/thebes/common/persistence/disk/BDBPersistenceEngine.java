@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class BDBPersistenceEngine implements IPersistenceEngine {
 
@@ -58,6 +59,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(true);
+        envConfig.setLockTimeout(5, TimeUnit.SECONDS);
         env = new Environment(new File(Config.getDiskDatabaseFile()), envConfig);
 
         DatabaseConfig dbConfig = new DatabaseConfig();
@@ -73,9 +75,12 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
             return true;
         }
 
-        Transaction putTxn = env.beginTransaction(null, null);
+
+        Transaction putTxn = null;
 
         try {
+            putTxn = env.beginTransaction(null, null);
+
             DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
             DatabaseEntry existingEntry = new DatabaseEntry();
             db.get(putTxn, keyEntry, existingEntry, LockMode.RMW);
@@ -103,13 +108,12 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
             return false;
         } finally {
             if(putTxn != null)
-            putTxn.commit();
+                putTxn.commit();
         }
         return true;
     }
 
     public DataItem get(String key) throws TException {
-
         DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
         DatabaseEntry dataEntry = new DatabaseEntry();
 
