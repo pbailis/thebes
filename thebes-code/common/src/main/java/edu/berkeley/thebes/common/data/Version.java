@@ -33,6 +33,9 @@ public class Version implements Comparable<Version> {
     }
 	
 	public static Version fromThrift(ThriftVersion thriftVersion) {
+        if(thriftVersion == null)
+            return null;
+
         long version = thriftVersion.getVersion();
 	    
 	    short clientID = (short) (pow2Less1(numBitsClientID) & version);
