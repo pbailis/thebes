@@ -115,7 +115,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
 
         OperationStatus status = db.get(null, keyEntry, dataEntry, LockMode.DEFAULT);
 
-        if(dataEntry.getData() == null)
+        if(status != OperationStatus.SUCCESS || dataEntry.getData() == null)
             return null;
 
         ThriftDataItem tdrRet = new ThriftDataItem();
