@@ -17,9 +17,11 @@ public class DataItem implements Comparable<DataItem> {
         thriftDataItem.setData(data);
         thriftDataItem.setVersion(version.getThriftVersion());
         thriftDataItem.setTransactionKeys(transactionKeys);
+        assert(thriftDataItem.getVersion() != null);
 	}
 
     public DataItem(ThriftDataItem item) {
+        assert(item.getVersion() != null);
         thriftDataItem = item;
     }
 	
@@ -27,6 +29,7 @@ public class DataItem implements Comparable<DataItem> {
         thriftDataItem = new ThriftDataItem();
         thriftDataItem.setData(data);
         thriftDataItem.setVersion(version.getThriftVersion());
+        assert(thriftDataItem.getVersion() != null);
     }
 	
 	public ThriftDataItem toThrift() {
