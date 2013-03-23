@@ -278,8 +278,8 @@ public class ThebesHATClient implements IThebesClient {
 
         // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
         if(transactionWriteBuffer.containsKey(key)) {
-            if (transactionWriteBuffer.get(key).getVersion()
-            		.compareTo(ret.getVersion()) > 0) {
+            if (ret == null || transactionWriteBuffer.get(key).getVersion()
+            		           .compareTo(ret.getVersion()) > 0) {
                 return transactionWriteBuffer.get(key).getData();
             }
         }
