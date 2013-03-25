@@ -5,7 +5,7 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
-\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz}
+\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, draftwatermarkbottom, draftwatermarktop}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
 \usetikzlibrary{positioning, snakes, shapes}
@@ -22,18 +22,18 @@
 
 \begin{abstract}
 Given the presence of network latency and the possibility of partial
-failure and network partitions, many systems eschew transactional
-functionality providing strong semantic guarantees on groups of
-multiple operations over multiple data items. In this work, we
-consider the problem of providing transactional guarantees that are
-highly available, or do not suffer from network latency or system
-partitions.  We introduce a new taxonomy of highly available
-algorithms and analyze a combination of ACID and distributed
-consistency guarantees to identify which can and cannot be achieved by
-Highly Available Transaction (HAT) systems. In doing so, we
-analytically and experimentally quantify the cost of violating high
-availability as well as the cost of providing necessarily relaxed
-semantics.
+failure and network partitions, many modern distributed systems eschew
+transactional functionality, which provides strong semantic guarantees
+on groups of multiple operations over multiple data items. In this
+work, we consider the problem of providing transactional guarantees
+that are highly available, or do not suffer from unavailability during
+system partitions or typically incur high network latency.  We
+introduce a new taxonomy of highly available algorithms and analyze a
+combination of ACID and distributed consistency guarantees to identify
+which can and cannot be achieved by Highly Available Transaction (HAT)
+systems. In doing so, we analytically and experimentally quantify the
+benefit of providing high availability as well as the associated
+semantic costs.
 \end{abstract}
 
 \input{intro.tex}

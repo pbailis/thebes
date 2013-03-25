@@ -301,7 +301,7 @@ public class Config {
         return getOption(ConfigParameters.DISK_DATABASE_FILE);
     }
 
-    public static boolean doCleanDatabaseFile() {
+    public static Boolean doCleanDatabaseFile() {
         return getOption(ConfigParameters.DO_CLEAN_DATABASE_FILE);
     }
 

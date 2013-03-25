@@ -1,4 +1,97 @@
 
+
+(TODO: fix me--HotOS copy!)
+
+Nonetheless, Coordinating transactional atomicity across replicas is
+challenging. For example, if, as is common~\cite{readonly, eiger}, we
+use a master to determine the correct set of updates to read, then the
+system will not be available when clients are partitioned from the
+master. Instead, we rely on decentralized \textit{background}
+agreement to decide when to show new values, which can safely stall in
+the presence of partitions. Each server keeps a known good value for
+each data item $d$ it is assigned, $d_{good}$ and a set of pending
+updates to $d$, $d_{pending}$. We use asynchronous agreement to move
+updates from $d_{pending}$ to $d_{good}$: all of $d_{good}$'s
+transactional siblings (or later values) are guaranteed present on all
+replicas. Without aborts, this requires only one synchronous round
+trip time (RTT).
+
+\noindent\textit{Writes:} First, consider the case where transactions
+do not internally abort. On commit, for each written data item $d$, we
+send the last written value of $d$ ($d_v$) with the transaction ID and
+$L_v$, a list of all data items and values written in the transaction,
+to available replicas for $d$. The replicas immediately reply with a
+response to \textit{commit}, place $d_v$ it in their respective
+$d_{pending}$, and send a receipt to all replicas for items in
+$L_v$. Once a server receives receipts from all replicas for all items
+in $L_v$, the server sets $d_{good} = d_v$ if $d_v$'s ID is greater
+than $d_{good}$'s ID. Accordingly, a new value will only appear in
+$d_{good}$ when the other values written with $d_{good}$ ($L_v$) are
+resident on every respective replica (though possibly in their
+$d_{pending}$).\vspace{.5em}
+
+\noindent\textit{Reads:} Each client maintains a vector of transaction
+IDs $V$, with one entry per data item ($V(d)$). When a client reads a
+new data item $d_i$, the server returns both $d_i$ and $L_v$, and, for
+all data items $k \in L_v$, the client sets $V(k)$ to $d_i$'s ID. When
+a client sends a read request for item $x$, it also sends $V(x)$, and
+the replica returns \textit{either} $x_{good}$ if it matches $V(x)$ or
+occurs after $V(x)$ in the transaction order or, if $x_{good}$ is
+unsatisfactory, $V(x)$ from $x_{pending}$. If $V(x)$ is empty, the
+server returns $x_{good}$.\vspace{.5em}
+
+We can also consider arbitrary
+application-defined partial orders, as in explicit
+causality~\cite{explicit-socc}, if dependencies are specified at
+commit time.
+
+\noindent\textit{Aborts:} If we allow internal aborts, writes require
+2 RTTs: one to check constraints and one to execute the above. Write
+propagation and update visibility are achieved asynchronously, as in
+the no-abort case.\vspace{.5em}
+
+This implementation is entirely masterless and both reads and writes
+do not block for coordination. One key property is that we do not, in general,
+dictate when writes become visible (see: session guarantees,
+\S\ref{sec:impossible}). Accordingly, it is highly available.\vspace{.5em}
+
+
+The database tradition of providing ACID guarantees: atomicity,
+consistency, isolation, and durability are, with few exceptions, not
+addressed by the distributed systems literature. There are several
+factors behind this occurrence, the least of which is that distributed
+systems rarely consider multi-object guarantees, whereas ACID
+transactions are frequently used to provide semantic guarantees across
+multiple operations on multiple objects. While linearizability
+(unfortunately often called ``atomicity'') ``composes'' across
+multiple objects, a linearizable system does not provide ACID
+``atomicity'' (which we will call ``transactional atomicity'' for
+clarity): just because two writes are visible to all writers
+immediately after they complete does not, on its own, provide any
+guarantees about the mutual visibility of the two writes.
+
+ecades of
+research on semantics-based concurrency control and
+coordination-reducing techniques such as escrow transactions and sagas
+allow serializability in the presence of partial system knowledge or
+otherwise reduce coordination cost. However, the majority of these
+algorithms are intended to preserve application-level consistency,
+which, for arbitrary applications and arbitrary sequence of
+operations, cannot be ensured with high availability in the presence
+of partitions.
+
+ We might view the use of weak consistency is somewhat
+of an ``arms race'': anecdotally, one major RDBMS vendor was forced to
+lower their default isolation level in order to compare favorably in
+out-of-the-box performance comparisons with its major competitor,
+which had already lowered its default setting. Applications can guard
+against inconsistency in a weakly isolated environment by performing
+their own locking external to the database or by performing ad-hoc
+concurrency control within the database. However, this appears
+error-prone and, without further evidence, it remains somewhat
+puzzling why this is indeed favorable to providing serializability
+with in the database itself.
+
 TRASH
 
 We can accomplish these three requirements in two ways. First, clients

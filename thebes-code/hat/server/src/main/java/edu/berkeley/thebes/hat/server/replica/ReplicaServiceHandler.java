@@ -40,7 +40,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
 
         // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
-        if (value.getTransactionKeys().isEmpty()) {
+        if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
             persistenceEngine.put(key, value);
         } else {
             dependencyResolver.addPendingWrite(key, value);
@@ -64,9 +64,18 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
-            if (ret == null)
-                throw new TException(String.format("suitable version was not found! time: %d clientID: %d",
-                                                   requiredVersion.getTimestamp(), requiredVersion.getClientID()));
+            // race?
+            if(ret == null) {
+                logger.warn(String.format("Didn't find suitable version (timestamp=%d) for key %s in pending or persistenceEngine, so fetching again", requiredVersion.getTimestamp(), key));
+                ret = persistenceEngine.get(key);
+            }
+
+            if(ret == null || requiredVersion.compareTo(ret.getVersion()) > 0) {
+                logger.error(String.format("suitable version was not found! required time: %d clientID: %d only got %s",
+                                                   requiredVersion.getTimestamp(), requiredVersion.getClientID(),
+                                                   ret == null ? "null" : Long.toString(ret.getVersion().getTimestamp())));
+                ret = null;
+            }
         }
 
         if(ret == null) {

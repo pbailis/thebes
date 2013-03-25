@@ -18,12 +18,13 @@ deployments. Specifically:
 
 \subsection{Existing Algorithms}
 
-As we have discussed, many existing database transaction and
-concurrency control algorithms are not designed for high
-availability. These algorithms often presume a single-server
-deployment or the requirement for serializability. As a consequence,
-traditional transaction processing systems are not well-optimized for
-a HAT context.
+Many existing database transaction and concurrency control algorithms
+are not designed for high availability. These algorithms often presume
+a single-server deployment or the requirement for serializability. As
+a consequence, traditional transaction processing systems are not
+well-optimized for a HAT context. In this section, we briefly discuss
+design decisions and algorithmic details that preclude high
+availability.
 
 We begin by considering several existing algorithms that provide
 serializability but are not highly available. In summary, all
@@ -41,13 +42,13 @@ before committing.
 
 \item \textbf{Optimistic concurrency control} allows reads from any
   server but transactions must be checked by a scheduler before
-  commit. With one scheduler per database, this requires one RTT for
-  concurrency control. If schedulers are sharded by database
-  partition, a multi-partition transaction may require contacting
-  several different schedulers and, possibly, an atomic commit
-  protocol, which becomes substantially more expensive.
+  commit. With one scheduler per database, this requires one RTT
+  specifically for concurrency control. If schedulers are sharded by
+  database partition, a multi-partition transaction may require
+  contacting several different schedulers and, possibly, an atomic
+  commit protocol, which becomes substantially more expensive.
 
-\item \textbf{Deterministic transaction scheduling} is effecitvely the
+\item \textbf{Deterministic transaction scheduling} is ffectively the
   inverse of optimistic concurrency control: a scheduler first orders
   the transactions, then sends them to database replicas for in-order
   execution. These techniques, pioneered in the context of totally
@@ -61,16 +62,22 @@ before committing.
 
 \end{itemize}
 
-There are several mechanisms that do not provide serializability (and
-often provide HAT semantics) but which are not
-available. Non-serializability can but does not necessarily imply high
-availability and low latency:
+Perhaps unsurprisingly, the reliance on a glocal total order
+necessitates a minimum of one round-trip to a designated master or
+coordination service for each of these classic algorithms. This is
+simply a cost of providing serializability, and the cost of the
+(minimum one) round trip will be determined by the deployment
+environment, as we saw in Section~\ref{sec:motivation}.
+
+There also are several mechanisms that do not provide serializability
+but provide transactional semantics with varying availability
+properties:
 
 \begin{itemize}
 \item \textbf{Lock-based protocols} such as those used to provide weak
   isolation in Gray's original paper require at least one RTT to the a
   lock server (or, alternatively, a majority quorum). In the presence
-  of failure, distributed locking can be challenging.
+  of failure, distributed locking is challenging.
 \item The \textbf{MDCC} commit protocol uses a Paxos variant and escrow
   transactions to provide Repeatable Read isolation with 1-2 RTTs. (TODO: CHECK)
 \item \textbf{Parallel Snapshot Isolation} as developed by the Walter
@@ -85,7 +92,7 @@ availability and low latency:
   transactions, reads and writes may become unavailable. \textbf{COPS}
   provides similar semantics for read-only transactions but does not
   suffer from unavailability as it does not have a coordinator.
-\item \textbf{Chan and Gray read-only transactions} use a similar
+\item \textbf{Chan and Gray's Read-only transactions} use a similar
   algorithm to Eiger to provide read-only transactions with item cut
   isolation and causal consistency but coordinate on reads instead of
   writes.
@@ -104,13 +111,12 @@ availability and low latency:
 \subsection{Application Requirements}
 
 Thus far, we have largely ignored the question of which applications
-actually require HAT semantics versus traditional ACID guarantees. As
-we summarized in Section~\ref{needed}, the main cost of providing HAT
-updates is the inability to prevent Lost Update, Write Skew, and
-provide recency bounds. In this Section, we attempt to understand when
-these guarantees matter both abstractly and by the use of a
-representative customer order transaction application patterned off of
-TPC-C.
+require semantics which are unavailable to HATs. As we showed in
+Section~\ref{sec:hats}, the main cost of choosing HATs comes in the
+inability to prevent Lost Update, Write Skew, and provide recency
+bounds. In this Section, we attempt to understand when these
+guarantees matter both abstractly and by the use of a representative
+customer order transaction application patterned off of TPC-C.
 
 Recent work on the CALM Theorem, Lattice-based state update, and
 Commutative and Replicated Data Types demonstrates that, if updates
@@ -125,6 +131,14 @@ consistency constraints. Similarly, applications requiring
 write visibility between clients should opt for unavailability instead
 of possibly missing a write visibility deadline.
 
+As an example of an actual system rearchitecture,
+less than one year after its announcement, Yahoo!'s PNUTS developers
+explicitly added a support for weaker, highly available operation,
+explaining that ``strict adherence [to strong consistency] leads to
+difficult situations under network partitioning or server
+failures...in many circumstances, applications need a relaxed
+approach''~\cite{pnuts-update}.
+
 Absent a necessary and sufficient result describing exactly which
 application logics can be achieved with high availability and to make
 these requirements more concrete, we consider an example application:
@@ -132,34 +146,99 @@ the TPC-C benchmark. Our goal is \textit{not} to provide a performance
 analysis, as any HAT configuration will be non-compliant. Rather, we
 examine the five queries contained in the benchmarks---ostensibly
 representative of a standard transaction processing application---to
-understand which are achievable in a HAT context.
+understand which are achievable in a HAT context. TPC-C consists of
+five transactions, capturing operation of a real-world warehouse,
+including sales, payments, and deliveries. We analyze each transaction
+and its interactions below.
 
-Integrity constraints:
---Mostly SUM, AVG, COUNT
---This is okay and foreign key constraints are provided by TA
+\begin{itemize}
+\item \textbf{New-Order} places an order for a variable quantity of
+  data items, updating warehouse stock as needed. The New-Order
+  transaction selects a sales district, assigns the new order an order
+  ID number, adjusts the remaining warehouse stock, and writes a
+  placeholder entry for the pending order. There are two mutations we
+  must be consider in detail.
 
-New Order:
---Lookup of warehouse codes is fine, are not mutated
---Assigning a version order is not okay, but we can still get uniqueness
---Stock adjustment is monotonic and can't go below zero due to replenish. However, might overstock!
+  First, assigning an order ID number is challenging. We can easily
+  assign a \textit{unique} order ID, by, say, concatenating the
+  customer ID with a timestamp and server ID. However, the TPC-C
+  specification requires that order numbers are assigned sequentially,
+  which we cannot guarantee in HATs due to Lost Update. Accordingly,
+  HATs can allow placement of new orders with unique identifiers but
+  cannot provide compliant TPC-C execution due to the non-monotonic
+  counter increase.
 
-Payment:
---Monotonic, simply increase the number of each respective field
+  Second, decrementing inventory counts is a potentially risky
+  operation as, without coordination, inventory counts may become
+  negative. However, TPC-C automatically ``restocks'' inventory counts
+  (by 91 items) when there are 10 or fewer items
+  remaining. Accordingly, even in the presence of concurrent new
+  orders to the same item, the stock will never fall below
+  zero. However, an $R$ replica HAT system might end up with $91(R-1)$
+  more stock than a single-site implementation.
 
-Delivery:
---Problematic; is non-monotonic, removing from the order table
---Without additional semantics, have to block
---CALM analysis would catch this, enforce coordination
---Does \textit{not} block new New Order transactions
+\item \textbf{Payment} updates running balances for warehouses,
+  districts, and customer records as well as providing an audit
+  trail. All balance operations can be made commutative, so the
+  transaction can execute under HATs.
 
-Order Status:
---Non-monotonic
---Read your writes may be problematic
+\item \textbf{Order-Status} is a read-only transaction and can be
+  safely executed under HATs. The TPC-C specification does not require
+  recency bounds but, in practice, they may be useful. If a client is
+  sticky with her replica set, she will read her own writes, which may
+  be sufficient.
 
-While TPC-C isolation tests are for lock-based models (and HATs are,
-by requirement, non-locking), consider TPC-E tests. Modifying the
-description and image together is fine, etc.
+\item \textbf{Delivery} represents the fulfillment of a pending order
+  created by a New Order transaction: it deletes the order from the
+  pending list, updates the customer's balance, updates the order's
+  carrier ID and delivery time, and updates the customer balance. The
+  challenge in delivery comes in deletion, which is non-monotonic: an
+  item might be removed twice from the pending table. If delivery can
+  be made idempotent---that is, if multiple Delivery transactions have
+  the same effect as one---then multiple clients can execute the same
+  Deliveries without fatal consequences.
 
+  In practice, given that a physical shipment is likely only delivered
+  once, it is unlikely that multiple agents will attempt a Delivery
+  transaction for the same order simultaneously. However, in this
+  case, we have simply moved the non-monotonicity to the real world:
+  the carrier that picks up the package for an order must ensure that
+  she is the only carrier who has done so. While we can program around
+  the other operations in the order, HATs cannot--without the help of
+  business-specific processes--serve Delivery transactions. That said,
+  New Orders may be placed.
+
+\item \textbf{Stock-Level} is another read-only transaction and can be
+  executed without any non-HAT guarantees, with the same caveats
+  regarding recency.
+\end{itemize}
+
+Throughout execution, TPC-C requires the maintainence of several
+integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
+requires that each warehouse's sales count must reflect the sum of its
+subordinate sales districts. This integrity constraint spans two
+tables but, given the ability to update both tables atomically via
+transactional atomicity, can be easily maintained. Consistency
+Conditions 4 through 12 (3.3.2.4-12) can similarly be satisfied by
+applying updates atomically across tables. Consistency Conditions 2
+and 3 (3.3.2.2-3) concern order ID assignment and are more
+problematic: effectively, each New Order placed by a customer in a
+district must have an ID that is one the prior order in that
+district. This requires preventing Lost Update within each district's
+table. However, as we have seen, the required transactions can execute
+without these two conditions.
+
+In summary, many---but not all---TPC-C transactions are well-served by
+HATs. The two problematic transactions---New Order and Payment---rely
+on non-monotonic state updates. The former transaction can be modified
+to ensure ID uniqueness at the expense of dense ID ordering, while the
+latter is an inherently non-monotonic action requiring external
+compensation or stronger consistency protocols. We expect that,
+especially for read-dominated workloads found in many online services,
+HAT guarantees may suffice for many applications. Finally, while TPC-C
+is not subject to write skew anomalies, we note that many TPC-E
+isolation tests, such as one that requires simultaneously modifying a
+product description and its image, are satisfied by HATs.
 
 \subsection{Experimental Costs}
 

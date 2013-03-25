@@ -28,7 +28,6 @@ public class ReplicaRouter {
         asyncReplicas = new ArrayList<ReplicaService.AsyncClient>(serverIPs.size());
 
         for (ServerAddress server : serverIPs) {
-        	System.out.println("Connecting to " + server);
             syncReplicas.add(ThriftUtil.getReplicaServiceSyncClient(server.getIP(), server.getPort()));
             asyncReplicas.add(ThriftUtil.getReplicaServiceAsyncClient(server.getIP(), server.getPort()));
         }
