@@ -10,70 +10,62 @@ import com.google.common.collect.Lists;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
 public class DataItem implements Comparable<DataItem> {
-	private final ByteBuffer data;
-	private Version version;
-	private List<String> transactionKeys;
+	private final ThriftDataItem thriftDataItem;
 
 	public DataItem(byte[] data, Version version, List<String> transactionKeys) {
-		this.data = ByteBuffer.wrap(data);
-		this.version = version;
-		this.transactionKeys = transactionKeys;
+        thriftDataItem = new ThriftDataItem();
+        thriftDataItem.setData(data);
+        thriftDataItem.setVersion(version.getThriftVersion());
+        thriftDataItem.setTransactionKeys(transactionKeys);
+        assert(thriftDataItem.getVersion() != null);
 	}
+
+    public DataItem(ThriftDataItem item) {
+        assert(item.getVersion() != null);
+        thriftDataItem = item;
+    }
 	
 	public DataItem(ByteBuffer data, Version version) {
-		this.data = data;
-		this.version = version;
-		this.transactionKeys = Lists.newArrayList();
-	}
+        thriftDataItem = new ThriftDataItem();
+        thriftDataItem.setData(data);
+        thriftDataItem.setVersion(version.getThriftVersion());
+        assert(thriftDataItem.getVersion() != null);
+    }
 	
-	public static DataItem fromThrift(ThriftDataItem dataItem) {
-		if (dataItem == null) {
-			return null;
-		}
-		
-		return new DataItem(
-				dataItem.getData(),
-				Version.fromThrift(dataItem.getVersion()),
-				dataItem.getTransactionKeys());
-	}
-	
-	public static ThriftDataItem toThrift(DataItem dataItem) {
-		if (dataItem == null) {
-			return null;
-		}
-		
-		ThriftDataItem thriftDI = new ThriftDataItem(dataItem.getData(),
-				Version.toThrift(dataItem.getVersion()));
-		if (dataItem.getTransactionKeys() != null) {
-			thriftDI.setTransactionKeys(dataItem.getTransactionKeys());
-		}
-		return thriftDI;
+	public ThriftDataItem toThrift() {
+		return thriftDataItem;
 	}
 
 	public ByteBuffer getData() {
-		return data;
+        if(thriftDataItem.getData() == null)
+            return null;
+
+		return ByteBuffer.wrap(thriftDataItem.getData());
 	}
 
 	public Version getVersion() {
-		return version;
+		return Version.fromThrift(thriftDataItem.getVersion());
 	}
 
     public Version setVersion(Version newVersion) {
-        version = newVersion;
-        return version;
+        thriftDataItem.setVersion(newVersion.getThriftVersion());
+        return newVersion;
     }
 
 	public List<String> getTransactionKeys() {
-		return transactionKeys;
+		return thriftDataItem.getTransactionKeys();
 	}
 
 	public void setTransactionKeys(List<String> transactionKeys) {
-		this.transactionKeys = transactionKeys;
+		thriftDataItem.setTransactionKeys(transactionKeys);
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(data, version, transactionKeys);
+		return Objects.hashCode(thriftDataItem.getData(),
+                                // is this what we want here?
+                                this.getVersion(),
+                                thriftDataItem.getTransactionKeys());
 	}
 
 	@Override
@@ -91,8 +83,8 @@ public class DataItem implements Comparable<DataItem> {
     @Override
     public int compareTo(DataItem o) {
         return ComparisonChain.start()
-                .compare(version, o.getVersion())
-                .compare(data, o.getData())
+                .compare(this.getVersion(), o.getVersion())
+                .compare(this.getData(), o.getData())
                 .result();
     }
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.naming.ConfigurationException;
 
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -250,7 +251,7 @@ public class ThebesHATClient implements IThebesClient {
         DataItem ret = doGet(key);
 
         if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            if(ret != null) {
+            if(ret != null && ret.getTransactionKeys() != null) {
                 /*
                   If the value we just read was part of a transaction that i.) wrote to a key
                   we've already read and ii.) is ordered after the transaction that wrote to
@@ -278,8 +279,8 @@ public class ThebesHATClient implements IThebesClient {
 
         // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
         if(transactionWriteBuffer.containsKey(key)) {
-            if (transactionWriteBuffer.get(key).getVersion()
-            		.compareTo(ret.getVersion()) > 0) {
+            if (ret == null || transactionWriteBuffer.get(key).getVersion()
+            		           .compareTo(ret.getVersion()) > 0) {
                 return transactionWriteBuffer.get(key).getData();
             }
         }
@@ -288,7 +289,7 @@ public class ThebesHATClient implements IThebesClient {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
-        return ret.getData();
+        return ret == null ? null : ret.getData();
     }
 
     private boolean doPutSync(String key,
@@ -298,7 +299,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             ret = router.getSyncReplicaByKey(key).put(key,
-                                                      DataItem.toThrift(value));
+                                                      value.toThrift());
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
@@ -318,7 +319,7 @@ public class ThebesHATClient implements IThebesClient {
 
         try {
             router.getAsyncReplicaByKey(key).put(key,
-                                                 DataItem.toThrift(value),
+                                                 value.toThrift(),
                                                  callback);
         } catch (RuntimeException e) {
             errorMetric.mark();
@@ -336,8 +337,12 @@ public class ThebesHATClient implements IThebesClient {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ret = DataItem.fromThrift(router.getSyncReplicaByKey(key).get(key,
-            		Version.toThrift(atomicityVersionVector.getVersion(key))));
+            ThriftDataItem tdrRet = router.getSyncReplicaByKey(key).get(key,
+                        		Version.toThrift(atomicityVersionVector.getVersion(key)));
+            if(tdrRet.getData() == null)
+                return null;
+
+            ret = new DataItem(tdrRet);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;

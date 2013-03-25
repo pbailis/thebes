@@ -31,7 +31,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     @Override
     public boolean put(String key,
                        ThriftDataItem valueThrift) throws TException {
-        DataItem value = DataItem.fromThrift(valueThrift);
+        DataItem value = new DataItem(valueThrift);
         if(logger.isTraceEnabled())
             logger.trace("received PUT request for key: '"+key+
                          "' value: '"+value+
@@ -40,7 +40,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
 
         // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
-        if (value.getTransactionKeys().isEmpty()) {
+        if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
             persistenceEngine.put(key, value);
         } else {
             dependencyResolver.addPendingWrite(key, value);
@@ -58,17 +58,30 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         if(logger.isTraceEnabled())
             logger.trace("received GET request for key: '"+key+
                          "' requiredVersion: "+ requiredVersion+
-                         ", found verison: " + (ret == null ? null : ret.getVersion()));
+                         ", found version: " + (ret == null ? null : ret.getVersion()));
 
-        if (requiredVersion != null &&
+        if (requiredVersion != null && requiredVersion != Version.NULL_VERSION &&
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 
-            if (ret == null)
-                throw new TException(String.format("suitable version was not found! time: %d clientID: %d",
-                                                   requiredVersion.getTimestamp(), requiredVersion.getClientID()));
+            // race?
+            if(ret == null) {
+                logger.warn(String.format("Didn't find suitable version (timestamp=%d) for key %s in pending or persistenceEngine, so fetching again", requiredVersion.getTimestamp(), key));
+                ret = persistenceEngine.get(key);
+            }
+
+            if(ret == null || requiredVersion.compareTo(ret.getVersion()) > 0) {
+                logger.error(String.format("suitable version was not found! required time: %d clientID: %d only got %s",
+                                                   requiredVersion.getTimestamp(), requiredVersion.getClientID(),
+                                                   ret == null ? "null" : Long.toString(ret.getVersion().getTimestamp())));
+                ret = null;
+            }
         }
 
-        return DataItem.toThrift(ret);
+        if(ret == null) {
+            return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
+        }
+
+        return ret.toThrift();
     }
 }

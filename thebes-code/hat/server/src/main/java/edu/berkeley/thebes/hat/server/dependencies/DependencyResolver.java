@@ -68,7 +68,7 @@ public class DependencyResolver {
         this.unresolvedAcksLock = new ReentrantLock();
     }
 
-    public void addPendingWrite(String key, DataItem value) {
+    public void addPendingWrite(String key, DataItem value) throws TException {
         Version version = value.getVersion();
         
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
@@ -132,8 +132,8 @@ public class DependencyResolver {
         
         return null;
     }
-    
-    public void ackTransactionPending(Version transactionId) {
+
+    public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
         if (transactionQueue != null && transactionQueue.serverAcked()) {
             commit(transactionQueue);

@@ -215,12 +215,12 @@ def provision_graphite(region):
 def provision_spot(regionName, num):
     global AMIs
     system("ec2-request-spot-instances %s --region %s -t m1.xlarge -price 0.50 " \
-           "-k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
+           "-b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1' -k thebes -g thebes -n %d" % (AMIs[regionName], regionName, num));
 
 def provision_instance(regionName, num):
     global AMIs
     system("ec2-run-instances %s --region %s -t m1.xlarge " \
-           "-k thebes -g thebes -n %d > /tmp/instances" % (AMIs[regionName], regionName, num));
+           "-b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1' -k thebes -g thebes -n %d > /tmp/instances" % (AMIs[regionName], regionName, num));
     #system("ec2-run-instances %s -n %d -g 'cassandra' --t m1.large -k " \
     #   "'lenovo-pub' -b '/dev/sdb=ephemeral0' -b '/dev/sdc=ephemeral1'" %
     #   (AMIs[region], n))
@@ -332,6 +332,10 @@ def jumpstart_hosts(clusters):
     run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /home/ubuntu/.bashrc", user="root")
     pprint("Done")
 
+    pprint("Setting up ephemeral RAID0")
+    run_script("all-hosts", SCRIPTS_DIR+"/resources/setup_raid0_ephemeral.sh")
+    pprint("Done")
+
     pprint("Resetting git...")
     run_cmd_in_thebes('all-hosts', 'git stash', user="ubuntu")
     pprint("Done")
@@ -438,11 +442,11 @@ def getNextClientID():
 def start_servers(clusters, use2PL, thebesArgString):
     baseCmd = "ulimit -u unlimited; cd /home/ubuntu/thebes/thebes-code; rm *.log; screen -d -m "
     if not use2PL:
-        runServerCmd = baseCmd + "java -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
+        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
     else:
-        runServerCmd = baseCmd + "java -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
+        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
 
-    runTMCmd = baseCmd + "java -ea -Dclusterid=%d -Dclientid=%d %s -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar 1>tm.log 2>&1"
+    runTMCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dclientid=%d %s -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar 1>tm.log 2>&1"
 
 
     pprint('Starting servers...')
@@ -667,13 +671,13 @@ def pprint(str):
     else:
         print str
 
-def run_ycsb_trial(use2PL, **kwargs):
+def run_ycsb_trial(use2PL, serverArgs="", **kwargs):
     pprint("Restarting thebes clusters")
     assign_hosts(regions)
     stop_thebes_processes(clusters)
     write_config(clusters, graphiteRegion)
     restart_graphite(graphiteRegion)
-    start_servers(clusters, use2PL, thebesArgString)
+    start_servers(clusters, use2PL, thebesArgString+" "+serverArgs)
     start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
     runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
     fetch_logs(runid, clusters)
@@ -723,6 +727,7 @@ if __name__ == "__main__":
     parser.add_argument('-D', dest='thebes_args', action='append', default=[],
                      help='Parameters to pass along to the thebes servers/clients.')
     parser.add_argument('--ycsb_vary_constants_experiment', action='store_true', help='run experiment for varying constants')
+    parser.add_argument('--ycsb_test_backend_experiment', action='store_true', help='run experiment for varying backends')
 
     args,unknown = parser.parse_known_args()
 
@@ -753,9 +758,9 @@ if __name__ == "__main__":
     if args.setup or args.launch:
         pprint("Setting up thebes clusters")
         assign_hosts(regions)
-        #setup_hosts(clusters)
+        setup_hosts(clusters)
         jumpstart_hosts(clusters)
-        #write_config(clusters, graphiteRegion)
+        write_config(clusters, graphiteRegion)
         ##setup_graphite(graphiteRegion)
         #start_graphite(graphiteRegion)
         #start_servers(clusters, use2PL, thebesArgString)
@@ -883,4 +888,26 @@ if __name__ == "__main__":
                 
     if not args.launch and not args.rebuild and not args.restart and not args.terminate:
         parser.print_help()
+
+    if args.ycsb_test_backend_experiment:
+        transaction_length=4
+        threads=20
+        isolation_level = "READ_COMMITTED"
+        atomicity_level = "CLIENT"
+        for backend in ["MEMORY", "BDB", "LEVELDB"]:
+            backendStr = "-Dpersistence_engine="+backend
+            run_ycsb_trial(False, serverArgs=backendStr, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-%s" % (transaction_length, 
+                                                                                         isolation_level,
+                                                                                         atomicity_level,
+                                                                                         threads,
+                                                                                         backend)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform")
+
 

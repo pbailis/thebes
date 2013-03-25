@@ -7,7 +7,9 @@ package edu.berkeley.thebes.common.config;
  */
 public interface ConfigParameterTypes {
     public enum PersistenceEngine implements ConfigParameterTypes {
-        MEMORY;
+        MEMORY,
+        LEVELDB,
+        BDB;
     }
     
     public enum TransactionMode implements ConfigParameterTypes {

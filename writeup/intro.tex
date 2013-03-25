@@ -12,10 +12,10 @@ and, by proxy, unavailability. The formal introduction of the CAP
 Theorem, which proves the incompatiblity of ``always on'' operation
 with guarantees on data item recency in the presence of unreliable
 networks has led to a large number of systems prioritizing high
-availability, which brings with it guaranteed low latency, which is especially
-important in geo-replicated contexts. Accordingly, we observe a dearth
-of systems providing general-purpose multi-operation
-\textit{transactions} over multiple data items with useful semantics.
+availability and guaranteed low latency, especially important in
+geo-replicated contexts. We observe a dearth of systems providing
+general-purpose multi-operation \textit{transactions} over multiple
+data items with useful semantics.
 
 The relationship of the CAP Theorem with ACID semantics is poorly
 understood. While serializability---the gold standard of SSI
@@ -26,15 +26,16 @@ guarantees do not provide SSI for arbitrary general-purpose read/write
 transactions, they are widely employed (Section~\ref{needed}),
 overwhelmingly as the default setting in today's traditional ``ACID''
 and up-and-coming ``NewSQL'' databases and often as the maximum
-guarantees offered. While the prevalence of these weak isolation
-configurations is encouraging, the current literature does not provide
-guidance as to the operation of weakly consistent isolation guarantees
-in a distributed context. Rather, we have a strong understanding of
-weak isolation in the single-server context from which they originated
-as well as several techniques for providing distributed
-serializability but little to no guidance as to which ACID guarantees
-are compatible with Highly Available Transactions (HATS), or can be
-provided with high availability and low latency.
+guarantees offered (Section~\ref{sec:modernacid}). While the
+prevalence of these weak isolation configurations is encouraging, the
+current literature does not provide guidance as to the operation of
+weakly consistent isolation guarantees in a distributed
+context. Rather, we have a strong understanding of weak isolation in
+the single-server context from which it originated as well as several
+techniques for providing distributed serializability but little to no
+guidance as to which ACID guarantees are compatible with Highly
+Available Transactions (HATs), or can be provided with high
+availability and low latency.
 
 This work attempts to bridge this gap between ACID properties and
 highly available systems. We analyze a range of existing ACID and
@@ -47,41 +48,53 @@ isolation, preventing Fuzzy Read phenomena, and ensuring atomicity of
 transactional updates are achievable. We also attempt to bridge the
 often distant worlds of distributed system consistency and ACID
 database consistency by analyzing the relationship between so-called
-session guarantees and ``register'' semantics. In performing this
-taxonomization, we also introduce a hierarchy of highly available
-system guarantees as, for example, some guarantees require
-``stickiness,'' or fate-sharing between clients and database
+session guarantees, ``register'' semantics, and ACID models. In
+performing this taxonomization, we also introduce a hierarchy of
+highly available system guarantees as, for example, some guarantees
+require ``stickiness,'' or fate-sharing between clients and database
 servers. We believe that this analysis is the first that has been
 performed over such a broad range of ACID and distributed consistency
 models.
 
-While this model classification is useful, we seek to understand the
-implications of choosing to employ high availability. HATs provide
-high availability and low latency but suffer from weakened semantic
-guarantees. Traditional ACID properties provide strong semantic
-guarantees but do not provide high availability or low latency. We
-attempt to objectively study these virtues and limitations by
-performing an extensive survey of practitioner accounts and research
-literature, performing experimental analyses on modern cloud
-infrastructure, and analyzing representative applications for their
-semantic requirements. While our results are not definitive, they
-suggest that HATs offer a one to three order of magnitude latency
-decrease compared to traditional protocols, while providing acceptable
-semantics for programs with monotonic and commutative
-updates. Similarly, HAT guarantees can be used to ensure that
-arbitrary foreign key constraints are satisfied but not necessarily
-uniqueness constraints. For programs with non-monotonic transactional
-requirements, HATs may fall short, necessitating greater coordination
-strategies. Speed and availability are not without a price, but we
-attempt to estimate the size of the tag. Succintly, \textit{what is
-  benefits do highly available transactions offer and what is their
-  cost?}
+While this model classification is useful, we also seek to understand
+the implications of choosing to employ highly available systems. HATs
+provide high availability and low latency but cannot offer all of the
+semantic guarantees of unavailable systems. Traditional ACID
+properties provide strong semantic guarantees but do not provide high
+availability or low latency. We attempt to objectively study these
+virtues and limitations by performing an extensive survey of
+practitioner accounts and research literature, performing experimental
+analyses on modern cloud infrastructure, and analyzing representative
+applications for their semantic requirements. While our results are
+not definitive, they suggest that HATs offer a one to three order of
+magnitude latency decrease compared to traditional protocols while
+providing acceptable semantics for many programs, particularly those
+with purely monotonic logic and commutative updates. HAT guarantees
+can also ensure arbitrary foreign key constraints on updates and
+sometimes provide uniqeness guarantees. However, for programs with
+non-monotonic logic, HATs may fall short, requiring more
+coordination-intensive mechanisms. Concisely, we attempt to understand
+\textit{what benefits do highly available transactions offer and what
+  is their cost?}
 
 In this paper, we make the following contributions:
 
 \begin{itemize}
-\item We present a model for high availability in a transactional environment, including Replica-agnostic High Availability (R-HA) and Sticky High Availability (S-HA).
-\item We analyze the existing literature on ACID properties (particularly, ANSI SQL Spec, Adya, Gray) to show which properties* with a focus on isolation* are achievable in HATS. Achievable properties include transactional atomicity, variants of repeatable read isolation, and session guarantees. We also describe unavailable properties, like preventing Lost Update and Write Skew. We believe that this is the first such characterization in the literature.
-\item We further motivate the study of HATS via the analysis of existing concurrency control algorithms in a highly available environment as well as through deployment of an experimental database prototype on public cloud infrastructure.
+\item We present a model for high availability in a transactional
+  environment, replica-based High Availability, Sticky High
+  Availability, and Transactional High Availability.
+
+\item We analyze the existing literature on ACID properties and
+  replicated data semantics to show which properties are achievable in
+  HAT systems. Achievable properties include transactional atomicity,
+  variants of repeatable read isolation, and session guarantees. We
+  also describe unavailable properties, like preventing Lost Update
+  and Write Skew. We believe that this is the first such
+  characterization in the literature.
+
+\item We further motivate the study of HATs via the analysis of
+  existing concurrency control algorithms, a case-study of running a
+  transactional application with HATs, and via deployment of a HAT
+  database prototype on public cloud infrastructure.
 \end{itemize}
 

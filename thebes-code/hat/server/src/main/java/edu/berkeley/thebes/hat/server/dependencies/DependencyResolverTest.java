@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.apache.thrift.TException;
 
 public class DependencyResolverTest extends TestCase {
     private static final short CLIENT_ID = 0;
@@ -33,7 +34,7 @@ public class DependencyResolverTest extends TestCase {
         logicalClock = new AtomicLong(0);
     }
     
-    public void testBasic() {
+    public void testBasic() throws TException {
         Version xact1 = getTransactionId();
         router.expect(xact1);
         resolver.addPendingWrite("hello",
@@ -48,7 +49,7 @@ public class DependencyResolverTest extends TestCase {
         assertGood("hello", "World!", xact1);
     }
 
-    public void testWaitForAllSelf() {
+    public void testWaitForAllSelf() throws TException {
         Version xact1 = getTransactionId();
         router.expect(xact1);
         resolver.addPendingWrite("hello",
@@ -81,7 +82,7 @@ public class DependencyResolverTest extends TestCase {
 
     }
     
-    public void testPrematureAck() {
+    public void testPrematureAck() throws TException {
         Version xact1 = getTransactionId();
         
         resolver.ackTransactionPending(xact1);
@@ -95,7 +96,7 @@ public class DependencyResolverTest extends TestCase {
         assertGood("hello", "World!", xact1);
     }
     
-    public void testPrematureAckAll() {
+    public void testPrematureAckAll() throws TException {
         Version xact1 = getTransactionId();
         
         resolver.ackTransactionPending(xact1);
@@ -108,7 +109,7 @@ public class DependencyResolverTest extends TestCase {
         assertGood("hello", "World!", xact1);
     }
     
-    public void testUnrelated() {
+    public void testUnrelated() throws TException {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
         router.expect(xact1);
@@ -137,7 +138,7 @@ public class DependencyResolverTest extends TestCase {
         assertGood("other", "value!", xact2);
     }
     
-    public void testSameKey() {
+    public void testSameKey() throws TException {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
         router.expect(xact1);
@@ -166,7 +167,7 @@ public class DependencyResolverTest extends TestCase {
         assertGood("hello", "value!", xact2);
     }
     
-    public void testSameKeyPrematureAcks() {
+    public void testSameKeyPrematureAcks() throws TException {
         Version xact1 = getTransactionId();
         Version xact2 = getTransactionId();
         
