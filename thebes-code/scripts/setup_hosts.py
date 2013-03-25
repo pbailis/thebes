@@ -442,11 +442,11 @@ def getNextClientID():
 def start_servers(clusters, use2PL, thebesArgString):
     baseCmd = "ulimit -u unlimited; cd /home/ubuntu/thebes/thebes-code; rm *.log; screen -d -m "
     if not use2PL:
-        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms7G -Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
+        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
     else:
-        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms7G Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
+        runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
 
-    runTMCmd = baseCmd + "java -XX:+UseParallelGC -Xms7G -Xmx15G -ea -Dclusterid=%d -Dclientid=%d %s -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar 1>tm.log 2>&1"
+    runTMCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dclientid=%d %s -jar twopl/tm/target/twopl-tm-1.0-SNAPSHOT.jar 1>tm.log 2>&1"
 
 
     pprint('Starting servers...')
