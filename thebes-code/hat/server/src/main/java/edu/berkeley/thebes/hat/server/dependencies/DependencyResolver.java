@@ -54,7 +54,6 @@ public class DependencyResolver {
     
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
-    private final ConcurrentMap<String, Set<PendingWrite>> pendingWritesMap;
     private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
@@ -64,7 +63,6 @@ public class DependencyResolver {
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
-        this.pendingWritesMap = Maps.newConcurrentMap();
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         this.unresolvedAcksLock = new ReentrantLock();
@@ -73,11 +71,9 @@ public class DependencyResolver {
     public void addPendingWrite(String key, DataItem value) {
         Version version = value.getVersion();
         
-        pendingWritesMap.putIfAbsent(key, new ConcurrentSkipListSet<PendingWrite>());
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
         
         PendingWrite newPendingWrite = new PendingWrite(key, value);
-        pendingWritesMap.get(key).add(newPendingWrite);
         
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         transQueue.add(newPendingWrite);
@@ -90,58 +86,57 @@ public class DependencyResolver {
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
         unresolvedAcksLock.lock();
+        boolean shouldCommit = false;
         try {
             if (unresolvedAcksMap.containsKey(version)) {
                 AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
-                for (int i = 0; i < numAcksForTransaction.get(); i ++) {
-                    ackAndMaybeCommit(transQueue);
+                for (int i = 0; i < numAcksForTransaction.get() && !shouldCommit; i ++) {
+                    shouldCommit = transQueue.serverAcked();
                 }
                 unresolvedAcksMap.remove(version);
             }
         } finally {
             unresolvedAcksLock.unlock();
-        }            
-        
-        if (Math.random() < .001) {
-            int numPendingWrites = 0;
-            for (Set<PendingWrite> pendingWrites : pendingWritesMap.values()) {
-                numPendingWrites += pendingWrites.size();
-            }
-            logger.debug("Currently have " + numPendingWrites + " pending writes!");
         }
+        
+        if (shouldCommit) {
+            commit(transQueue);
+        }
+        
+//        if (Math.random() < .001) {
+//            int numPendingWrites = 0;
+//            for (Set<PendingWrite> pendingWrites : pendingWritesMap.values()) {
+//                numPendingWrites += pendingWrites.size();
+//            }
+//            logger.debug("Currently have " + numPendingWrites + " pending writes!");
+//        }
     }
     
-    private void ackAndMaybeCommit(TransactionQueue queue) {
-        if (!queue.serverAcked()) {
-            // Not enough acks to commit yet.
-            return;
-        }
-        
+    private void commit(TransactionQueue queue) {
         for (PendingWrite write : queue.pendingWrites) {
             persistenceEngine.put(write.getKey(), write.getValue());
-            pendingWritesMap.get(write.getKey()).remove(write);
         }
         pendingTransactionsMap.remove(queue.version);
     }
     
     public DataItem retrievePendingItem(String key, Version version) {
-        if (!pendingWritesMap.containsKey(key)) {
+        if (!pendingTransactionsMap.containsKey(version)) {
             return null;
         }
         
-        for (PendingWrite pendingWrite : pendingWritesMap.get(key)) {
-            DataItem value = pendingWrite.getValue();
-            if (version.equals(value.getVersion())) {
-                return value;
+        for (PendingWrite pendingWrite : pendingTransactionsMap.get(version).pendingWrites) {
+            if (key.equals(pendingWrite.getKey())) {
+                return pendingWrite.getValue();
             }
         }
+        
         return null;
     }
     
     public void ackTransactionPending(Version transactionId) {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
-        if (transactionQueue != null) {
-            ackAndMaybeCommit(transactionQueue);
+        if (transactionQueue != null && transactionQueue.serverAcked()) {
+            commit(transactionQueue);
             return;
         }
         
