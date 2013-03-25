@@ -112,7 +112,7 @@ public class DependencyResolver {
 //        }
     }
     
-    private void commit(TransactionQueue queue) {
+    private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
             persistenceEngine.put(write.getKey(), write.getValue());
         }
