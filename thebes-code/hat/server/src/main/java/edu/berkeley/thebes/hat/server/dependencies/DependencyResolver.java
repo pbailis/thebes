@@ -168,13 +168,13 @@ public class DependencyResolver {
         
         public void add(PendingWrite write) {
             pendingWrites.add(write);
-            if (numKeysForThisReplica == 0 ||
-                    numKeysForThisReplica == write.getNumKeysForThisReplica()) {
+            if (!(numKeysForThisReplica == 0 ||
+                    numKeysForThisReplica == write.getNumKeysForThisReplica())) {
                 logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
                 assert(false);
             }
-            if (numReplicasInvolved == 0 ||
-                    numReplicasInvolved == write.getReplicaIndicesInvolved().size()) {
+            if (!(numReplicasInvolved == 0 ||
+                    numReplicasInvolved == write.getReplicaIndicesInvolved().size())) {
                 logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
                 assert(false);
             }
