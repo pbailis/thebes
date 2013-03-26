@@ -91,6 +91,11 @@ public class Version implements Comparable<Version> {
 	            .compare(logicalTime, other.getLogicalTime())
 	            .result();
 	}
+
+    @Override
+    public String toString() {
+        return String.format("%d:%d:%d", getClientID(), getLogicalTime(), getTimestamp());
+    }
 	
 	@Override
 	public int hashCode() {
