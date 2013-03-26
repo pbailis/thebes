@@ -28,10 +28,10 @@ public class AntiEntropyServiceRouter {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceRouter.class);
 
     /** Siblings replicate the same data. */
-    private static List<AntiEntropyService.Client> replicaSiblingClients;
+    private List<AntiEntropyService.Client> replicaSiblingClients;
     /** Neighbors live in the same cluster. Includes self! */
-    private static List<AntiEntropyService.Client> neighborClients;
-    private static int numServersInCluster;
+    private List<AntiEntropyService.Client> neighborClients;
+    private int numServersInCluster;
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
@@ -87,13 +87,16 @@ public class AntiEntropyServiceRouter {
 
     /** Actually does the forwarding! Called in its own thread. */
     private void forwardNextQueuedWriteToSiblings() {
+        ServerAddress tryServer = null;
         try {
             QueuedWrite writeToForward = writesToForwardSiblings.take();
+            int i = 0;
             for (AntiEntropyService.Client sibling : replicaSiblingClients) {
+                tryServer = Config.getSiblingServers().get(i++);
                 sibling.put(writeToForward.key, writeToForward.value);
             }
         } catch (TException e) {
-            logger.error("Failure while announcing queued pending write: ", e);
+            logger.error("Failure while forwarding write to siblings (" + tryServer + "): ", e);
         } catch (InterruptedException e) {
             logger.error("Interrupted: ", e);
         }
@@ -107,15 +110,17 @@ public class AntiEntropyServiceRouter {
     
     /** Actually does the announcement! Called in its own thread. */
     private void announceNextQueuedPendingWrite() {
+        ServerAddress tryServer = null;
         try {
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
             
             for (Integer serverIndex : announcement.servers) {
                 AntiEntropyService.Client neighborClient = neighborClients.get(serverIndex);
+                tryServer = Config.getServersInCluster().get(serverIndex);
                 neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
         } catch (TException e) {
-            logger.error("Failure while announcing queued pending write: ", e);
+            logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         } catch (InterruptedException e) {
             logger.error("Interrupted: ", e);
         }
