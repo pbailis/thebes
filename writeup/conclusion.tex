@@ -1,12 +1,27 @@
 
 \section{Conclusion}
 
-VIII. Conclusion (.5pg)
+In this paper, we have begun to understand the relationship between
+multi-operation, multi-object transactions and high availability. We
+have outlined requirements for high availability in a transactional
+context, or Highly Available Transactions (HATs) and taxonomized
+guarantees spanning both distributed systems and ACID database
+literature accordingly. Many transactional guarantees are achievable
+with high availability, while a few, like preventing Lost Update and
+Write Skew, are not. To understand the benefits of high availability
+and low latency, we classified the prevalence and cost of partitions
+and network latency both in the literature and via experiment, while
+analyzing existing transactions to determine whether HATs were
+sufficient to ensure application consistency.
 
-HATS represent a new class of database system:
-* Can't get serializability, but can get other properties
-* Key challenge: designing distributed algorithms and architectures for partial failure, asynchrony
-* Rearchitecture of DBMSs and better understanding of applications are key
-
-References (1pg)
-
+Fundamentally, high availability represents a new constraint for
+database designs. While the CAP Theorem has had a large impact on
+distributed data storage design, our knowledge of database systems has
+not kept pace. The key distributed systems challenge of designing
+distributed algorithms and architectures for partial failure and
+network asynchrony is largely unaddressed in the literature on
+transaction processing systems. We believe that, in order to fully
+realize the potential of HAT systems, further rearchitecture and study
+of existing database designs as well as better understanding of
+application semantics and their relationship to distributed
+consistency will be necessary.

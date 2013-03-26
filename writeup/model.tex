@@ -3,35 +3,48 @@
 \label{sec:availability}
 
 To understand which guarantees can be provided with high availabilty,
-we must first understand what properties define high availability. In
-this section, we will formulate a model that captures a range of
-availability models, including ``true'' high availability,
-availablility with stickiness, and several other useful variants.
+we must first define what high availability means. In this section, we
+will formulate a model that captures a range of availability models,
+including ``true'' high availability, availablility with stickiness,
+and several other useful variants.
 
 Informally, highly available algorithms ensure ``always on'' operation
-and promise a guaranteed response. If users of a highly available
-system are able to contact a (set of) server(s) in a system, they are
-guaranteed a response as the (set of) server(s) does not need to
-communicate with any others. This lack of fast-path coordination also
-means that a highly available system can also offer low latency
-operation~\cite{abadi-pacelc}. To describe whether a transactional
-system is highly available, we need both a way to describe what
-servers a client must contact as well as what kinds of responses a
-server can provide, especially given the possibility of aborts.
+and guaranteed low latency. If users of a highly available system are
+able to contact a (set of) server(s) in a system, they are guaranteed
+a response as the (set of) server(s) does not need to communicate with
+any others. If servers are partitioned from one another, they do not
+need to stall in order to provide a ``safe'' query response. This lack
+of fast-path coordination also means that a highly available system
+also provides low latency~\cite{abadi-pacelc}. However, to properly
+describe whether a \textit{transactional} system is highly available,
+we need both a way to describe what servers a client must contact as
+well as what kinds of responses a server can provide, especially given
+the possibility of aborts.
 
 \subsection{Replica Availability}
 
 Traditionally, a system provides high availability if every user that
 can contact a server eventually receives a response from that server,
 even in the presence of arbitrary, indefinitely long network
-partitions between servers~\cite{gilbert-cap}. This is a useful
-definition: if we can contact at least one server, then we can receive
-a response. However, there are several other cases we should consider.
+partitions between servers~\cite{gilbert-cap}. As in a standard
+distributed database, designated servers might handle operations on
+different data items;\footnote{There is a further distinction between a
+  fully replicated system, in which all servers are replicas for all
+  data items, and a partially replicated system, in which at least one
+  server acts as a replica for only a subset of all data items. For
+  generality, and, for applicability to many modern ``sharded'' or
+  ``partitioned'' data storage systems like Dynamo, we consider
+  partially replicated systems.} a server that can handle an
+operation for a given data item is called a \textit{replica} for that
+item. This is a useful definition: if a client can contact at least
+one replica for an item on which it wishes to perform an operation,
+then the replica will provide a response to the client. However, there
+are several other cases we should consider.
 
 First, clients may wish to contact multiple servers. For example, to
-ensure that the effects of its operations will persist in the face of
+ensure that the effects of operations will persist in the face of
 server failures, clients may wish to wait until operations reach more
-than one server before they considers operations completed. However,
+than one server before they consider operations completed. However,
 according to our definition of high availability, server-fault
 tolerance is unavailable. To allow flexibility in the number of
 servers required for an operation, we propose
@@ -39,30 +52,30 @@ servers required for an operation, we propose
 it eventually receives a response from all of them, even in the
 presence of indefinitely long network partitions. Compared to a system
 providing high availability ($1$-availability), a system with
-$2$-availability and will require more messaging, possibly higher
-latency and more unsuccessful operations in the presence of network
-and server failures.  Additionally, as is commmon in standard
-consensus algorithms like Paxos, clients may want to contact a
-majority of $N$ servers in a system. This \textit{majority
+$2$-availability will require more messaging and possibly higher
+latency and may experience more unsuccessful operations in the
+presence of network and server failures.  Additionally, as is commmon
+in standard consensus algorithms like Paxos, clients may want to
+contact a majority of $N$ servers in a system. This \textit{majority
   availability} (a special case of $K$-availability with $K=\lceil
-\frac{N}{2} \rceil$) is more available than $N$-availability.
+\frac{N}{2} \rceil$) is more available than full $N$-availability.
 
 Clients may also wish to contact the same server (or set of servers)
 across subsequent operations. As we will discuss in
 Section~\ref{sec:hats}, clients can ensure continuity between
 operations (e.g., reading their prior updates to a data item) by
 maintaining affinity or ``stickiness'' with a server or set of
-servers~\cite{vogels-defs}. Simultaneously aintaining availability and
-stickiness requires fate-sharing between the client and its set of
+servers~\cite{vogels-defs}. Simultaneously maintaining availability
+and stickiness requires fate-sharing between the client and its set of
 servers: if a client's sticky servers fail, or, equivalently, if the
 client is partitioned from its sticky servers, then it may face
 unavailability. We say that a system provides \textit{sticky
   availability} if a client's subsequent operations are executed
-against a server that has observed all of its prior operations, then
-it eventually receives a response, even in the presence of
-indefinitely long partitions. As above, it may be useful for a client
-to achieve stickiness \textit{and} contact many replicas (i.e., for
-fault tolerance), so we generalize sticky availability to
+against a server that has observed all effects of its prior
+operations, then it eventually receives a response, even in the
+presence of indefinitely long partitions. As above, it may be useful
+for a client to achieve stickiness \textit{and} contact many replicas
+(i.e., for fault tolerance), so we generalize sticky availability to
 \textit{$K$-sticky availability}, which provides sticky availability
 with $K$ distinct servers. A client may choose to become $1$-sticky
 available by acting as a server itself; for example, a client might
@@ -70,7 +83,7 @@ cache its reads and writes. However, a single client cannot achieve
 $K$-sticky availability with $K>1$ on its own. Moreover, ``sticking''
 all clients to a designated set of servers (i.e., master availability)
 is a special case of sticky availability and is less available than
-the equivalent sticky availability.
+the equivalent non-mastered sticky availability.
 
 \begin{figure}
 \centering
@@ -103,16 +116,16 @@ the equivalent sticky availability.
 
 
 \end{tikzpicture}
-\label{fig:availability-order}
 \caption{Hierarchy of replica availability levels for $N>3$ servers.}
+\label{fig:availability-order}
 \end{figure}
 
-We show the hierarchy of replica availabilty levels in
+We show a hierarchy of replica availability levels in
 Figure~\ref{fig:availability-order}. $K$-sticky availability subsumes
 $K$-availability, but $K$-sticky availability is incomparable with
 $(K+1)$-availability. $N$-sticky availability is equivalent to
 $N$-availability, while majority availability subsumes $1$-sticky
-availability More generally, $\lceil \frac{N}{2} \rceil$$+$$K$$-$$1$
+availability. More generally, $\lceil \frac{N}{2} \rceil$$+$$K$$-$$1$
 availability subsumes $K$-sticky availability. We have omitted
 discussion of operation-specific availability levels (e.g.,
 $N$-availability for writes and $1$-availability for reads in a
@@ -123,21 +136,21 @@ taxnomization.
 
 \subsection{Transactional Availability}
 
-Thus far, we have focused on single-operation availability. This is
-standard in distributed systems literature (e.g., atomic, regular, and
-safe register models all concern single objects~\cite{herlihy-art}),
-yet the database literature largely focuses on transactions: groups of
-multiple operations over multiple objects. Accordingly, by itself,
-replica availability is insufficient to describe availability
-guarantees for transactions. Additionally, given the choice of
-\textit{commit} and \textit{abort} responses---which signal
-transaction success or failure to a client---we must be careful in
-defining availability.
+So far, we have focused on single-object, single-operation
+availability. This is standard in distributed systems literature
+(e.g., atomic, regular, and safe register models all concern single
+objects~\cite{herlihy-art}), yet the database literature largely
+focuses on transactions: groups of multiple operations over multiple
+objects. Accordingly, by itself, replica availability is insufficient
+to describe availability guarantees for transactions. Additionally,
+given the choice of \textit{commit} and \textit{abort}
+responses---which signal transaction success or failure to a
+client---we must be careful in how we define availability.
 
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and
-receive a response from at least one server responsible for each data
-item. This may result in lower availability than a non-transactional
+receive a response from at least one replica for each data item. This
+may result in lower availability than a non-transactional
 requirement. Additionally, given the possiblity of aborts, we need to
 ensure useful forward progress. A system can trivially guarantee
 clients a response by always aborting their
@@ -154,7 +167,7 @@ implementation an \textit{external abort}.
 
 We say that a system provides \textit{transactional availability} if,
 given replica availability for every data item in a transaction, the
-transaction eventually commits or internally aborts. For example,
+transaction eventually commits or internally aborts~\cite{hat-hotos}. For example,
 system will violate transactional $2$-availability if client that can
 contact two servers for each of data items in its transaction does not
 eventually commit in the absence of internal aborts.

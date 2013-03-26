@@ -2,6 +2,9 @@
 \section{Future Work}
 \label{sec:futurework}
 
+We believe that there are several promising avenues for future work on
+Highly Available Transaction systems:
+
 \textbf{What is the space of consistency and isolation properties?} In
 this work, we have taxonomized several well-defined and
 well-documented consistency properties. This is useful as it
@@ -27,32 +30,32 @@ instance, CAP's impact on distributed systems of the last decade. But
 what property defines the boundaries between classes of highly
 available systems? Is there a meta-property that exactly characterizes
 what properties are achievable with high availability or sticky high
-availability? This is an area of ongoing research within the HAT
-project.
+availability? This is an area of ongoing research within the Berkeley
+HAT project.
 
 \textbf{What are the costs and benefits within HAT designs?} There are
 many possible combinations of HAT guarantees, and the performance and
 ease of implementation of a HAT system will likely vary depending on
-which guarantees it attempts to provide. As we have alluded to, the
+which guarantees it attempts to provide. As we have discussed, the
 cost in moving from a sticky high available system to a truly highly
 available system seems expensive. As a concrete example, the Eiger and
-COPS systems use metadata garbage collection and assume linearizable
-clients within each datacenter in order to keep the overhead of
-providing causal consistency small. Without performing extensive
-client-side caching, these techniques do not seem applicable to a
-highly available implementation. This is not intended as a fault of
-the prior systems---they perform well for the task at hand---but hint
-at the complexity of moving between sticky and truly highly available
-systems.
+COPS systems~\cite{cops, eiger} use metadata garbage collection and
+assume linearizable clients within each datacenter in order to keep
+the overhead of providing causal consistency small. Without performing
+extensive client-side caching, these techniques do not seem applicable
+to a highly available implementation. This is not intended as a fault
+of the prior systems---they perform well for the task at hand---but
+hint at the complexity of moving between sticky and truly highly
+available systems.
 
 \textbf{Where do semantics-based concurrency control lie in the HAT
   landscape?} The vast amount of literature on semantics-based
 concurrency control provides hints as to when coordination can be
 avoided but still providing ``strongly consistent'' outcomes. We have
 performed a narrow case study in this work, but a general
-taxonomization of techniques such as escrow transactions and Sagas
-could help answer the challenge of programming in a weakly consistent
-environment. These techniques might be aided by considering models
-with service-level agreements or bounded messaging asynchrony. While
-our focus is on ``classic'' distributed systems trade-offs, there are
-several interesting hybrids to consider.
+taxonomization of techniques such as escrow transactions~\cite{escrow}
+and Sagas~\cite{sagas} could help answer the challenge of programming
+in a weakly consistent environment. These techniques might be aided by
+considering models with service-level agreements or bounded messaging
+asynchrony. While our focus is on ``classic'' distributed systems
+trade-offs, there are several interesting hybrids to consider.

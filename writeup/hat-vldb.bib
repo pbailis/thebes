@@ -24,7 +24,7 @@ month={June},
 howpublished={YDN Blog, \url{http://developer.yahoo.com/blogs/ydn/posts/2010/06/sherpa_update/#4}}}
 
 @article{stonebraker2010errors,
-  title={Errors in Database Systems, Eventual Consistency, and the CAP Theorem},
+  title={Errors in Database Systems, Eventual Consistency, and the {CAP Theorem}},
   author={Stonebraker, Michael},
   journal={Comm. ACM},
   volume={5},
@@ -186,7 +186,7 @@ booktitle = {CIDR 2011}}
 @article{snapshot-serializable,
  author = {Fekete, Alan and Liarokapis, Dimitrios and O'Neil, Elizabeth and O'Neil, Patrick and Shasha, Dennis},
  title = {Making snapshot isolation serializable},
- journal = {ACM Trans. Database Syst.},
+ journal = {ACM TODS},
  issue_date = {June 2005},
  volume = {30},
  number = {2},
@@ -213,6 +213,13 @@ booktitle = {CIDR 2011}}
  author = {Bykov, Sergey and Geller, Alan and Kliot, Gabriel and Larus, James R. and Pandya, Ravi and Thelin, Jorgen},
  title = {Orleans: cloud computing for everyone},
  booktitle = {SOCC 2011}
+}
+
+@book{herlihy-art,
+  title={The art of multiprocessor programming},
+  author={Herlihy, Maurice and Shavit, Nir},
+  year={2008},
+  publisher={Morgan Kaufmann}
 }
 
 @article{sequentialconsistency,
@@ -269,6 +276,8 @@ publisher = {Apress}}
   institution={IBM Research Division}
 }
 
+
+
 @unpublished{gray-rules,
 title={Rules of Thumb in Data Engineering},
 author={Jim Gray},
@@ -281,6 +290,11 @@ title={The Eight Fallacies of Distributed Computing},
 author={Peter Deutsch},
 howpublished={\url{https://blogs.oracle.com/jag/resource/Fallacies.html}},
 year={1994}}
+
+@inproceedings{bolton,
+title={Bolt-on Causal Consistency},
+author={Peter Bailis and Ali Ghodsi and Joseph M. Hellerstein and Ion Stoica},
+booktitle={SIGMOD 2013}}
 
 @book{dist-txns-book,
   title={Transactional information systems: theory, algorithms, and the practice of concurrency control and recovery},
@@ -357,6 +371,16 @@ note={\url{http://msdn.microsoft.com/en-us/library/ms173763.aspx}, January 2013}
 @online{nuodb-docs,
 title={{NuoDB: Transactions and Isolation Levels}},
 note={\url{http://www.nuodb.com/nuodb-online-documentation/references/r_Lang/r_Transactions.html}, January 2013}}
+
+@inproceedings{hat-hotos,
+title={{HAT, not CAP}: Introducing {Highly Available Transactions}},
+author = {Peter Bailis and Alan Fekete and Ali Ghodsi and Joseph M. Hellerstein and Ion Stoica},
+booktitle={To appear in {HotOS 2013}},
+note = {Note: version appearing on arXiv is a superset of conference submission and camera-ready}}
+
+@techreport{hat-tr,
+title={{Highly Available Transactions: Virtues and Limitations (Technical Report)}},
+note={TODO}}
 
 @online{oracle-docs,
 title={{Oracle Database Concepts 11g Release 1 (11.1): 13 Data Concurrency and Consistency}},
@@ -503,6 +527,11 @@ title = {{ISO/IEC 9075-2:2011} \textit{Information technology -- Database langua
   year={1979},
 }
 
+@inproceedings{blooml,
+  title={Logic and lattices for distributed programming},
+  author={Conway, Neil and Marczak, William R and Alvaro, Peter and Hellerstein, Joseph M and Maier, David},
+  booktitle = {SOCC 2012}}
+
 @techreport{pram,
   title={{PRAM}: A scalable shared memory},
   author={Lipton, R.J. and Sandberg, J.S.},
@@ -516,10 +545,32 @@ title = {{ISO/IEC 9075-2:2011} \textit{Information technology -- Database langua
   author={Brantner, M. and Florescu, D. and Graf, D. and Kossmann, D. and Kraska, T.},
   booktitle={SIGMOD 2008}}
 
+@article{escrow,
+  title={The escrow transactional method},
+  author={O'Neil, Patrick E},
+  journal={ACM TODS},
+  volume={11},
+  number={4},
+  pages={405--430},
+}
+
+@inproceedings{sagas,
+ author = {Garcia-Molina, Hector and Salem, Kenneth},
+title={Sagas},
+booktitle = {SIGMOD 1987}}
+
 @inproceedings{swift,
 title={Geo-replication all the way to the edge},
 author = {Marek Zawirski and Annette Bieniusa and Valter Balegas and Nuno Preguica and Sergio Duarte and Marc Shapiro and Carlos Baquero},
 note = {Personal communication and draft under submission (\url{http://asc.di.fct.unl.pt/~nmp/swiftcomp/swiftcloud.html})}}
+
+@techreport{crdt,
+  title={A comprehensive study of convergent and commutative replicated data types},
+  author={Shapiro, Marc and Pregui{\c{c}}a, Nuno and Baquero, Carlos and Zawirski, Marek and others},
+  year={2011},
+  number={7506},
+  institution = {INRIA}
+}
 
 @inproceedings{ansicritique,
   title={A critique of ANSI SQL isolation levels},
@@ -583,6 +634,14 @@ booktitle={PDP 2004}}
   booktitle={SIGMOD 2012}
 }
 
+@article{deterministic-scheduling,
+ author = {Schiper, Andr{\'e} and Raynal, Michel},
+ title = {From group communication to transactions in distributed systems},
+ journal = {CACM},
+ volume = {39},
+ number = {4},
+ year = {1996},}
+
 
 @inproceedings{redblue,
   title={Making Geo-Replicated Systems Fast as Possible, Consistent when Necessary},
@@ -636,7 +695,6 @@ pages = {37-42},
   author={Bernstein, P.A. and Hadzilacos, V. and Goodman, N.},
   volume={370},
   year={1987},
-  chapter = {8 (Replicated Data)},
   publisher={Addison-wesley New York}
 }
 
