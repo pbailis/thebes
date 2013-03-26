@@ -27,17 +27,12 @@ import java.util.concurrent.TimeUnit;
 public class AntiEntropyServiceRouter {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceRouter.class);
 
-    /** Siblings replicate the same data. */
-    private List<AntiEntropyService.Client> replicaSiblingClients;
-    /** Neighbors live in the same cluster. Includes self! */
-    private List<AntiEntropyService.Client> neighborClients;
-    private int numServersInCluster;
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
-            logger.debug("Server marked as standalone; not starting anti-entropy!");
+            logger.debug("Server marked as standalone; not starting anti-entropy (jk)!");
             // TODO: Fix this.
-            return;
+//            return;
         }
 
         Uninterruptibles.sleepUninterruptibly(Config.getAntiEntropyBootstrapTime(),
@@ -45,29 +40,34 @@ public class AntiEntropyServiceRouter {
 
         logger.debug("Bootstrapping anti-entropy...");
 
-        numServersInCluster = Config.getServersInCluster().size();
-        replicaSiblingClients = createClientsFromAddresses(Config.getSiblingServers());
-        neighborClients = createClientsFromAddresses(Config.getServersInCluster());
+        logger.trace("Starting thread to forward writes to siblings...");
+        for (int i = 0; i < Config.getNumAntiEntropyThreads(); i ++) {
+            new Thread() {
+                public void run() {
+                    List<AntiEntropyService.Client> replicaSiblingClients =
+                            createClientsFromAddresses(Config.getSiblingServers());
+                    while (true) {
+                        forwardNextQueuedWriteToSiblings(replicaSiblingClients);
+                    }
+                }
+            }.start();
+        }
+
+        logger.trace("Starting thread to announce new pending writes...");
+        for (int i = 0; i < Config.getNumAntiEntropyThreads(); i ++) {
+            new Thread() {
+                public void run() {
+                    List<AntiEntropyService.Client> neighborClients =
+                            createClientsFromAddresses(Config.getSiblingServers());
+                    while (true) {
+                        announceNextQueuedPendingWrite(neighborClients);
+                    }
+                }
+            }.start();
+        }
 
         logger.debug("...anti-entropy bootstrapped");
 
-        logger.trace("Starting thread to forward writes to siblings...");
-        new Thread() {
-            public void run() {
-                while (true) {
-                    forwardNextQueuedWriteToSiblings();
-                }
-            }
-        }.start();
-
-        logger.trace("Starting thread to announce new pending writes...");
-        new Thread() {
-            public void run() {
-                while (true) {
-                    announceNextQueuedPendingWrite();
-                }
-            }
-        }.start();
     }
 
     /** Stores the writes we receive and need to forward to all siblings */
@@ -86,12 +86,12 @@ public class AntiEntropyServiceRouter {
     }
 
     /** Actually does the forwarding! Called in its own thread. */
-    private void forwardNextQueuedWriteToSiblings() {
+    private void forwardNextQueuedWriteToSiblings(List<AntiEntropyService.Client> siblings) {
         ServerAddress tryServer = null;
         try {
             QueuedWrite writeToForward = writesToForwardSiblings.take();
             int i = 0;
-            for (AntiEntropyService.Client sibling : replicaSiblingClients) {
+            for (AntiEntropyService.Client sibling : siblings) {
                 tryServer = Config.getSiblingServers().get(i++);
                 sibling.put(writeToForward.key, writeToForward.value);
             }
@@ -109,13 +109,13 @@ public class AntiEntropyServiceRouter {
     }
     
     /** Actually does the announcement! Called in its own thread. */
-    private void announceNextQueuedPendingWrite() {
+    private void announceNextQueuedPendingWrite(List<AntiEntropyService.Client> neighbors) {
         ServerAddress tryServer = null;
         try {
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
             
             for (Integer serverIndex : announcement.servers) {
-                AntiEntropyService.Client neighborClient = neighborClients.get(serverIndex);
+                AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
                 tryServer = Config.getServersInCluster().get(serverIndex);
                 neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }

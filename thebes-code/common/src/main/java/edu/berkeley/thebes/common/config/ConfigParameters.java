@@ -30,6 +30,7 @@ public enum ConfigParameters {
     SOCKET_TIMEOUT(Integer.class, 4000),
     SERVER_PORT(Integer.class, 8080),
     ANTI_ENTROPY_PORT(Integer.class, 8081),
+    ANTI_ENTROPY_THREADS(Integer.class, 10),
     STANDALONE(Boolean.class, false),
     ROUTE_TO_MASTERS(Boolean.class, false),
     TXN_MODE(TransactionMode.class, RequirementLevel.CLIAPP),
