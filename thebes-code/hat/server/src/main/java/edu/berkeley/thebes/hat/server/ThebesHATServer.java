@@ -56,6 +56,7 @@ public class ThebesHATServer {
                     Config.getServerBindIP());
 
         } catch (Exception e) {
+            logger.error("ERROR: ", e);
             e.printStackTrace();
         }
     }
