@@ -70,12 +70,13 @@ not definitive for all applications, they suggest that HATs offer a
 one to three order of magnitude latency decrease compared to
 traditional protocols and provide acceptable semantics for a wide
 range of programs, particularly those with monotonic logic and
-commutative updates. HAT systems can also provide arbitrary foreign
-key constraints on multi-item updates and sometimes provide uniqeness
-guarantees. However, particularly for programs with non-monotonic
-logic, HATs may fall short, requiring more coordination-intensive
-mechanisms. Concisely, we attempt to understand \textit{what benefits
-  do Highly Available Transactions offer and what is their cost?}
+commutative updates~\cite{calm, blooml, crdt}. HAT systems can also provide
+arbitrary foreign key constraints on multi-item updates and sometimes
+provide uniqeness guarantees. However, particularly for programs with
+non-monotonic logic, HATs may fall short, requiring more
+coordination-intensive mechanisms. Concisely, we attempt to understand
+\textit{what benefits do Highly Available Transactions offer and what
+  is their cost?}
 
 In this paper, we make the following contributions:
 
