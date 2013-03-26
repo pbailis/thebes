@@ -90,7 +90,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 deserializer.get().deserialize(existingThriftItem, existingEntry.getData());
                 DataItem existingDataItem = new DataItem(existingThriftItem);
 
-                if (existingDataItem.getVersion().compareTo(value.getVersion()) <= 0) {
+                if (existingDataItem.getVersion().compareTo(value.getVersion()) > 0) {
                     return false;
                 }
             }

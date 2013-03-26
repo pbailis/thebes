@@ -63,7 +63,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         try {
             DataItem curItem = get(key);
 
-            if (curItem != null && curItem.getVersion().compareTo(value.getVersion()) <= 0) {
+            if (curItem != null && curItem.getVersion().compareTo(value.getVersion()) > 0) {
                 return false;
             }
             else {
