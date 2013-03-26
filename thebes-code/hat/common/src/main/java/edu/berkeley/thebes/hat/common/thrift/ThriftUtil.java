@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingSocket;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
@@ -28,7 +29,7 @@ public class ThriftUtil {
 
     public static AntiEntropyService.Client getAntiEntropyServiceClient(
             String host, int port) throws TTransportException {
-        TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
+        TProtocol protocol = createFramedProtocol(host, port, Config.getSocketTimeout());
         return new AntiEntropyService.Client(protocol);
     }
 
@@ -43,5 +44,12 @@ public class ThriftUtil {
         TTransport transport = new TSocket(host, port, timeout);
         transport.open();
         return new TBinaryProtocol(transport);
+    }
+    
+    private static TProtocol createFramedProtocol(String host, int port, int timeout)
+            throws TTransportException {
+        TTransport transport = new TSocket(host, port, timeout);
+        transport.open();
+        return new TBinaryProtocol(new TFramedTransport(transport));
     }
 }
