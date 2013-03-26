@@ -29,7 +29,7 @@ public class ThriftUtil {
 
     public static AntiEntropyService.Client getAntiEntropyServiceClient(
             String host, int port) throws TTransportException {
-        TProtocol protocol = createFramedProtocol(host, port, Config.getSocketTimeout());
+        TProtocol protocol = createProtocol(host, port, Config.getSocketTimeout());
         return new AntiEntropyService.Client(protocol);
     }
 
