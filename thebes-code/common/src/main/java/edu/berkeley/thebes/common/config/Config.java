@@ -272,6 +272,10 @@ public class Config {
     public static Boolean isStandaloneServer() {
         return getOption(ConfigParameters.STANDALONE);
     }
+    
+    public static Integer getNumAntiEntropyThreads() {
+        return getOption(ConfigParameters.ANTI_ENTROPY_THREADS);
+    }
 
     public static TransactionMode getThebesTxnMode() {
         return getOption(ConfigParameters.TXN_MODE);
