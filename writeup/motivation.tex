@@ -16,13 +16,7 @@ years, with the added concern that messages can be lost in transit or
 delayed indefinitely by network
 partitions~\cite{gray-rules}. Accordingly, ignoring network failures
 and latency can ``cause big trouble and painful learning
-experiences''~\cite{fallacies-deutsch}. As an example of an actual system rearchitecture,
-less than one year after its announcement, Yahoo!'s PNUTS developers
-explicitly added a support for weaker, highly available operation,
-explaining that ``strict adherence [to strong consistency] leads to
-difficult situations under network partitioning or server
-failures...in many circumstances, applications need a relaxed
-approach''~\cite{pnuts-update}.
+experiences''~\cite{fallacies-deutsch}.
 
 In this section, we quantify the impact of network partitions and
 latency in several real-world deployments. While the importance of
@@ -61,10 +55,19 @@ North America and Europe due a router
 bug~\cite{juniper-partition}---and misconfigurations---such as BGP
 faults in 2008~\cite{pakistan-youtube} and
 2010~\cite{research-experiment-partition}---can cause widespread
-partitions. Many of our discussions with practitioners---especially
-those operating on public cloud infrastructure---as well as reports
-from large-scale operators like Google~\cite{dean-keynote} confirm
-that partitions are a reality for service operators today.
+partitions.
+
+Many of our discussions with practitioners---especially those
+operating on public cloud infrastructure---as well as reports from
+large-scale operators like Google~\cite{dean-keynote} confirm that
+partition management is an important consideration service operators
+today. As an example of an actual system rearchitecture, less than one
+year after its announcement, Yahoo!'s PNUTS developers explicitly
+added a support for weaker, highly available operation. The engineers
+explained that ``strict adherence [to strong consistency] leads to
+difficult situations under network partitioning or server
+failures...in many circumstances, applications need a relaxed
+approach''~\cite{pnuts-update}.
 
 Several recent studies quantify partition behavior more rigorously. A
 2011 study of several Microsoft datacenters found a mean of 40.8
@@ -214,14 +217,7 @@ available linearizable systems linearizability, it is often
 interpreted to preclude a larger set of guarantees, including ACID, or
 transactional atomicity, consistency, isolation and durability
 guarantees, as evidenced by the lack of highly available systems
-providing them.  As an example of an production database redesign
-explicitly attributable to partition behavior, less than one year
-after its announcement, Yahoo!'s PNUTS system developers explicitly
-added a support for weaker, highly available operation, explaining
-that ``strict adherence [to strong consistency] leads to difficult
-situations under network partitioning or server failures...in many
-circumstances, applications need a relaxed
-approach''~\cite{pnuts-update}.
+providing them.
 
 Database designers and researchers have long realized that
 serializability---the gold standard of ACID isolation, which
@@ -260,6 +256,7 @@ that prevents serializability entirely, similar decisions may be
 appropriate.
 
 \begin{table}
+\begin{center}
 \begin{small}
 \begin{tabular}{|l|c|c|}
 \hline
@@ -291,6 +288,7 @@ VoltDB & S & S\\
   \protect\cite{hat-hotos}).}\vspace{-1.5em}
 \label{table:existing}
 \end{small}
+\end{center}
 \end{table}
 
 The primary challenge in providing weak isolation in a HAT context is
