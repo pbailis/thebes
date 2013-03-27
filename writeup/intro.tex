@@ -6,20 +6,20 @@ Requirements for high availability, predictable low latency, and
 simplicity of coordination protocols have led many recent distributed
 database designers to renounce several guarantees provided by
 traditional database systems~\cite{bigtable, pnuts, dynamo}. In
-particular, many modern systems forgo providing ACID
-guarantees---which often provide single-system image programmability
-but suffer from unavailability and often expensive coordination
-costs~\cite{davidson-survey}. The CAP Theorem~\cite{gilbert-cap},
-demonstrating the incompatibility of ``always on'' operation with
-guarantees on data item recency in the presence of unreliable
-networks, has led a large number of systems to prioritize high
-availability and guaranteed low latency, which are especially
-important in geo-replicated contexts. We observe a dearth of highly
-available systems providing general-purpose multi-operation
-\textit{transactions} over multiple data items with useful semantics.
+particular, many modern systems forgo providing ACID guarantees, which
+often provide single-system image programmability but suffer from
+unavailability and often expensive coordination
+costs~\cite{davidson-survey}. In particular, the July 2000
+announcement of the CAP Theorem~\cite{gilbert-cap}, which states that
+a highly available system cannot provide recency guarantees in the
+presence of network partitions, proved a rallying call for a
+generation of scalable but semantically weak systems. Over a decade
+later, we observe a dearth of highly available systems providing
+general-purpose multi-operation \textit{transactions} over multiple
+data items with useful semantics.
 
-While serializability---the gold standard of traditional ACID
-transactions---is not achievable with high availability for general
+While serializability, the gold standard of traditional ACID
+transactions, is not achievable with high availability for general
 read-write transactions~\cite{davidson-survey}, databases have a long
 tradition of providing weaker isolation and consistency
 guarantees~\cite{adya, ansicritique, gray-isolation}. Due to their
