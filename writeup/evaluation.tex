@@ -7,14 +7,14 @@ consistency properties are available and which are not, we begin to
 understand their implications for existing algorithms, applications,
 and deployments. Specifically:
 
-\begin{enumerate}
+\begin{myenumerate}
 \item We revisit traditional database concurrency control with a focus
   on coordination costs and on high availability.
 \item We examine the properties required by a realistic OLTP
   application patterned on TPC-C.
 \item We perform a brief experimental evaluation of HAT versus non-HAT
   properties on public cloud infrastructure.
-\end{enumerate}
+\end{myenumerate}
 
 \subsection{Existing Algorithms}
 
@@ -26,115 +26,56 @@ well-optimized for a HAT context. In this section, we briefly discuss
 design decisions and algorithmic details that preclude high
 availability.
 
-\vspace{.5em}\noindent\textbf{Serializablity} We begin by considering several
-existing algorithms that provide serializability but are not highly
-available. In summary, all algorithms in this
-class~\cite{bernstein-book} require at least one round trip time (RTT)
-before committing.
+\vspace{.5em}\noindent\textbf{Serializablity} To establish a serial
+order on transactions, all existing algorithms for achieving
+serializability of general-purpose read-write transactions in a
+distributed setting~\cite{bernstein-book} may require at least one
+round trip time (RTT) before committing. As an example, traditional
+two-phase locking for a transaction of length $T$ requires $T$
+\texttt{lock} operations and at least one unlock operation.  Each of
+these operations requires coordination, either with other database
+replicas or with a lock service. If the coordination mechanism for
+locking is unavailable, transactions cannot make progress. Similarly,
+optimistic concurrency control requires contacting a validation
+service, while deterministic transaction
+scheduling~\cite{deterministic-scheduling} requires a
+scheduler. Multi-version concurrency control fares somewhat better but
+must still be checked for write conflicts.
 
-\vspace{.5em}\noindent\textit{Two-phase locking} (ignoring deadlocks) requires $T$ lock
-operations and 1 unlock operation for a transaction of length $T$. If
-all items are located on a single master server, this requires one RTT
-(for requests originating from servers other than the master). If
-items are located on $S$ ($S \leq T$) different servers, two-phase
-locking requires, at minimum, $2(S-1)$ RTTs---one for lock and another
-for unlock.
+Perhaps unsurprisingly, the reliance on a globally agreed total order
+necessitates a minimum of one round-trip to a designated master or
+coordination service for each of these classic algorithms.  This is
+intuitively a consequence of serializability's lack of high
+availability~\cite{davidson-survey} (or, as we have shown, reliance on
+preventing Lost Update and Write Skew).  The cost of the (minimum one)
+round trip will be determined by the deployment environment, as we saw
+in Section~\ref{sec:motivation}.
 
-\vspace{.5em}\noindent\textit{Optimistic concurrency control} allows
-reads from any server but transactions must be checked by a scheduler
-before commit. With one scheduler per database, this requires one RTT
-specifically for concurrency control. If schedulers are sharded by
-database partition, a multi-partition transaction may require
-contacting several different schedulers and, possibly, an atomic
-commit protocol, which becomes substantially more
-expensive.
-
-\vspace{.5em}\noindent\textit{Deterministic transaction scheduling} is
-effectively the inverse of optimistic concurrency control: a scheduler
-first orders the transactions, then sends them to database replicas
-for in-order execution. These techniques, pioneered in the context of
-totally ordered atomic broadcast
-systems~\cite{deterministic-scheduling}, have recently seen increased
-attention~\cite{calvin} and effectively require communication overhead
-similar to optimistic concurrency control. Finally,
-
-\vspace{.5em}\noindent\textit{Multiversion concurrency control} allows readers to read older
-versions of data items but, like OCC, must eventually be checked for
-write-write conflicts, requiring a scheduler.
-
-\vspace{.5em} Perhaps unsurprisingly, the reliance on a global total
-order necessitates a minimum of one round-trip to a designated master
-or coordination service for each of these classic algorithms. This is
-simply a cost of providing serializability, and the cost of the
-(minimum one) round trip will be determined by the deployment
-environment, as we saw in Section~\ref{sec:motivation}.
-
-\vspace{.5em}\noindent\textbf{Non-serializablity} While it is possible to use
-several of the prior mechanisms for HAT systems---for example, a
-multi-version storage system is a reasonable candidate for the basis
-of a HAT database, albeit with write conflict checking
-disabled---several techniques, like locking, are not suitable for
-HATs. In fact, there are several mechanisms that do not provide
-serializability but provide transactional semantics with varying
-availability properties:
-
-\vspace{.5em}\noindent\textit{Lock-based protocols} such as those used to provide weak
-  isolation in Gray's original proposal~\cite{gray-isolation} require
-  at least one RTT to the a lock server (or, alternatively, a majority
-  quorum). In the presence of failure, distributed locking is
-  challenging.
-
-\vspace{.5em}\noindent The \textit{MDCC} commit protocol uses a Paxos
-variant and escrow transactions to provide read committed (without
-Lost Update) and Non-monotonic Snapshot Isolation with 1-2 RTTs but is
-unavailable due to Lost Update~\cite{mdcc}.
-
-\vspace{.5em}\noindent\textit{Parallel Snapshot Isolation} as
-developed by the Walter system provides (unavailable) snapshot
-isolation variant and, even when writes commute, requires 1 RTT to
-enforce read recency~\cite{walter}. However, like other Snapshot
-Isolation variants, PSI could be made highly available by giving up
-recency requirements and Lost Update prevention.
-
-\vspace{.5em}\noindent\textit\textbf{Eiger} provides read-only and
-write-only transactions with item cut isolation and causal
-consistency. It relies on sticky high availability with a linearizable
-set of replicas within a datacenter. This provides low latency across
-data centers. In the presence of server failure during write
-transactions, reads and writes may become unavailable. Eiger's
-predecessor \textit{COPS} provides similar semantics for read-only
-transactions but does not suffer from unavailability as it does not
-rely have a coordinator.
-
-\vspace{.5em}\noindent\textit{Chan and Gray's Read-only transactions}
-use a similar algorithm to Eiger to provide read-only transactions
-with item cut isolation and causal consistency but client version
-selection coordination is performed on reads instead of
-writes~\cite{readonly}.
-
-\vspace{.5em}\noindent\textit{Bolt-on Causal
-  Consistency}~\cite{bolton} and \textit{Swift}~\cite{swift} can
-provide read-only and write-only transactions with item cut isolation
-and causal consistency with sticky high availability and both rely on
-client-side caching.
-
-\vspace{.5em}\noindent\textit{Bayou} provides several session
-guarantees but, in its original implementation, may face unavailabilty
-in the presence of failure~\cite{sessionguarantees}.
-
-\vspace{.5em}\noindent\textit{Brantner's S3 Database} uses caching to
-provide several session and transactional guarantees on top of cloud
-infrastructure, often relying on linearizable queues and, accordingly,
-are often unavailable~\cite{kraska-s3}
-
-\vspace{.5em}
+\vspace{.5em}\noindent\textbf{Non-serializablity} Perhaps
+interestingly, many existing distributed implementations of weak
+isolation are not highly available. Lock-based proposals such as those
+used to provide weak isolation in Gray's original
+proposal~\cite{gray-isolation} do not degrade gracefully in the
+presence of partial failure. However, lock-based protocols \textit{do}
+provide recency guarantees. While multi-versioned storage systems
+allow for a variety of transactional guarantees, we have not seen
+proposals for truly weak isolation (e.g., non-``tentative update''
+schemes) in this context. Chan and Gray's read-only transactions
+provide read-only transactions with item-cut isolation, causal
+consistency, and transactional atomicity but are unavailable in the
+presence of coordinator failure~\cite{readonly}, similar to read-only
+and write-only transactions more recently proposed by
+Eiger~\cite{eiger}.  Bolt-on causal consistency~\cite{bolton},
+Swift~\cite{swift}, Brantner's S3 database~\cite{kraska-s3}, and
+Bayou~\cite{sessionguarantees} can all provide variants of the above
+model with high availability, but none provide this HAT functionality
+without modification. Similarly, the MDCC~\cite{mdcc} protocol offers
+Read Committed isolation with Lost Update avoidance but is similarly
+unavailable due to its reliance on preventing write conflicts.
 
 As we have seen, it is possible to implement many guarantees weaker
 than serializability---including guarantees that are achievable with
-high availability---and not achieve high availability. These
-designs---though often unavailable---offer benefits unavailable to
-HATs: for example, lock-based read committed, provide recency
-guarantees in addition to read committed isolation! We expect that
+high availability---and not achieve high availability. We expect that
 further understanding the trade-offs between semantic strength,
 performance, and storage and metadata requirements will remain an area
 of active research for the foreseeable future.

@@ -186,15 +186,12 @@ isolation, transactional atomicity prevents Read Skew anomalies
 Transactional atomicity is achievable in a HAT environment. To ensure
 transactional atomicity, servers need to know when all of a
 transaction's updates are present on their respective
-replicas. However, servers do \textit{not} need to agree exactly when
-all replicas are aware that all of a transaction's updates are present
-on their respective replicas. This subtle distinction corresponds to
-the difference between the distributed systems concepts of reliable
-broadcast and consensus. The former requires that, if one server
-reveals a write, then all servers reveal a write, while the latter
-requires explicit agreement across servers (and is unavailable). We
-omit a full discussion of the algorithm and instead refer the reader
-to the extended version of this paper~\cite{hat-tr}.
+replicas. However, replicas do not need to agree on when to reveal a
+new value to clients. In distributed systems terminology,
+transactional atomicity only requires reliable broadcast (with some
+additional metadata for clients). We omit a full discussion of the
+algorithm and instead refer the reader to the extended version of this
+paper~\cite{hat-tr}.
 
 \subsubsection{Session Guarantees}
 
@@ -217,8 +214,8 @@ discussion.
 
 There are several guarantees that we can make with high availability:
 
-\vspace{.5em}\noindent\textit{\textbf{Monotonic reads}} stipulates
-that a client's subsequent reads to a given object ``never return any
+\vspace{.5em}\noindent\textit{\textbf{Monotonic reads}} requires that
+a client's subsequent reads to a given object ``never return any
 previous values''; reads from each item progress forward in a total
 order. The ordering of reads should respect any total ordering on
 transactions.
@@ -243,23 +240,17 @@ We can achieve the above guarantees by forcing servers to wait to
 reveal new writes until their respective dependencies are fulfilled on
 all replicas. In the case of Monotonic Reads, servers should only
 reveal new writes to a data item when all other servers responsible
-for the item have also seen them. Otherwise, a client might read a
-newer version, subsequently become partitioned from its prior server,
-and contact a comparatively out-of-date server. In the case of
-Monotonic Writes, each new write should become visible only when each
-client's prior write is visible everywhere, along with Monotonic Reads
-guarantees. For Writes Follow Reads, a servers should similarly wait
-to reveal items until their dependencies are present everywhere.
-
-Effectively, this mechanism requires that clients only read from a
-globally agreed upon lower bound on the versions written to the
-system. This is highly available as a client will never block
-due to inability to find a server with a sufficiently up-to-date
-version of a data item. However, it does not imply that transactions
-will read their own writes or provide much confidence in making
-forward progress through the version history in the presence of
-partitions. The problem is that, if a server is partitioned, under the
-highly available model, we cannot discount the possibility that an
+for the item have also seen them. In the case of Monotonic Writes and
+Writes Follow Reads, each new write should become visible only when
+each write's dependencies are visible everywhere. This mechanism
+effectively requires that all clients read from a globally agreed upon
+lower bound on the versions written to the system. This is highly
+available as a client will never block due to inability to find a
+server with a sufficiently up-to-date version of a data item. However,
+it does not imply that transactions will read their own writes or, in
+the presence of partitions, make forward progress through the version
+history. The problem is that, if a server becomes partitioned, under
+the highly available model, we must handle the possibility that an
 unfortunate client will be forced to issue her next requests against
 the partitioned server!
 

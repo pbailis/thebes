@@ -10,6 +10,40 @@
 
 \usetikzlibrary{positioning, snakes, shapes}
 
+\newenvironment{myitemize}
+{
+
+   \vspace{0mm}
+    \begin{list}{$\bullet$}{\leftmargin=1em}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.25em} 
+        \setlength{\itemindent}{0em}
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
+
+\newenvironment{myenumerate}
+{
+
+   \vspace{0mm}
+   \newcounter{qcounter}
+    \begin{list}{\arabic{qcounter}.~}{\usecounter{qcounter}\leftmargin=1em}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.25em} 
+        \setlength{\itemindent}{0em}
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
 
 \begin{document}
 
@@ -17,7 +51,7 @@
 % ****************** TITLE ****************************************
 
 \title{Highly Available Transactions: Virtues and Limitations}
-
+\author{UC Berkeley}\vspace{-2em}
 \maketitle
 
 \begin{abstract}
