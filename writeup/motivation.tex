@@ -18,12 +18,13 @@ partitions~\cite{gray-rules}. Accordingly, ignoring network failures
 and latency can ``cause big trouble and painful learning
 experiences''~\cite{fallacies-deutsch}.
 
-In this section, we quantify the impact of network partitions and
+In this section, we quantify the effect of network partitions and
 latency in several real-world deployments. While the importance of
 network behavior is a topic of considerable speculation within the
 database community~\cite{stonebraker2010errors}, there is mounting
 evidence---both anecdotal and experimental---that partitions occur and
-network latencies are non-negligible.
+network latencies are non-negligible. We subsequently discuss the
+impact of these findings on modern database operation.
 
 \subsection{Partitions in the Real World}
 
@@ -101,7 +102,7 @@ observe that, as a general trend, partitions exist and must
 accordingly be met with either unavailability at some servers or, as
 we will discuss, relaxed semantic guarantees.
 
-\subsection{Latency: An Omnipresent Concern}
+\subsection{Latency and Planet Earth}
 
 Even with fault-free networks, distributed systems face the challenge
 of communication latency, Deutsch's second ``Fallacy.'' In this

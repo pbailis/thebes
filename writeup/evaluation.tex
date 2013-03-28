@@ -125,7 +125,8 @@ they are sticky-available. Another transaction type, Payment, updates
 running balances for warehouses, districts, and customer records as
 well as providing an audit trail. The transaction is increment-only,
 so all balance increase operations can commute, and TA allows the
-maintainence of any foreign-key constraints.
+maintainence of any foreign-key constraints (e.g.,
+\texttt{UPDATE/DELETE CASCADE}).
 
 While three out of five transactions have been easily achievable with
 HATs, the remaining two transactions---New-Order and Delivery---are
@@ -185,6 +186,13 @@ are satisfied by HATs.
 
 \subsection{Experimental Costs}
 
+\begin{figure}
+\includegraphics[width=.8\columnwidth]{figs/macrotracelegend.pdf}\vspace{-2mm}
+\includegraphics[width=\columnwidth]{figs/lat-thru-trace-K0-SCALEMACRO.pdf}
+\includegraphics[width=\columnwidth]{figs/lat-thru-trace-K0-SCALEMACRO.pdf}
+\caption{Latency-throughput for database operation on EC2 (DUMMY FIG)}
+\label{fig:wan-exp}
+\end{figure}
 
 2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
 	- Eventual Consistency

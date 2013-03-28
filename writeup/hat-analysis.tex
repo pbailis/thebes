@@ -162,7 +162,10 @@ for each key):
 T_1 &: w_x(1)~w_y(1)~w_z(1)
 \\T_2 &: r_x(a)~r_y(1)~r_x(b)~r_z(c)~\\[-1.5em]
 \end{align*}
-$T_2$ can also observe $a=\bot$ or $a=1$.
+$T_2$ can also observe $a=\bot$ or $a=1$. Notably, TA implies Read
+Committed isolation: observing all effects of a transaction implicitly
+requires observing the final (committed) effects of a transaction as
+well.
 
 Perhaps perplexingly, discussions of TA are absent from existing
 discussions of weak ACID. This is perhaps again due to the single-node
@@ -369,8 +372,8 @@ Update, is also unavailable.
 The inability to prevent Lost Update means that Consistent Read,
 Snapshot Isolation, and Cursor Stability guarantees are all
 unavailable. The inability to prevent Lost Update or Write Skew means
-that Repeatable Read, Conflict Serializability, and One-Copy
-Serializability guarantees are unavailable.
+that Repeatable Read and One-Copy Serializability guarantees are
+unavailable.
 
 \subsubsection{Unavailable Recency Guarantees}
 
@@ -405,19 +408,19 @@ be achieved due to the inability to prevent Lost Update and Write Skew phenomena
 We illustrate the hierarchy of available, sticky available, and
 unavailble consistency models we have discussed in
 Figure~\ref{fig:hatcompared}. Many models are simultaneously
-achievable: for example, a HAT system can provide monotonic reads and
-transactional atomicity or transactional atomicity and read your
-writes and, for maximum semantic richness, can provide all of
-transactional atomicity, predicate cut isolation, monotonic reads,
-monotonic writes, and writes follow reads. An unavailable system might
-provide PRAM and Serializability, as advocated by Salem and
-Daudjee~\cite{daudjee-session}.
+achievable, but we find several particularly compelling. If we combine
+all sticky-HAT guarantees, we have transactional, causal snapshot
+reads. If we combine TA and P-CI, we have transactional snapshot
+reads. We can achieve RC, MR, and RYW by simply sticking clients to
+servers. And we can also combine unavailable models---for example, an
+unavailable system might provide PRAM and One-Copy
+Serializability~\cite{daudjee-session}.
 
 To the best of our knowledge, this is the first unification of
 database ACID, distributed consistency, and session guarantee
 models. Perhaps satisfactorily, strong one-copy serializability
 subsumes all other models, while considering the (large) power set of
-all compatible models (e.g., the diagram depicts 144 possible highly available
+all compatible models (e.g., the diagram depicts 96 possible highly available
 combinations) hints at the vast expanse of consistency models found in
 the literature. This taxonimization is \textit{not} exhaustive, but we
 believe it lends substantial clarity into the relationships between a
@@ -438,8 +441,7 @@ Committed (RC), Item Cut Isolation (P-CI), Predicate Cut Isolation
 Reads (WFR)\\\hline Sticky-HA & Read Your Writes (RYW), PRAM,
 Causal\\\hline Unavailable & Cursor Stability (CS)\lostupdate,
 Snapshot Isolation (SI)\lostupdate, Repeatable Read
-(RR)\lostupdate\rwskew, Conflict Serializability
-(CSR)\lostupdate\rwskew, One-Copy Serializability
+(RR)\lostupdate\rwskew, One-Copy Serializability
 (1SR)\lostupdate\rwskew, Recency\linearizable, Safe\linearizable,
 Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
 \\\hline
@@ -460,14 +462,12 @@ Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
 
   \tikzstyle{every node}=[font=\small]
 
-
-
- \node[draw=none,fill=none] (ici) at (0, 0) {I-CI};
- \node[draw=none,fill=none] (pci) at (1.1, 1.3) {P-CI};
+ \node[draw=none,fill=none] (ici) at (1.2, 0) {I-CI};
+ \node[draw=none,fill=none] (pci) at (1.65, 1.2) {P-CI};
  \node[draw=none,fill=none] (rc) at (-1.2, .8) {RC};
  \node[draw=none,fill=none] (ru) at (-1.2, 0) {RU};
 
- \node[draw=none,fill=none] (ta) at (1.2, 0) {TA};
+ \node[draw=none,fill=none] (ta) at (-.2, 1.3) {TA};
  \node[draw=none,fill=none] (mr) at (2.4, 0) {MR};
  \node[draw=none,fill=none] (mw) at (3.6, 0) {MW};
  \node[draw=none,fill=none] (wfr) at (6.3,0) {WFR};
@@ -480,19 +480,19 @@ Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
  \node at (3.6, 2) [sticky] (causal) {causal};
  \node at (3.6, 1) [sticky] (pram) {PRAM};
  \node[noha] (cs) at (-1.2, 1.8) {CS};
- \node[noha] (rr) at (-.8, 2.7) {RR};
+ \node[noha] (rr) at (-.2, 2.7) {RR};
  \node[noha] (si) at (2.2, 2.4) {SI};
- \node[noha] (s) at (0, 3.5) {CSR};
- \node[noha] (sr) at (2.2, 3.6) {1SR};
- \node[noha] (ssr) at (4.95, 3.7) {Strong-1SR};
+ \node[noha] (1sr) at (1.2, 3.2) {1SR};
+ \node[noha] (ssr) at (3.6, 3.6) {Strong-1SR};
 
  \draw [->, red] (recency) -- (safe);
  \draw [->, red] (safe) -- (regular);
  \draw [->, red] (regular) -- (linearizable);
  \draw [->, red] (linearizable) -- (ssr);
- \draw [->, red] (sr) -- (ssr);
+ \draw [->, red] (1sr) -- (ssr);
  
  \draw [->] (ru) -- (rc);
+ \draw [->] (rc) -- (ta);
  \draw [->] (ici) -- (pci);
 
  \draw [->, blue] (mr) -- (pram);
@@ -518,12 +518,11 @@ Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
  \draw [->, red] (cs) -- (rr);
  \draw [->, red] (pci) -- (si);
  \draw [->, red] (ici) -- (rr);
- \draw [->, red] (rr) -- (s);
- \draw [->, red] (si) -- (s);
+ \draw [->, red] (rr) -- (1sr);
+ \draw [->, red] (si) -- (1sr);
  \draw [->, red] (ta) -- (si);
  \draw [->, red] (ta) -- (rr);
- \draw [->, red] (s) -- (sr);
- \draw [->, red] (causal) -- (sr);
+ \draw [->, red] (causal) -- (ssr);
 
 \end{tikzpicture}
 \label{fig:hat-order}
