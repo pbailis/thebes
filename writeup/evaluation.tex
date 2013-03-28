@@ -172,12 +172,12 @@ problematic, as we have discussed.
 
 In summary, many---but not all---TPC-C transactions are well-served by
 HATs. The two problematic transactions---New-Order and Payment---rely
-on non-monotonic state updates. The former transaction can be modified
+on non-monotonic state update. The former transaction can be modified
 to ensure ID uniqueness at the expense of sequential per-district ID
 ordering, while the latter is an inherently non-monotonic action
 requiring external compensation or stronger consistency protocols. We
 expect that, especially for read-dominated workloads found in many
-online services, HAT guarantees may suffice for many
+online services, HAT guarantees will suffice for many
 applications. Finally, while TPC-C is not subject to write skew
 anomalies, we note that many TPC-E isolation tests, such as one that
 requires simultaneously modifying a product description and its image,
