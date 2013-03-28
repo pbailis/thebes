@@ -105,88 +105,70 @@ consistency constraints. Similarly, applications requiring write
 visibility between clients should opt for unavailability instead of
 possibly missing a write visibility deadline.
 
-\vspace{.5em}\noindent\textbf{TPC-C} Absent a necessary and sufficient result describing exactly which
-application logics can be achieved with high availability and to make
-these requirements more concrete, we consider an example application:
-the TPC-C benchmark. Our goal is \textit{not} to provide a performance
-analysis, as any HAT configuration will be non-compliant. Rather, we
-examine the five queries contained in the benchmarks---ostensibly
-representative of a standard transaction processing application---to
-understand which are achievable in a HAT context. TPC-C consists of
-five transactions, capturing operation of a real-world warehouse,
-including sales, payments, and deliveries. We analyze each kind of
-transaction and its interactions below.
+\vspace{.5em}\noindent\textbf{TPC-C} Absent a necessary and sufficient
+result describing exactly which application logics can be achieved
+with high availability and to make these requirements more concrete,
+we consider an example application: the TPC-C benchmark. Our goal is
+\textit{not} to provide a performance analysis, as any HAT
+configuration will be non-compliant. Rather, we examine the five
+queries contained in the benchmarks---ostensibly representative of a
+standard transaction processing application---to understand which are
+achievable in a HAT context. Surprisingly, four of five can be
+executed with HATs, while the fifth potentially requires unavailablity.
 
-\vspace{.5em}\noindent\textit{New-Order} places an order for a
+TPC-C consists of five transactions, capturing operation of a
+real-world warehouse, including sales, payments, and deliveries. Two
+transactions---Order-Status and Stock-Level---are read-only and can be
+executed safely under HATs. Clients may read stale data, but this does
+not violate TPC-C requirements and clients will read their writes if
+they are sticky-available. Another transaction type, Payment, updates
+running balances for warehouses, districts, and customer records as
+well as providing an audit trail. The transaction is increment-only,
+so all balance increase operations can commute, and TA allows the
+maintainence of any foreign-key constraints.
+
+While three out of five transactions have been easily achievable with
+HATs, the remaining two transactions---New-Order and Delivery---are
+not so simple. The New-Order transaction places an order for a
 variable quantity of data items, updating warehouse stock as
-needed. The transaction selects a sales district, assigns the order an
-ID number, adjusts the remaining warehouse stock, and writes a
-placeholder entry for the pending order. There are two mutations we
-must be consider in detail.
+needed. It selects a sales district, assigns the order an ID number,
+adjusts the remaining warehouse stock, and writes a placeholder entry
+for the pending order. The Delivery transaction represents the
+fulfillment of a New-Order: it deletes the order from the pending
+list, updates the customer's balance, updates the order's carrier ID
+and delivery time, and updates the customer balance.
 
-First, assigning an order ID number is challenging. We can easily
-assign a \textit{unique} order ID, by, say, concatenating the customer
-ID with a timestamp and server ID. However, the TPC-C specification
-requires that order numbers are assigned sequentially, which we cannot
-guarantee in HATs because assigning sequential IDs requires preventing
-Lost Update. Accordingly, HATs can allow placement of new orders with
-unique identifiers but cannot provide compliant TPC-C execution due to
-the requirement for a non-monotonic counter increase.
+There are three challenges that only allow HATs to place non-compliant
+New-Orders and to fail on Payments. First, we must assign each new
+order an ID number. We can assign a unique number by, say,
+concatenating the client ID and a timestamp. However, the TPC-C
+specification requires order numbers to be assigned sequentially,
+which requires Lost Update. Accordingly, HATs cannot provide compliant
+TPC-C execution but can maintain uniqueness constraints. Second, the
+New-Order transaction decrements inventory counts: what if the count
+becomes negative? Fortunately, TPC-C New-Order restocks the inventory
+count (increments by 91) if it would become negative as the result of
+placing an order. This means that, even in the presence of concurrent
+New-Orders, an item's stock will never fall below zero. This is TPC-C
+compliant, but a HAT system might end up with substantially more stock
+than in a single-site implementation. Third, delivery events are
+non-monotonic---deleting a pending New-Order transaction---and should
+be idempotent in order to avoid billing a customer twice; this implies
+a need to prevent Lost Update. We can avoid this issue by moving the
+non-monotonicity to the real world---the carrier that picks up the
+package for an order can ensure that she is the only carrier who has
+done so---but cannot provide a correct execution with HATs alone.
 
-Second, decrementing inventory counts is, in general, a potentially
-risky operation because, without coordination, inventory counts may
-become negative. However, TPC-C automatically ``restocks'' inventory
-counts (by 91 items) when there are 10 or fewer items
-remaining. Accordingly, even in the presence of concurrent new orders
-to the same item, the stock will never fall below zero. However, an
-$R$ replica HAT system might end up with $91(R-1)$ more stock than in
-a single-site implementation.
-
-\vspace{.5em}\noindent\textit{Payment} updates running balances for
-warehouses, districts, and customer records as well as providing an
-audit trail. All balance increase operations can be made commutative,
-so the transaction can execute under HATs.
-
-\vspace{.5em}\noindent\textit{Order-Status} is a read-only transaction
-and can be safely executed under HATs. The TPC-C specification does
-not require recency bounds but, in practice, they may be desirable. If
-a client is sticky with a set of replicas, she will read her own
-writes, which may be sufficient.
-
-\vspace{.5em}\noindent\textit{Delivery} represents the fulfillment of
-a pending order created by a New Order transaction: it deletes the
-order from the pending list, updates the customer's balance, updates
-the order's carrier ID and delivery time, and updates the customer
-balance. The challenge in delivery comes in deletion, which is
-non-monotonic: an item might be removed twice from the pending
-table. If delivery can be made idempotent---that is, if multiple
-Delivery transactions have the same effect as one---then multiple
-clients can execute the same Deliveries without fatal consequences.
-
-In practice, given that a physical shipment is likely only delivered
-once, it is unlikely that multiple agents will attempt a Delivery
-transaction for the same order simultaneously. However, in this case,
-we have simply moved the non-monotonicity to the real world: the
-carrier that picks up the package for an order must ensure that she is
-the only carrier who has done so. While we can program around the
-other operations in the order, HATs cannot--without the help of
-business-specific processes--serve Delivery transactions. That said,
-New-Orders may be placed with high availability.
-
-\vspace{.5em}\noindent\textit{Stock-Level} is another read-only
-transaction and can be executed without any non-HAT guarantees, with
-the same caveats regarding recency.
-
-\vspace{.5em} Throughout execution, TPC-C also requires the
-maintainence of several integrity constraints. For example,
-Consistency Condition 1 (3.3.2.1) requires that each warehouse's sales
-count must reflect the sum of its subordinate sales districts. This
-integrity constraint spans two tables but, given the ability to update
-both tables atomically via transactional atomicity, can be easily
-maintained. Consistency Conditions 4 through 12 (3.3.2.4-12) can
-similarly be satisfied by applying updates atomically across
-tables. Consistency Conditions 2 and 3 (3.3.2.2-3) concern order ID
-assignment and are more problematic, as we have discussed.
+Throughout execution, TPC-C also requires the maintainence of several
+integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
+requires that each warehouse's sales count must reflect the sum of its
+subordinate sales districts. This integrity constraint spans two
+tables but, given the ability to update both tables atomically via
+transactional atomicity, can be easily maintained. Consistency
+Conditions 4 through 12 (3.3.2.4-12) can similarly be satisfied by
+applying updates atomically across tables. Consistency Conditions 2
+and 3 (3.3.2.2-3) concern order ID assignment and are more
+problematic, as we have discussed.
 
 In summary, many---but not all---TPC-C transactions are well-served by
 HATs. The two problematic transactions---New-Order and Payment---rely
