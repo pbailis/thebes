@@ -22,19 +22,13 @@ taxonomization, experimental and application analysis (basically all
 but Section 4.1)---we believe this paper is the first to explore this
 area.
 
-
 There has been a recent resurgence of interest in distributed
 multi-object semantics, both in academia~\cite{kraska-s3, granola,
   gstore, mdcc, redblue, cops, eiger, walter,calvin, swift} and
-industry~\cite{megastore, orleans, spanner}. We can roughly categorize
-related work into two categories: unavailable systems with stronger
-semantics than HATs and highly available systems with weaker
-semantics.
-
-Unavailable, strongly consistent databases have a long tradition. As
-discussed in Section~\ref{sec:motivation}, classic ACID databases
-provide strong semantics but their lock-based and traditional
-multi-versioned implementations are unavailable in the presence of
+industry~\cite{megastore, orleans, spanner}. As discussed in
+Section~\ref{sec:motivation}, classic ACID databases provide strong
+semantics but their lock-based and traditional multi-versioned
+implementations are unavailable in the presence of
 partitions~\cite{bernstein-concurrency, bernstein-book,
   gray-isolation}. Similar semantics are common in recent
 work. Notably, Google's Spanner provides externally serializable
@@ -51,4 +45,7 @@ HBase~\cite{hbase}, MDCC~\cite{mdcc}, Megastore~\cite{megastore},
 Orleans~\cite{orleans}, and Walter~\cite{walter}---are a reasonable
 choice. With HATs, we seek an alternative set of semantics that are
 still useful but do not violate requirements for high availability or
-low latency.
+low latency. Recent systems proposals such as Swift~\cite{swift},
+Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
+provide transactional causal consistency guarantees with varying
+availability and represent a new class of (sticky) HAT systems.

@@ -8,15 +8,14 @@ systems: ``\textit{1.)}  The network is reliable. \textit{2.)} Latency
 is zero''~\cite{fallacies-deutsch}. On a single server, communication
 channels are robust and relatively fast, and few single-server systems
 need to account for a possibility of partial system failure. However,
-both of these assumptions are no longer valid in a distributed
-setting. To extend Jim Gray's storage latency analogy, if memory is
-1.5 hours from the CPU and disk is 2 years away, then, especially
-across wide-area networks (WANs), remote server accesses can exceed 30
-years, with the added concern that messages can be lost in transit or
-delayed indefinitely by network
-partitions~\cite{gray-rules}. Accordingly, ignoring network failures
-and latency can ``cause big trouble and painful learning
-experiences''~\cite{fallacies-deutsch}.
+in a distributed setting, both of these assumptions are no longer
+valid. To extend Jim Gray's storage latency analogy, if memory is 1.5
+hours from the CPU and disk is 2 years away, then, especially across
+wide-area networks (WANs), remote server accesses can exceed 30 years,
+with the added concern that messages can be lost in transit or delayed
+indefinitely by network partitions~\cite{gray-rules}. Accordingly,
+ignoring network failures and latency can ``cause big trouble and
+painful learning experiences''~\cite{fallacies-deutsch}.
 
 In this section, we quantify the effect of network partitions and
 latency in several real-world deployments. While the importance of
@@ -24,7 +23,8 @@ network behavior is a topic of considerable speculation within the
 database community~\cite{stonebraker2010errors}, there is mounting
 evidence---both anecdotal and experimental---that partitions occur and
 network latencies are non-negligible. We subsequently discuss the
-impact of these findings on modern database operation.
+impact of these findings on modern database operation and motivate the
+case for HATs.
 
 \subsection{Partitions in the Real World}
 
@@ -32,10 +32,10 @@ Network partitions---or, informally, communication link failures
 between participants in a distributed system---are challenging. A
 system facing network partitions faces the impossibility of
 simultaneously maintaining a correct ``global'' view of system state
-while simultaneously providing operation to all of its
+while simultaneously providing online operation to all of its
 clients~\cite{davidson-survey}. For networks that do not partition,
 maintaining semantic guarantees and available operation is
-simple~\cite{stonebraker2010errors}. However, given the
+straightforward~\cite{stonebraker2010errors}. However, given the
 \textit{possibility} of partitions, a system must be prepared to
 either lose availability of operations or its ability to reason about
 global state. In this section, we present evidence for the frequency
@@ -62,13 +62,13 @@ Many of our discussions with practitioners---especially those
 operating on public cloud infrastructure---as well as reports from
 large-scale operators like Google~\cite{dean-keynote} confirm that
 partition management is an important consideration service operators
-today. As an example of an actual system rearchitecture, less than one
-year after its announcement, Yahoo!'s PNUTS developers explicitly
-added a support for weaker, highly available operation. The engineers
-explained that ``strict adherence [to strong consistency] leads to
-difficult situations under network partitioning or server
-failures...in many circumstances, applications need a relaxed
-approach''~\cite{pnuts-update}.
+today. As an example of an actual system rearchitecture resulting from
+partitions, less than one year after its announcement, Yahoo!'s PNUTS
+developers explicitly added support for weaker, highly available
+operation. The engineers explained that ``strict adherence [to strong
+  consistency] leads to difficult situations under network
+partitioning or server failures...in many circumstances, applications
+need a relaxed approach''~\cite{pnuts-update}.
 
 Several recent studies quantify partition behavior more rigorously. A
 2011 study of several Microsoft datacenters found a mean of 40.8
@@ -85,17 +85,17 @@ account for 28.1\% of all customer support tickets while 39\% of
 tickets relate to network hardware.  The median incident duration for
 highest priority tickets ranges from 114--188 minutes and up to a full
 day for all tickets~\cite{turner2012failure}. Other studies confirm
-these results, showing median time between failures of approximately
-3000 seconds with a median time to repair between 2 and 1000
-seconds~\cite{ip-backbone-failures} as well as frequent path routing
-failures on the Internet~\cite{labovitz-failures}. Isolating,
+these results, showing median time between failures over a WAN network
+of approximately 3000 seconds with a median time to repair between 2
+and 1000 seconds~\cite{ip-backbone-failures} as well as frequent path
+routing failures on the Internet~\cite{labovitz-failures}. Isolating,
 quantifying, and designing for these network failures is an area of
 active research in networking
 community~\cite{surviving-failures-bodik, uw-failure-networks}.
 
 These results---which do not consider server-level failures (another
 form of system partition that has also been studied at
-scale~\cite{google-availability})---indicate that partitions
+scale~\cite{google-availability})---indicate that network partitions
 \textit{do} occur within and across modern datacenters. We do not
 intend to fixate on any particular statistical behavior but instead
 observe that, as a general trend, partitions exist and must
@@ -125,9 +125,9 @@ illustrate the difference between intra-datacenter, inter-datacenter,
 and inter-planetary networks, we performed a measurement study of
 network behavior on Amazon's EC2, a widely-used public compute
 cloud. We measured one week of ping times between all seven EC2
-regions, across three ``availability zones'', or closely co-located
-datacenters, and within a single ``availabilty zone,'' at a
-granularity of 1s (dataset to be released).
+geographic ``regions'', across three ``availability zones'' (closely
+co-located datacenters), and within a single ``availabilty zone''
+(datacenter), at a granularity of 1s (dataset to be released).
 
 We summarize the results of our network measurement study in
 Table~\ref{table:rtt}. On average, inter-datacenter communication (1c)
@@ -136,11 +136,11 @@ co-located datacenters (1b) and between 40 and 647 times faster than
 across geographically distributed datacenters (1a). The cost of
 wide-area communication exceeds the speed of light: for example,
 communicating from S\~{a}o Paulo to Singapore is lower-bounded by
-speed-of-light transit RTT of 106.7 ms but, on average, incurs a 362.8
-ms RTT (95th percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the
-distribution of latencies varies between links, but the trend---in
-line with other recent studies~\cite{mdcc, redblue}---is clear: remote
-communication has a substantial cost.
+speed-of-light transit RTT of 106.7ms but, on average, incurs a
+362.8ms RTT (95th percentile: 649ms). As shown in
+Figure~\ref{fig:rtt}, the distribution of latencies varies between
+links, but the trend---in line with other recent studies~\cite{mdcc,
+  redblue}---is clear: remote communication has a substantial cost.
 
 \definecolor{min-lat-color}{HTML}{B2FF99}
 \definecolor{max-lat-color}{HTML}{FF7F7F}
@@ -195,65 +195,64 @@ H2 &  & \colorbox{min-lat-color}{0.50}  \\
 \label{sec:modernacid}
 
 Mitigating the effects of partitions and network latency is a
-difficult task, requiring systems designers to make fundamental
-trade-offs. In this section, we briefly discuss known semantic limits
-for systems wishing to maintain high availability and their impact on
-modern database systems. While the gold standard of ACID databases is
-unavailable, we show that many database systems operate under much
-weaker models, motivating the study of these models in a highly
-available context in the remainder of this paper.
+difficult task, requiring systems designers to choose between
+fundamental trade-offs. In this section, we briefly discuss known
+semantic limits for systems wishing to maintain high availability and
+their impact on modern database systems. While the gold standard of
+ACID semantics is unavailable, we show that many database systems
+operate under much weaker models, motivating further study of these
+models in a highly available context in the remainder of this paper.
 
-One of the most popularly celebrated impossibility results for
+One of the most popularly celebrated impossibility results in
 distributed systems is Brewer's CAP Theorem, which, as formally proven
 by Gilbert and Lynch, states that it is impossible to maintain
-linearizability (``C,'' or ``consistency''---albeit poorly named), or
-the ability to read the last completed write, and replica availability
-(``A'') in the presence of network partitions
-(``P'')~\cite{gilbert-cap}. Brewer's Theorem has roots in decades of
-distributed database designs~\cite{davidson-survey} and has had a
-substantial impact on recent large-scale distributed systems design:
-while CAP is narrowly scoped to the impossibility of building highly
-available linearizable systems linearizability, it is often
-interpreted to preclude a larger set of guarantees, including ACID, or
-transactional atomicity, consistency, isolation and durability
-guarantees, as evidenced by the lack of highly available systems
-providing them.
+linearizability , or the ability to read the last completed write,
+(``C,'' or ``consistency''---albeit poorly named) and replica
+availability, or a guaranteed response, (``A'') in the presence of
+network partitions (``P'')~\cite{gilbert-cap}. Brewer's Theorem has
+roots in decades of distributed database
+designs~\cite{davidson-survey} and has had a substantial impact on
+recent large-scale distributed systems design: while CAP is narrowly
+scoped to the impossibility of building highly available linearizable
+systems, it is often interpreted to preclude a larger set of
+guarantees, including ACID (transactional atomicity, consistency,
+isolation and durability guarantees), as evidenced by the lack of
+highly available systems providing them.
 
-Database designers and researchers have long realized that
+Database researchers and designers have long realized that
 serializability---the gold standard of ACID isolation, which
 guarantees application-level consistency---is not achievable in a
 highly available system~\cite{davidson-survey}.  However, database
 systems offer a range of ACID properties besides
 serializability. Within a single-node database, the coordination
 penalties associated with ensuring equivalence with a serial execution
-can be severe and manifest themselves in the form of concurrency
-control contention (and, subsequently, performance degradation,
-scalability limitations, and, often, external aborts like
+can be severe and manifest themselves in the form of decreased
+concurrency (and, subsequently, performance degradation, scalability
+limitations, and, often, external aborts like
 deadlocks)~\cite{gray-isolation}. Instead, databases offer a host of
 so-called \textit{weak isolation} models that allow varying
 restrictions on the space of schedules that are allowable by the
 system~\cite{adya}. None of these weak isolation models guarantees
 serializability, but the benefits of these models can often outweigh
-costs of possible consistency anomalies that might arise
-from their use.
+costs of possible consistency anomalies that might arise from their
+use.
 
 To understand the prevalence of these weak isolation models, we
-recently surveyed, we surveyed the default and maximum isolation
-models provided by 18 relational databases, often claiming to provide
-``ACID'' or ``NewSQL'' functionality~\cite{hat-hotos}. As shown in
-Table~\ref{table:existing}, only three out of 18 databases provides
-serializability by default, and at least eight do not provide
+recently surveyed the default and maximum isolation models provided by
+18 relational databases, often claiming to provide ``ACID'' or
+``NewSQL'' functionality~\cite{hat-hotos}. As shown in
+Table~\ref{table:existing}, only three out of 18 databases provided
+serializability by default, and at least eight did not provide
 serializability as an option at all. This is particularly surprising
 when we consider the widespread deployment of many of these
 non-serializable databases, like Oracle 11g, which are known to power
 major businesses and product functionality. Given that these
 transactional models are frequently used, our inability to provide
-serializability in arbitrary HATs is non-fatal for practical
+serializability in arbitrary HATs appears non-fatal for practical
 applications. If application writers and database vendors have already
 decided that the benefits of weak isolation outweigh potential
 application inconsistencies, then, in a highly available environment
-that prevents serializability entirely, similar decisions may be
-appropriate.
+that prohibits serializability, similar decisions may be tenable.
 
 \begin{table}
 \begin{center}
@@ -292,20 +291,22 @@ VoltDB & S & S\\
 \end{table}
 
 The primary challenge in providing weak isolation in a HAT context is
-that, unfortunately, it is unclear \textit{which} of these isolation
-guarantees can be provided with high availability. The existing
-algorithms for providing weak isolation are typically designed for a
-single-node context and are, to the best of our knowledge, unavailable
-due to a reliance on concurrency control mechanisms like locking that
-are not resilient to partial failure. Morever, we are not aware of any
-prior literature that provides guidance as to the relationship between
-weak isolation and high availability: prior work has examined the
+that, unfortunately, it is unclear \textit{which} of these ACID
+(particularly isolation) guarantees can be provided with high
+availability. The existing algorithms for providing weak isolation are
+typically designed for a single-node context and are, to the best of
+our knowledge, unavailable due to a reliance on concurrency control
+mechanisms like locking that are not resilient to partial failure
+(Section~\ref{sec:evaluation}). Morever, we are not aware of any prior
+literature that provides guidance as to the relationship between weak
+isolation and high availability: prior work has examined the
 relationship between serializability and high
 availability~\cite{davidson-survey} and weak isolation on a
 single-server~\cite{adya, ansicritique} but never weak isolation and
 high availability taken together. We believe that this apparent gap in
 the database literature is a possible contributing factor to the
-often-apparent attitude that general-purpose transactional semantics
-are either too expensive to provide in many modern distributed
-databases---except under special circumstances, such as providing
-operations over groups of co-located data items.
+often-apparent attitude~\cite{hn, foundation-article} that
+general-purpose transactional semantics are either too expensive to
+provide in many modern distributed databases---except under special
+circumstances, such as providing operations over groups of co-located
+data items~\cite{entitygroup}.

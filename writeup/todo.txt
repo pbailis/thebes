@@ -1,0 +1,19 @@
+
+INTRO
+
+references from start:
+"Fragmentwise serializability"
+"Achieving Robustness in Distributed Databases"
+"Database Replication Techniques: 3 parameter class"--Kemme
+
+Add a punchline to the contributions list
+
+MOTIVATION
+
+"as evidenced by the lack of..." <-- citation here would be good
+
+Partial and fully replicated system <-- citation here
+
+HAT SECTIOn
+
+Oracle Read Consistency implementation <--citation
