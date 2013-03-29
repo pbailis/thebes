@@ -8,8 +8,44 @@
 \usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, draftwatermarkbottom, draftwatermarktop}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
+\renewcommand{\ttdefault}{fi4}
+
 \usetikzlibrary{positioning, snakes, shapes}
 
+\newenvironment{myitemize}
+{
+
+   \vspace{0mm}
+    \begin{list}{$\bullet$}{\leftmargin=1em}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.25em} 
+        \setlength{\itemindent}{0em}
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
+
+\newenvironment{myenumerate}
+{
+
+   \vspace{0mm}
+   \newcounter{qcounter}
+    \begin{list}{\arabic{qcounter}.~}{\usecounter{qcounter}\leftmargin=1em}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.25em} 
+        \setlength{\itemindent}{0em}
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
 
 \begin{document}
 
@@ -17,7 +53,7 @@
 % ****************** TITLE ****************************************
 
 \title{Highly Available Transactions: Virtues and Limitations}
-
+{\author{Peter Bailis{\fontsize{12}{14}$^\dagger$}, Aaron Davidson{\fontsize{12}{14}$^\dagger$}, Alan Fekete{\fontsize{12}{14}$^\diamond$}, Ali Ghodsi{\fontsize{12}{14}$^{\dagger,\ddagger}$}, Joseph M. Hellerstein{\fontsize{12}{14}$^\dagger$}, Ion Stoica{\fontsize{12}{14}$^\dagger$}\\{{\fontsize{12}{14}$^\dagger$}\hspace{.5mm}UC Berkeley\hspace{4mm}{\fontsize{12}{14}$^\diamond$}\hspace{.5mm}University of Sydney\hspace{4mm}{\fontsize{12}{14}$^\ddagger$}\hspace{.5mm}KTH/Royal Institute of Technology}}}
 \maketitle
 
 \begin{abstract}
@@ -52,8 +88,6 @@ semantic costs.
 
 \input{conclusion.tex}
 
-
-foo~\cite{adya}
 
 % The following two commands are all you need in the
 % initial runs of your .tex file to

@@ -1,4 +1,17 @@
 
+Read Uncommitted is similar to the distributed systems
+concept of replica convergence, in which all replicas for a data item
+must end up with the same data item. This convergence is usually
+achieved by picking a ``winning'' update, requiring a means of totally
+ordering updates to each item; one can view Read Uncommitted as a
+cross-item convergence property
+
+This convergence property should be
+considered mandatory given the spirit of existing literature on
+isolation protocols: in all models we have encountered, the database
+should behave as if there is some total order over
+transactions. Indeed, non-convergent systems are remarkably difficult
+to reason about.
 
 (TODO: fix me--HotOS copy!)
 

@@ -6,25 +6,27 @@ Peter Deutsch begins his classic list of ``Fallacies of Distributed
 Computing'' with two concerns fundamental to distributed database
 systems: ``\textit{1.)}  The network is reliable. \textit{2.)} Latency
 is zero''~\cite{fallacies-deutsch}. On a single server, communication
-systems are robust and relatively fast, and most single-node systems
-do not need to prepare for partial component failure. However, these
-assumptions are no longer valid in a distributed setting. To extend
-Jim Gray's storage latency analogy, if memory is 1.5 hours from the
-CPU, disk is 2 years away, especially across wide-area networks,
-remote server accesses can exceed 30 years, with the added concern
-that messages can be lost in transit or delayed indefinitely by
-network partitions~\cite{gray-rules}. Accordingly, ignoring network
-failures and latency ``cause[s] big trouble and painful learning
+channels are robust and relatively fast, and few single-server systems
+need to account for a possibility of partial system failure. However,
+both of these assumptions are no longer valid in a distributed
+setting. To extend Jim Gray's storage latency analogy, if memory is
+1.5 hours from the CPU and disk is 2 years away, then, especially
+across wide-area networks (WANs), remote server accesses can exceed 30
+years, with the added concern that messages can be lost in transit or
+delayed indefinitely by network
+partitions~\cite{gray-rules}. Accordingly, ignoring network failures
+and latency can ``cause big trouble and painful learning
 experiences''~\cite{fallacies-deutsch}.
 
-In this section, we attempt to quantify the impact of network
-partitions and latency in real-world deployments. While the importance
-of network behavior is a topic of considerable speculation within the
+In this section, we quantify the effect of network partitions and
+latency in several real-world deployments. While the importance of
+network behavior is a topic of considerable speculation within the
 database community~\cite{stonebraker2010errors}, there is mounting
 evidence---both anecdotal and experimental---that partitions occur and
-latency is non-negligible.
+network latencies are non-negligible. We subsequently discuss the
+impact of these findings on modern database operation.
 
-\subsection{Partitions}
+\subsection{Partitions in the Real World}
 
 Network partitions---or, informally, communication link failures
 between participants in a distributed system---are challenging. A
@@ -36,34 +38,45 @@ maintaining semantic guarantees and available operation is
 simple~\cite{stonebraker2010errors}. However, given the
 \textit{possibility} of partitions, a system must be prepared to
 either lose availability of operations or its ability to reason about
-global state.
+global state. In this section, we present evidence for the frequency
+and non-triviality of WAN and LAN partitions.
 
 According to James Hamilton, Vice President and Distinguished Engineer
-on the Amazon Web Service team, ``network partitions should be rare
+on the Amazon Web Services team, ``network partitions should be rare
 but net gear continues to cause more issues than it
 should''~\cite{hamilton-partitions}. Anecdotal evidence confirms
 Hamilton's assertion. In April 2011, a network misconfiguration led to
 a twelve-hour long series of outages across the Amazon EC2 and RDS
 services~\cite{amazon-netpartition}. Subsequent misconfigurations and
-partial failures such as another EC2 failure in October 2012 have led
-to full site outages for web services like Reddit, Foursquare, and
-Heroku~\cite{ec2-downsites}. At a global scale, hardware
-failures---like the 2011 outages in Internet backbones in North
-America and Europe due a router bug~\cite{juniper-partition}---and
-misconfigurations---such as BGP faults in 2008~\cite{pakistan-youtube}
-and 2010~\cite{research-experiment-partition}---can cause widespread
-partitions. Many of our discussions with practitioners---especially
-those operating on public cloud infrastructure---as well as reports
-from large-scale operators like Google~\cite{dean-keynote} confirm
-that partitions are a reality.
+partial failures such as another EC2 outage in October 2012 have led
+to full site disruptions for popular web services like Reddit,
+Foursquare, and Heroku~\cite{ec2-downsites}. At a global scale,
+hardware failures---like the 2011 outages in Internet backbones in
+North America and Europe due a router
+bug~\cite{juniper-partition}---and misconfigurations---such as BGP
+faults in 2008~\cite{pakistan-youtube} and
+2010~\cite{research-experiment-partition}---can cause widespread
+partitions.
 
-Several recent studies rigorously quantify partition behavior. A 2011
-study of several Microsoft datacenters found a mean of 40.8 network
-link failures per day (95th percentile: 136), with a median time to
-repair of around five minutes, and up to one week. Perhaps
-surprisingly, network redundancy only reduces the median impact of
-failures by up to 40\%, meaning providers cannot easily reduce the
-incidence of partitions~\cite{sigcomm-dc}. A 2010 study of over 200
+Many of our discussions with practitioners---especially those
+operating on public cloud infrastructure---as well as reports from
+large-scale operators like Google~\cite{dean-keynote} confirm that
+partition management is an important consideration service operators
+today. As an example of an actual system rearchitecture, less than one
+year after its announcement, Yahoo!'s PNUTS developers explicitly
+added a support for weaker, highly available operation. The engineers
+explained that ``strict adherence [to strong consistency] leads to
+difficult situations under network partitioning or server
+failures...in many circumstances, applications need a relaxed
+approach''~\cite{pnuts-update}.
+
+Several recent studies quantify partition behavior more rigorously. A
+2011 study of several Microsoft datacenters found a mean of 40.8
+network link failures per day (95th percentile: 136), with a median
+time to repair of around five minutes (and up to one week). Perhaps
+surprisingly, provisioning redundant networks only reduces impact of
+failures by up to 40\%, meaning network providers cannot easily
+curtail partition behavior~\cite{sigcomm-dc}. A 2010 study of over 200
 wide-area routers found an average of 16.2--302.0 failures per link
 per year with an average annual downtime of 24--497 minutes per link
 per year (95th percentile at least 34 hours)~\cite{sigcomm-wan}. In
@@ -71,15 +84,14 @@ HP's managed enterprise networks, WAN, LAN, and connectivity problems
 account for 28.1\% of all customer support tickets while 39\% of
 tickets relate to network hardware.  The median incident duration for
 highest priority tickets ranges from 114--188 minutes and up to a full
-day for all tickets.~\cite{turner2012failure}. The incidence of
-network failures is further confirmed by several prior studies showing
-for example, on Sprint's WANs, a median time to repair between 2 and
-1000 seconds, and a median time between failures of approximately 3000
-seconds.~\cite{ip-backbone-failures} and frequent path routing
-failures on the Internet~\cite{labovitz-failures}. Indeed, isolating,
-quantifying, and designing for network failures is an area of active
-research in networking community~\cite{surviving-failures-bodik,
-  uw-failure-networks}.
+day for all tickets~\cite{turner2012failure}. Other studies confirm
+these results, showing median time between failures of approximately
+3000 seconds with a median time to repair between 2 and 1000
+seconds~\cite{ip-backbone-failures} as well as frequent path routing
+failures on the Internet~\cite{labovitz-failures}. Isolating,
+quantifying, and designing for these network failures is an area of
+active research in networking
+community~\cite{surviving-failures-bodik, uw-failure-networks}.
 
 These results---which do not consider server-level failures (another
 form of system partition that has also been studied at
@@ -90,41 +102,45 @@ observe that, as a general trend, partitions exist and must
 accordingly be met with either unavailability at some servers or, as
 we will discuss, relaxed semantic guarantees.
 
-\subsection{Latency}
+\subsection{Latency and Planet Earth}
 
 Even with fault-free networks, distributed systems face the challenge
-of communication latency, Deutsch's second ``Fallacy.'' Fundamentally,
-the speed at which two servers can communicate is (according to modern
-physics) bounded by the speed of light. Two servers located on
-opposite sides of the Earth face, in the best case---communicating via
-a hypothetical link crossing through the center of the
-planet---require a minimum 85.1 ms RTT (133.7 ms if sent at ground
-level). As services are replicated to multiple, geographically
-distinct sites, the cost of communication increases this upper bound.
+of communication latency, Deutsch's second ``Fallacy.'' In this
+section, we quantify expected latencies, which are often
+huge---hundreds of milliseconds---in a geo-replicated context.
 
-In real deployments, latencies are higher than the speed of light due
-to routing, congestion, and processing times; if not, servers a
-kilometer apart would enjoy a 6.7 $\mu$s RTT. To illustrate the
-difference between intra-datacenter, inter-datacenter, and
-inter-planetary networks, we performed a measurement study of network
-behavior on Amazon's EC2, a widely-used public compute cloud. We
-measured one week of ping times between all seven EC2 regions, across
-three ``availability zones'', or closely co-located datacenters, in
-the Eastern United States, and within a single ``availabilty zone,''
-at a granularity of 1s (dataset to be released).
+Fundamentally, the speed at which two servers can communicate is
+(according to modern physics) bounded by the speed of light. Two
+servers located on opposite sides of the Earth face, in the best
+case---communicating via a hypothetical link crossing through the
+center of the planet---require a minimum 85.1 ms RTT (133.7 ms if sent
+at ground level). As services are replicated to multiple,
+geographically distinct sites, the cost of communication increases to
+this upper bound.
+
+In real deployments, latencies are actually higher than the speed of
+light dictates due to routing, congestion, and processing times; if
+not, servers a kilometer apart would enjoy a 6.7 $\mu$s RTT. To
+illustrate the difference between intra-datacenter, inter-datacenter,
+and inter-planetary networks, we performed a measurement study of
+network behavior on Amazon's EC2, a widely-used public compute
+cloud. We measured one week of ping times between all seven EC2
+regions, across three ``availability zones'', or closely co-located
+datacenters, and within a single ``availabilty zone,'' at a
+granularity of 1s (dataset to be released).
 
 We summarize the results of our network measurement study in
 Table~\ref{table:rtt}. On average, inter-datacenter communication (1c)
 is between 1.82 and 6.38 times faster than across geographically
-co-located datacenters (1b) and 40 and 647 times faster than across
-geographically distributed datacenters (1a). The cost of wide-area
-communication exceeds the speed of light: for example, communicating
-from S\~{a}o Paulo to Singapore is lower-bounded by speed-of-light
-transit RTT of 106.7 ms but, on average, incurs a 362.8 ms RTT (95th
-percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the distribution
-of latencies varies between links, but the trend---in line with other
-recent studies~\cite{mdcc, redblue}---is clear: remote communication
-has a substantial cost.
+co-located datacenters (1b) and between 40 and 647 times faster than
+across geographically distributed datacenters (1a). The cost of
+wide-area communication exceeds the speed of light: for example,
+communicating from S\~{a}o Paulo to Singapore is lower-bounded by
+speed-of-light transit RTT of 106.7 ms but, on average, incurs a 362.8
+ms RTT (95th percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the
+distribution of latencies varies between links, but the trend---in
+line with other recent studies~\cite{mdcc, redblue}---is clear: remote
+communication has a substantial cost.
 
 \definecolor{min-lat-color}{HTML}{B2FF99}
 \definecolor{max-lat-color}{HTML}{FF7F7F}
@@ -175,31 +191,33 @@ H2 &  & \colorbox{min-lat-color}{0.50}  \\
 \end{figure}
 
 
-\subsection{Modern Systems}
+\subsection{CAP, Isolation, and Modern Systems}
 \label{sec:modernacid}
 
 Mitigating the effects of partitions and network latency is a
-difficult task, requiring system desigers to make hard trade-offs. In
-this section, we briefly discuss known semantic limits for systems
-wishing to maintain high availability and their impact on modern
-database systems. While the gold standard of ACID databases is
+difficult task, requiring systems designers to make fundamental
+trade-offs. In this section, we briefly discuss known semantic limits
+for systems wishing to maintain high availability and their impact on
+modern database systems. While the gold standard of ACID databases is
 unavailable, we show that many database systems operate under much
 weaker models, motivating the study of these models in a highly
 available context in the remainder of this paper.
 
-Most notable among existing impossibility results for distributed
-systems is Brewer's CAP Theorem, which, as formally proven by Gilbert
-and Lynch, states that it is impossible to maintain linearizability
-(``C,'' or ``consistency''---albeit poorly named), or the ability to
-read the last completed write, and replica availability (``A'') in the
-presence of network partitions (``P'')~\cite{gilbert-cap}. Brewer's
-Theorem has roots in decades of distributed database
-designs~\cite{davidson-survey} and has had a substantial impact on
-recent large-scale distributed systems design. Yet, while CAP is
-narrowly scoped to the impossibility linearizability, it is often
+One of the most popularly celebrated impossibility results for
+distributed systems is Brewer's CAP Theorem, which, as formally proven
+by Gilbert and Lynch, states that it is impossible to maintain
+linearizability (``C,'' or ``consistency''---albeit poorly named), or
+the ability to read the last completed write, and replica availability
+(``A'') in the presence of network partitions
+(``P'')~\cite{gilbert-cap}. Brewer's Theorem has roots in decades of
+distributed database designs~\cite{davidson-survey} and has had a
+substantial impact on recent large-scale distributed systems design:
+while CAP is narrowly scoped to the impossibility of building highly
+available linearizable systems linearizability, it is often
 interpreted to preclude a larger set of guarantees, including ACID, or
 transactional atomicity, consistency, isolation and durability
-guarantees.
+guarantees, as evidenced by the lack of highly available systems
+providing them.
 
 Database designers and researchers have long realized that
 serializability---the gold standard of ACID isolation, which
@@ -215,69 +233,74 @@ deadlocks)~\cite{gray-isolation}. Instead, databases offer a host of
 so-called \textit{weak isolation} models that allow varying
 restrictions on the space of schedules that are allowable by the
 system~\cite{adya}. None of these weak isolation models guarantees
-serializability, but the benefits of these models can outweigh the
-costs of possible application-level consistency anomalies that arise
+serializability, but the benefits of these models can often outweigh
+costs of possible consistency anomalies that might arise
 from their use.
 
-To understand the prevalence of these weak isolation models, in an
-earlier workshop paper~\cite{hat-hotos}, we surveyed the default and
-maximum isolation models provided by 18 relational databases, often
-claiming to provide ``ACID'' or ``NewSQL'' functionality. As shown in
+To understand the prevalence of these weak isolation models, we
+recently surveyed, we surveyed the default and maximum isolation
+models provided by 18 relational databases, often claiming to provide
+``ACID'' or ``NewSQL'' functionality~\cite{hat-hotos}. As shown in
 Table~\ref{table:existing}, only three out of 18 databases provides
 serializability by default, and at least eight do not provide
 serializability as an option at all. This is particularly surprising
-when we consider the widespread deployment of many of these databases,
-like Oracle 11g, which are known to power major businesses and product
-functionality. Given that these transactional models are frequently
-used, our inability to provide serializability in arbitrary HATs is
-non-fatal to practical applications. If application writers and
-database vendors have already decided that the benefits of weak
-isolation outweigh potential application inconsistencies, then, as we
-will see, in a highly available environment, similar decisions may be
+when we consider the widespread deployment of many of these
+non-serializable databases, like Oracle 11g, which are known to power
+major businesses and product functionality. Given that these
+transactional models are frequently used, our inability to provide
+serializability in arbitrary HATs is non-fatal for practical
+applications. If application writers and database vendors have already
+decided that the benefits of weak isolation outweigh potential
+application inconsistencies, then, in a highly available environment
+that prevents serializability entirely, similar decisions may be
 appropriate.
 
 \begin{table}
+\begin{center}
 \begin{small}
 \begin{tabular}{|l|c|c|}
 \hline
 Database & Default & Maximum\\\hline
-Actian Ingres 10.0/10S~\cite{actian-docs} & S & S\\
-Aerospike~\cite{aerospike-docs} & RC & RC\\
-Akiban Persistit~\cite{akiban-docs} & SI & SI\\
-Clustrix CLX 4100~\cite{clustrix-docs} & RR & ?\\
-Greenplum 4.1~\cite{greenplum-docs} & RC & S \\
-IBM DB2 10 for z/OS~\cite{db2-docs} & CS & S\\
-IBM Informix 11.50~\cite{informix-docs} & Depends & RR\\
-MySQL 5.6~\cite{innodb-docs} & RR & S \\
-MemSQL 1b~\cite{memsql-docs} & RC & RC\\
-MS SQL Server 2012~\cite{ms-sql-docs} & RC & S \\
-NuoDB~\cite{nuodb-docs} & CR & CR\\
-Oracle 11g~\cite{oracle-docs} & RC & SI\\
-Oracle Berkeley DB~\cite{bdb-reg-docs} & S & S\\
-Oracle Berkeley DB JE~\cite{bdb-je-docs} & RR & S\\
-Postgres 9.2.2~\cite{postgres-docs} & RC & S\\
-SAP HANA~\cite{hana-docs} & RC & SI\\
-ScaleDB 1.02~\cite{scaledb-docs} & RC & RC\\
-VoltDB~\cite{voltdb-docs} & S & S\\
+Actian Ingres 10.0/10S & S & S\\
+Aerospike & RC & RC\\
+Akiban Persistit & SI & SI\\
+Clustrix CLX 4100 & RR & ?\\
+Greenplum 4.1 & RC & S \\
+IBM DB2 10 for z/OS & CS & S\\
+IBM Informix 11.50 & Depends & RR\\
+MySQL 5.6 & RR & S \\
+MemSQL 1b & RC & RC\\
+MS SQL Server 2012 & RC & S \\
+NuoDB & CR & CR\\
+Oracle 11g & RC & SI\\
+Oracle Berkeley DB & S & S\\
+Oracle Berkeley DB JE & RR & S\\
+Postgres 9.2.2 & RC & S\\
+SAP HANA & RC & SI\\
+ScaleDB 1.02 & RC & RC\\
+VoltDB & S & S\\
 \hline
 \multicolumn{3}{|p{7cm}|}{{\footnotesize RC: read committed, RR: repeatable read, SI: snapshot isolation, S: serializability, CS: cursor stability, CR: consistent read}}\\\hline
 
 \end{tabular}
 \caption{Default and maximum isolation levels for ACID and NewSQL
   databases as of January 2013 (from
-  \protect\cite{needed-hotos}).}\vspace{-1.5em}
+  \protect\cite{hat-hotos}).}\vspace{-1.5em}
 \label{table:existing}
 \end{small}
+\end{center}
 \end{table}
 
 The primary challenge in providing weak isolation in a HAT context is
 that, unfortunately, it is unclear \textit{which} of these isolation
 guarantees can be provided with high availability. The existing
-algorithms for providing weak isolation are typically presented for a
-single-node context and are therefore unavailable. We are not aware of
-any prior literature that provides guidance as to the relationship
-between weak isolation and high availability. Prior work has examined
-the relationship between serializability and high
+algorithms for providing weak isolation are typically designed for a
+single-node context and are, to the best of our knowledge, unavailable
+due to a reliance on concurrency control mechanisms like locking that
+are not resilient to partial failure. Morever, we are not aware of any
+prior literature that provides guidance as to the relationship between
+weak isolation and high availability: prior work has examined the
+relationship between serializability and high
 availability~\cite{davidson-survey} and weak isolation on a
 single-server~\cite{adya, ansicritique} but never weak isolation and
 high availability taken together. We believe that this apparent gap in

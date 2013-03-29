@@ -1,24 +1,54 @@
 
 \section{Related Work}
 
-VI. Related Work (.75pg)
+Although we are not aware of any related work specifically addressing
+what properties are available in a highly available system, there are
+several systems and related research results upon which we draw in
+this work.
 
-HA and CAP studies
+Weak consistency and high availability have been well
+studied. Serializability has long been known to be
+unachievable~\cite{davidson-survey} and Brewer's CAP Theorem has
+attracted considerable attention~\cite{gilbert-cap}. The research has
+begun to offer hints regarding the connection between ``weak
+consistency'' and low latency~\cite{abadi-pacelc}, while several
+studies~\cite{adya, ansicritique} examine weak isolation guarantees,
+grounded in a single-server context. The connection between weak
+consistency models in a distributed setting~\cite{calm, crdt} and high
+availability is relatively unexplored. With the exception of a
+preliminary workshop paper on this work~\cite{hat-hotos}---upon which
+this work builds, providing impossibility results, a full
+taxonomization, experimental and application analysis (basically all
+but Section 4.1)---we believe this paper is the first to explore this
+area.
 
---Davidson, Brewer, Gilbert and Lynch
 
-Weak Isolation models
+There has been a recent resurgence of interest in distributed
+multi-object semantics, both in academia~\cite{kraska-s3, granola,
+  gstore, mdcc, redblue, cops, eiger, walter,calvin, swift} and
+industry~\cite{megastore, orleans, spanner}. We can roughly categorize
+related work into two categories: unavailable systems with stronger
+semantics than HATs and highly available systems with weaker
+semantics.
 
---Gray, Adya, Berenson, CALM, HotOS paper
-
-Highly Available Distributed Systems overview
-
---COPS, Eiger, SwiftCloud, CRDTs
-
-* Probably do a good job with this one, in addition to the first part of Section V. We can talk at length about the relationship between distributed systems and databases.
-
-1.) High Availability and CAP (giving the DB folks due credit here!)
-2.) Highly Available Distributed Systems
-3.) Weak Isolation (there's a lot here, pay plenty of lip service to Adya)
-4.) Available/unavailable systems
-	--Stress that, with the advent of Spanner, transactions are coming back; HATS represents new design space. (Can even say "Spanner borrowed traditional database techniques; would benefit from HAT approach (c.f., 100ms geo-replicated latencies)"; also talk about optimization for read-only transactions).
+Unavailable, strongly consistent databases have a long tradition. As
+discussed in Section~\ref{sec:motivation}, classic ACID databases
+provide strong semantics but their lock-based and traditional
+multi-versioned implementations are unavailable in the presence of
+partitions~\cite{bernstein-concurrency, bernstein-book,
+  gray-isolation}. Similar semantics are common in recent
+work. Notably, Google's Spanner provides externally serializable
+transactions. While Spanner fits Google's read-mostly workload well,
+read/write transactions use two-phase locking (incurring at least one
+round trip time over wide-area networks), are unavailable to clients
+in a non-majority partition, and cannot read their
+writes~\cite{spanner}. These latency and availability penalties are
+fundamental to providing strong consistency. For users willing to
+tolerate these costs, Spanner, or similar strongly consistent,
+unavailable systems---including Calvin~\cite{calvin},
+G-Store~\cite{gstore}, Gemini~\cite{redblue}, Granola~\cite{granola},
+HBase~\cite{hbase}, MDCC~\cite{mdcc}, Megastore~\cite{megastore},
+Orleans~\cite{orleans}, and Walter~\cite{walter}---are a reasonable
+choice. With HATs, we seek an alternative set of semantics that are
+still useful but do not violate requirements for high availability or
+low latency.
