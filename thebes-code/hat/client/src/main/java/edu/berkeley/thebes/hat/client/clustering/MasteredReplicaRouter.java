@@ -32,7 +32,7 @@ public class MasteredReplicaRouter extends ReplicaRouter {
         this.numNeighbors = Config.getServersInCluster().size();
         
         for (int i = 0; i < numClusters; i ++) {
-            List<ServerAddress> neighbors = Config.getServersInCluster();
+            List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             List<ReplicaService.Client> neighborClients = Lists.newArrayList();
             for (ServerAddress neighbor : neighbors) {
                 neighborClients.add(ThriftUtil.getReplicaServiceSyncClient(neighbor.getIP(),
