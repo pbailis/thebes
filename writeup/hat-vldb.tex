@@ -57,19 +57,19 @@
 \maketitle
 
 \begin{abstract}
-Given the presence of network latency and the possibility of partial
+To minimize network latency and handle the possibility of partial
 failure and network partitions, many modern distributed systems eschew
 transactional functionality, which provides strong semantic guarantees
 for groups of multiple operations over multiple data items. In this
-work, we consider the problem of providing transactional guarantees
-that are highly available, or do not suffer from unavailability during
-system partitions or typically incur high network latency.  We
-introduce a new taxonomy of highly available algorithms and analyze a
+work, we consider the problem of achieving transactional guarantees
+with high availability, or without suffering from unavailability
+during system partitions or incurring high network latency.  We
+introduce a new taxonomy of high availability and analyze a
 combination of ACID and distributed consistency guarantees to identify
 which can and cannot be achieved by Highly Available Transaction (HAT)
 systems. In doing so, we analytically and experimentally quantify the
 benefit of providing high availability as well as the associated
-semantic costs.
+semantic compromises.
 \end{abstract}
 
 \input{intro.tex}

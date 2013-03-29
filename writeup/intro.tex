@@ -41,7 +41,7 @@ in the single-server context from which it originated~\cite{adya,
 providing distributed serializability~\cite{bernstein-concurrency,
   spanner, granola, daudjee-session, calvin}. However, the current
 literature does not provide guidance as to the operation of weakly
-consistent transactional guarantees in a highly available distributed
+consistent transactional guarantees in a replicated
 context. Accordingly, in this work, we consider the problem of
 providing Highly Available Transactions (HATs), or semantic guarantees
 regarding multiple operations operating on multiple data items that
@@ -57,18 +57,17 @@ models and rigorously taxonomize their availability characteristics;
 in doing so, we unify previous work on ACID properties~\cite{adya},
 session guarantees~\cite{sessionguarantees}, and traditional
 disributed ``register'' semantics~\cite{herlihy-art}. By identifying
-the availability cost of a wide range of popular consistency
-guarantees, this work allows developers to weigh the costs and
-benefits of relying on particular guarantees in their applications. While
-several models, like serializability and Snapshot Isolation, are
-unachievable due to update conflict avoidance (preventing Lost Update
-and Write Skew phenomena), many other ACID guarantees are HAT
-compliant, such as providing Read Committed isolation, preventing
-Fuzzy Read phenomena, and ensuring atomicity of transactional
-updates. Several other guarantees, like reading one's writes, fall
-into a new availability class---``sticky'' high availability---which
-provides an intermediate ground between strict high availability and
-majority availability.
+the availability cost of a wide range of guarantees, this work allows
+developers to weigh the costs and benefits of relying on particular
+guarantees in their applications. While several models, like
+serializability and Snapshot Isolation, are unachievable due to update
+conflict avoidance (preventing Lost Update and Write Skew phenomena),
+many other ACID guarantees are HAT compliant, such as providing Read
+Committed isolation, preventing Fuzzy Read phenomena, and ensuring
+atomicity of transactional updates. Several other guarantees, like
+reading one's writes, fall into a new availability class---``sticky''
+high availability---which provides an intermediate ground between
+strict high availability and majority availability.
 
 This taxonomy allows us to weigh the costs and benefits of a wide
 range of semantic guarantees, but which guarantees are worthwhile in
@@ -79,12 +78,12 @@ infrastructure, and analyzing representative applications for their
 semantic requirements. While our results are not definitive for all
 applications, they suggest that HATs offer a one to three order of
 magnitude latency decrease compared to traditional protocols and can
-provide acceptable semantics for a wide range of programs,
-particularly those with monotonic logic and commutative
-updates~\cite{calm, blooml, crdt}. HAT systems can also enforce
-arbitrary foreign key constraints on multi-item updates and sometimes
-provide limited uniqueness guarantees. However, particularly for
-programs with non-monotonic logic, HATs may fall short, requiring more
+provide acceptable semantics for a wide range of programs, especially
+those with monotonic logic and commutative updates~\cite{calm, blooml,
+  crdt}. HAT systems can also enforce arbitrary foreign key
+constraints on multi-item updates and sometimes provide limited
+uniqueness guarantees. However, particularly for programs with
+non-monotonic logic, HATs may fall short, requiring more
 coordination-intensive, unavailable mechanisms. Concisely, we attempt
 to understand \textit{what benefits do Highly Available Transactions
   offer and what is their cost?}
