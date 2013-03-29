@@ -342,4 +342,8 @@ public class Config {
             return ip;
         }
     }
+
+    public static int getNumClusters() {
+        return getClusterMap().size();
+    }
 }

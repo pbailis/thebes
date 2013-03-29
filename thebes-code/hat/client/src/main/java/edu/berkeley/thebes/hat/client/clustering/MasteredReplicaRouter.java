@@ -28,7 +28,7 @@ public class MasteredReplicaRouter extends ReplicaRouter {
         
         this.replicaAddressesByCluster = Maps.newHashMap();
         this.syncReplicasByCluster = Maps.newHashMap();
-        this.numClusters = Config.getSiblingServers().size();
+        this.numClusters = Config.getNumClusters();
         this.numNeighbors = Config.getServersInCluster().size();
         
         for (int i = 0; i < numClusters; i ++) {
