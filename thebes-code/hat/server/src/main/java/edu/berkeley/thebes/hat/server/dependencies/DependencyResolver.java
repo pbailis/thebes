@@ -76,7 +76,11 @@ public class DependencyResolver {
         PendingWrite newPendingWrite = new PendingWrite(key, value);
         
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
-        transQueue.add(newPendingWrite);
+        try {
+            transQueue.add(newPendingWrite);
+        } catch (Exception e) {
+            logger.error("Error on version " + version + ": ", e);
+        }
         
         if (transQueue.shouldAnnounceTransactionReady()) {
             router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
@@ -100,6 +104,7 @@ public class DependencyResolver {
         }
         
         if (shouldCommit) {
+            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
         
@@ -136,6 +141,7 @@ public class DependencyResolver {
     public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
         if (transactionQueue != null && transactionQueue.serverAcked()) {
+            logger.debug("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved);
             commit(transactionQueue);
             return;
         }
