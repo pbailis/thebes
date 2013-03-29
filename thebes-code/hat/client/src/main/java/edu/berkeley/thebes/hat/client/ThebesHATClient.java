@@ -145,7 +145,7 @@ public class ThebesHATClient implements IThebesClient {
 
     @Override
     public void open() throws TTransportException, ConfigurationException, IOException {
-        router = new ReplicaRouter();
+        router = ReplicaRouter.newInstance(Config.shouldRouteToMasters());
         atomicityVersionVector = new VersionVector();
     }
 
