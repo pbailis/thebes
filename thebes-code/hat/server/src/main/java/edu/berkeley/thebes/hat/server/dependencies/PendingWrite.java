@@ -46,8 +46,8 @@ public class PendingWrite implements Comparable<PendingWrite> {
                 numKeysForThisReplica ++;
             }
         }
-        if (!replicaIndicesInvolved.contains(myIndex)) {
-            System.err.println("WARNINGG: " + replicaIndicesInvolved + " does not include me! " + myIndex + " (" + key + " / " + transactionKeys + ")");
+        if (!serversInTransaction.contains(myIndex)) {
+            System.err.println("WARNINGG: " + serversInTransaction + " does not include me! " + myIndex + " (" + key + " / " + transactionKeys + ")");
         }
         replicaIndicesInvolved = serversInTransaction;
     }
