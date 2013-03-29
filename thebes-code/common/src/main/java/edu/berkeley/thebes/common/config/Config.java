@@ -141,7 +141,7 @@ public class Config {
     }
     
     /** Returns the cluster map (based on the current transaction mode). */
-    private static Map<Integer, List<String>> getClusterMap() {
+    public static Map<Integer, List<String>> getClusterMap() {
         return getOption(txnMode.getClusterConfigParam());
     }
 
