@@ -136,11 +136,11 @@ public class NearestReplicaRouter extends ReplicaRouter {
                 toFetch.put(client, new HashMap<String, ThriftVersion>());
             }
 
-            Version requiredVersion = keys.get(key);
-            if(requiredVersion == null)
-                requiredVersion = Version.NULL_VERSION;
+            ThriftVersion requiredVersion = null;
+            if(keys.get(key) != null)
+                requiredVersion = keys.get(key).getThriftVersion();
 
-            toFetch.get(client).put(key, requiredVersion.getThriftVersion());
+            toFetch.get(client).put(key, requiredVersion);
         }
 
         Semaphore notifyDone = new Semaphore(0);
