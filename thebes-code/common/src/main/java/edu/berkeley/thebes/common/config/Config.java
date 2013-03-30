@@ -19,6 +19,7 @@ import com.yammer.metrics.reporting.GraphiteReporter;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.RoutingMode;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
@@ -276,6 +277,10 @@ public class Config {
     public static Integer getNumAntiEntropyThreads() {
         return getOption(ConfigParameters.ANTI_ENTROPY_THREADS);
     }
+    
+    public static Integer getNumQuorumThreads() {
+        return getOption(ConfigParameters.QUORUM_THREADS);
+    }
 
     public static TransactionMode getThebesTxnMode() {
         return getOption(ConfigParameters.TXN_MODE);
@@ -329,8 +334,8 @@ public class Config {
                 masterServers.get(getServerID()).getIP().equals(getServerIP());
     }
 
-    public static Boolean shouldRouteToMasters() {
-        return getOption(ConfigParameters.ROUTE_TO_MASTERS);
+    public static RoutingMode getRoutingMode() {
+        return getOption(ConfigParameters.ROUTING_MODE);
     }
     
     /** Returns the IP for this server, based on our clusterid and serverid. */
