@@ -20,7 +20,7 @@ service ReplicaService {
   dataitem.ThriftDataItem get(1: string key
                               2: version.ThriftVersion requiredVersion);
 
-  map<string, dataitem.ThriftDataItem> get_all(1: list<string> keys);
+  map<string, dataitem.ThriftDataItem> get_all(1: map<string, version.ThriftVersion> keys);
 
   bool put(1: string key,
            2: dataitem.ThriftDataItem value);

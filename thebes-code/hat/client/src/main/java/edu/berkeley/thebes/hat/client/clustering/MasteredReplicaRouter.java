@@ -77,4 +77,14 @@ public class MasteredReplicaRouter extends ReplicaRouter {
             throw new TException("Failed to read from " + getReplicaIPByKey(key), e);
         }
     }
+
+    @Override
+    public Map<String, ThriftDataItem> get_all(Map<String, Version> keys) throws TException {
+        throw new TException("get_all unsupported");
+    }
+
+    @Override
+    public boolean put_all(Map<String, DataItem> pairs) throws TException {
+        throw new TException("put_all unsupported");
+    }
 }

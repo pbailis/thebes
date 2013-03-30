@@ -174,20 +174,9 @@ public class ThebesHATClient implements IThebesClient {
             if(atomicityLevel == AtomicityLevel.CLIENT) {
                 queuedWrite.setTransactionKeys(transactionKeys);
             }
-
-            doPutSync(key,
-                      queuedWrite);
-
-            /*
-            doPutAsync(key,
-                       queuedWrite,
-                       transactionKeys,
-                       callback);
-                       */
-
         }
 
-        //callback.blockForWrites();
+        router.put_all(transactionWriteBuffer);
 
         if(atomicityLevel != AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
@@ -246,20 +235,7 @@ public class ThebesHATClient implements IThebesClient {
         }
     }
 
-    @Override
-    public ByteBuffer get(String key) throws TException {
-        if(!transactionInProgress)
-            throw new TException("transaction is not in progress");
-        
-        operationMetric.mark();
-
-        if(isolationLevel == IsolationLevel.REPEATABLE_READ &&
-                transactionReadBuffer.containsKey(key)) {
-            return transactionReadBuffer.get(key).getData();
-        }
-
-        DataItem ret = doGet(key);
-
+    private DataItem processGet(String key, DataItem ret) {
         if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
             if(ret != null && ret.getTransactionKeys() != null) {
                 /*
@@ -290,8 +266,8 @@ public class ThebesHATClient implements IThebesClient {
         // if this branch evaluates to true, then we're using Transactional Atomicity or RC or greater
         if(transactionWriteBuffer.containsKey(key)) {
             if (ret == null || transactionWriteBuffer.get(key).getVersion()
-            		           .compareTo(ret.getVersion()) > 0) {
-                return transactionWriteBuffer.get(key).getData();
+                               .compareTo(ret.getVersion()) > 0) {
+                return transactionWriteBuffer.get(key);
             }
         }
 
@@ -299,7 +275,99 @@ public class ThebesHATClient implements IThebesClient {
             atomicityVersionVector.updateVector(ret.getTransactionKeys(), ret.getVersion());
         }
 
+        return ret;
+    }
+
+    @Override
+    public ByteBuffer get(String key) throws TException {
+        if(!transactionInProgress)
+            throw new TException("transaction is not in progress");
+        
+        operationMetric.mark();
+
+        if(isolationLevel == IsolationLevel.REPEATABLE_READ &&
+                transactionReadBuffer.containsKey(key)) {
+            return transactionReadBuffer.get(key).getData();
+        }
+
+        DataItem ret = processGet(key, doGet(key));
+
         return ret == null ? null : ret.getData();
+    }
+
+    @Override
+    public boolean put_all(Map<String, ByteBuffer> pairs) throws TException {
+        if(!transactionInProgress)
+            throw new TException("transaction is not in progress");
+
+        operationMetric.mark();
+
+        long timestamp = System.currentTimeMillis();
+
+        Map<String, DataItem> values = Maps.newHashMap();
+
+        for(String key : pairs.keySet()) {
+            DataItem dataItem = new DataItem(pairs.get(key),
+                    new Version(clientID, LOGICAL_CLOCK.incrementAndGet(), timestamp));
+
+            values.put(key, dataItem);
+        }
+
+        if(isolationLevel.higherThan(IsolationLevel.NO_ISOLATION) || atomicityLevel != AtomicityLevel.NO_ATOMICITY) {
+            if(isolationLevel == IsolationLevel.REPEATABLE_READ) {
+                transactionReadBuffer.putAll(values);
+            }
+            transactionWriteBuffer.putAll(values);
+
+            return true;
+        }
+        else {
+            TimerContext timer = latencyPerOperationMetric.time();
+            boolean ret;
+
+            try {
+                ret = router.put_all(values);
+            } catch (RuntimeException e) {
+                errorMetric.mark();
+                throw e;
+            } catch (TException e) {
+                errorMetric.mark();
+                throw e;
+            } finally {
+                timer.stop();
+            }
+            return ret;
+        }
+    }
+
+    public Map<String, ByteBuffer> get_all(List<String> keys) throws TException {
+        Map<String, Version> requiredVersions = Maps.newHashMap();
+        for(String key : keys) {
+            requiredVersions.put(key, atomicityVersionVector.getVersion(key));
+        }
+
+        Map<String, ByteBuffer> ret = Maps.newHashMap();
+
+        TimerContext timer = latencyPerOperationMetric.time();
+        try {
+            Map<String, ThriftDataItem> tdrRet = router.get_all(requiredVersions);
+
+            for(String key : tdrRet.keySet()) {
+                ThriftDataItem tdItem = tdrRet.get(key);
+                DataItem item = processGet(key, tdItem == null ? null : new DataItem(tdItem));
+                ret.put(key, item == null ? null : item.getData());
+            }
+
+        } catch (RuntimeException e) {
+            errorMetric.mark();
+            throw e;
+        } catch (TException e) {
+            errorMetric.mark();
+            throw e;
+        } finally {
+            timer.stop();
+        }
+        return ret;
     }
 
     private boolean doPutSync(String key,

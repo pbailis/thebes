@@ -36,7 +36,7 @@ public class ReplicaService {
 
     public edu.berkeley.thebes.common.thrift.ThriftDataItem get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion) throws org.apache.thrift.TException;
 
-    public Map<String,edu.berkeley.thebes.common.thrift.ThriftDataItem> get_all(List<String> keys) throws org.apache.thrift.TException;
+    public Map<String,edu.berkeley.thebes.common.thrift.ThriftDataItem> get_all(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys) throws org.apache.thrift.TException;
 
     public boolean put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
 
@@ -48,7 +48,7 @@ public class ReplicaService {
 
     public void get(String key, edu.berkeley.thebes.common.thrift.ThriftVersion requiredVersion, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_all(List<String> keys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_all_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_all(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_all_call> resultHandler) throws org.apache.thrift.TException;
 
     public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -100,13 +100,13 @@ public class ReplicaService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get failed: unknown result");
     }
 
-    public Map<String,edu.berkeley.thebes.common.thrift.ThriftDataItem> get_all(List<String> keys) throws org.apache.thrift.TException
+    public Map<String,edu.berkeley.thebes.common.thrift.ThriftDataItem> get_all(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys) throws org.apache.thrift.TException
     {
       send_get_all(keys);
       return recv_get_all();
     }
 
-    public void send_get_all(List<String> keys) throws org.apache.thrift.TException
+    public void send_get_all(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys) throws org.apache.thrift.TException
     {
       get_all_args args = new get_all_args();
       args.setKeys(keys);
@@ -223,7 +223,7 @@ public class ReplicaService {
       }
     }
 
-    public void get_all(List<String> keys, org.apache.thrift.async.AsyncMethodCallback<get_all_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_all(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys, org.apache.thrift.async.AsyncMethodCallback<get_all_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       get_all_call method_call = new get_all_call(keys, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -231,8 +231,8 @@ public class ReplicaService {
     }
 
     public static class get_all_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private List<String> keys;
-      public get_all_call(List<String> keys, org.apache.thrift.async.AsyncMethodCallback<get_all_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys;
+      public get_all_call(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys, org.apache.thrift.async.AsyncMethodCallback<get_all_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.keys = keys;
       }
@@ -1247,7 +1247,7 @@ public class ReplicaService {
   public static class get_all_args implements org.apache.thrift.TBase<get_all_args, get_all_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_all_args");
 
-    private static final org.apache.thrift.protocol.TField KEYS_FIELD_DESC = new org.apache.thrift.protocol.TField("keys", org.apache.thrift.protocol.TType.LIST, (short)1);
+    private static final org.apache.thrift.protocol.TField KEYS_FIELD_DESC = new org.apache.thrift.protocol.TField("keys", org.apache.thrift.protocol.TType.MAP, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1255,7 +1255,7 @@ public class ReplicaService {
       schemes.put(TupleScheme.class, new get_all_argsTupleSchemeFactory());
     }
 
-    public List<String> keys; // required
+    public Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1320,8 +1320,9 @@ public class ReplicaService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.KEYS, new org.apache.thrift.meta_data.FieldMetaData("keys", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+          new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_all_args.class, metaDataMap);
     }
@@ -1330,7 +1331,7 @@ public class ReplicaService {
     }
 
     public get_all_args(
-      List<String> keys)
+      Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys)
     {
       this();
       this.keys = keys;
@@ -1341,9 +1342,17 @@ public class ReplicaService {
      */
     public get_all_args(get_all_args other) {
       if (other.isSetKeys()) {
-        List<String> __this__keys = new ArrayList<String>();
-        for (String other_element : other.keys) {
-          __this__keys.add(other_element);
+        Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> __this__keys = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftVersion>();
+        for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftVersion> other_element : other.keys.entrySet()) {
+
+          String other_element_key = other_element.getKey();
+          edu.berkeley.thebes.common.thrift.ThriftVersion other_element_value = other_element.getValue();
+
+          String __this__keys_copy_key = other_element_key;
+
+          edu.berkeley.thebes.common.thrift.ThriftVersion __this__keys_copy_value = new edu.berkeley.thebes.common.thrift.ThriftVersion(other_element_value);
+
+          __this__keys.put(__this__keys_copy_key, __this__keys_copy_value);
         }
         this.keys = __this__keys;
       }
@@ -1362,22 +1371,18 @@ public class ReplicaService {
       return (this.keys == null) ? 0 : this.keys.size();
     }
 
-    public java.util.Iterator<String> getKeysIterator() {
-      return (this.keys == null) ? null : this.keys.iterator();
-    }
-
-    public void addToKeys(String elem) {
+    public void putToKeys(String key, edu.berkeley.thebes.common.thrift.ThriftVersion val) {
       if (this.keys == null) {
-        this.keys = new ArrayList<String>();
+        this.keys = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftVersion>();
       }
-      this.keys.add(elem);
+      this.keys.put(key, val);
     }
 
-    public List<String> getKeys() {
+    public Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> getKeys() {
       return this.keys;
     }
 
-    public get_all_args setKeys(List<String> keys) {
+    public get_all_args setKeys(Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion> keys) {
       this.keys = keys;
       return this;
     }
@@ -1403,7 +1408,7 @@ public class ReplicaService {
         if (value == null) {
           unsetKeys();
         } else {
-          setKeys((List<String>)value);
+          setKeys((Map<String,edu.berkeley.thebes.common.thrift.ThriftVersion>)value);
         }
         break;
 
@@ -1551,17 +1556,20 @@ public class ReplicaService {
           }
           switch (schemeField.id) {
             case 1: // KEYS
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.keys = new ArrayList<String>(_list0.size);
-                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                  org.apache.thrift.protocol.TMap _map0 = iprot.readMapBegin();
+                  struct.keys = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftVersion>(2*_map0.size);
+                  for (int _i1 = 0; _i1 < _map0.size; ++_i1)
                   {
-                    String _elem2; // required
-                    _elem2 = iprot.readString();
-                    struct.keys.add(_elem2);
+                    String _key2; // required
+                    edu.berkeley.thebes.common.thrift.ThriftVersion _val3; // optional
+                    _key2 = iprot.readString();
+                    _val3 = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+                    _val3.read(iprot);
+                    struct.keys.put(_key2, _val3);
                   }
-                  iprot.readListEnd();
+                  iprot.readMapEnd();
                 }
                 struct.setKeysIsSet(true);
               } else { 
@@ -1586,12 +1594,13 @@ public class ReplicaService {
         if (struct.keys != null) {
           oprot.writeFieldBegin(KEYS_FIELD_DESC);
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.keys.size()));
-            for (String _iter3 : struct.keys)
+            oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.keys.size()));
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftVersion> _iter4 : struct.keys.entrySet())
             {
-              oprot.writeString(_iter3);
+              oprot.writeString(_iter4.getKey());
+              _iter4.getValue().write(oprot);
             }
-            oprot.writeListEnd();
+            oprot.writeMapEnd();
           }
           oprot.writeFieldEnd();
         }
@@ -1620,9 +1629,10 @@ public class ReplicaService {
         if (struct.isSetKeys()) {
           {
             oprot.writeI32(struct.keys.size());
-            for (String _iter4 : struct.keys)
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftVersion> _iter5 : struct.keys.entrySet())
             {
-              oprot.writeString(_iter4);
+              oprot.writeString(_iter5.getKey());
+              _iter5.getValue().write(oprot);
             }
           }
         }
@@ -1634,13 +1644,16 @@ public class ReplicaService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.keys = new ArrayList<String>(_list5.size);
-            for (int _i6 = 0; _i6 < _list5.size; ++_i6)
+            org.apache.thrift.protocol.TMap _map6 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.keys = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftVersion>(2*_map6.size);
+            for (int _i7 = 0; _i7 < _map6.size; ++_i7)
             {
-              String _elem7; // required
-              _elem7 = iprot.readString();
-              struct.keys.add(_elem7);
+              String _key8; // required
+              edu.berkeley.thebes.common.thrift.ThriftVersion _val9; // optional
+              _key8 = iprot.readString();
+              _val9 = new edu.berkeley.thebes.common.thrift.ThriftVersion();
+              _val9.read(iprot);
+              struct.keys.put(_key8, _val9);
             }
           }
           struct.setKeysIsSet(true);
@@ -1964,16 +1977,16 @@ public class ReplicaService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map8 = iprot.readMapBegin();
-                  struct.success = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map8.size);
-                  for (int _i9 = 0; _i9 < _map8.size; ++_i9)
+                  org.apache.thrift.protocol.TMap _map10 = iprot.readMapBegin();
+                  struct.success = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map10.size);
+                  for (int _i11 = 0; _i11 < _map10.size; ++_i11)
                   {
-                    String _key10; // required
-                    edu.berkeley.thebes.common.thrift.ThriftDataItem _val11; // optional
-                    _key10 = iprot.readString();
-                    _val11 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-                    _val11.read(iprot);
-                    struct.success.put(_key10, _val11);
+                    String _key12; // required
+                    edu.berkeley.thebes.common.thrift.ThriftDataItem _val13; // optional
+                    _key12 = iprot.readString();
+                    _val13 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+                    _val13.read(iprot);
+                    struct.success.put(_key12, _val13);
                   }
                   iprot.readMapEnd();
                 }
@@ -2001,10 +2014,10 @@ public class ReplicaService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter12 : struct.success.entrySet())
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter14 : struct.success.entrySet())
             {
-              oprot.writeString(_iter12.getKey());
-              _iter12.getValue().write(oprot);
+              oprot.writeString(_iter14.getKey());
+              _iter14.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -2035,10 +2048,10 @@ public class ReplicaService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter13 : struct.success.entrySet())
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter15 : struct.success.entrySet())
             {
-              oprot.writeString(_iter13.getKey());
-              _iter13.getValue().write(oprot);
+              oprot.writeString(_iter15.getKey());
+              _iter15.getValue().write(oprot);
             }
           }
         }
@@ -2050,16 +2063,16 @@ public class ReplicaService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TMap _map14 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map14.size);
-            for (int _i15 = 0; _i15 < _map14.size; ++_i15)
+            org.apache.thrift.protocol.TMap _map16 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map16.size);
+            for (int _i17 = 0; _i17 < _map16.size; ++_i17)
             {
-              String _key16; // required
-              edu.berkeley.thebes.common.thrift.ThriftDataItem _val17; // optional
-              _key16 = iprot.readString();
-              _val17 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-              _val17.read(iprot);
-              struct.success.put(_key16, _val17);
+              String _key18; // required
+              edu.berkeley.thebes.common.thrift.ThriftDataItem _val19; // optional
+              _key18 = iprot.readString();
+              _val19 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+              _val19.read(iprot);
+              struct.success.put(_key18, _val19);
             }
           }
           struct.setSuccessIsSet(true);
@@ -3196,16 +3209,16 @@ public class ReplicaService {
             case 1: // PAIRS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map18 = iprot.readMapBegin();
-                  struct.pairs = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map18.size);
-                  for (int _i19 = 0; _i19 < _map18.size; ++_i19)
+                  org.apache.thrift.protocol.TMap _map20 = iprot.readMapBegin();
+                  struct.pairs = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map20.size);
+                  for (int _i21 = 0; _i21 < _map20.size; ++_i21)
                   {
-                    String _key20; // required
-                    edu.berkeley.thebes.common.thrift.ThriftDataItem _val21; // optional
-                    _key20 = iprot.readString();
-                    _val21 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-                    _val21.read(iprot);
-                    struct.pairs.put(_key20, _val21);
+                    String _key22; // required
+                    edu.berkeley.thebes.common.thrift.ThriftDataItem _val23; // optional
+                    _key22 = iprot.readString();
+                    _val23 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+                    _val23.read(iprot);
+                    struct.pairs.put(_key22, _val23);
                   }
                   iprot.readMapEnd();
                 }
@@ -3233,10 +3246,10 @@ public class ReplicaService {
           oprot.writeFieldBegin(PAIRS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.pairs.size()));
-            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter22 : struct.pairs.entrySet())
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter24 : struct.pairs.entrySet())
             {
-              oprot.writeString(_iter22.getKey());
-              _iter22.getValue().write(oprot);
+              oprot.writeString(_iter24.getKey());
+              _iter24.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -3267,10 +3280,10 @@ public class ReplicaService {
         if (struct.isSetPairs()) {
           {
             oprot.writeI32(struct.pairs.size());
-            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter23 : struct.pairs.entrySet())
+            for (Map.Entry<String, edu.berkeley.thebes.common.thrift.ThriftDataItem> _iter25 : struct.pairs.entrySet())
             {
-              oprot.writeString(_iter23.getKey());
-              _iter23.getValue().write(oprot);
+              oprot.writeString(_iter25.getKey());
+              _iter25.getValue().write(oprot);
             }
           }
         }
@@ -3282,16 +3295,16 @@ public class ReplicaService {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TMap _map24 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.pairs = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map24.size);
-            for (int _i25 = 0; _i25 < _map24.size; ++_i25)
+            org.apache.thrift.protocol.TMap _map26 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.pairs = new HashMap<String,edu.berkeley.thebes.common.thrift.ThriftDataItem>(2*_map26.size);
+            for (int _i27 = 0; _i27 < _map26.size; ++_i27)
             {
-              String _key26; // required
-              edu.berkeley.thebes.common.thrift.ThriftDataItem _val27; // optional
-              _key26 = iprot.readString();
-              _val27 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-              _val27.read(iprot);
-              struct.pairs.put(_key26, _val27);
+              String _key28; // required
+              edu.berkeley.thebes.common.thrift.ThriftDataItem _val29; // optional
+              _key28 = iprot.readString();
+              _val29 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+              _val29.read(iprot);
+              struct.pairs.put(_key28, _val29);
             }
           }
           struct.setPairsIsSet(true);

@@ -32,5 +32,5 @@ public abstract class ReplicaRouter {
     abstract public boolean put_all(Map<String, DataItem> pairs) throws TException;
 
     abstract public ThriftDataItem get(String key, Version requiredVersion) throws TException;
-    abstract public List<ThriftDataItem> get_all(List<String> keys) throws TException;
+    abstract public Map<String, ThriftDataItem> get_all(Map<String, Version> keys) throws TException;
 }

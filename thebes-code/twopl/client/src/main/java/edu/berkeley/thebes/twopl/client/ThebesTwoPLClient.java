@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -157,6 +158,17 @@ public class ThebesTwoPLClient implements IThebesClient {
             throw new TException("Must be in a transaction!");
         }
         xactCommands.add(cmd);
+    }
+
+
+    @Override
+    public boolean put_all(Map<String, ByteBuffer> pairs) throws TException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<String, ByteBuffer> get_all(List<String> keys) throws TException {
+        throw new UnsupportedOperationException();
     }
     
     public void close() { return; }
