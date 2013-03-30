@@ -14,7 +14,6 @@ import java.io.IOException;
 public abstract class ReplicaRouter {
     public static ReplicaRouter newInstance(RoutingMode routingMode)
             throws IOException, TTransportException {
-        LoggerFactory.getLogger(ReplicaRouter.class).error("HELLO REPLICA ROUTER??" + routingMode);
         switch (routingMode) {
         case NEAREST:
             return new NearestReplicaRouter();

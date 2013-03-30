@@ -158,6 +158,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             
             @Override
             public void onComplete(put_call response) {
+                logger.error("Response for " + key + "!");
                 if (numAcks.incrementAndGet() > quorum) {
                     request.sendResponse(true);
                 }
