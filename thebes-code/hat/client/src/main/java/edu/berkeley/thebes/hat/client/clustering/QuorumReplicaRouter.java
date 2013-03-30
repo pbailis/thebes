@@ -119,6 +119,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             if(replica.executeRequest(request))
                 numSent++;
         }
+
+        assert(numSent >= quorum);
+
         logger.trace("Waiting for response");
         E ret = request.getResponseWhenReady();
         logger.trace("Got response");
@@ -155,6 +158,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         private AtomicInteger numAcks = new AtomicInteger(0);
         private AtomicInteger numNacks = new AtomicInteger(0);
+        private AtomicInteger numResponses = new AtomicInteger(0);
 
         public WriteRequest(String key, DataItem value) {
             this.key = key;
@@ -167,16 +171,18 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
                 replica.client.put(key, value);
 
-                logger.trace("Client finished put "+Integer.toString(numAcks.get()+numNacks.get()));
+                logger.trace("Client finished put " + Integer.toString(numAcks.get() + numNacks.get()));
 
-                if (numAcks.incrementAndGet() + numNacks.get() >= quorum) {
+                numAcks.incrementAndGet();
+                if (numResponses.incrementAndGet() >= quorum) {
                     sendResponse(true);
                 }
             } catch (TException e) {
                 logger.error("Error: ", e);
 
-                if (numNacks.incrementAndGet() + numAcks.get() >= quorum) {
-                    sendResponse(false);
+                numNacks.incrementAndGet();
+                if (numResponses.incrementAndGet() >= quorum) {
+                    sendResponse(numNacks.get() <= quorum);
                 }
             } finally {
                 replica.inUse.set(false);
@@ -188,8 +194,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         private String key;
         private Version requiredVersion;
         private SortedSet<DataItem> returnedDataItems;
-        private AtomicInteger numAcks = new AtomicInteger(0);
-        private AtomicInteger numNacks = new AtomicInteger(0);
+        private AtomicInteger numResponses = new AtomicInteger(0);
 
 
         public ReadRequest(String key, Version requiredVersion) {
@@ -206,7 +211,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                     returnedDataItems.add(new DataItem(resp));
                 }
 
-                if (numAcks.incrementAndGet() + numNacks.get() >= quorum) {
+                if (numResponses.incrementAndGet() >= quorum) {
                     if (returnedDataItems.isEmpty()) {
                         sendResponse(new ThriftDataItem()); // "null"
                     } else {
@@ -217,7 +222,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             } catch (TException e) {
                 logger.error("Exception:", e);
 
-                if (numNacks.incrementAndGet() + numAcks.get() >= quorum) {
+                if (numResponses.incrementAndGet() >= quorum) {
                     sendResponse(new ThriftDataItem()); // "null"
                 }
             } finally {
