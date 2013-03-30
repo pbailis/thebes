@@ -89,7 +89,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 	
 	public void cleanup() throws DBException {
         try {
-            client.endTransaction();
+            client.commitTransaction();
         } catch(Exception e) {
             throw new DBException(e.getMessage());
         }
@@ -110,7 +110,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
     public int endTransaction() {
         try {
         	finalTransactionLength = -1;
-            client.endTransaction();
+            client.commitTransaction();
         } catch (Exception e) {
             e.printStackTrace();
             logger.warn(e.getMessage());

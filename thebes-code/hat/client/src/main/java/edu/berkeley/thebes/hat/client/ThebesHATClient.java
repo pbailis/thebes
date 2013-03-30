@@ -83,8 +83,8 @@ public class ThebesHATClient implements IThebesClient {
 
     //ANSI client-side data structures
     private IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
-    private Map<String, DataItem> transactionWriteBuffer;
-    private Map<String, DataItem> transactionReadBuffer;
+    private Map<String, DataItem> transactionWriteBuffer = Maps.newHashMap();
+    private Map<String, DataItem> transactionReadBuffer = Maps.newHashMap();
 
     //Session guarantee data structures
     private SessionLevel sessionLevel = Config.getThebesSessionLevel();

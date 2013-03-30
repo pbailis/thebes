@@ -709,6 +709,23 @@ public class Client
 			try
 			{
 				db=DBFactory.newDB(dbname,props);
+
+				// if we're loading and we're TPCC, then just do load from here
+				// huge hack								
+				if(!dotransactions && db instanceof TPCCDB) {
+					TPCCDB tpccdb = (TPCCDB) db;
+					System.out.println("LOADING TPCC");
+					try {
+						db.init();
+						tpccdb.load();
+						db.cleanup();
+					} catch (Exception e) {
+						System.out.println(e);
+						e.printStackTrace();
+					} finally {
+						System.exit(1);
+					}
+				}
 			}
 			catch (UnknownDBException e)
 			{

@@ -46,7 +46,10 @@ public class DBFactory
 	 
 	 ret.setProperties(properties);
 
-	 return new DBWrapper(ret);
+	 if(ret instanceof TransactionalDB)
+		 return new DBWrapper(ret);
+	 else
+		 return ret;
       }
       
 }
