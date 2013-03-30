@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.client.clustering;
 
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import com.google.common.collect.Lists;
@@ -7,7 +8,11 @@ import com.google.common.collect.Maps;
 
 import edu.berkeley.thebes.common.clustering.RoutingHash;
 import edu.berkeley.thebes.common.config.Config;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.RoutingMode;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
@@ -24,15 +29,15 @@ public class MasteredReplicaRouter extends ReplicaRouter {
     private final int numNeighbors;
 
     public MasteredReplicaRouter() throws TTransportException, IOException {
-        assert(Config.shouldRouteToMasters());
+        assert(Config.getRoutingMode() == RoutingMode.MASTERED);
         
         this.replicaAddressesByCluster = Maps.newHashMap();
         this.syncReplicasByCluster = Maps.newHashMap();
-        this.numClusters = Config.getSiblingServers().size();
+        this.numClusters = Config.getNumClusters();
         this.numNeighbors = Config.getServersInCluster().size();
         
         for (int i = 0; i < numClusters; i ++) {
-            List<ServerAddress> neighbors = Config.getServersInCluster();
+            List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             List<ReplicaService.Client> neighborClients = Lists.newArrayList();
             for (ServerAddress neighbor : neighbors) {
                 neighborClients.add(ThriftUtil.getReplicaServiceSyncClient(neighbor.getIP(),
@@ -43,23 +48,33 @@ public class MasteredReplicaRouter extends ReplicaRouter {
         }
     }
 
-    @Override
-    public ReplicaService.Client getSyncReplicaByKey(String key) {
+    private ReplicaService.Client getSyncReplicaByKey(String key) {
         int hash = RoutingHash.hashKey(key, numNeighbors);
         int clusterID = (hash % numClusters) + 1;
         return syncReplicasByCluster.get(clusterID).get(hash);
     }
 
-    @Override
-    public ReplicaService.AsyncClient getAsyncReplicaByKey(String key) {
-        throw new UnsupportedOperationException("Unsupported! (Needs to be updated if you want to use.)");
-//        return asyncReplicas.get(RoutingHash.hashKey(key, asyncReplicas.size()));
-    }
-
-    @Override
-    public ServerAddress getReplicaIPByKey(String key) {
+    private ServerAddress getReplicaIPByKey(String key) {
         int hash = RoutingHash.hashKey(key, numNeighbors);
         int clusterID = (hash % numClusters) + 1;
         return replicaAddressesByCluster.get(clusterID).get(hash);
+    }
+
+    @Override
+    public boolean put(String key, DataItem value) throws TException {
+        try {
+            return getSyncReplicaByKey(key).put(key, value.toThrift());
+        } catch (TException e) {
+            throw new TException("Failed to write to " + getReplicaIPByKey(key), e);
+        }
+    }
+
+    @Override
+    public ThriftDataItem get(String key, Version requiredVersion) throws TException {
+        try {
+            return getSyncReplicaByKey(key).get(key, Version.toThrift(requiredVersion));
+        } catch (TException e) {
+            throw new TException("Failed to read from " + getReplicaIPByKey(key), e);
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.AtomicityLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.IsolationLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.PersistenceEngine;
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.RoutingMode;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.SessionLevel;
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.TransactionMode;
 
@@ -32,7 +33,8 @@ public enum ConfigParameters {
     ANTI_ENTROPY_PORT(Integer.class, 8081),
     ANTI_ENTROPY_THREADS(Integer.class, 10),
     STANDALONE(Boolean.class, false),
-    ROUTE_TO_MASTERS(Boolean.class, false),
+    ROUTING_MODE(RoutingMode.class, RoutingMode.NEAREST),
+    QUORUM_THREADS(Integer.class, 10),
     TXN_MODE(TransactionMode.class, RequirementLevel.CLIAPP),
     HAT_ISOLATION_LEVEL(IsolationLevel.class, IsolationLevel.NO_ISOLATION),
     ANTIENTROPY_BOOTSTRAP_TIME(Integer.class, 30*1000),
