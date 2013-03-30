@@ -62,4 +62,10 @@ public interface ConfigParameterTypes {
         NO_ATOMICITY,
         CLIENT;
     }
+    
+    public enum RoutingMode implements ConfigParameterTypes {
+        MASTERED,
+        QUORUM,
+        NEAREST;
+    }
 }
