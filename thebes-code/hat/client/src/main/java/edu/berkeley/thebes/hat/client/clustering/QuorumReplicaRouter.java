@@ -151,16 +151,14 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         }
 
         public E getResponseWhenReady() {
-            while(true) {
-                try {
-                    responseSemaphore.tryAcquire(quorum, 5, TimeUnit.SECONDS);
-                    if(numResponses.get() < quorum)
-                        logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
-                }
-                catch(InterruptedException e) {
-                        logger.warn("error: ", e);
-                        logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
-                }
+            try {
+                responseSemaphore.tryAcquire(quorum, 5, TimeUnit.SECONDS);
+                if(numResponses.get() < quorum)
+                    logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
+            }
+            catch(InterruptedException e) {
+                    logger.warn("error: ", e);
+                    logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
             }
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
