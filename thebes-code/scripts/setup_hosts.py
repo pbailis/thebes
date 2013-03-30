@@ -591,7 +591,7 @@ def fetch_logs(runid, clusters):
         system("mkdir -p "+server_dir)
         fetch_file_single_compressed(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)
 
-    outroot = './output/'+runid
+    outroot = args.output_dir+runid
 
     system("mkdir -p "+outroot)
 
@@ -766,6 +766,9 @@ if __name__ == "__main__":
     parser.add_argument('--num_tms', '-nt', dest='tms', nargs='?',
                         default=1, type=int,
                         help='Number of transaction managers per cluster, default=1')
+    parser.add_argument('--output', dest='output_dir', nargs='?',
+                        default="./output", type=str,
+                        help='output directory for runs')
     parser.add_argument('--xact_mode', '-x', dest='xact_mode', nargs='?',
                         default="hat", type=str,
                         help='Transaction mode of hat or twopl, default=hat')
