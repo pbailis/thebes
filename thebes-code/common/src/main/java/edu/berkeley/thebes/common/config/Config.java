@@ -149,7 +149,7 @@ public class Config {
         return getOption(ConfigParameters.TWOPL_CLUSTER_CONFIG);
     }
 
-    private static List<ServerAddress> getServersInCluster(int clusterID) {
+    public static List<ServerAddress> getServersInCluster(int clusterID) {
         List<String> serverIPs = getClusterMap().get(clusterID);
         List<ServerAddress> servers = Lists.newArrayList();
         
@@ -341,5 +341,9 @@ public class Config {
         } else {
             return ip;
         }
+    }
+
+    public static int getNumClusters() {
+        return getClusterMap().size();
     }
 }

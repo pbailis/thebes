@@ -76,7 +76,11 @@ public class DependencyResolver {
         PendingWrite newPendingWrite = new PendingWrite(key, value);
         
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
-        transQueue.add(newPendingWrite);
+        try {
+            transQueue.add(newPendingWrite);
+        } catch (Exception e) {
+            logger.error("Error on version " + version + ": ", e);
+        }
         
         if (transQueue.shouldAnnounceTransactionReady()) {
             router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
@@ -88,18 +92,13 @@ public class DependencyResolver {
         unresolvedAcksLock.lock();
         boolean shouldCommit = false;
         try {
-            if (unresolvedAcksMap.containsKey(version)) {
-                AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
-                for (int i = 0; i < numAcksForTransaction.get() && !shouldCommit; i ++) {
-                    shouldCommit = transQueue.serverAcked();
-                }
-                unresolvedAcksMap.remove(version);
-            }
+            shouldCommit = ackUnresolved(transQueue, version);
         } finally {
             unresolvedAcksLock.unlock();
         }
         
         if (shouldCommit) {
+            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
         
@@ -135,20 +134,48 @@ public class DependencyResolver {
 
     public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
-        if (transactionQueue != null && transactionQueue.serverAcked()) {
-            commit(transactionQueue);
+        if (transactionQueue != null) {
+            if (transactionQueue.serverAcked()) {
+                if (logger.isDebugEnabled()) { logger.debug("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
+                commit(transactionQueue);
+            }
             return;
         }
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
+        boolean shouldCommit = false;
         unresolvedAcksLock.lock();
         try {
             unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
             unresolvedAcksMap.get(transactionId).incrementAndGet();
+            
+            // Check for race conditions where the transaction arrived while we were adding this!
+            transactionQueue = pendingTransactionsMap.get(transactionId);
+            if (transactionQueue != null) {
+                shouldCommit = ackUnresolved(transactionQueue, transactionId);
+            }
         } finally {
             unresolvedAcksLock.unlock();
         }
+        
+        if (shouldCommit) {
+            logger.debug("Committing via unresolved RACE: " + transactionId);
+            commit(transactionQueue);
+        }
+    }
+    
+    /** Should own unresolvedAcksLock while calling this. */
+    private boolean ackUnresolved(TransactionQueue transQueue, Version version) {
+        boolean shouldCommit = false;
+        if (unresolvedAcksMap.containsKey(version)) {
+            AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
+            for (int i = 0; i < numAcksForTransaction.get() && !shouldCommit; i ++) {
+                shouldCommit = transQueue.serverAcked();
+            }
+            unresolvedAcksMap.remove(version);
+        }
+        return shouldCommit;
     }
     
     private static class TransactionQueue {
