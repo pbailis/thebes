@@ -169,6 +169,7 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
             	int OL_SUPPLY_W_ID = warehouseIDs.get(ol_cnt);
             	
             	String stockKey = TPCCConstants.getStockKey(OL_SUPPLY_W_ID, OL_I_ID);
+            	toFetch.add(stockKey);
             	
             	RippedLineOrder rip = new RippedLineOrder();
             	rip.item_key = itemKey;
