@@ -75,7 +75,7 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                          "' requiredVersion: "+ requiredVersion+
                          ", found version: " + (ret == null ? null : ret.getVersion()));
 
-        if (requiredVersion != null && requiredVersion != Version.NULL_VERSION &&
+        if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
                 (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
             ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
 

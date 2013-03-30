@@ -79,9 +79,6 @@ public class Version implements Comparable<Version> {
 
 	@Override
 	public int compareTo(Version other) {
-        if(other.getThriftVersion().getVersion() == NULL_VERSION.getThriftVersion().getVersion())
-            return 0;
-
 	    // If the timestamps are more than half the period (2^numBitsTimestamp) apart,
 	    // then we assume we've wrapped around, so the lower is actually higher!
 	    if (Math.abs(timestamp - other.getTimestamp()) > pow2Less1(numBitsTimestamp-1)) {
