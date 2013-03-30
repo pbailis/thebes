@@ -45,37 +45,55 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     private final int numClusters;
     private final int numNeighbors;
     private int quorum;
-    
+
     private final Map<ServerAddress, ReplicaClient> replicaRequestQueues = Maps.newHashMap();
 
     private class ReplicaClient {
-        private ReplicaService.AsyncClient client;
+        private Client client;
         private AtomicBoolean inUse;
+        BlockingQueue<Request<?>> requestBlockingQueue;
 
-        public ReplicaClient(ReplicaService.AsyncClient client) {
+        public ReplicaClient(Client client) {
             this.client = client;
             this.inUse = new AtomicBoolean(false);
+            requestBlockingQueue = Queues.newLinkedBlockingQueue();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while(true) {
+                        Request<?> request = Uninterruptibles.takeUninterruptibly(requestBlockingQueue);
+                        request.process(ReplicaClient.this);
+                    }
+                }
+            }).start();
+        }
+
+        public void executeRequest(Request<?> request) {
+            if(!inUse.getAndSet(true)) {
+                requestBlockingQueue.add(request);
+            }
         }
     }
 
     public QuorumReplicaRouter() throws TTransportException, IOException {
         assert(Config.getRoutingMode() == RoutingMode.QUORUM);
-        
+
         this.replicaAddressesByCluster = Maps.newHashMap();
         this.numClusters = Config.getNumClusters();
         this.numNeighbors = Config.getServersInCluster().size();
         this.quorum = (int) Math.ceil((numNeighbors+1)/2);
-        
+
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             for (ServerAddress neighbor : neighbors) {
                 replicaRequestQueues.put(neighbor, new ReplicaClient(
-                        ThriftUtil.getReplicaServiceAsyncClient(neighbor.getIP(), neighbor.getPort())));
+                        ThriftUtil.getReplicaServiceSyncClient(neighbor.getIP(), neighbor.getPort())));
             }
             replicaAddressesByCluster.put(i+1, neighbors);
         }
     }
-    
+
     @Override
     public boolean put(String key, DataItem value) throws TException {
         logger.error("PUT for key " + key);
@@ -87,7 +105,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         logger.error("GET for key " + key);
         return performRequest(key, new ReadRequest(key, requiredVersion));
     }
-    
+
     /** Performs the request by queueing N requests and waiting for Q responses. */
     public <E> E performRequest(String key, Request<E> request) {
         int numSent = 0;
@@ -97,7 +115,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             ReplicaClient replica = replicaRequestQueues.get(replicaAddress);
             if (!replica.inUse.getAndSet(true)) {
                 numSent ++;
-                request.process(replica);
+                replica.executeRequest(request);
             }
         }
         logger.error("Sent " + numSent + " messages for key " + key);
@@ -105,34 +123,33 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         logger.error("Received response " + ret + " for key " + key);
         return ret;
     }
-    
+
     private abstract class Request<E> {
         private AtomicBoolean responseSent;
         private BlockingQueue<E> responseChannel;
-        
+
         private Request() {
             this.responseSent = new AtomicBoolean(false);
             this.responseChannel = Queues.newLinkedBlockingQueue();
         }
 
         abstract public void process(ReplicaClient client);
-        
+
         protected void sendResponse(E response) {
             if (!responseSent.getAndSet(true)) {
                 responseChannel.add(response);
             }
         }
-        
+
         public E getResponseWhenReady() {
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
-    
+
     private class WriteRequest extends Request<Boolean> {
-        private Request<Boolean> request;
         private String key;
         private ThriftDataItem value;
-        
+
         private AtomicInteger numAcks = new AtomicInteger(0);
         private AtomicInteger numNacks = new AtomicInteger(0);
 
@@ -140,53 +157,35 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             this.key = key;
             this.value = value.toThrift();
         }
-        
+
         public void process(ReplicaClient replica) {
-            PutCallback callback = new PutCallback(replica);
             try {
                 logger.error("Calling put...");
-                replica.client.put(key, value, callback);
+                replica.client.put(key, value);
                 logger.error("Called put...");
+
+                if (numAcks.incrementAndGet() > quorum) {
+                    sendResponse(true);
+                }
             } catch (TException e) {
                 logger.error("Exception happened!");
-                callback.onError(e);
-            }
-        }
-        
-        private class PutCallback implements AsyncMethodCallback<put_call> {
-            ReplicaClient replica;
-            public PutCallback(ReplicaClient replica) {
-                this.replica = replica;
-            }
-            
-            @Override
-            public void onComplete(put_call response) {
-                logger.error("Response for " + key + "!");
-                if (numAcks.incrementAndGet() > quorum) {
-                    request.sendResponse(true);
-                }
-                replica.inUse.set(false);
-            }
-    
-            @Override
-            public void onError(Exception exception) {
-                logger.error("Bad stuff happened: ", exception);
-                numNacks.incrementAndGet();
+
                 if (numNacks.incrementAndGet() > quorum) {
-                    request.sendResponse(false);
+                    sendResponse(false);
                 }
+            } finally {
                 replica.inUse.set(false);
             }
         }
     }
-    
+
     private class ReadRequest extends Request<ThriftDataItem> {
         private String key;
         private Version requiredVersion;
         private SortedSet<DataItem> returnedDataItems;
         private AtomicInteger numAcks = new AtomicInteger(0);
         private AtomicInteger numNacks = new AtomicInteger(0);
-        
+
 
         public ReadRequest(String key, Version requiredVersion) {
             this.key = key;
@@ -195,34 +194,15 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         }
 
         public void process(ReplicaClient replica) {
-            AsyncMethodCallback<get_call> callback = new GetCallback(replica);
             try {
-                replica.client.get(key, Version.toThrift(requiredVersion), callback);
-            } catch (TException e) {
-                callback.onError(e);
-            }
-        }
-        
-        private class GetCallback implements AsyncMethodCallback<get_call> {
-            ReplicaClient replica;
-            public GetCallback(ReplicaClient replica) {
-                this.replica = replica;
-            }
-            
-            @Override
-            public void onComplete(get_call response) {
-                ThriftDataItem resp;
-                try {
-                    resp = response.getResult();
-                } catch (TException e) {
-                    onError(e);
-                    return;
-                }
-                
+                logger.error("Calling put...");
+                ThriftDataItem resp = replica.client.get(key, requiredVersion.getThriftVersion());
+                logger.error("Called put...");
+
                 if (resp != null && resp.getVersion() != null) {
                     returnedDataItems.add(new DataItem(resp));
                 }
-                
+
                 if (numAcks.incrementAndGet() > quorum) {
                     if (returnedDataItems.isEmpty()) {
                         sendResponse(new ThriftDataItem()); // "null"
@@ -230,16 +210,15 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                         sendResponse(returnedDataItems.last().toThrift());
                     }
                 }
-                replica.inUse.set(false);
-            }
-    
-            @Override
-            public void onError(Exception exception) {
-                logger.error("Bad stuff happened: ", exception);
+
+            } catch (TException e) {
+                logger.error("Exception happened!");
+
                 numNacks.incrementAndGet();
                 if (numNacks.incrementAndGet() > quorum) {
                     sendResponse(new ThriftDataItem()); // "null"
                 }
+            } finally {
                 replica.inUse.set(false);
             }
         }
