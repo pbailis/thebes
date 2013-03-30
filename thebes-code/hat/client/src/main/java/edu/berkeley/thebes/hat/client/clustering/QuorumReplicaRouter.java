@@ -44,7 +44,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     private final Map<Integer, List<ServerAddress>> replicaAddressesByCluster;
     private final int numClusters;
     private final int numNeighbors;
-    private int quorum;
+    private final int quorum;
 
     private final Map<ServerAddress, ReplicaClient> replicaRequestQueues = Maps.newHashMap();
 
@@ -86,6 +86,8 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         this.numClusters = Config.getNumClusters();
         this.numNeighbors = Config.getServersInCluster().size();
         this.quorum = (int) Math.ceil((numNeighbors+1)/2);
+
+        logger.debug("Quorum is set to "+this.quorum);
 
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
