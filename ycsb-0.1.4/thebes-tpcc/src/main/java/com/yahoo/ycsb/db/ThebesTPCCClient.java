@@ -32,6 +32,7 @@ import com.yahoo.ycsb.db.tpcc.helper.rows.StockRow;
 import com.yahoo.ycsb.db.tpcc.helper.rows.WarehouseRow;
 import com.yahoo.ycsb.generator.ConstantIntegerGenerator;
 import com.yahoo.ycsb.generator.IntegerGenerator;
+import com.yahoo.ycsb.measurements.Measurements;
 
 import edu.berkeley.thebes.client.ThebesClient;
 
@@ -41,6 +42,8 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
     public static final int ERROR = -1;
     public static final int NOT_FOUND = -2;
 	
+	Measurements _measurements = Measurements.getMeasurements();
+    
     ThebesClient client;
     
     private RandomGenerator generator = new RandomGenerator((int) (System.currentTimeMillis() % Integer.MAX_VALUE));
@@ -93,6 +96,7 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
 	}
 	
     private int runNewOrder() {
+		long st=System.nanoTime();
         try {
             client.beginTransaction();
             
@@ -231,6 +235,9 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
             System.out.println("EXCEPTION IN NEWORDER: "+e.getMessage());
             e.printStackTrace();
             return ERROR;
+        } finally {
+    		long en=System.nanoTime();
+    		_measurements.measure("TRANSACTION",(int)((en-st)/1000));
         }
     }
 	
