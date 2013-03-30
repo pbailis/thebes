@@ -145,7 +145,7 @@ public class ThebesHATClient implements IThebesClient {
 
     @Override
     public void open() throws TTransportException, ConfigurationException, IOException {
-        router = ReplicaRouter.newInstance(Config.shouldRouteToMasters());
+        router = ReplicaRouter.newInstance(Config.getRoutingMode());
         atomicityVersionVector = new VersionVector();
     }
 
@@ -308,47 +308,45 @@ public class ThebesHATClient implements IThebesClient {
         boolean ret;
 
         try {
-            ret = router.getSyncReplicaByKey(key).put(key,
-                                                      value.toThrift());
+            ret = router.put(key, value);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
         } catch (TException e) {
             errorMetric.mark();
-            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
+            throw e;
         } finally {
             timer.stop();
         }
         return ret;
     }
 
-    private boolean doPutAsync(String key,
-                               DataItem value,
-                               TransactionMultiPutCallback callback) throws TException {
-        TimerContext timer = latencyPerOperationMetric.time();
-
-        try {
-            router.getAsyncReplicaByKey(key).put(key,
-                                                 value.toThrift(),
-                                                 callback);
-        } catch (RuntimeException e) {
-            errorMetric.mark();
-            throw e;
-        } catch (TException e) {
-            errorMetric.mark();
-            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
-        } finally {
-            timer.stop();
-        }
-        return true;
-    }
+//    private boolean doPutAsync(String key,
+//                               DataItem value,
+//                               TransactionMultiPutCallback callback) throws TException {
+//        TimerContext timer = latencyPerOperationMetric.time();
+//
+//        try {
+//            router.put(key,
+//                                                 value.toThrift(),
+//                                                 callback);
+//        } catch (RuntimeException e) {
+//            errorMetric.mark();
+//            throw e;
+//        } catch (TException e) {
+//            errorMetric.mark();
+//            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
+//        } finally {
+//            timer.stop();
+//        }
+//        return true;
+//    }
     
     private DataItem doGet(String key) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;
         try {
-            ThriftDataItem tdrRet = router.getSyncReplicaByKey(key).get(key,
-                        		Version.toThrift(atomicityVersionVector.getVersion(key)));
+            ThriftDataItem tdrRet = router.get(key, atomicityVersionVector.getVersion(key));
             if(tdrRet.getData() == null)
                 return null;
 
@@ -358,7 +356,7 @@ public class ThebesHATClient implements IThebesClient {
             throw e;
         } catch (TException e) {
             errorMetric.mark();
-            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
+            throw e;
         } finally {
             timer.stop();
         }
