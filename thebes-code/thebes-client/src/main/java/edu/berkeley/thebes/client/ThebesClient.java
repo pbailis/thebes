@@ -52,8 +52,13 @@ public class ThebesClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
-        return internalClient.endTransaction();
+    public boolean commitTransaction() throws TException {
+        return internalClient.commitTransaction();
+    }
+
+    @Override
+    public void abortTransaction() throws TException {
+        internalClient.abortTransaction();
     }
 
     @Override

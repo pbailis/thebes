@@ -12,7 +12,9 @@ public interface IThebesClient {
     public void open() throws TTransportException, ConfigurationException, IOException;
 
     public void beginTransaction() throws TException;
-    public boolean endTransaction() throws TException;
+
+    public void abortTransaction() throws TException;
+    public boolean commitTransaction() throws TException;
 
     public boolean put(String key, ByteBuffer value) throws TException;
     public ByteBuffer get(String key) throws TException;
