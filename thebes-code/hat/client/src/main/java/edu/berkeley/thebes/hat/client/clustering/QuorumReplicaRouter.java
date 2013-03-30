@@ -142,9 +142,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         protected void sendResponse(E response) {
             logger.trace("Sending response!");
 
-            if (!responseSent.getAndSet(true)) {
-                responseChannel.add(response);
-            }
+            responseChannel.add(response);
         }
 
         public E getResponseWhenReady() {
