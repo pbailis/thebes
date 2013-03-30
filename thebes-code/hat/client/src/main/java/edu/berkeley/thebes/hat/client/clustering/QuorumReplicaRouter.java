@@ -125,6 +125,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         assert(numSent >= quorum);
 
+        if(numSent < quorum)
+            logger.warn(String.format("sent %d, need %d", numSent, quorum));
+
         logger.trace("Waiting for response");
         E ret = request.getResponseWhenReady();
         logger.trace("Got response");
@@ -152,7 +155,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         public E getResponseWhenReady() {
             try {
-                responseSemaphore.tryAcquire(quorum, 5, TimeUnit.SECONDS);
+                responseSemaphore.tryAcquire(quorum, 25, TimeUnit.SECONDS);
                 if(numResponses.get() < quorum)
                     logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
             }
