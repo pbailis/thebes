@@ -110,7 +110,7 @@ def get_instances(regionName, tag):
                 continue
             region = line[10]
             instanceid = line[1]
-            status = line[4]
+            status = line[5]
             print status
             hosts.append(Host(ip, region, instanceid, status))
         elif line[0] == "TAG":
@@ -231,6 +231,8 @@ def wait_all_hosts_up(regions):
 def claim_instances(regions, tag):
     for region in regions:
         instances = get_instances(region.name, None)
+        print "UNTAGGED:", [host.instanceid for host in get_instances(region.name, None)]
+        print "MINE:", [host.instanceid for host in get_instances(region.name, tag)]
         instanceString = ' '.join([host.instanceid for host in instances])
         pprint("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
         system("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
