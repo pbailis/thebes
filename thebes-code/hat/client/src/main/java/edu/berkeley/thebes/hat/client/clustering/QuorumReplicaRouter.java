@@ -134,21 +134,33 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     private abstract class Request<E> {
         private BlockingQueue<E> responseChannel;
         private Semaphore responseSemaphore;
+        AtomicInteger numResponses;
 
         private Request() {
             this.responseChannel = Queues.newLinkedBlockingQueue();
             responseSemaphore = new Semaphore(0);
+            numResponses = new AtomicInteger(0);
         }
 
         abstract public void process(ReplicaClient client);
 
         protected void notifyResponse(E response) {
             responseChannel.add(response);
+            numResponses.incrementAndGet();
             responseSemaphore.release();
         }
 
         public E getResponseWhenReady() {
-            responseSemaphore.acquireUninterruptibly(quorum);
+            while(true) {
+                try {
+                    responseSemaphore.tryAcquire(quorum, 5, TimeUnit.SECONDS);
+                    break;
+                }
+                catch(InterruptedException e) {
+                        logger.warn("error: ", e);
+                        logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
+                }
+            }
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
