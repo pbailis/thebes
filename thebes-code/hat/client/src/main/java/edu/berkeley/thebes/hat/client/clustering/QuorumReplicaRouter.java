@@ -146,6 +146,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             try {
                 logger.error("Calling put...");
                 replica.client.put(key, value, callback);
+                logger.error(replica.client.hasTimeout() + " / " + replica.client.getTimeout());
                 logger.error("Called put...");
             } catch (TException e) {
                 logger.error("Exception happened!");
