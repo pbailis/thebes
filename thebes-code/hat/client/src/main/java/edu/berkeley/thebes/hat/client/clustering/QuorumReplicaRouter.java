@@ -88,15 +88,20 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     
     /** Performs the request by queueing N requests and waiting for Q responses. */
     public <E> E performRequest(String key, Request<E> request) {
+        int numSent = 0;
         int replicaIndex = RoutingHash.hashKey(key, numNeighbors);
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
             ReplicaClient replica = replicaRequestQueues.get(replicaAddress);
             if (!replica.inUse.getAndSet(true)) {
+                numSent ++;
                 request.process(replica);
             }
         }
-        return request.getResponseWhenReady();
+        logger.debug("Sent " + numSent + " messages for key " + key);
+        E ret = request.getResponseWhenReady();
+        logger.debug("Received response " + ret + " for key " + key);
+        return ret;
     }
     
     private abstract class Request<E> {
