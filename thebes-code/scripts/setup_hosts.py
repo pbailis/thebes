@@ -231,7 +231,7 @@ def wait_all_hosts_up(regions, tag):
 
     # Since ssh takes some time to come up
     pprint("Waiting for instances to warm up... ")
-    sleep(60)
+    sleep(20)
     pprint("Awake!")
 
 def claim_instances(regions, tag):
@@ -496,7 +496,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
 #                           'rm *.log;' \
                            'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p histogram.buckets=10000 -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
                            ' -p requestdistribution=%s -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
-                           ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml -Droute_to_masters=%s %s' \
+                           ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml -Drouting_mode=%s %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
                                                            kwargs.get("threads", 10) if runType != 'load' else 50,
@@ -513,7 +513,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
                                                            cluster.clusterID,
                                                            kwargs.get("isolation_level", "NO_ISOLATION"),
                                                            kwargs.get("atomicity_level", "NO_ATOMICITY"),
-                                                           kwargs.get("route_to_masters", "false"),
+                                                           kwargs.get("routing_mode", "NEAREST"),
                                                            thebesArgString,
                                                            runType,
                                                            runType))
@@ -792,14 +792,14 @@ if __name__ == "__main__":
     if args.restart:
         run_ycsb_trial(False, tag, runid="DEFAULT_RUN",
                        threads=60,
-                       distributionparameter=2,
+                       distributionparameter=8,
                        isolation_level="NO_ISOLATION",
                        atomicity_level="NO_ATOMICITY",
                        recordcount=100000,
                        time=60,
-                       timeout=120*10000,
+                       timeout=120*1000,
                        keydistribution="uniform",
-                       route_to_masters="true")
+                       routing_mode="QUORUM")
 
     if args.terminate:
         pprint("Terminating thebes clusters")
@@ -854,7 +854,7 @@ if __name__ == "__main__":
                                    time=120,
                                    timeout=120*10000,
                                    keydistribution="uniform",
-                                   route_to_masters="true")
+                                   routing_mode="MASTERED")
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
