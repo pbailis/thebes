@@ -29,7 +29,6 @@ public class ThebesClient implements IThebesClient {
     public void open() throws TTransportException, ConfigurationException, IOException {
         Config.initializeClient();
         Log4JConfig.configureLog4J();
-        LoggerFactory.getLogger(ThebesClient.class).error("Hello from ThebesClient!");
 
         switch (Config.getThebesTxnMode()) {
         case HAT:

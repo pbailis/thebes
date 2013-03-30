@@ -144,8 +144,11 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         public void process(ReplicaClient replica) {
             PutCallback callback = new PutCallback(replica);
             try {
+                logger.error("Calling put...");
                 replica.client.put(key, value, callback);
+                logger.error("Called put...");
             } catch (TException e) {
+                logger.error("Exception happened!");
                 callback.onError(e);
             }
         }
@@ -158,6 +161,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             
             @Override
             public void onComplete(put_call response) {
+                logger.error("Response for " + key + "!");
                 if (numAcks.incrementAndGet() > quorum) {
                     request.sendResponse(true);
                 }
