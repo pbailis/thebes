@@ -754,7 +754,7 @@ if __name__ == "__main__":
         
     if args.launch or args.claim:
         pprint("Claiming untagged instances...")
-        claim_instances(tag)
+        claim_instances(regions, tag)
 
     if args.setup or args.launch:
         pprint("Setting up thebes clusters")
