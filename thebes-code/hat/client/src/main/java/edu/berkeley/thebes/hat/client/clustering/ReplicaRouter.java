@@ -1,23 +1,30 @@
 package edu.berkeley.thebes.hat.client.clustering;
 
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+
+import edu.berkeley.thebes.common.config.ConfigParameterTypes.RoutingMode;
+import edu.berkeley.thebes.common.data.DataItem;
+import edu.berkeley.thebes.common.data.Version;
+import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
 import java.io.IOException;
 
-import edu.berkeley.thebes.common.thrift.ServerAddress;
-import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
-
 public abstract class ReplicaRouter {
-    public static ReplicaRouter newInstance(boolean shouldRouteToMasters)
+    public static ReplicaRouter newInstance(RoutingMode routingMode)
             throws IOException, TTransportException {
-        if (shouldRouteToMasters) {
+        switch (routingMode) {
+        case NEAREST:
+            return new NearestReplicaRouter();
+        case QUORUM:
+            return new QuorumReplicaRouter();
+        case MASTERED:
             return new MasteredReplicaRouter();
-        } else {
-            return new StandardReplicaRouter();
+        default:
+            throw new IllegalArgumentException();
         }
     }
     
-    abstract public ReplicaService.Client getSyncReplicaByKey(String key);
-    abstract public ReplicaService.AsyncClient getAsyncReplicaByKey(String key);
-    abstract public ServerAddress getReplicaIPByKey(String key);
+    abstract public boolean put(String key, DataItem value) throws TException;
+    abstract public ThriftDataItem get(String key, Version requiredVersion) throws TException;
 }
