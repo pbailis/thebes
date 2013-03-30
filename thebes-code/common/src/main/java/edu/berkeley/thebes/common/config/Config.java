@@ -353,6 +353,6 @@ public class Config {
     }
 
     public static int getDatabaseCacheSize() {
-        return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
+        return (Integer) getOption(ConfigParameters.DATABASE_CACHE_SIZE);
     }
 }
