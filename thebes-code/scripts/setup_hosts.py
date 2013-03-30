@@ -77,10 +77,11 @@ class Cluster:
         return self.numServers + self.numClients + self.numTMs
 
 class Host:
-    def __init__(self, ip, regionName, instanceid):
+    def __init__(self, ip, regionName, instanceid, status):
         self.ip = ip
         self.regionName = regionName
         self.instanceid = instanceid
+        self.status = status
 
 # UTILITIES
 def run_cmd_in_thebes(hosts, cmd, user='root'):
@@ -89,11 +90,12 @@ def run_cmd_in_thebes(hosts, cmd, user='root'):
 def run_cmd_in_ycsb(hosts, cmd, user='root'):
     run_cmd(hosts, "cd /home/ubuntu/thebes/ycsb-0.1.4; ulimit -u unlimited; %s" % cmd, user)
 
-
-def get_instances(regionName):
+# Passing tag=None will return all hosts without a tag.
+def get_instances(regionName, tag):
     system("rm -f instances.txt")
     hosts = []
-    blacklisted_hosts = []
+    allowed_hosts = []
+    ignored_hosts = []
 
     system("ec2-describe-instances --region %s >> instances.txt" % regionName)
 
@@ -108,11 +110,20 @@ def get_instances(regionName):
                 continue
             region = line[10]
             instanceid = line[1]
-            hosts.append(Host(ip, region, instanceid))
-        elif line[0] == "TAG" and line[3] in tag_blacklist:
-            blacklisted_hosts.append(line[2])
+            status = line[4]
+            print status
+            hosts.append(Host(ip, region, instanceid, status))
+        elif line[0] == "TAG":
+            if line[3] is tag:
+                allowed_hosts.append(line[2])
+            else:
+                ignored_hosts.append(line[2])
 
-    return [host for host in hosts if host.instanceid not in blacklisted_hosts]
+    if tag != None:
+        return [host for host in hosts if host.instanceid in allowed_hosts]
+    else:
+        return [host for host in hosts if host.instanceid not in ignored_hosts]
+        
 
 def get_spot_request_ids(regionName):
     system("rm -f instances.txt")
@@ -128,39 +139,13 @@ def get_spot_request_ids(regionName):
 
     return ret
 
-def get_num_running_instances(regionName):
-    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
-    num_running = 0
-    blacklisted_hosts = []
-
-    for line in open("/tmp/running.txt"):
-        line = line.split()
-        if line[0] == "INSTANCE" and line[3] == "running":
-            num_running = num_running + 1
-        elif line[0] == "TAG" and line[3] in tag_blacklist:
-            if line[2] not in blacklisted_hosts:
-                blacklisted_hosts.append(line[2])
-
-    system("rm /tmp/running.txt")
-    return num_running-len(blacklisted_hosts)
-
-def get_num_nonterminated_instances(regionName):
-    system("ec2-describe-instance-status --region %s > /tmp/running.txt" % regionName)
-    num_nonterminated = 0
-    blacklisted_hosts = []
-
-    for line in open("/tmp/running.txt"):
-        line = line.split()
-        print line
-        if line[0] == "INSTANCE" and line[3] != "terminated":
-            num_nonterminated = num_nonterminated + 1
-        elif line[0] == "TAG" and line[3] in tag_blacklist:
-            if line[2] not in blacklisted_hosts:
-                blacklisted_hosts.append(line[2])
-
-    system("rm /tmp/running.txt")
-    print blacklisted_hosts
-    return num_nonterminated-len(blacklisted_hosts)
+def get_num_running_instances(regionName, tag):
+    instances = get_instances(regionName, tag)
+    return [host for host in instances if host.status is "running"]
+        
+def get_num_nonterminated_instances(regionName, tag):
+    instances = get_instances(regionName, tag)
+    return [host for host in instances if host.status is not "terminated"]
 
 def make_instancefile(name, hosts):
     f = open("hosts/" + name, 'w')
@@ -243,10 +228,16 @@ def wait_all_hosts_up(regions):
     sleep(60)
     pprint("Awake!")
 
+def claim_instances(regions, tag):
+    for region in regions:
+        instances = get_instances(region.name, None)
+        instanceString = ' '.join([host.instanceid for host in instances])
+        pprint("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
+        system("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
 
-    # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
-    # Also logs the assignments in the hosts/ files.
-def assign_hosts(regions):
+# Assigns hosts to clusters (and specifically as servers, clients, and TMs)
+# Also logs the assignments in the hosts/ files.
+def assign_hosts(regions, tag):
     allHosts = []
     allServers = []
     allClients = []
@@ -255,7 +246,7 @@ def assign_hosts(regions):
     system("mkdir -p hosts")
 
     for region in regions:
-        hostsToAssign = get_instances(region.name)
+        hostsToAssign = get_instances(region.name, tag)
         pprint("Assigning %d hosts to %s... " % (len(hostsToAssign), region.name))
         allHosts += hostsToAssign
         hostsPerRegion[region.name] = hostsToAssign
@@ -293,7 +284,6 @@ def assign_hosts(regions):
         make_instancefile("region-%s.txt" % region, hosts)
 
     pprint("Assigned all %d hosts!" % len(allHosts))
-
 
 # Runs general setup over all hosts.
 def setup_hosts(clusters):
@@ -663,7 +653,7 @@ def parseArgs(args):
             newRegion.takeGraphiteOwnership()
             graphiteRegion = newRegion
 
-    return regions, clusters, use2PL, graphiteRegion
+    return regions, clusters, use2PL, graphiteRegion, args.tag
 
 
 def pprint(str):
@@ -673,9 +663,9 @@ def pprint(str):
     else:
         print str
 
-def run_ycsb_trial(use2PL, serverArgs="", **kwargs):
+def run_ycsb_trial(use2PL, tag, serverArgs="", **kwargs):
     pprint("Restarting thebes clusters")
-    assign_hosts(regions)
+    assign_hosts(regions, tag)
     stop_thebes_processes(clusters)
     write_config(clusters, graphiteRegion)
     restart_graphite(graphiteRegion)
@@ -686,10 +676,13 @@ def run_ycsb_trial(use2PL, serverArgs="", **kwargs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
+    parser.add_argument('--tag', dest='tag', required=True, help='Tag to use for your instances')
     parser.add_argument('--fetchlogs', '-f', action='store_true',
                         help='Fetch logs and exit')
     parser.add_argument('--launch', '-l', action='store_true',
                         help='Launch EC2 cluster')
+    parser.add_argument('--claim', action='store_true',
+                        help='Claim non-tagged instances as our own')
     parser.add_argument('--setup', '-s', action='store_true',
                         help='Set up already running EC2 cluster')
     parser.add_argument('--terminate', '-t', action='store_true',
@@ -737,7 +730,7 @@ if __name__ == "__main__":
     pprint("Reminder: Run this script from an ssh-agent!")
 
     detectScriptsDir()
-    (regions, clusters, use2PL, graphiteRegion) = parseArgs(args)
+    (regions, clusters, use2PL, graphiteRegion, tag) = parseArgs(args)
     thebesArgString = ' '.join(['-D%s' % arg for arg in args.thebes_args])
 
     if args.anti_slow:
@@ -745,7 +738,7 @@ if __name__ == "__main__":
 
     if args.fetchlogs:
         pprint("Fetching logs")
-        assign_hosts(regions)
+        assign_hosts(regions, tag)
         runid = str(datetime.now()).replace(' ', '_')
         fetch_logs(runid, clusters)
         exit(-1)
@@ -756,10 +749,14 @@ if __name__ == "__main__":
         provision_clusters(regions, not args.no_spot, args.anti_slow)
         provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions)
+        
+    if args.launch or args.claim:
+        pprint("Claiming untagged instances...")
+        claim_instances(tag)
 
     if args.setup or args.launch:
         pprint("Setting up thebes clusters")
-        assign_hosts(regions)
+        assign_hosts(regions, tag)
         setup_hosts(clusters)
         jumpstart_hosts(clusters)
         write_config(clusters, graphiteRegion)
@@ -772,7 +769,7 @@ if __name__ == "__main__":
 
     if args.launch or args.rebuild:
         pprint("Rebuilding thebes clusters")
-        assign_hosts(regions)
+        assign_hosts(regions, tag)
         stop_thebes_processes(clusters)
         rebuild_all(clusters)
 
@@ -787,7 +784,7 @@ if __name__ == "__main__":
         rebuild_servers(clusters)
 
     if args.restart:
-        run_ycsb_trial(False, runid="DEFAULT_RUN",
+        run_ycsb_trial(False, tag, runid="DEFAULT_RUN",
                        threads=60,
                        distributionparameter=2,
                        isolation_level="NO_ISOLATION",
@@ -808,7 +805,7 @@ if __name__ == "__main__":
                 for threads in [1, 10, 25, 50, 75, 100, 200]:
                     isolation_level = "READ_COMMITTED"
                     atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
+                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
                                                                                               isolation_level,
                                                                                               atomicity_level,
                                                                                               threads, 
@@ -824,7 +821,7 @@ if __name__ == "__main__":
 
                     isolation_level = "READ_COMMITTED"
                     atomicity_level = "CLIENT"
-                    run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
+                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
                                                                                               isolation_level,
                                                                                               atomicity_level,
                                                                                               threads, 
@@ -840,7 +837,7 @@ if __name__ == "__main__":
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, runid=("MASTERED_EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
+                    run_ycsb_trial(False, tag, runid=("MASTERED_EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
                                                                                            threads,
                                                                                           iteration)),
                                    threads=threads,
@@ -855,7 +852,7 @@ if __name__ == "__main__":
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, runid=("EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
+                    run_ycsb_trial(False, tag, runid=("EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
                                                                                            threads,
                                                                             iteration)),
                                    threads=threads,
@@ -870,7 +867,7 @@ if __name__ == "__main__":
                     continue
 
                     # 2PL
-                    run_ycsb_trial(True, runid=("TWOPL-%d-THREADS%d-IT%d" % (transaction_length, threads, iteration)),
+                    run_ycsb_trial(True, tag, runid=("TWOPL-%d-THREADS%d-IT%d" % (transaction_length, threads, iteration)),
                                    threads=threads, distributionparameter=transaction_length)
 
                     continue
@@ -883,7 +880,7 @@ if __name__ == "__main__":
                             if isolation_level == "NO_ISOLATION" and atomicity_level == "NO_ATOMICITY" and transaction_length != 4:
                                 continue
 
-                            run_ycsb_trial(False, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
+                            run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d" % (transaction_length, 
                                                                                                       isolation_level,
                                                                                                       atomicity_level,
                                                                                                       threads)),
@@ -906,7 +903,7 @@ if __name__ == "__main__":
         atomicity_level = "CLIENT"
         for backend in ["MEMORY", "BDB", "LEVELDB"]:
             backendStr = "-Dpersistence_engine="+backend
-            run_ycsb_trial(False, serverArgs=backendStr, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-%s" % (transaction_length, 
+            run_ycsb_trial(False, tag, serverArgs=backendStr, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-%s" % (transaction_length, 
                                                                                          isolation_level,
                                                                                          atomicity_level,
                                                                                          threads,
