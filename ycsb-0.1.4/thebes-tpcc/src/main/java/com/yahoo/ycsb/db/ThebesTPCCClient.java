@@ -14,6 +14,7 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.yahoo.ycsb.ByteArrayByteIterator;
 import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
@@ -95,6 +96,14 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
         client.close();
 	}
 	
+	private class RippedLineOrder {
+		String item_key;
+		int ol_cnt;
+		int supply_warehouse;
+		String stock_key;
+		int ol_i_id;
+	}
+	
     private int runNewOrder() {
 		long st=System.nanoTime();
         try {
@@ -120,21 +129,17 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
             
         	String O_ENTRY_D = Long.toString(System.currentTimeMillis());
         	
-        	WarehouseRow warehouse = new WarehouseRow();
-        	byte[] warehouseByteRet = client.get(TPCCConstants.getWarehouseKey(HOME_WAREHOUSE)).array();
-        	deserializer.deserialize(warehouse, warehouseByteRet);
+        	List<String> toFetch = Lists.newArrayList();
+        	Map<String, ByteBuffer> toPut = Maps.newHashMap();
         	
-        	double warehouseTaxRate = warehouse.getW_tax();
+        	String warehouseKey = TPCCConstants.getWarehouseKey(HOME_WAREHOUSE);
+        	toFetch.add(warehouseKey);
         	
-        	DistrictRow district = new DistrictRow();
-        	byte[] districtByteRet = client.get(TPCCConstants.getDistrictKey(HOME_WAREHOUSE, D_ID)).array();
-        	deserializer.deserialize(district, districtByteRet);
-        	
-        	double districtTaxRate = district.getD_tax();
-        	
-        	CustomerRow customer = new CustomerRow();
-        	byte[] customerByteRet = client.get(TPCCConstants.getCustomerKey(HOME_WAREHOUSE, D_ID, C_ID)).array();
-        	deserializer.deserialize(customer, customerByteRet);
+        	String districtKey = TPCCConstants.getDistrictKey(HOME_WAREHOUSE, D_ID); 
+        	toFetch.add(districtKey);
+
+        	String customerKey = TPCCConstants.getCustomerKey(HOME_WAREHOUSE, D_ID, C_ID);
+        	toFetch.add(customerKey);
             
         	OrderRow order = new OrderRow(C_ID,
         								  O_ENTRY_D,
@@ -142,34 +147,61 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
         								  -1,
         								  OL_CNT,
         								  allLocal ? (short) 0 : (short) 1);
-        	client.put(TPCCConstants.getOrderKey(HOME_WAREHOUSE, D_ID, O_ID), ByteBuffer.wrap(serializer.serialize(order)));
+        	toPut.put(TPCCConstants.getOrderKey(HOME_WAREHOUSE, D_ID, O_ID), ByteBuffer.wrap(serializer.serialize(order)));
         	
         	NewOrderRow newOrder = new NewOrderRow();
-        	client.put(TPCCConstants.getNewOrderKey(HOME_WAREHOUSE, D_ID, O_ID), ByteBuffer.wrap(serializer.serialize(newOrder)));
+        	toPut.put(TPCCConstants.getNewOrderKey(HOME_WAREHOUSE, D_ID, O_ID), ByteBuffer.wrap(serializer.serialize(newOrder)));
         	
         	double totalAmount = 0;
         	
-            for(int ol_cnt = 0; ol_cnt < OL_CNT; ++ol_cnt) {
+        	List<RippedLineOrder> itemKeys = Lists.newArrayList();
+        	
+            for(int ol_cnt = 0; ol_cnt < OL_CNT; ++ol_cnt) {            	
             	int OL_I_ID = generator.NURand(8191,1,100000);
-            	int OL_QUANTITY = generator.number(1, 10);
             	
             	if(rollback && ol_cnt == OL_CNT-1) {
             		OL_I_ID = -1;
             	}
             	
+            	String itemKey = TPCCConstants.getItemKey(OL_I_ID);
+            	toFetch.add(itemKey);
+            	
+            	int OL_SUPPLY_W_ID = warehouseIDs.get(ol_cnt);
+            	
+            	String stockKey = TPCCConstants.getStockKey(OL_SUPPLY_W_ID, OL_I_ID);
+            	
+            	RippedLineOrder rip = new RippedLineOrder();
+            	rip.item_key = itemKey;
+            	rip.ol_cnt = ol_cnt;
+            	rip.stock_key = stockKey;
+            	rip.supply_warehouse = OL_SUPPLY_W_ID;
+            	rip.ol_i_id = OL_I_ID;
+            	
+            	itemKeys.add(rip);
+            }
+            
+            Map<String, ByteBuffer> results = client.get_all(toFetch);
+            
+            for(RippedLineOrder rip : itemKeys) {
+            	String itemKey = rip.item_key;
+            	String stockKey = rip.stock_key;
+            	int OL_SUPPLY_W_ID = rip.supply_warehouse;
+            	int ol_cnt = rip.ol_cnt;
+            	int OL_I_ID = rip.ol_i_id;
+            	
             	ItemRow item = new ItemRow();
-            	ByteBuffer itemBytebufferRet = client.get(TPCCConstants.getItemKey(OL_I_ID));
+            	ByteBuffer itemBytebufferRet = results.get(itemKey);
             	if(itemBytebufferRet == null) {
             		client.abortTransaction();
             		return OK;
             	}
             	deserializer.deserialize(item, itemBytebufferRet.array());
             	
-            	int OL_SUPPLY_W_ID = warehouseIDs.get(ol_cnt);
-            	
             	StockRow stock = new StockRow();
-            	byte[] stockByteRet = client.get(TPCCConstants.getStockKey(OL_SUPPLY_W_ID, OL_I_ID)).array();
+            	byte[] stockByteRet = results.get(stockKey).array();
             	deserializer.deserialize(stock, stockByteRet);
+            	
+            	int OL_QUANTITY = generator.number(1, 10);
             	
             	int currentQuantity = stock.getS_quantity();
             	if(currentQuantity > OL_QUANTITY+10)
@@ -183,7 +215,7 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
             	if(OL_SUPPLY_W_ID != HOME_WAREHOUSE)
             		stock.setS_remote_cnt(stock.getS_remote_cnt()+1);
             	
-            	client.put(TPCCConstants.getStockKey(OL_SUPPLY_W_ID, OL_I_ID), ByteBuffer.wrap(serializer.serialize(stock)));
+            	toPut.put(TPCCConstants.getStockKey(OL_SUPPLY_W_ID, OL_I_ID), ByteBuffer.wrap(serializer.serialize(stock)));
             	
             	double OL_AMOUNT = OL_QUANTITY*item.getI_price();
             	totalAmount += OL_AMOUNT;
@@ -222,11 +254,28 @@ public class ThebesTPCCClient extends DB implements TPCCDB {
             											  (short) OL_QUANTITY,
             											  OL_AMOUNT,
             											  districtData);
-            	client.put(TPCCConstants.getOrderLineKey(HOME_WAREHOUSE, D_ID, O_ID, ol_cnt), ByteBuffer.wrap(serializer.serialize(orderLine)));            			
+            	toPut.put(TPCCConstants.getOrderLineKey(HOME_WAREHOUSE, D_ID, O_ID, ol_cnt), ByteBuffer.wrap(serializer.serialize(orderLine)));    
             }
+            
+    	    WarehouseRow warehouse = new WarehouseRow();
+        	byte[] warehouseByteRet = results.get(warehouseKey).array();
+        	deserializer.deserialize(warehouse, warehouseByteRet);
+        	
+        	double warehouseTaxRate = warehouse.getW_tax();
+        	
+        	DistrictRow district = new DistrictRow();
+        	byte[] districtByteRet = results.get(districtKey).array();
+        	deserializer.deserialize(district, districtByteRet);
+        	
+        	double districtTaxRate = district.getD_tax();
+        	
+        	CustomerRow customer = new CustomerRow();
+        	byte[] customerByteRet = results.get(customerKey).array();
+        	deserializer.deserialize(customer, customerByteRet);
             
             totalAmount*=(1-customer.getC_discount())*(1+warehouse.getW_tax()+district.getD_tax());
             
+            client.put_all(toPut);
             client.commitTransaction();
             
             
