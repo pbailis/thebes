@@ -352,7 +352,7 @@ public class Config {
         return getClusterMap().size();
     }
 
-    public static int getDatabaseCacheSize() {
-        return (Integer) getOption(ConfigParameters.DATABASE_CACHE_SIZE);
+    public static Integer getDatabaseCacheSize() {
+        return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
     }
 }
