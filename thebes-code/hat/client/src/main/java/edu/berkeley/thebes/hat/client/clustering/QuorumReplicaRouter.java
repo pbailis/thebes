@@ -172,12 +172,10 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         public void process(ReplicaClient replica) {
             try {
                 replica.client.put(key, value);
-
                 replica.inUse.set(false);
                 notifyResponse(true);
             } catch (TException e) {
                 logger.error("Error: ", e);
-
                 replica.inUse.set(false);
                 notifyResponse(false);
             }
@@ -187,34 +185,18 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     private class ReadRequest extends Request<ThriftDataItem> {
         private String key;
         private Version requiredVersion;
-        private SortedSet<DataItem> returnedDataItems;
-        private AtomicInteger numResponses = new AtomicInteger(0);
-
 
         public ReadRequest(String key, Version requiredVersion) {
             this.key = key;
             this.requiredVersion = requiredVersion != null ? requiredVersion : Version.NULL_VERSION;
-            this.returnedDataItems = new ConcurrentSkipListSet<DataItem>();
         }
 
         public void process(ReplicaClient replica) {
             try {
                 ThriftDataItem resp = replica.client.get(key, requiredVersion.getThriftVersion());
 
-                if (resp != null && resp.getVersion() != null) {
-                    returnedDataItems.add(new DataItem(resp));
-                }
-
-                if (numResponses.incrementAndGet() >= quorum) {
-                    if (returnedDataItems.isEmpty()) {
-                        replica.inUse.set(false);
-                        notifyResponse(new ThriftDataItem()); // "null"
-                    } else {
-                        replica.inUse.set(false);
-                        notifyResponse(returnedDataItems.last().toThrift());
-                    }
-                }
-
+                replica.inUse.set(false);
+                notifyResponse(resp);
             } catch (TException e) {
                 logger.error("Exception:", e);
 
