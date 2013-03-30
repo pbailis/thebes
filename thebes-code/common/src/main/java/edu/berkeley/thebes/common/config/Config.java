@@ -351,4 +351,8 @@ public class Config {
     public static int getNumClusters() {
         return getClusterMap().size();
     }
+
+    public static int getDatabaseCacheSize() {
+        return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
+    }
 }

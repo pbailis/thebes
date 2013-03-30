@@ -48,7 +48,8 @@ public enum ConfigParameters {
     ATOMICITY_LEVEL(AtomicityLevel.class, AtomicityLevel.NO_ATOMICITY),
     LOGGER_LEVEL(String.class, "WARN"),
     DISK_DATABASE_FILE(String.class, "/tmp/thebes.db"),
-    DO_CLEAN_DATABASE_FILE(Boolean.class, true);
+    DO_CLEAN_DATABASE_FILE(Boolean.class, true),
+    DATABASE_CACHE_SIZE(Integer.class, -1);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;

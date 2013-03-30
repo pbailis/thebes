@@ -38,6 +38,9 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
     public void open() throws IOException {
         Options options = new Options();
+        options.blockSize(1024);
+        if(Config.getDatabaseCacheSize() != -1)
+            options.cacheSize(Config.getDatabaseCacheSize());
         options.createIfMissing(true);
         lockManager = new LockManager();
 
