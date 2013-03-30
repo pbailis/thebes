@@ -205,9 +205,8 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 }
 
             } catch (TException e) {
-                logger.error("Exception happened!");
+                logger.error("Exception:", e);
 
-                numNacks.incrementAndGet();
                 if (numNacks.incrementAndGet() >= quorum) {
                     sendResponse(new ThriftDataItem()); // "null"
                 }
