@@ -125,7 +125,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 numSent++;
         }
 
-        assert(numSent >= quorum);
+        assert numSent >= quorum;
 
         if(numSent < quorum)
             logger.warn(String.format("attempted %d, sent %d, need %d", numAttempted, numSent, quorum));
