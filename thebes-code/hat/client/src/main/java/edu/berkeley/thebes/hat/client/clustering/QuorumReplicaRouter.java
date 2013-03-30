@@ -1,6 +1,7 @@
 package edu.berkeley.thebes.hat.client.clustering;
 
 import org.apache.thrift.TException;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,9 @@ import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
+import edu.berkeley.thebes.hat.common.thrift.ReplicaService.AsyncClient.put_call;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService.Client;
+import edu.berkeley.thebes.hat.common.thrift.ReplicaService.AsyncClient.get_call;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 
 import java.io.IOException;
@@ -39,23 +42,19 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     private static Logger logger = LoggerFactory.getLogger(QuorumReplicaRouter.class);
 
     private final Map<Integer, List<ServerAddress>> replicaAddressesByCluster;
-    private List<ServerAddress> allReplicaAddresses;
     private final int numClusters;
     private final int numNeighbors;
-    private final Random randomGenerator;
     private int quorum;
     
-    private final Map<ServerAddress, ReplicaRequestQueue> replicaRequestQueues = Maps.newHashMap();
+    private final Map<ServerAddress, ReplicaClient> replicaRequestQueues = Maps.newHashMap();
 
-    private class ReplicaRequestQueue {
-        private ReplicaService.Client client;
-        private BlockingQueue<Request<?>> queue;
-        private Lock lock;
+    private class ReplicaClient {
+        private ReplicaService.AsyncClient client;
+        private AtomicBoolean inUse;
 
-        public ReplicaRequestQueue(Client client, BlockingQueue<Request<?>> queue, Lock lock) {
+        public ReplicaClient(ReplicaService.AsyncClient client) {
             this.client = client;
-            this.queue = queue;
-            this.lock = lock;
+            this.inUse = new AtomicBoolean(false);
         }
     }
 
@@ -66,166 +65,111 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         this.numClusters = Config.getNumClusters();
         this.numNeighbors = Config.getServersInCluster().size();
         this.quorum = (int) Math.ceil((numNeighbors+1)/2);
-        this.randomGenerator = new Random();
-        this.allReplicaAddresses = Lists.newArrayList();
         
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             for (ServerAddress neighbor : neighbors) {
-                replicaRequestQueues.put(neighbor, new ReplicaRequestQueue(
-                        ThriftUtil.getReplicaServiceSyncClient(neighbor.getIP(), neighbor.getPort()),
-                        Queues.<Request<?>>newLinkedBlockingQueue(), new ReentrantLock()));
-                allReplicaAddresses.add(neighbor);
+                replicaRequestQueues.put(neighbor, new ReplicaClient(
+                        ThriftUtil.getReplicaServiceAsyncClient(neighbor.getIP(), neighbor.getPort())));
             }
             replicaAddressesByCluster.put(i+1, neighbors);
         }
-        
-        for (int i = 0; i < Config.getNumQuorumThreads(); i ++) {
-            new Thread() {
-                @Override
-                public void run() {
-                    while (true) {
-                        boolean foundAnyRequests = executePendingRequest();
-                        if (!foundAnyRequests) {
-                            Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
-                        }
-                    }
-                }
-            }.start();
-            
-            // Stagger thread creation times so they sweep at different intervals
-            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
-        }
     }
-    
-    /** Finds an executes some pending request. Returns true if we found at least one to execute. */
-    @SuppressWarnings("rawtypes")
-    public boolean executePendingRequest() {
-        int start = randomGenerator.nextInt(allReplicaAddresses.size());
-        int i = start;
-        do {
-            ServerAddress address = allReplicaAddresses.get(i);
-            ReplicaRequestQueue requestQueue = replicaRequestQueues.get(address);
-            if (requestQueue.lock.tryLock()) {
-                try {
-                    // We own the lock, meaning we're the only ones using this replica!
-                    if (!requestQueue.queue.isEmpty()) {
-                        // And someone wants to write to this replica...
-                        List<Request> allPendingRequests = Lists.newArrayList();
-                        requestQueue.queue.drainTo(allPendingRequests);
-                        
-                        for (Request r : allPendingRequests) {
-                            r.process(requestQueue.client);
-                        }
-                        
-                        return true;
-                    }
-                } finally {
-                    requestQueue.lock.unlock();
-                }
-            }
-            
-            i = (i+1) % allReplicaAddresses.size();
-        } while (i != start);
-        
-        return false;
-    }
-
     
     @Override
     public boolean put(String key, DataItem value) throws TException {
-        return performRequest(key, new WriteProcessor(key, value));
+        return performRequest(key, new WriteRequest(key, value));
     }
 
     @Override
     public ThriftDataItem get(String key, Version requiredVersion) throws TException {
-        return performRequest(key, new ReadProcessor(key, requiredVersion));
+        return performRequest(key, new ReadRequest(key, requiredVersion));
     }
     
     /** Performs the request by queueing N requests and waiting for Q responses. */
-    public <E> E performRequest(String key, Processor<E> processor) {
-        Request<E> request = Request.forProcessor(processor);
+    public <E> E performRequest(String key, Request<E> request) {
         int replicaIndex = RoutingHash.hashKey(key, numNeighbors);
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
-            replicaRequestQueues.get(replicaAddress).queue.add(request);
+            ReplicaClient replica = replicaRequestQueues.get(replicaAddress);
+            if (!replica.inUse.getAndSet(true)) {
+                request.process(replica);
+            }
         }
         return request.getResponseWhenReady();
     }
     
-    private static class Request<E> {
-        private Processor<E> processor;
+    private abstract class Request<E> {
         private AtomicBoolean responseSent;
         private BlockingQueue<E> responseChannel;
         
-        private Request(Processor<E> processor) {
-            this.processor = processor;
+        private Request() {
             this.responseSent = new AtomicBoolean(false);
             this.responseChannel = Queues.newLinkedBlockingQueue();
         }
 
-        public static <E> Request<E> forProcessor(Processor<E> processor) {
-            return new Request<E>(processor);
-        }
+        abstract public void process(ReplicaClient client);
         
-        public void process(ReplicaService.Client client) {
-            if (!responseSent.get()) {
-                E response = processor.process(client);
-                if (response != null) {
-                    sendResponse(response);
-                }
-            }
-        }
-        
-        private void sendResponse(E response) {
+        protected void sendResponse(E response) {
             if (!responseSent.getAndSet(true)) {
                 responseChannel.add(response);
             }
         }
         
-        /** Returns the response after waiting for Q responses from our N replicas. */
         public E getResponseWhenReady() {
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
     
-    /** A Processor is in charge of individual client communications + aggregating the results. */
-    public interface Processor<E> {
-        /** Return null if we're not ready to return a result, or else the result of the quorum. */
-        public E process(ReplicaService.Client client);
-    }
-    
-    private class WriteProcessor implements Processor<Boolean> {
+    private class WriteRequest extends Request<Boolean> {
+        private Request<Boolean> request;
         private String key;
         private ThriftDataItem value;
         
         private AtomicInteger numAcks = new AtomicInteger(0);
         private AtomicInteger numNacks = new AtomicInteger(0);
 
-        public WriteProcessor(String key, DataItem value) {
+        public WriteRequest(String key, DataItem value) {
             this.key = key;
             this.value = value.toThrift();
         }
         
-        public Boolean process(ReplicaService.Client client) {
+        public void process(ReplicaClient replica) {
+            PutCallback callback = new PutCallback(replica);
             try {
-                client.put(key, value);
-                numAcks.incrementAndGet();
+                replica.client.put(key, value, callback);
             } catch (TException e) {
-                logger.error("Bad stuff happened: ", e);
-                numNacks.incrementAndGet();
+                callback.onError(e);
+            }
+        }
+        
+        private class PutCallback implements AsyncMethodCallback<put_call> {
+            ReplicaClient replica;
+            public PutCallback(ReplicaClient replica) {
+                this.replica = replica;
             }
             
-            if (numAcks.get() > quorum) {
-                return true;
-            } else if (numNacks.get() > quorum) {
-                return false;
+            @Override
+            public void onComplete(put_call response) {
+                if (numAcks.incrementAndGet() > quorum) {
+                    request.sendResponse(true);
+                }
+                replica.inUse.set(false);
             }
-            return null;
+    
+            @Override
+            public void onError(Exception exception) {
+                logger.error("Bad stuff happened: ", exception);
+                numNacks.incrementAndGet();
+                if (numNacks.incrementAndGet() > quorum) {
+                    request.sendResponse(false);
+                }
+                replica.inUse.set(false);
+            }
         }
     }
-
-    private class ReadProcessor implements Processor<ThriftDataItem> {
+    
+    private class ReadRequest extends Request<ThriftDataItem> {
         private String key;
         private Version requiredVersion;
         private SortedSet<DataItem> returnedDataItems;
@@ -233,35 +177,61 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         private AtomicInteger numNacks = new AtomicInteger(0);
         
 
-        public ReadProcessor(String key, Version requiredVersion) {
+        public ReadRequest(String key, Version requiredVersion) {
             this.key = key;
             this.requiredVersion = requiredVersion;
             this.returnedDataItems = new ConcurrentSkipListSet<DataItem>();
         }
 
-        public ThriftDataItem process(ReplicaService.Client client) {
+        public void process(ReplicaClient replica) {
+            AsyncMethodCallback<get_call> callback = new GetCallback(replica);
             try {
-                ThriftDataItem resp = client.get(key, Version.toThrift(requiredVersion));
+                replica.client.get(key, Version.toThrift(requiredVersion), callback);
+                numAcks.incrementAndGet();
+            } catch (TException e) {
+                callback.onError(e);
+            }
+        }
+        
+        private class GetCallback implements AsyncMethodCallback<get_call> {
+            ReplicaClient replica;
+            public GetCallback(ReplicaClient replica) {
+                this.replica = replica;
+            }
+            
+            @Override
+            public void onComplete(get_call response) {
+                ThriftDataItem resp;
+                try {
+                    resp = response.getResult();
+                } catch (TException e) {
+                    onError(e);
+                    return;
+                }
+                
                 if (resp != null && resp.getVersion() != null) {
                     returnedDataItems.add(new DataItem(resp));
                 }
-                numAcks.incrementAndGet();
-            } catch (TException e) {
-                logger.error("Bad stuff happened: ", e);
-                numNacks.incrementAndGet();
-            }
-            
-            if (numAcks.get() > quorum) {
-                if (returnedDataItems.isEmpty()) {
-                    return new ThriftDataItem(); // "null"
-                } else {
-                    return returnedDataItems.first().toThrift();
+                
+                if (numAcks.incrementAndGet() > quorum) {
+                    if (returnedDataItems.isEmpty()) {
+                        sendResponse(new ThriftDataItem()); // "null"
+                    } else {
+                        sendResponse(returnedDataItems.first().toThrift());
+                    }
                 }
-            } else if (numNacks.get() > quorum) {
-                return new ThriftDataItem(); // "null"
+                replica.inUse.set(false);
             }
-            
-            return null;
+    
+            @Override
+            public void onError(Exception exception) {
+                logger.error("Bad stuff happened: ", exception);
+                numNacks.incrementAndGet();
+                if (numNacks.incrementAndGet() > quorum) {
+                    sendResponse(new ThriftDataItem()); // "null"
+                }
+                replica.inUse.set(false);
+            }
         }
     }
 }
