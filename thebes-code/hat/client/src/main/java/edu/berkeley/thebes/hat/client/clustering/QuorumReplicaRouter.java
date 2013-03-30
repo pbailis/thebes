@@ -175,13 +175,13 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 replica.client.put(key, value);
                 logger.error("Called put...");
 
-                if (numAcks.incrementAndGet() > quorum) {
+                if (numAcks.incrementAndGet() >= quorum) {
                     sendResponse(true);
                 }
             } catch (TException e) {
                 logger.error("Exception happened!");
 
-                if (numNacks.incrementAndGet() > quorum) {
+                if (numNacks.incrementAndGet() >= quorum) {
                     sendResponse(false);
                 }
             } finally {
@@ -214,7 +214,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                     returnedDataItems.add(new DataItem(resp));
                 }
 
-                if (numAcks.incrementAndGet() > quorum) {
+                if (numAcks.incrementAndGet() >= quorum) {
                     if (returnedDataItems.isEmpty()) {
                         sendResponse(new ThriftDataItem()); // "null"
                     } else {
@@ -226,7 +226,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 logger.error("Exception happened!");
 
                 numNacks.incrementAndGet();
-                if (numNacks.incrementAndGet() > quorum) {
+                if (numNacks.incrementAndGet() >= quorum) {
                     sendResponse(new ThriftDataItem()); // "null"
                 }
             } finally {
