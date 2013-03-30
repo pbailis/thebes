@@ -195,7 +195,7 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
+    public boolean commitTransaction() throws TException {
         transactionInProgress = false;
         
         requestMetric.mark();
@@ -210,6 +210,16 @@ public class ThebesHATClient implements IThebesClient {
         transactionReadBuffer.clear();
 
         return true;
+    }
+
+    @Override
+    public void abortTransaction() throws TException {
+        transactionInProgress = false;
+
+        requestMetric.mark();
+
+        transactionWriteBuffer.clear();
+        transactionReadBuffer.clear();
     }
 
     @Override

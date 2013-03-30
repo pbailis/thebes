@@ -93,7 +93,7 @@ public class ThebesCLIApp {
                     for(int i = 0; i < 10; ++i) {
                         client.put(Integer.toString(i), ByteBuffer.wrap("FOOO".getBytes()));
                     }
-                    client.endTransaction();
+                    client.commitTransaction();
                 }
                 doExit();
             }
@@ -120,7 +120,7 @@ public class ThebesCLIApp {
                         client.beginTransaction();
                         break;
                     case END:
-                        client.endTransaction();
+                        client.commitTransaction();
                         break;
                         
                     case GET:

@@ -52,4 +52,9 @@ strengthened by considering failure models with, say, bounded
 asynchrony or service-level agreements from underlying
 hardware. Additionally, while we have focused on systems that provide
 a single availability mode, there are several interesting hybrids to
-consider.
+consider. For example, a system may provide ``best-effort'' stickiness
+(or serializability!) in the absence of partitions, but, in the
+presence of partitions, ``lose'' guarantees by having clients
+reconnect to an available replica. This strategy provides stronger
+guarantees in the absence of partitions but, to provide availability,
+sacrifices them in the event of partitions.

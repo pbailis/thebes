@@ -111,10 +111,9 @@ def get_instances(regionName, tag):
             region = line[10]
             instanceid = line[1]
             status = line[5]
-            print status
             hosts.append(Host(ip, region, instanceid, status))
         elif line[0] == "TAG":
-            if line[3] is tag:
+            if line[3] == tag:
                 allowed_hosts.append(line[2])
             else:
                 ignored_hosts.append(line[2])
@@ -141,11 +140,11 @@ def get_spot_request_ids(regionName):
 
 def get_num_running_instances(regionName, tag):
     instances = get_instances(regionName, tag)
-    return [host for host in instances if host.status is "running"]
+    return len([host for host in instances if host.status == "running"])
         
 def get_num_nonterminated_instances(regionName, tag):
     instances = get_instances(regionName, tag)
-    return [host for host in instances if host.status is not "terminated"]
+    return len([host for host in instances if host.status != "terminated"])
 
 def make_instancefile(name, hosts):
     f = open("hosts/" + name, 'w')
@@ -154,15 +153,22 @@ def make_instancefile(name, hosts):
     f.close
 
 # MAIN STUFF
-def check_for_instances(regions):
+def check_for_instances(regions, tag):
     numRunningAnywhere = 0
+    numUntagged = 0
     for region in regions:
-        numRunning = get_num_nonterminated_instances(region)
+        numRunning = get_num_nonterminated_instances(region, tag)
         numRunningAnywhere += numRunning
+        numUntagged += get_num_nonterminated_instances(region, None)
 
     if numRunningAnywhere > 0:
         pprint("NOTICE: You appear to have %d instances up already." % numRunningAnywhere)
         f = raw_input("Continue without terminating them? ")
+        if f != "Y" and f != "y":
+            exit(-1)
+    if numUntagged > 0:
+        pprint("NOTICE: You appear to have %d UNTAGGED instances up already." % numRunningAnywhere)
+        f = raw_input("Continue without terminating/claiming them? ")
         if f != "Y" and f != "y":
             exit(-1)
 
@@ -212,11 +218,11 @@ def provision_instance(regionName, num):
     #   (AMIs[region], n))
 
 
-def wait_all_hosts_up(regions):
+def wait_all_hosts_up(regions, tag):
     for region in regions:
         pprint("Waiting for instances in %s to start..." % region.name)
         while True:
-            numInstancesInRegion = get_num_running_instances(region.name)
+            numInstancesInRegion = get_num_running_instances(region.name, None)
             numInstancesExpected = region.getTotalNumHosts()
             if numInstancesInRegion >= numInstancesExpected:
                 break
@@ -231,10 +237,7 @@ def wait_all_hosts_up(regions):
 def claim_instances(regions, tag):
     for region in regions:
         instances = get_instances(region.name, None)
-        print "UNTAGGED:", [host.instanceid for host in get_instances(region.name, None)]
-        print "MINE:", [host.instanceid for host in get_instances(region.name, tag)]
         instanceString = ' '.join([host.instanceid for host in instances])
-        pprint("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
         system("ec2-create-tags %s --tag %s --region %s" % (instanceString, tag, region.name))
 
 # Assigns hosts to clusters (and specifically as servers, clients, and TMs)
@@ -588,13 +591,14 @@ def fetch_logs(runid, clusters):
 #ssh root@ec2-50-17-17-32.compute-1.amazonaws.com "cd /home/ubuntu/thebes/ycsb-0.1.4;bash bin/ycsb.sh load thebes -p hosts=ec2-107-22-85-127.compute-1.amazonaws.com, ec2-107-21-167-213.compute-1.amazonaws.com, ec2-23-22-4-123.compute-1.amazonaws.com -threads 10 -fieldlength=1 -p fieldcount=1 -p operationcount=10000 -p recordcount=10000 -t  -p maxexecutiontime=60 -DtransactionLengthDistributionType=constant -DtransactionLengthDistributionParameter=5 -Dclientid=2 -Dtxn_mode=hat -Dclusterid=2 -Dconfig_file=../thebes-code/conf/thebes.yaml  1>load_out.log 2>load_err.log"
 
 
-def terminate_clusters():
+def terminate_clusters(tag):
     for regionName in AMIs.keys():
-        instance_ids = ' '.join([h.instanceid for h in get_instances(regionName)])
+        allHosts = get_instances(regionName, tag) + get_instances(regionName, None)
+        instance_ids = ' '.join([h.instanceid for h in allHosts])
         spot_request_ids = ' '.join(get_spot_request_ids(regionName))
 
         if instance_ids.strip() != '':
-            pprint('Terminating instances in %s...' % regionName)
+            pprint('Terminating instances (tagged & untagged) in %s...' % regionName)
             system("ec2-terminate-instances --region %s %s" % (regionName, instance_ids))
         else:
             pprint('No instances to terminate in %s, skipping...' % regionName)
@@ -747,10 +751,10 @@ if __name__ == "__main__":
 
     if args.launch:
         pprint("Launching thebes clusters")
-        check_for_instances(AMIs.keys())
+        check_for_instances(AMIs.keys(), tag)
         provision_clusters(regions, not args.no_spot, args.anti_slow)
         provision_graphite(graphiteRegion)
-        wait_all_hosts_up(regions)
+        wait_all_hosts_up(regions, tag)
         
     if args.launch or args.claim:
         pprint("Claiming untagged instances...")
@@ -799,7 +803,7 @@ if __name__ == "__main__":
 
     if args.terminate:
         pprint("Terminating thebes clusters")
-        terminate_clusters()
+        terminate_clusters(tag)
 
     if args.ycsb_vary_constants_experiment:
         for iteration in range(0, 5):

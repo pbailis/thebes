@@ -2,10 +2,11 @@
 \section{Application and System Analysis}
 \label{sec:evaluation}
 
-With a firm understanding of which of several ACID and distributed
-consistency properties are available and which are not, we begin to
-understand their implications for existing algorithms, applications,
-and deployments. Specifically:
+We now have an understanding of which guarantees are and are not
+HAT-compliant. In this section, we begin to understand the impact of
+this high availability on existing systems and applications as well as
+briefly demonstrate HAT algorithms on public cloud
+infrastructure. Specifically:
 
 \begin{myenumerate}
 \item We revisit traditional database concurrency control with a focus
@@ -27,66 +28,62 @@ design decisions and algorithmic details that preclude high
 availability.
 
 \vspace{.5em}\noindent\textbf{Serializablity} To establish a serial
-order on transactions, all existing algorithms for achieving
-serializability of general-purpose read-write transactions in a
-distributed setting~\cite{bernstein-book} may require at least one
-round trip time (RTT) before committing. As an example, traditional
-two-phase locking for a transaction of length $T$ requires $T$
-\texttt{lock} operations and at least one \texttt{unlock} operation.
-Each of these operations requires coordination, either with other
-database replicas or with a lock service. If the coordination
-mechanism for locking is unavailable, transactions cannot
-commit. Similarly, optimistic concurrency control requires contacting
-a validation service, while deterministic transaction
+order on transactions, algorithms for achieving serializability of
+general-purpose read-write transactions in a distributed
+setting~\cite{bernstein-book} may require at least one round trip time
+(RTT) before committing. As an example, traditional two-phase locking
+for a transaction of length $T$ requires $T$ \texttt{lock} operations
+and at least one \texttt{unlock} operation.  In a distributed
+environment, each of these operations requires coordination, either
+with other database replicas or with a lock service. If the
+coordination mechanism for locking is unavailable, transactions cannot
+commit. Similarly, optimistic concurrency control requires
+coordinating via a validation step, while deterministic transaction
 scheduling~\cite{deterministic-scheduling} requires a
 scheduler. Serializability under multi-version concurrency control
-fares somewhat better but still requires checking for update
-conflicts.
+also requires checking for update conflicts.
 
-Perhaps unsurprisingly, the reliance on a globally agreed total order
-necessitates a minimum of one round-trip to a designated master or
-coordination service for each of these classic algorithms.  This is
-intuitively a consequence of serializability's lack of high
+In summary, perhaps unsurprisingly, the reliance on a globally agreed
+total order necessitates a minimum of one round-trip to a designated
+master or coordination service for each of these classic algorithms.
+This is intuitively a consequence of serializability's lack of high
 availability~\cite{davidson-survey} (or, as we have shown, reliance on
 preventing Lost Update and Write Skew).  The cost of the (minimum one)
 round trip will be determined by the deployment environment, as we saw
 in Section~\ref{sec:motivation}.
 
-\vspace{.5em}\noindent\textbf{Non-serializablity} Perhaps
-interestingly, many existing distributed implementations of weak
-isolation are not highly available. Lock-based proposals such as those
-used to provide weak isolation in Gray's original
-proposal~\cite{gray-isolation} do not degrade gracefully in the
-presence of partial failure. (Note, however, that lock-based protocols
-\textit{do} offer the benefit of recency guarantees.) While
-multi-versioned storage systems allow for a variety of transactional
-guarantees, we have not seen proposals for truly weak isolation (e.g.,
-non-``tentative update'' schemes) in this context. Chan and Gray's
-read-only transactions provide read-only transactions with item-cut
-isolation, causal consistency, and transactional atomicity but are
-unavailable in the presence of coordinator failure~\cite{readonly},
-similar to read-only and write-only transactions more recently
-proposed by Eiger~\cite{eiger}.  Bolt-on causal
-consistency~\cite{bolton}, Brantner's S3 database~\cite{kraska-s3},
-and Bayou~\cite{sessionguarantees} can all provide variants of the
-above model with high availability, but none provide this HAT
-functionality without substantial modification; Swift~\cite{swift} is
-closest to providing full HAT operation in a sticky
-context. Similarly, the MDCC~\cite{mdcc} protocol offers Read
-Committed isolation with Lost Update avoidance but is similarly
-unavailable due to its reliance on preventing write conflicts.
+\vspace{.5em}\noindent\textbf{Non-serializablity} Many existing
+distributed implementations of weak isolation are not highly
+available. Lock-based proposals such as those used to provide weak
+isolation in Gray's original proposal~\cite{gray-isolation} do not
+degrade gracefully in the presence of partial failure. (Note, however,
+that lock-based protocols \textit{do} offer the benefit of recency
+guarantees.) While multi-versioned storage systems allow for a variety
+of transactional guarantees, we have not seen proposals for truly weak
+isolation (e.g., non-``tentative update'' schemes) in this
+context. Chan and Gray's read-only transactions provide read-only
+transactions with item-cut isolation, causal consistency, and
+transactional atomicity (session PL-2L) but are unavailable in the
+presence of coordinator failure~\cite{readonly}, similar to read-only
+and write-only transactions more recently proposed by
+Eiger~\cite{eiger}.  Bolt-on causal consistency~\cite{bolton},
+Brantner's S3 database~\cite{kraska-s3}, and
+Bayou~\cite{sessionguarantees} can all provide variants of session
+PL-2L with high availability, but none provide this HAT functionality
+without substantial modification; Swift~\cite{swift} is closest to
+providing full HAT operation in a sticky context. Similarly, the
+MDCC~\cite{mdcc} protocol offers Read Committed isolation with Lost
+Update avoidance but is similarly unavailable due to its reliance on
+preventing write conflicts.
 
 As we have seen, it is possible to implement many guarantees weaker
 than serializability---including guarantees that are achievable with
-high availability---and not achieve high availability. We expect that
-further understanding the trade-offs between semantic strength,
-performance, and storage and metadata requirements will remain an area
-of active research for the foreseeable future.
+high availability---and still not achieve high availability.
 
 \subsection{Application Requirements}
 
 Thus far, we have largely ignored the question of which applications
-require semantics which are unavailable to HATs. As we showed in
+require semantics that are unavailable to HATs. As we showed in
 Section~\ref{sec:hats}, the main cost of choosing HATs comes in the
 inability to prevent Lost Update, Write Skew, and provide recency
 bounds. In this section, we attempt to understand when these
@@ -105,9 +102,10 @@ monotonic logic with commutative operators may not suffer from
 application-level consistency anomalies as a result of Lost Update or
 Write Skew anomalies. However, applications with non-monotonic state
 mutation will not, in general, be able to maintain application-level
-consistency constraints. Similarly, applications requiring write
-visibility between clients should opt for unavailability instead of
-possibly missing a write visibility deadline.
+consistency constraints with HATs alone. Similarly, applications
+requiring write visibility between clients should opt for
+unavailability instead of possibly missing a write visibility
+deadline.
 
 \vspace{.5em}\noindent\textbf{TPC-C} Absent a necessary and sufficient
 result describing exactly which application logics can be achieved
@@ -118,10 +116,10 @@ configuration will be non-compliant. Rather, we examine the five
 queries contained in the benchmarks---ostensibly representative of a
 standard transaction processing application---to understand which are
 achievable in a HAT context. Surprisingly, four of five can be
-executed with HATs, while the fifth potentially requires unavailablity.
+executed with HATs, while the fifth may require unavailablity.
 
 TPC-C consists of five transactions, capturing operation of a
-real-world warehouse, including sales, payments, and deliveries. Two
+wholesale warehouse, including sales, payments, and deliveries. Two
 transactions---\textit{Order-Status} and \textit{Stock-Level}---are
 read-only and can be executed safely under HATs. Clients may read
 stale data, but this does not violate TPC-C requirements and clients
@@ -148,8 +146,8 @@ New-Orders and to fail on Payments. First, New-Order requires a unique
 ID number for each order. We can create a unique number by, say,
 concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
-assigned, which requires Lost Update. Accordingly, HATs cannot provide
-compliant TPC-C execution but can maintain uniqueness
+assigned, which requires preventing Lost Update. Accordingly, HATs
+cannot provide compliant TPC-C execution but can maintain uniqueness
 constraints. Second, the New-Order transaction decrements inventory
 counts: what if the count becomes negative? Fortunately, TPC-C
 New-Order restocks each item's inventory count (increments by 91) if
@@ -163,7 +161,9 @@ avoid billing a customer twice; this implies a need to prevent Lost
 Update. We can avoid this issue by moving the non-monotonicity to the
 real world---the carrier that picks up the package for an order can
 ensure that she is the only carrier who has done so---but cannot
-provide a correct execution with HATs alone.
+provide a correct execution with HATs alone. However, according to
+distributed transaction architects~\cite{helland}, these compensatory
+actions are relatively common in real-world business processes.
 
 Throughout execution, TPC-C also requires the maintainence of several
 integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
