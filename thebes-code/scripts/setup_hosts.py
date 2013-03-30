@@ -720,7 +720,7 @@ def run_ycsb_trial(use2PL, tag, serverArgs="", **kwargs):
     write_config(clusters, graphiteRegion)
     restart_graphite(graphiteRegion)
     start_servers(clusters, use2PL, thebesArgString+" "+serverArgs)
-    start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs)
+    start_ycsb_clients(clusters, use2PL, thebesArgString+" -Dpersistence_engine=leveldb -Ddisk_database_file=/mnt/md0/thebes.db", **kwargs)
     runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
     fetch_logs(runid, clusters)
 
@@ -865,7 +865,7 @@ if __name__ == "__main__":
 
     if args.ycsb_vary_constants_experiment:
         for iteration in range(0, 5):
-            for transaction_length in [8]:
+            for transaction_length in [6]:
                 for threads in [1, 10, 25, 50, 75, 100, 200]:
                     isolation_level = "READ_COMMITTED"
                     atomicity_level = "NO_ATOMICITY"
