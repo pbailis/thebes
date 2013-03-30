@@ -87,7 +87,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         this.numNeighbors = Config.getServersInCluster().size();
         this.quorum = (int) Math.ceil((numNeighbors+1)/2);
 
-        logger.debug("Quorum is set to "+this.quorum);
+        assert(this.quorum <= this.numNeighbors);
+
+        logger.debug("quorum is set to "+this.quorum);
 
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
@@ -146,9 +148,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         }
 
         public E getResponseWhenReady() {
-            for(int i = 0; i < quorum; ++i)
-                responseSemaphore.acquireUninterruptibly();
-
+            responseSemaphore.acquireUninterruptibly(quorum);
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
@@ -165,8 +165,8 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         public void process(ReplicaClient replica) {
             try {
                 logger.trace("Client starting put");
-
                 replica.client.put(key, value);
+                logger.trace("Client ended put");
 
                 notifyResponse(true);
             } catch (TException e) {
