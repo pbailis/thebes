@@ -94,7 +94,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             }.start();
             
             // Stagger thread creation times so they sweep at different intervals
-            Uninterruptibles.sleepUninterruptibly(100/Config.getNumQuorumThreads(), TimeUnit.MILLISECONDS);
+            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
         }
     }
     
@@ -134,16 +134,17 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     
     @Override
     public boolean put(String key, DataItem value) throws TException {
-        return performRequest(key, Request.forProcessor(new WriteProcessor(key, value)));
+        return performRequest(key, new WriteProcessor(key, value));
     }
 
     @Override
     public ThriftDataItem get(String key, Version requiredVersion) throws TException {
-        return performRequest(key, Request.forProcessor(new ReadProcessor(key, requiredVersion)));
+        return performRequest(key, new ReadProcessor(key, requiredVersion));
     }
     
     /** Performs the request by queueing N requests and waiting for Q responses. */
-    public <E> E performRequest(String key, Request<E> request) {
+    public <E> E performRequest(String key, Processor<E> processor) {
+        Request<E> request = Request.forProcessor(processor);
         int replicaIndex = RoutingHash.hashKey(key, numNeighbors);
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
@@ -159,15 +160,15 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         
         private Request(Processor<E> processor) {
             this.processor = processor;
-            responseSent = new AtomicBoolean(false);
-            responseChannel = Queues.newLinkedBlockingQueue();
+            this.responseSent = new AtomicBoolean(false);
+            this.responseChannel = Queues.newLinkedBlockingQueue();
         }
 
         public static <E> Request<E> forProcessor(Processor<E> processor) {
             return new Request<E>(processor);
         }
         
-        public final void process(ReplicaService.Client client) {
+        public void process(ReplicaService.Client client) {
             if (!responseSent.get()) {
                 E response = processor.process(client);
                 if (response != null) {
@@ -176,14 +177,14 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             }
         }
         
-        private final void sendResponse(E response) {
+        private void sendResponse(E response) {
             if (!responseSent.getAndSet(true)) {
                 responseChannel.add(response);
             }
         }
         
         /** Returns the response after waiting for Q responses from our N replicas. */
-        public final E getResponseWhenReady() {
+        public E getResponseWhenReady() {
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
