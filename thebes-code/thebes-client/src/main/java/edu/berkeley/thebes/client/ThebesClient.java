@@ -16,6 +16,8 @@ import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
 
 // Wrapper class for various thebes clients
 
@@ -67,7 +69,16 @@ public class ThebesClient implements IThebesClient {
     public boolean put(String key, ByteBuffer value) throws TException {
         return internalClient.put(key, value);
     }
-    
+
+    @Override
+    public boolean put_all(Map<String, ByteBuffer> pairs) throws TException {
+        return internalClient.put_all(pairs);
+    }
+
+    public Map<String, ByteBuffer> get_all(List<String> keys) throws TException {
+        return internalClient.get_all(keys);
+    }
+
     public boolean unsafe_load(String key, ByteBuffer value) throws TException {
         if (internalClient instanceof ThebesTwoPLTransactionClient) {
             return ((ThebesTwoPLTransactionClient) internalClient).unsafe_load(key, value);

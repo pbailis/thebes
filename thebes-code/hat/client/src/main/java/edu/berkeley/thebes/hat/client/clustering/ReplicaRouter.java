@@ -10,6 +10,8 @@ import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 public abstract class ReplicaRouter {
     public static ReplicaRouter newInstance(RoutingMode routingMode)
@@ -27,5 +29,8 @@ public abstract class ReplicaRouter {
     }
     
     abstract public boolean put(String key, DataItem value) throws TException;
+    abstract public boolean put_all(Map<String, DataItem> pairs) throws TException;
+
     abstract public ThriftDataItem get(String key, Version requiredVersion) throws TException;
+    abstract public List<ThriftDataItem> get_all(List<String> keys) throws TException;
 }

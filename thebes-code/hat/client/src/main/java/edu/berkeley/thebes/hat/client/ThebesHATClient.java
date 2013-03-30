@@ -320,27 +320,6 @@ public class ThebesHATClient implements IThebesClient {
         }
         return ret;
     }
-
-//    private boolean doPutAsync(String key,
-//                               DataItem value,
-//                               TransactionMultiPutCallback callback) throws TException {
-//        TimerContext timer = latencyPerOperationMetric.time();
-//
-//        try {
-//            router.put(key,
-//                                                 value.toThrift(),
-//                                                 callback);
-//        } catch (RuntimeException e) {
-//            errorMetric.mark();
-//            throw e;
-//        } catch (TException e) {
-//            errorMetric.mark();
-//            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
-//        } finally {
-//            timer.stop();
-//        }
-//        return true;
-//    }
     
     private DataItem doGet(String key) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();

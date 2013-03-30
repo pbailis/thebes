@@ -18,10 +18,14 @@ struct DataDependencyRequest {
 
 service ReplicaService {
   dataitem.ThriftDataItem get(1: string key
-                        2: version.ThriftVersion requiredVersion);
+                              2: version.ThriftVersion requiredVersion);
+
+  map<string, dataitem.ThriftDataItem> get_all(1: list<string> keys);
 
   bool put(1: string key,
            2: dataitem.ThriftDataItem value);
+
+  bool put_all(1: map<string, dataitem.ThriftDataItem> pairs);
 }
 
 service AntiEntropyService {
