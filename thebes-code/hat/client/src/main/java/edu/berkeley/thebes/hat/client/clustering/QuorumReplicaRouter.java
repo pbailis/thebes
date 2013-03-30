@@ -130,7 +130,6 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     }
     
     private class WriteRequest extends Request<Boolean> {
-        private Request<Boolean> request;
         private String key;
         private ThriftDataItem value;
         
@@ -164,7 +163,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             public void onComplete(put_call response) {
                 logger.error("Response for " + key + "!");
                 if (numAcks.incrementAndGet() > quorum) {
-                    request.sendResponse(true);
+                    sendResponse(true);
                 }
                 replica.inUse.set(false);
             }
@@ -174,7 +173,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 logger.error("Bad stuff happened: ", exception);
                 numNacks.incrementAndGet();
                 if (numNacks.incrementAndGet() > quorum) {
-                    request.sendResponse(false);
+                    sendResponse(false);
                 }
                 replica.inUse.set(false);
             }

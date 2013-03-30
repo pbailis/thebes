@@ -32,8 +32,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     public boolean put(String key,
                        ThriftDataItem valueThrift) throws TException {
         DataItem value = new DataItem(valueThrift);
-        if(logger.isTraceEnabled())
-            logger.trace("received PUT request for key: '"+key+
+//        if(logger.isTraceEnabled())
+            logger.error("received PUT request for key: '"+key+
                          "' value: '"+value+
                          "' transactionKeys: "+value.getTransactionKeys());
 
