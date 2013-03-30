@@ -178,7 +178,7 @@ public class ThebesHATClient implements IThebesClient {
 
         router.put_all(transactionWriteBuffer);
 
-        if(atomicityLevel != AtomicityLevel.CLIENT)
+        if(atomicityLevel == AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
                                                 transactionVersion);
     }
