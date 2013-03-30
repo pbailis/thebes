@@ -2,72 +2,88 @@
 
 \section{Introduction}
 
-Requirements for high availability, predictable low latency, and
-simplicity of coordination protocols have led many recent distributed
-database designers to renounce several properties provided by
-traditional database systems~\cite{bigtable, pnuts, dynamo}. In
-particular, many modern systems forgo providing ACID guarantees, which
-often provide single-system image programmability but traditionally
-suffer from unavailability and often expensive coordination
-costs~\cite{davidson-survey}. In particular, the July 2000
-announcement of the CAP Theorem~\cite{gilbert-cap}, which states that
-a highly available system cannot provide recency guarantees in the
-presence of network partitions, proved a rallying call for a
-generation of scalable but semantically weak system designs. Over a
-decade later, we observe a dearth of highly available systems
-providing general-purpose multi-operation \textit{transactions} over
-multiple data items with useful semantics.
+In July 2000, the CAP Theorem~\cite{gilbert-cap} was crisply
+formulated that a highly available system cannot provide strong
+consistency guarantees in the presence of network partitions. This
+became a rallying call for a generation of highly scalable but
+semantically weak system designs. The NoSQL movement embraced this
+mantra, leading to many production quality databases that eschewed
+strong consistency guarantees, but could scale-out to many
+servers~\cite{bigtable, pnuts, dynamo}. The consistency concept used
+in the CAP theorem was proposed by the distributed systems community,
+and concerned providing strong recency guarantees of a data item that
+is replicated across servers.  However, the NoSQL movement implicitly
+took it to imply that transactions are also unavailable in the
+presence of network partitions. Over a decade later, we observe a
+dearth of highly available systems providing general-purpose
+multi-operation \textit{transactions} over multiple data items with
+useful semantics.
 
-While serializability, the gold standard of traditional ACID
-transactions, is not achievable with high availability for general
-read-write transactions~\cite{davidson-survey}, database systems have
-a long tradition of providing weaker isolation and consistency
-guarantees~\cite{adya, ansicritique, gray-isolation}. Due to their
-concurrency and overall performance benefits, weak isolation models
-are widely employed, overwhelmingly as the default setting in today's
-traditional ``ACID'' and up-and-coming ``NewSQL'' databases and often
-as the maximum guarantee offered (Section~\ref{sec:modernacid}). While
-this weak isolation does not provide serializability for
-general-purpose transactions, it is apparently strong enough to
-deliver acceptable behavior to many application programmers and is
-substantially stronger than the typical semantics of current highly
-available systems. This raises the question: which of these semantics
-can be provided while remaining highly available?
+
+ Serializability, the gold standard of traditional ACID transactions,
+ is indeed not achievable with the requirement of high availability
+ the in the presence of partitions~\cite{davidson-survey}. However,
+ database systems have a long tradition of providing weaker isolation
+ and consistency guarantees~\cite{adya, ansicritique,
+   gray-isolation}. Due to their concurrency and overall performance
+ benefits, weak isolation models are widely employed, overwhelmingly
+ as the default setting in today's traditional ``ACID'' and
+ up-and-coming ``NewSQL'' databases and often as the maximum guarantee
+ offered (Section~\ref{sec:modernacid}). While this weak isolation
+ does not provide serializability for general-purpose transactions, it
+ is apparently strong enough to deliver acceptable behavior to many
+ application programmers and is substantially stronger than the
+ typical semantics of current highly available systems. This raises
+ the question: which of these semantics can be provided while always
+ remaining highly available?
 
 Unfortunately, the relationship of the CAP Theorem and ACID semantics
 is poorly understood. We have a strong understanding of weak isolation
 in the single-server context from which it originated~\cite{adya,
   ansicritique, gray-isolation} as well as several techniques for
 providing distributed serializability~\cite{bernstein-concurrency,
-  spanner, granola, daudjee-session, calvin}. However, the current
+  spanner, granola, daudjee-session, calvin}.  However, the current
 literature does not provide guidance as to the operation of weakly
-consistent transactional guarantees in a replicated
-context. Accordingly, in this work, we consider the problem of
-providing Highly Available Transactions (HATs), or semantic guarantees
-regarding multiple operations operating on multiple data items that
-are achievable with high availability and low latency, albeit with
-some cost to achievable semantics. While our prior, preliminary
-results indicated that some models are achievable~\cite{hat-hotos},
-the literature lacks a deep understanding of what models are
-available, which are not, and when this distinction matters.
+consistent transactional guarantees in a replicated context. To make
+matters worse, the distributed computing literature has produced a
+large body of work on weak data consistency models for single
+replicated objects. Accordingly, in this work, we consider the problem
+of providing understanding semantic guarantees regarding multiple
+operations operating on data items that are achievable with high
+availability and low latency, albeit with some cost to achievable
+semantics. While our prior, preliminary results indicated that some
+models are achievable~\cite{hat-hotos}, the literature lacks a deep
+understanding of what models are available, which are not, and when
+this distinction matters.
 
-This work attempts to bridge the gap between ACID properties and
+This work attempts to bridge the gap between, one the one hand, the
+plethora of isolation and consistency models proposed in the
+transactions and distributed systems literature, and, on the other hand
 highly available systems. We introduce a hierarchy of consistency
 models and rigorously taxonomize their availability characteristics;
 in doing so, we unify previous work on ACID properties~\cite{adya},
 session guarantees~\cite{sessionguarantees}, and traditional
-disributed ``register'' semantics~\cite{herlihy-art}. By identifying
-the availability cost of a wide range of guarantees, this work allows
-developers to weigh the costs and benefits of relying on particular
-guarantees in their applications. While several models, like
-serializability and Snapshot Isolation, are unachievable due to update
-conflict avoidance (preventing Lost Update and Write Skew phenomena),
-many other ACID guarantees are HAT compliant, such as providing Read
-Committed isolation, preventing Fuzzy Read phenomena, and ensuring
-atomicity of transactional updates. Several other guarantees, like
-reading one's writes, fall into a new availability class---``sticky''
-high availability---which provides an intermediate ground between
-strict high availability and majority availability.
+distributed ``register'' semantics~\cite{herlihy-art}. 
+
+
+Our main contributions are the following. We classify among the wide
+array of isolation and consistency models those that are highly
+available, denoting them as {\em Highly Available Transactions
+  (HATs)}.  In doing so, we show that many implementations that
+provide HAT-semantics are not available, but that the unavailability
+is {\em not} inherent to their semantic guarantees. Thus, we provide
+highly available implementations for HATs.  Furthermore, our
+investigation shows, somewhat surprisingly, that besides
+serializability, only Snapshot Isolation (SI) and Repeatable Reads
+(RR) are unavailable. The reason for their unavailability stems from
+their requirement to avoid update conflict (preventing Lost Updates
+and Write Skew phenomena). Finally, we show that many of the weaker
+data consistency models from distributed systems can be implemented in
+a highly available manner as well. For that, the model of the system
+has to be changed to include clients, which cannot be mobile, but
+rather have to {\em stick} to one server, something which is implicit
+in much of the previous work on distributed systems.
+
 
 This taxonomy allows us to weigh the costs and benefits of a wide
 range of semantic guarantees, but which guarantees are worthwhile in
@@ -88,16 +104,16 @@ coordination-intensive, unavailable mechanisms. Concisely, we attempt
 to understand \textit{what benefits do Highly Available Transactions
   offer and what is their cost?}
 
-In this paper, we make the following contributions:
-\begin{myitemize}
-\item We model high availability in a transactional environment,
-  including traditional and sticky high availability.
+%% In this paper, we make the following contributions:
+%% \begin{myitemize}
+%% \item We model high availability in a transactional environment,
+%%   including traditional and sticky high availability.
 
-\item We taxonomize ACID and distributed consistency properties
-  according to their availability characteristics.
+%% \item We taxonomize ACID and distributed consistency properties
+%%   according to their availability characteristics.
 
-\item We analyze existing concurrency control algorithms, perform a
-  case-study of an existing transactional application, and
-  briefly evaluate a HAT database prototype.
-\end{myitemize}
+%% \item We analyze existing concurrency control algorithms, perform a
+%%   case-study of an existing transactional application, and
+%%   briefly evaluate a HAT database prototype.
+%% \end{myitemize}
 
