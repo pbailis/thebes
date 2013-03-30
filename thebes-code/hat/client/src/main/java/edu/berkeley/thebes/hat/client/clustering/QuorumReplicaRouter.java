@@ -115,10 +115,12 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     /** Performs the request by queueing N requests and waiting for Q responses. */
     public <E> E performRequest(String key, Request<E> request) {
         int numSent = 0;
+        int numAttempted = 0
         int replicaIndex = RoutingHash.hashKey(key, numNeighbors);
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
             ReplicaClient replica = replicaRequestQueues.get(replicaAddress);
+            numAttempted++;
             if(replica.executeRequest(request))
                 numSent++;
         }
@@ -126,7 +128,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         assert(numSent >= quorum);
 
         if(numSent < quorum)
-            logger.warn(String.format("sent %d, need %d", numSent, quorum));
+            logger.warn(String.format("attempted %d, sent %d, need %d", numAttempted, numSent, quorum));
 
         logger.trace("Waiting for response");
         E ret = request.getResponseWhenReady();
