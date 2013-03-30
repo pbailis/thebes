@@ -63,7 +63,12 @@ public class ThebesTwoPLTransactionClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
+    public void abortTransaction() throws TException {
+        throw new TException("abort not supported by ThebesTwoPLTransactionClient");
+    }
+
+    @Override
+    public boolean commitTransaction() throws TException {
     	inTransaction = false;
         for (String key : readLocks) {
             masterRouter.getMasterByKey(key).unlock(sessionId, key);

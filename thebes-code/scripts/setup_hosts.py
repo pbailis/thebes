@@ -382,7 +382,7 @@ def write_config(clusters, graphiteRegion):
     sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^cluster_config: .*", "cluster_config: " + cluster_config_str)
     sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^twopl_cluster_config: .*", "twopl_cluster_config: " + twopl_cluster_config_str)
     sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^twopl_tm_config: .*", "twopl_tm_config: " + twopl_tm_config_str)
-    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^graphite_ip:.*", "graphite_ip: " + graphiteRegion.graphiteHost.ip)
+    sed(SCRIPTS_DIR + "/../conf/thebes.yaml", "^graphite_ip:.*", "graphite_ip: " + graphiteRegion.graphiteHost.ip if graphiteRegion else "" )
     #system("git add ../conf/thebes.yaml")
     #system("git commit -m'Config for experiment @%s'" % str(datetime.datetime.now()))
     #system("git push origin :ec2-experiment") # Delete previous remote branch
@@ -536,6 +536,50 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
         th.join()
     pprint("Done")
 
+def start_tpcc_clients(clusters, use2PL, thebesArgString, **kwargs):
+    def startYCSB(runType, cluster, client, clientID):
+        hosts = ','.join([host.ip for host in cluster.servers])
+        run_cmd_single(client.ip,
+                       'ulimit -u unlimited; cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+#                           'rm *.log;' \
+                           'bin/ycsb %s thebes-tpcc -p hosts=%s -threads %d -p fieldlength=%d -p histogram.buckets=10000 -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
+                           ' -p requestdistribution=%s -p maxexecutiontime=%d -P %s -p readproportion=0 -p updateproportion=1 -Dsocket_timeout=%d ' \
+                           ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml -Droute_to_masters=%s %s' \
+                           ' 1>%s_out.log 2>%s_err.log' % (runType,
+                                                           hosts,
+                                                           kwargs.get("threads", 10) if runType != 'load' else 50,
+                                                           kwargs.get("fieldlength", 1),
+                                                           kwargs.get("recordcount", 10000),
+                                                           kwargs.get("keydistribution", "uniform"),
+                                                           kwargs.get("time", 60) if runType != 'load' else 10000,
+                                                           kwargs.get("workload", "workloads/workloada"),
+                                                           kwargs.get("timeout", 10000),
+                                                           kwargs.get("lengthdistribution", "constant"),
+                                                           kwargs.get("distributionparameter", 5),
+                                                           clientID,
+                                                           "twopl" if use2PL else "hat",
+                                                           cluster.clusterID,
+                                                           kwargs.get("isolation_level", "NO_ISOLATION"),
+                                                           kwargs.get("atomicity_level", "NO_ATOMICITY"),
+                                                           kwargs.get("route_to_masters", "false"),
+                                                           thebesArgString,
+                                                           runType,
+                                                           runType))
+
+    ths = []
+    pprint("Running TPC-C on all clients.")
+
+    for cluster in clusters:
+        for i,client in enumerate(cluster.clients):
+            t = Thread(target=startYCSB, args=('run', cluster, client, getNextClientID()))
+            t.start()
+            ths.append(t)
+
+    for th in ths:
+        th.join()
+    pprint("Done")
+
+
 def fetch_logs(runid, clusters):
     def fetchYCSB(rundir, client):
         client_dir = rundir+"/"+"C"+client.ip
@@ -680,6 +724,18 @@ def run_ycsb_trial(use2PL, tag, serverArgs="", **kwargs):
     runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
     fetch_logs(runid, clusters)
 
+def run_tpcc_trial(use2PL, tag, serverArgs="", **kwargs):
+    pprint("Restarting thebes clusters")
+    assign_hosts(regions, tag)
+    stop_thebes_processes(clusters)
+    write_config(clusters, graphiteRegion)
+    restart_graphite(graphiteRegion)
+    run_cmd("all-servers", "rm -rf /mnt/md0/thebes.db; tar -xf /home/ubuntu/thebes.db.tar.gz /mnt/md0")
+    start_servers(clusters, use2PL, thebesArgString+" "+serverArgs+"-Ddo_clean_database_file=false -Dpersistence_engine=leveldb -Ddisk_database_file=/mnt/md0/thebes.db")
+    start_tpcc_clients(clusters, use2PL, thebesArgString, **kwargs)
+    runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
+    fetch_logs(runid, clusters)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Setup cassandra on EC2')
     parser.add_argument('--tag', dest='tag', required=True, help='Tag to use for your instances')
@@ -728,6 +784,7 @@ if __name__ == "__main__":
     parser.add_argument('-D', dest='thebes_args', action='append', default=[],
                      help='Parameters to pass along to the thebes servers/clients.')
     parser.add_argument('--ycsb_vary_constants_experiment', action='store_true', help='run experiment for varying constants')
+    parser.add_argument('--tpcc_experiment', action='store_true', help='run experiment for tpcc')
     parser.add_argument('--ycsb_test_backend_experiment', action='store_true', help='run experiment for varying backends')
 
     args,unknown = parser.parse_known_args()
@@ -753,7 +810,8 @@ if __name__ == "__main__":
         pprint("Launching thebes clusters")
         check_for_instances(AMIs.keys(), tag)
         provision_clusters(regions, not args.no_spot, args.anti_slow)
-        provision_graphite(graphiteRegion)
+        if graphiteRegion:
+            provision_graphite(graphiteRegion)
         wait_all_hosts_up(regions, tag)
         
     if args.launch or args.claim:
@@ -924,3 +982,67 @@ if __name__ == "__main__":
                                keydistribution="uniform")
 
 
+    if args.tpcc_experiment:
+        for iteration in range(0, 5):
+            for threads in [1, 10, 25, 50, 75, 100, 200]:
+                isolation_level = "READ_COMMITTED"
+                atomicity_level = "NO_ATOMICITY"
+                run_tpcc_trial(False, tag, runid=("TPCC-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
+                                                                                              isolation_level,
+                                                                                              atomicity_level,
+                                                                                              threads, 
+                                                                                              iteration)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform")
+                
+                isolation_level = "READ_COMMITTED"
+                atomicity_level = "CLIENT"
+                run_tpcc_trial(False, tag, runid=("TPCC-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
+                                                                                                    isolation_level,
+                                                                                                    atomicity_level,
+                                                                                                    threads, 
+                                                                                                    iteration)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform")
+                
+                isolation_level = "NO_ISOLATION"
+                atomicity_level = "NO_ATOMICITY"
+                run_tpcc_trial(False, tag, runid=("TPCC-MASTERED_EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
+                                                                                           threads,
+                                                                                          iteration)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform",
+                               route_to_masters="true")
+                
+                isolation_level = "NO_ISOLATION"
+                atomicity_level = "NO_ATOMICITY"
+                run_tpcc_trial(False, tag, runid=("TPCC-EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
+                                                                                           threads,
+                                                                                  iteration)),
+                               threads=threads,
+                               distributionparameter=transaction_length,
+                               atomicity_level=atomicity_level,
+                               isolation_level=isolation_level,
+                               recordcount=100000,
+                               time=120,
+                               timeout=120*10000,
+                               keydistribution="uniform")
+                

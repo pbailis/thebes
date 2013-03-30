@@ -4,11 +4,13 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
+import edu.berkeley.thebes.hat.client.clustering.QuorumReplicaRouter;
 import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
@@ -52,8 +54,13 @@ public class ThebesClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
-        return internalClient.endTransaction();
+    public boolean commitTransaction() throws TException {
+        return internalClient.commitTransaction();
+    }
+
+    @Override
+    public void abortTransaction() throws TException {
+        internalClient.abortTransaction();
     }
 
     @Override

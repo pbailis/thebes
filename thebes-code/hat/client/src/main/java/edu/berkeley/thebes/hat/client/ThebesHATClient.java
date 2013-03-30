@@ -83,8 +83,8 @@ public class ThebesHATClient implements IThebesClient {
 
     //ANSI client-side data structures
     private IsolationLevel isolationLevel = Config.getThebesIsolationLevel();
-    private Map<String, DataItem> transactionWriteBuffer;
-    private Map<String, DataItem> transactionReadBuffer;
+    private Map<String, DataItem> transactionWriteBuffer = Maps.newHashMap();
+    private Map<String, DataItem> transactionReadBuffer = Maps.newHashMap();
 
     //Session guarantee data structures
     private SessionLevel sessionLevel = Config.getThebesSessionLevel();
@@ -195,7 +195,7 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
+    public boolean commitTransaction() throws TException {
         transactionInProgress = false;
         
         requestMetric.mark();
@@ -210,6 +210,16 @@ public class ThebesHATClient implements IThebesClient {
         transactionReadBuffer.clear();
 
         return true;
+    }
+
+    @Override
+    public void abortTransaction() throws TException {
+        transactionInProgress = false;
+
+        requestMetric.mark();
+
+        transactionWriteBuffer.clear();
+        transactionReadBuffer.clear();
     }
 
     @Override

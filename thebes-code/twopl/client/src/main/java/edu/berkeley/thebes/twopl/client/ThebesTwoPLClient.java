@@ -66,7 +66,12 @@ public class ThebesTwoPLClient implements IThebesClient {
     }
 
     @Override
-    public boolean endTransaction() throws TException {
+    public void abortTransaction() throws TException {
+        throw new TException("abort not supported by ThebesTwoPLClient");
+    }
+
+    @Override
+    public boolean commitTransaction() throws TException {
         if (!inTransaction) {
             return false;
         }

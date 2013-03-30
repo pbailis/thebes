@@ -34,6 +34,7 @@ public class DBWrapper extends DB
 {
 	DB _db;
 	TransactionalDB _transactionalDB = null;
+	TPCCDB _tpccDB = null;
 	Measurements _measurements;
 	public List<Req> requests;
 
@@ -41,8 +42,14 @@ public class DBWrapper extends DB
 	{
 		_db=db;
         if(db instanceof TransactionalDB)
-            _transactionalDB = (TransactionalDB)db;
+            _transactionalDB = (TransactionalDB) db;
+        if(db instanceof TPCCDB)
+        	_tpccDB = (TPCCDB) db;
 		_measurements=Measurements.getMeasurements();
+	}
+	
+	public TPCCDB getTPCCDB() {
+		return _tpccDB;
 	}
 
     private void checkTransaction() {
