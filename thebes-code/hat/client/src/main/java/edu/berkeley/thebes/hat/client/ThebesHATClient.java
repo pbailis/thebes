@@ -189,7 +189,7 @@ public class ThebesHATClient implements IThebesClient {
 
         //callback.blockForWrites();
 
-        if(atomicityLevel != AtomicityLevel.CLIENT)
+        if(atomicityLevel == AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
                                                 transactionVersion);
     }
