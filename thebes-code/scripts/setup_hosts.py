@@ -731,7 +731,7 @@ def run_tpcc_trial(use2PL, tag, serverArgs="", **kwargs):
     write_config(clusters, graphiteRegion)
     restart_graphite(graphiteRegion)
     run_cmd("all-servers", "rm -rf /mnt/md0/thebes.db; tar -xf /home/ubuntu/thebes.db.tar.gz /mnt/md0")
-    start_servers(clusters, use2PL, thebesArgString+" "+serverArgs+"-Ddo_clean_database_file=false -Dpersistence_engine=leveldb -Ddisk_database_file=/mnt/md0/thebes.db")
+    start_servers(clusters, use2PL, thebesArgString+" "+serverArgs+"-Ddo_clean_database_file=false -Dpersistence_engine=leveldb -Ddisk_database_file=/mnt/md0/thebes.db -Ddatabase_cache_size=1073741824")
     start_tpcc_clients(clusters, use2PL, thebesArgString, **kwargs)
     runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
     fetch_logs(runid, clusters)
@@ -913,6 +913,22 @@ if __name__ == "__main__":
                                    timeout=120*10000,
                                    keydistribution="uniform",
                                    routing_mode="MASTERED")
+
+
+                    isolation_level = "NO_ISOLATION"
+                    atomicity_level = "NO_ATOMICITY"
+                    run_ycsb_trial(False, tag, runid=("QUORUM_EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
+                                                                                           threads,
+                                                                                          iteration)),
+                                   threads=threads,
+                                   distributionparameter=transaction_length,
+                                   atomicity_level=atomicity_level,
+                                   isolation_level=isolation_level,
+                                   recordcount=100000,
+                                   time=120,
+                                   timeout=120*10000,
+                                   keydistribution="uniform",
+                                   routing_mode="QUORUM")
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
