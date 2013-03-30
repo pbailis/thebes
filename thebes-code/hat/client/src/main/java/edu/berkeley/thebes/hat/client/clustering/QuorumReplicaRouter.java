@@ -162,12 +162,13 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             try {
                 replica.client.put(key, value);
 
-                if (numAcks.incrementAndGet() >= quorum) {
+                if (numAcks.incrementAndGet() + numNacks.get() >= quorum) {
                     sendResponse(true);
                 }
             } catch (TException e) {
+                logger.error("Error: ", e);
 
-                if (numNacks.incrementAndGet() >= quorum) {
+                if (numNacks.incrementAndGet() + numAcks.get() >= quorum) {
                     sendResponse(false);
                 }
             } finally {
