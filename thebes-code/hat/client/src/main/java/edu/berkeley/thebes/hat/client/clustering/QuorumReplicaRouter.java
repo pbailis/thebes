@@ -63,7 +63,6 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 public void run() {
                     while(true) {
                         Request<?> request = Uninterruptibles.takeUninterruptibly(requestBlockingQueue);
-
                         request.process(ReplicaClient.this);
                     }
                 }
@@ -120,7 +119,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             if(replica.executeRequest(request))
                 numSent++;
         }
+        logger.trace("Waiting for response");
         E ret = request.getResponseWhenReady();
+        logger.trace("Got response");
         return ret;
     }
 
@@ -136,6 +137,8 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         abstract public void process(ReplicaClient client);
 
         protected void sendResponse(E response) {
+            logger.trace("Sending response!");
+
             if (!responseSent.getAndSet(true)) {
                 responseChannel.add(response);
             }
@@ -160,7 +163,11 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         public void process(ReplicaClient replica) {
             try {
+                logger.trace("Client starting put");
+
                 replica.client.put(key, value);
+
+                logger.trace("Client finished put "+Integer.toString(numAcks.get()+numNacks.get()));
 
                 if (numAcks.incrementAndGet() + numNacks.get() >= quorum) {
                     sendResponse(true);
@@ -199,7 +206,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                     returnedDataItems.add(new DataItem(resp));
                 }
 
-                if (numAcks.incrementAndGet() >= quorum) {
+                if (numAcks.incrementAndGet() + numNacks.get() >= quorum) {
                     if (returnedDataItems.isEmpty()) {
                         sendResponse(new ThriftDataItem()); // "null"
                     } else {
@@ -210,7 +217,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             } catch (TException e) {
                 logger.error("Exception:", e);
 
-                if (numNacks.incrementAndGet() >= quorum) {
+                if (numNacks.incrementAndGet() + numAcks.get() >= quorum) {
                     sendResponse(new ThriftDataItem()); // "null"
                 }
             } finally {
