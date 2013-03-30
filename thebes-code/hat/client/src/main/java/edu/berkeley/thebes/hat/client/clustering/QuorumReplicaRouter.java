@@ -62,9 +62,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 @Override
                 public void run() {
                     while(true) {
-                        logger.error("Before Take");
                         Request<?> request = Uninterruptibles.takeUninterruptibly(requestBlockingQueue);
-                        logger.error("After Take");
 
                         request.process(ReplicaClient.this);
                     }
@@ -73,17 +71,10 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         }
 
         public boolean executeRequest(Request<?> request) {
-            logger.error("In execute");
-
             if(!inUse.getAndSet(true)) {
-                logger.error("In execute; inside getandset");
-
                 requestBlockingQueue.add(request);
                 return true;
             }
-            else
-                logger.error("In execute; outside getandset");
-
             return false;
         }
     }
@@ -99,7 +90,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             for (ServerAddress neighbor : neighbors) {
-                logger.error("Connecting to " + neighbor);
+                logger.debug("Connecting to " + neighbor);
                 replicaRequestQueues.put(neighbor, new ReplicaClient(
                         ThriftUtil.getReplicaServiceSyncClient(neighbor.getIP(), neighbor.getPort())));
             }
@@ -109,13 +100,11 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
     @Override
     public boolean put(String key, DataItem value) throws TException {
-        logger.error("PUT for key " + key);
         return performRequest(key, new WriteRequest(key, value));
     }
 
     @Override
     public ThriftDataItem get(String key, Version requiredVersion) throws TException {
-        logger.error("GET for key " + key);
         return performRequest(key, new ReadRequest(key, requiredVersion));
     }
 
@@ -129,9 +118,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             if(replica.executeRequest(request))
                 numSent++;
         }
-        logger.error("Sent " + numSent + " messages for key " + key);
         E ret = request.getResponseWhenReady();
-        logger.error("Received response " + ret + " for key " + key);
         return ret;
     }
 
@@ -171,15 +158,12 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         public void process(ReplicaClient replica) {
             try {
-                logger.error("Calling put...");
                 replica.client.put(key, value);
-                logger.error("Called put...");
 
                 if (numAcks.incrementAndGet() >= quorum) {
                     sendResponse(true);
                 }
             } catch (TException e) {
-                logger.error("Exception happened!");
 
                 if (numNacks.incrementAndGet() >= quorum) {
                     sendResponse(false);
@@ -200,15 +184,13 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         public ReadRequest(String key, Version requiredVersion) {
             this.key = key;
-            this.requiredVersion = requiredVersion;
+            this.requiredVersion = requiredVersion != null ? requiredVersion : Version.NULL_VERSION;
             this.returnedDataItems = new ConcurrentSkipListSet<DataItem>();
         }
 
         public void process(ReplicaClient replica) {
             try {
-                logger.error("Calling put...");
                 ThriftDataItem resp = replica.client.get(key, requiredVersion.getThriftVersion());
-                logger.error("Called put...");
 
                 if (resp != null && resp.getVersion() != null) {
                     returnedDataItems.add(new DataItem(resp));
