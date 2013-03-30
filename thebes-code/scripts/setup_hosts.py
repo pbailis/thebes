@@ -110,7 +110,7 @@ def get_instances(regionName, tag):
                 continue
             region = line[10]
             instanceid = line[1]
-            status = line[4]
+            status = line[5]
             print status
             hosts.append(Host(ip, region, instanceid, status))
         elif line[0] == "TAG":
@@ -752,7 +752,7 @@ if __name__ == "__main__":
         
     if args.launch or args.claim:
         pprint("Claiming untagged instances...")
-        claim_instances(tag)
+        claim_instances(regions, tag)
 
     if args.setup or args.launch:
         pprint("Setting up thebes clusters")
