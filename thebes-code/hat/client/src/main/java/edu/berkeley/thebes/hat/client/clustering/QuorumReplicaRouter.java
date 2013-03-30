@@ -115,7 +115,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     /** Performs the request by queueing N requests and waiting for Q responses. */
     public <E> E performRequest(String key, Request<E> request) {
         int numSent = 0;
-        int numAttempted = 0
+        int numAttempted = 0;
         int replicaIndex = RoutingHash.hashKey(key, numNeighbors);
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
