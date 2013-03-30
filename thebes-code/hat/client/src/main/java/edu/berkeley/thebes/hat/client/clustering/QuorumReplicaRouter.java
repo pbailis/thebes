@@ -72,16 +72,19 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             }).start();
         }
 
-        public void executeRequest(Request<?> request) {
+        public boolean executeRequest(Request<?> request) {
             logger.error("In execute");
 
             if(!inUse.getAndSet(true)) {
                 logger.error("In execute; inside getandset");
 
                 requestBlockingQueue.add(request);
+                return true;
             }
             else
                 logger.error("In execute; outside getandset");
+
+            return false;
         }
     }
 
@@ -123,10 +126,8 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         for (List<ServerAddress> replicasInCluster : replicaAddressesByCluster.values()) {
             ServerAddress replicaAddress = replicasInCluster.get(replicaIndex);
             ReplicaClient replica = replicaRequestQueues.get(replicaAddress);
-            if (!replica.inUse.getAndSet(true)) {
-                numSent ++;
-                replica.executeRequest(request);
-            }
+            if(replica.executeRequest(request))
+                numSent++;
         }
         logger.error("Sent " + numSent + " messages for key " + key);
         E ret = request.getResponseWhenReady();
