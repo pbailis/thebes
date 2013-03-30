@@ -4,11 +4,13 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.interfaces.IThebesClient;
 import edu.berkeley.thebes.common.log4j.Log4JConfig;
 import edu.berkeley.thebes.hat.client.ThebesHATClient;
+import edu.berkeley.thebes.hat.client.clustering.QuorumReplicaRouter;
 import edu.berkeley.thebes.twopl.client.ThebesTwoPLClient;
 import edu.berkeley.thebes.twopl.common.ThebesTwoPLTransactionClient;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
@@ -27,6 +29,7 @@ public class ThebesClient implements IThebesClient {
     public void open() throws TTransportException, ConfigurationException, IOException {
         Config.initializeClient();
         Log4JConfig.configureLog4J();
+        LoggerFactory.getLogger(ThebesClient.class).error("Hello from ThebesClient!");
 
         switch (Config.getThebesTxnMode()) {
         case HAT:

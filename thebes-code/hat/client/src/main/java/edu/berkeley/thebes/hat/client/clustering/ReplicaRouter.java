@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.client.clustering;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.LoggerFactory;
 
 import edu.berkeley.thebes.common.config.ConfigParameterTypes.RoutingMode;
 import edu.berkeley.thebes.common.data.DataItem;
@@ -13,6 +14,7 @@ import java.io.IOException;
 public abstract class ReplicaRouter {
     public static ReplicaRouter newInstance(RoutingMode routingMode)
             throws IOException, TTransportException {
+        LoggerFactory.getLogger(ReplicaRouter.class).error("HELLO REPLICA ROUTER??" + routingMode);
         switch (routingMode) {
         case NEAREST:
             return new NearestReplicaRouter();
