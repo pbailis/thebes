@@ -62,7 +62,10 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 @Override
                 public void run() {
                     while(true) {
+                        logger.error("Before Take");
                         Request<?> request = Uninterruptibles.takeUninterruptibly(requestBlockingQueue);
+                        logger.error("After Take");
+
                         request.process(ReplicaClient.this);
                     }
                 }
@@ -70,9 +73,15 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         }
 
         public void executeRequest(Request<?> request) {
+            logger.error("In execute");
+
             if(!inUse.getAndSet(true)) {
+                logger.error("In execute; inside getandset");
+
                 requestBlockingQueue.add(request);
             }
+            else
+                logger.error("In execute; outside getandset");
         }
     }
 
