@@ -187,7 +187,6 @@ public class QuorumReplicaRouter extends ReplicaRouter {
             AsyncMethodCallback<get_call> callback = new GetCallback(replica);
             try {
                 replica.client.get(key, Version.toThrift(requiredVersion), callback);
-                numAcks.incrementAndGet();
             } catch (TException e) {
                 callback.onError(e);
             }
@@ -217,7 +216,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                     if (returnedDataItems.isEmpty()) {
                         sendResponse(new ThriftDataItem()); // "null"
                     } else {
-                        sendResponse(returnedDataItems.first().toThrift());
+                        sendResponse(returnedDataItems.last().toThrift());
                     }
                 }
                 replica.inUse.set(false);
