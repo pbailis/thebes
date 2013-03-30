@@ -92,6 +92,7 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
                     client.get(x[1]);
             	}
             }
+            client.commitTransaction();
             /*
             for (StatementNode statement : statements) {
                 // TODO: Clean up interpreter by having it merely evaluate, not execute.
@@ -103,7 +104,7 @@ public class TwoPLTransactionServiceHandler implements TwoPLTransactionService.I
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            client.endTransaction();
+            client.abortTransaction();
         }
         
         return new TwoPLTransactionResult(interpreter.getOutput());

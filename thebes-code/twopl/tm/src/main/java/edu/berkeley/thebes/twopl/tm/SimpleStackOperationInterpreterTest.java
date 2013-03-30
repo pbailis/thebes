@@ -143,9 +143,14 @@ public class SimpleStackOperationInterpreterTest extends TestCase {
         }
 
         @Override
-        public boolean endTransaction() throws TException {
+        public boolean commitTransaction() throws TException {
             return true;
         }
+
+        @Override
+        public void abortTransaction() throws TException {
+        }
+
 
         @Override
         public void sendCommand(String cmd) throws TException {
