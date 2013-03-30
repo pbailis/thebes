@@ -151,20 +151,11 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         protected void notifyResponse(E response) {
             responseChannel.add(response);
-            numResponses.incrementAndGet();
             responseSemaphore.release();
         }
 
         public E getResponseWhenReady() {
-            try {
-                responseSemaphore.tryAcquire(quorum, 25, TimeUnit.SECONDS);
-                if(numResponses.get() < quorum)
-                    logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
-            }
-            catch(InterruptedException e) {
-                    logger.warn("error: ", e);
-                    logger.warn(String.format("have %d, need %d", numResponses.get(), quorum));
-            }
+            responseSemaphore.acquireUninterruptibly(quorum);
             return Uninterruptibles.takeUninterruptibly(responseChannel);
         }
     }
@@ -180,17 +171,15 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
         public void process(ReplicaClient replica) {
             try {
-                logger.trace("Client starting put");
                 replica.client.put(key, value);
-                logger.trace("Client ended put");
 
+                replica.inUse.set(false);
                 notifyResponse(true);
             } catch (TException e) {
                 logger.error("Error: ", e);
 
-                notifyResponse(false);
-            } finally {
                 replica.inUse.set(false);
+                notifyResponse(false);
             }
         }
     }
@@ -218,8 +207,10 @@ public class QuorumReplicaRouter extends ReplicaRouter {
 
                 if (numResponses.incrementAndGet() >= quorum) {
                     if (returnedDataItems.isEmpty()) {
+                        replica.inUse.set(false);
                         notifyResponse(new ThriftDataItem()); // "null"
                     } else {
+                        replica.inUse.set(false);
                         notifyResponse(returnedDataItems.last().toThrift());
                     }
                 }
@@ -228,10 +219,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 logger.error("Exception:", e);
 
                 if (numResponses.incrementAndGet() >= quorum) {
+                    replica.inUse.set(false);
                     notifyResponse(new ThriftDataItem()); // "null"
                 }
-            } finally {
-                replica.inUse.set(false);
             }
         }
     }
