@@ -149,9 +149,7 @@ public class NearestReplicaRouter extends ReplicaRouter {
             client.executeRequest(new GetAllRequest(toFetch.get(client), results, notifyDone));
         }
 
-        for(int i = 0; i < toFetch.keySet().size(); ++i) {
-            notifyDone.acquireUninterruptibly();
-        }
+        notifyDone.acquireUninterruptibly(toFetch.keySet().size());
 
         return results;
     }
