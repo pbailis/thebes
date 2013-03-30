@@ -69,6 +69,7 @@ public class QuorumReplicaRouter extends ReplicaRouter {
         for (int i = 0; i < numClusters; i ++) {
             List<ServerAddress> neighbors = Config.getServersInCluster(i+1);
             for (ServerAddress neighbor : neighbors) {
+                logger.error("Connecting to " + neighbor);
                 replicaRequestQueues.put(neighbor, new ReplicaClient(
                         ThriftUtil.getReplicaServiceAsyncClient(neighbor.getIP(), neighbor.getPort())));
             }
