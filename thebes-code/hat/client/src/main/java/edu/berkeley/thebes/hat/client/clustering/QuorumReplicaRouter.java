@@ -78,11 +78,13 @@ public class QuorumReplicaRouter extends ReplicaRouter {
     
     @Override
     public boolean put(String key, DataItem value) throws TException {
+        logger.error("PUT for key " + key);
         return performRequest(key, new WriteRequest(key, value));
     }
 
     @Override
     public ThriftDataItem get(String key, Version requiredVersion) throws TException {
+        logger.error("GET for key " + key);
         return performRequest(key, new ReadRequest(key, requiredVersion));
     }
     
@@ -98,9 +100,9 @@ public class QuorumReplicaRouter extends ReplicaRouter {
                 request.process(replica);
             }
         }
-        logger.debug("Sent " + numSent + " messages for key " + key);
+        logger.error("Sent " + numSent + " messages for key " + key);
         E ret = request.getResponseWhenReady();
-        logger.debug("Received response " + ret + " for key " + key);
+        logger.error("Received response " + ret + " for key " + key);
         return ret;
     }
     
