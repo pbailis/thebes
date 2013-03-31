@@ -1,5 +1,5 @@
 
-\section{Motivation}
+\section{Partitions and Latency}
 \label{sec:motivation}
 
 Distributed databases face a host of challenges that their
@@ -193,7 +193,7 @@ H2 &  & \colorbox{min-lat-color}{0.50}  \\
 \end{figure}
 
 
-\subsection{CAP, Isolation, and Modern Systems}
+\section{CAP and Modern Systems}
 \label{sec:modernacid}
 
 Systems designers must make fundamental trade-offs between latency,
@@ -206,20 +206,27 @@ study of these models in a highly available context in the remainder
 of this paper.
 
 One of the most popularly celebrated impossibility results in
-distributed systems is Brewer's CAP Theorem, which, as formally proven
-by Gilbert and Lynch, states that it is impossible to maintain
-linearizability , or the ability to read the last completed write,
-(``C,'' or ``consistency''---albeit poorly named) and replica
-availability, or a guaranteed response, (``A'') in the presence of
-network partitions (``P'')~\cite{gilbert-cap}. Brewer's Theorem has
-roots in decades of distributed database
+distributed systems is Brewer's CAP Theorem~\cite{brewer-slides},
+which, as formally proven by Gilbert and Lynch~\cite{gilbert-cap},
+states that it is impossible to maintain linearizability , or the
+ability to read the last completed write, (``C,'' or
+``consistency''---albeit poorly named) and replica availability, or a
+guaranteed response, (``A'') in the presence of network partitions
+(``P''). Brewer's Theorem has roots in decades of distributed database
 research~\cite{davidson-survey} and has had a substantial impact on
-recent large-scale distributed systems design: while CAP is narrowly
-scoped to the impossibility of building highly available linearizable
-systems, it is often interpreted to preclude a larger set of
-guarantees, including ACID (transactional atomicity, consistency,
-isolation and durability guarantees)~\cite{hn, foundation-article} as
-also evidenced by the lack of highly available systems providing them.
+recent large-scale distributed systems design~\cite{bigtable, pnuts,
+  dynamo}: while CAP is narrowly scoped to the impossibility of
+building highly available linearizable systems, it is often
+interpreted to preclude a larger set of guarantees, including ACID
+(transactional atomicity, consistency, isolation and durability
+guarantees). We are unlikely to determine the exact cause of this
+confusion, but it appears as early as the first public announcement of
+Brewer's result, in which ''distributed databases'' appear as an
+example of unavailable systems~\cite{brewer-slides}. While, in the
+same document, Brewer is careful to note that consistency and
+availability are a ``spectrum,'' all of ACID is still often labeled
+with a binary categorization of ``unavailable''~\cite{hn,
+  foundation-article}.
 
 Database researchers and designers have long realized that
 serializability---the gold standard of ACID isolation, which
@@ -302,5 +309,5 @@ literature that provides guidance as to the relationship between weak
 isolation and high availability: prior work has examined the
 relationship between serializability and high
 availability~\cite{davidson-survey} and weak isolation on a
-single-server~\cite{adya, ansicritique} but never weak isolation and
+single server~\cite{adya, ansicritique, gray-isolation} but never weak isolation and
 high availability taken together.

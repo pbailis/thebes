@@ -49,3 +49,25 @@ low latency. Recent systems proposals such as Swift~\cite{swift},
 Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
 provide transactional causal consistency guarantees with varying
 availability and represent a new class of (sticky) HAT systems.
+
+
+Wisemann et al. propose a three parameter classification for one-copy
+serializable database systems, performing a more extensive
+classification than our overview in Setion XX, including eager
+database replication~\cite{kemme-classification}. Additional, several
+surveys discuss distributed mechanisms for achieving one-copy
+serializability~\cite{wisemann-survey}, linearizability, consistent
+snapshots, and recency bounds~\cite{ceri-mechanism, chen-mechanism}.
+
+% Ceri discuss distributed database update mechanisms with respect to
+% linearizability, consistent snapshots (i.e., cut isolation), and
+% recency bounds~\cite{ceri-mechanism}.  Chen and Pu also classify
+% distributed replica maintenance from perspectives of
+% linearizability,% recency guarantees, and replica
+% divergence~\cite{chen-mechanism}.
+
+
+
+, with increasing interest in returning to transactional
+designs~\cite{spanner, walter, foundation-article, krikellas-bargain,
+  eiger}

@@ -15,10 +15,12 @@ which cannot (preventing Lost Update and Write Skew, recency).  We
 present a full summary of these results in
 Section~\ref{sec:hat-summary}.
 
-When possible, we draw on existing properties and definitions from the
-database and distributed systems literature, providing a brief,
-informal explanation and example for each guarantee. In particular,
-for our ACID guarantees, we draw largely on Atul Adya's
+As Brewer states, ``systems and database communities are separate but
+overlapping (with distinct vocabulary)''~\cite{brewer-slides}. With
+this challenge in mind, we draw on existing properties and definitions
+from the database and distributed systems literature, providing a
+brief, informal explanation and example for each guarantee. In
+particular, for our ACID guarantees, we draw largely on Atul Adya's
 dissertation~\cite{adya}, Berenson et al.'s 1995 critique of the ANSI
 SQL Specification~\cite{ansicritique}, and the ANSI SQL
 specification~\cite{ansi-sql}. We provide a set of formal definitions

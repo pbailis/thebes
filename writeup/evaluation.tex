@@ -1,5 +1,5 @@
 
-\section{Application and System Analysis}
+\section{HAT Implications}
 \label{sec:evaluation}
 
 We now have an understanding of which guarantees are and are not
@@ -27,7 +27,7 @@ well-optimized for a HAT context. In this section, we briefly discuss
 design decisions and algorithmic details that preclude high
 availability.
 
-\vspace{.5em}\noindent\textbf{Serializablity} To establish a serial
+\vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
 setting~\cite{bernstein-book} may require at least one round trip time
@@ -52,7 +52,7 @@ preventing Lost Update and Write Skew).  The cost of the (minimum one)
 round trip will be determined by the deployment environment, as we saw
 in Section~\ref{sec:motivation}.
 
-\vspace{.5em}\noindent\textbf{Non-serializablity} Many existing
+\vspace{.5em}\noindent\textbf{Non-serializability} Many existing
 distributed implementations of weak isolation are not highly
 available. Lock-based proposals such as those used to provide weak
 isolation in Gray's original proposal~\cite{gray-isolation} do not

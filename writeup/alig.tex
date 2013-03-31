@@ -1,0 +1,26 @@
+
+
+For that, the model of the system has to be changed to include
+clients, which cannot be mobile, but rather have to {\em stick} to one
+server, something which is implicit in much of the previous work on
+distributed systems.
+
+
+This taxonomy allows us to weigh the costs and benefits of a wide
+range of semantic guarantees, but which guarantees are worthwhile in
+practice? We attempt to objectively study the virtues and limitations
+of both classic and HAT systems by surveying practitioner accounts and
+research literature, performing experimental analyses on modern cloud
+infrastructure, and analyzing representative applications for their
+semantic requirements. While our results are not definitive for all
+applications, they suggest that HATs offer a one to three order of
+magnitude latency decrease compared to traditional protocols and can
+provide acceptable semantics for a wide range of programs, especially
+those with monotonic logic and commutative updates~\cite{calm, blooml,
+  crdt}. HAT systems can also enforce arbitrary foreign key
+constraints on multi-item updates and sometimes provide limited
+uniqueness guarantees. However, particularly for programs with
+non-monotonic logic, HATs may fall short, requiring more
+coordination-intensive, unavailable mechanisms. Concisely, we attempt
+to understand \textit{what benefits do Highly Available Transactions
+  offer and what is their cost?}
