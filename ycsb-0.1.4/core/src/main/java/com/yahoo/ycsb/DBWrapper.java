@@ -56,6 +56,7 @@ public class DBWrapper extends DB
 
         if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
         	long txStart = System.nanoTime();
+        	boolean isFucked = false;
         	
         	// TODO: Decide if we want to order the thingies
         	Collections.sort(requests);
@@ -76,6 +77,7 @@ public class DBWrapper extends DB
                             System.err.println("[IR on " + req.getKey() + "] FAILED HERE");
                         }
                     }
+                    isFucked = true;
         			break;
         		}
         	}
@@ -83,8 +85,10 @@ public class DBWrapper extends DB
         	
         	requests.clear();
         	
-            _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
-            _measurements.reportReturnCode("TRANSACTION", 1);
+        	if (!isFucked) {
+                _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
+                _measurements.reportReturnCode("TRANSACTION", 1);
+        	}
         }
     }
 
