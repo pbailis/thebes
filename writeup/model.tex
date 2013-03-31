@@ -17,11 +17,10 @@ to stall in order to provide a ``safe'' query response. This lack of
 fast-path coordination also means that a highly available system also
 provides low latency~\cite{abadi-pacelc}; in a wide-area setting, this
 means that clients need not need to wait for cross-datacenter
-communication. However, to properly describe whether a
-\textit{transactional} system is highly available, we need both a way
-to describe what servers a client must contact as well as what kinds
-of responses a server can provide, especially given the possibility of
-aborts.
+communication. To properly describe whether a \textit{transactional}
+system is highly available, we need to describe what servers a client
+must contact as well as what kinds of responses a server can provide,
+especially given the possibility of aborts.
 
 \subsection{Replica Availability}
 
@@ -35,11 +34,12 @@ different data items;\footnote{There is a further distinction between
   replicas for all data items, and a \textit{partially replicated}
   system, in which at least one server acts as a replica for only a
   subset of all data items. For generality, and, for applicability to
-  many modern ``sharded'' or ``partitioned'' data storage systems like
-  Dynamo, we consider partially replicated systems.} a server that can
-handle an operation for a given data item is called a \textit{replica}
-for that item. While this standard model is useful, there are several
-other cases we should consider.
+  many modern ``sharded'' or ``partitioned'' data storage
+  systems~\cite{dynamo, pnuts, bigtable, spanner}, we consider partially
+  replicated systems.} a server that can handle an operation for a
+given data item is called a \textit{replica} for that item. While this
+standard model is useful, there are several other cases we should
+consider.
 
 First, clients may wish to contact multiple servers. For example, to
 ensure that the effects of operations will persist in the event of
@@ -51,14 +51,15 @@ number of participating servers required for an operation, we propose
 \textit{$K$-availability}: if a client can contact $K$ servers, then
 it eventually receives a response from all of them, even in the
 presence of indefinitely long network partitions. Compared to a system
-providing high availability ($1$-availability), a system with
-$2$-availability will require more messaging and possibly higher
-latency and may experience more unsuccessful operations in the
-presence of network and server failures.  As is commmon in standard
-consensus algorithms like Paxos, clients may want to contact a
-majority of $N$ servers in a system. This \textit{majority
-  availability} (a special case of $K$-availability with $K=\lceil
-\frac{N}{2} \rceil$) is ``more available'' than full $N$-availability.
+providing \textit{high availability} ($1$-availability), a system with
+$2$-availability will be \textit{less available}, or require more
+messaging and possibly higher latency and may experience more
+unsuccessful operations in the presence of network and server
+failures.  As is commmon in standard consensus algorithms like Paxos,
+clients may want to contact a majority of $N$ servers in a
+system. This \textit{majority availability} (a special case of
+$K$-availability with $K=\lceil \frac{N}{2} \rceil$) is \textit{more
+  available} than full $N$-availability.
 
 Clients may also wish to contact the same server (or set of servers)
 across subsequent operations. As we will discuss in
@@ -79,11 +80,12 @@ tolerance), so we generalize sticky availability to \textit{$K$-sticky
   availability}, which provides sticky availability with $K$ distinct
 servers. A client may choose to become $1$-sticky available by acting
 as a server itself; for example, a client might cache its reads and
-writes. However, a single client cannot achieve $K$-sticky
-availability with $K>1$ without contacting other replicas. Moreover, ``sticking'' all clients
-to a designated set of servers (i.e., master availability) is a
-special case of sticky availability and is ``less available'' than the
-equivalent non-mastered sticky availability.
+writes~\cite{bolton, sessionguarantees, swift}. However, a single client
+cannot achieve $K$-sticky availability with $K>1$ without contacting
+other replicas. Moreover, ``sticking'' all clients to a designated set
+of servers (i.e., master availability) is a special case of sticky
+availability and is ``less available'' than the equivalent
+non-mastered sticky availability.
 
 \begin{figure}
 \centering
@@ -132,7 +134,7 @@ $N$-availability for writes and $1$-availability for reads in a
 write-all, read-one data store), system membership changes, or
 heterogeneous replicas (e.g., servers in a local and remote
 datacenters) but believe there are several avenues for further
-taxnomization.
+taxonomization.
 
 \subsection{Transactional Availability}
 
@@ -145,7 +147,7 @@ multiple objects. Accordingly, by itself, replica availability is
 insufficient to describe availability guarantees for
 transactions. Additionally, given the choice of \textit{commit} and
 \textit{abort} responses---which signal transaction success or failure
-to a client---we must be careful in how we define transactional availability.
+to a client---we must carefully define transactional availability.
 
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and

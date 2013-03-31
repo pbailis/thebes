@@ -2,12 +2,11 @@
 \section{Future Work}
 \label{sec:futurework}
 
-We believe that there are several promising avenues for future work in
-Highly Available Transaction systems:
+There are several promising avenues for future work in HAT systems:
 
-\textbf{What are the limits of HAT systems, and how are they defined?}
-In this work, we have taxonomized several well-defined and
-well-documented consistency properties. This is useful as it
+\textbf{What are the limits of achievable HAT models, and how are they
+  defined?}  In this work, we have taxonomized several well-defined
+and well-documented semantic properties. This is useful as it
 contextualizes decades of existing database and distributed systems
 design and algorithms but does not provide guidance as to what
 consistency models are the ``strongest''---or admit the smallest set
@@ -48,14 +47,14 @@ a narrow case study in this work, but a general taxonomization of
 techniques such as escrow transactions~\cite{escrow},
 Sagas~\cite{sagas}, and other long-running transaction
 support~\cite{gray-virtues} could help answer the challenge of
-programming in a weakly consistent environment. Additionally, HAT
-guarantees can be strengthened by considering failure models with,
-say, bounded asynchrony or service-level agreements from underlying
-hardware. Additionally, while we have focused on systems that provide
-a single availability mode, there are several interesting hybrids to
-consider. For example, a system may provide ``best-effort'' stickiness
-(or serializability!) in the absence of partitions, but, in the
-presence of partitions, ``lose'' guarantees by having clients
-reconnect to an available replica. This strategy provides stronger
-guarantees in the absence of partitions but, to provide availability,
-sacrifices them in the event of partitions.
+programming in a weakly consistent environment. HAT guarantees can
+also be strengthened by considering weaker failure models such as
+bounded asynchrony or models in which the underlying hardware provides
+explicit service-level agreements. Additionally, while we have focused
+on systems that provide a single availability mode, there are several
+interesting hybrids to consider. For example, a system may provide
+``best-effort'' stickiness (or serializability) in the absence of
+partitions, but, in the presence of partitions, ``lose'' guarantees by
+having clients reconnect to an available replica. This strategy
+provides stronger guarantees in the absence of partitions but, to
+provide availability, sacrifices them in the event of partitions.

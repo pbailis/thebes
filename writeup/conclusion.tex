@@ -1,27 +1,30 @@
 
 \section{Conclusion}
 
-In this paper, we have begun to understand the relationship between
+In this paper, we have explored the relationship between
 multi-operation, multi-object transactions and high availability. We
 have outlined requirements for high availability in a transactional
 context, or Highly Available Transactions (HATs) and taxonomized
 guarantees spanning both distributed systems and ACID database
-literature accordingly. Many transactional guarantees are achievable
-with high availability, while a few, like preventing Lost Update and
-Write Skew, are not. To understand the benefits of high availability
-and low latency, we classified the prevalence and cost of partitions
-and network latency both in the literature and via experiment, while
-analyzing existing transactions to determine whether HATs were
-sufficient to ensure application consistency.
+literature. Many transactional guarantees are achievable with high
+availability, while a few, like preventing Lost Update and Write Skew,
+are not. To understand the benefits of high availability and low
+latency, we classified the prevalence and cost of partitions and
+network latency both in the literature and via experiment, analyzing
+existing transactions to determine whether HATs were sufficient to
+ensure application consistency, and validated intuitions about the
+performance benefits of HAT on public cloud infrastructure.
 
-Fundamentally, high availability represents a new constraint for
-database designs. While the CAP Theorem has had a large impact on
-highly available distributed data storage design, our knowledge of
-database systems has not kept pace. The key distributed systems
-challenge of designing distributed algorithms and architectures for
-partial failure and network asynchrony is largely unaddressed in the
-literature on transaction processing systems. To fully realizing the
-potential of HAT systems will require further rearchitecture and study
-of existing database designs as well as better understanding of
-application semantics and their relationship to distributed
-consistency.
+Highly available operation represents a serious but often overlooked
+consideration in distributed database designs. While the CAP Theorem
+has had a large impact on highly available distributed data storage
+design, our treatment of high availability and low latency in
+transactional database systems has not kept pace. The key distributed
+systems challenge of designing distributed algorithms and
+architectures for partial failure and network asynchrony is largely
+unaddressed in the literature on transaction processing systems. Fully
+realizing the potential of HAT systems and bringing transactional
+functionality to a large class of scalable data stores will require
+further rearchitecture and study of existing database designs as well
+as better understanding of application semantics and their
+relationship to distributed consistency.

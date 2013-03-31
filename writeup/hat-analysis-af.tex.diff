@@ -1,0 +1,267 @@
+5,10c5,10
+< HAT systems, or systems providing transactions with transactional
+< availability with high availability ($1$-available) or sticky high
+< availability ($1$-sticky-available), offer substantial latency and
+< availability benefits, yet they come with a cost to achievable
+< semantics. In this section, we delineate which of several ACID,
+< distributed consistency, and session consistency levels can be
+---
+> HAT systems provide transactions with transactional
+> availability and either high availability ($1$-available) or sticky high
+> availability ($1$-sticky-available). They offer substantial latency and
+> availability benefits compared to traditional distributed databases, 
+> yet they cannot achieve all the traditional semantics. In this section, we delineate ACID,
+> distributed consistency, and session consistency levels which can be
+12c12
+< Repeatable Read isolation, and many session guarantees) and sticky
+---
+> Repeatable Read isolation, and many session guarantees), those with sticky
+14c14
+< which cannot (preventing Lost Update and Write Skew, recency).  We
+---
+> the properties which cannot be provided in a HAT system (those preventing Lost Update and Write Skew, or with recency).  We
+18,27c18,25
+< As Brewer states, ``systems and database communities are separate but
+< overlapping (with distinct vocabulary)''~\cite{brewer-slides}. With
+< this challenge in mind, we draw on existing properties and definitions
+< from the database and distributed systems literature, providing a
+< brief, informal explanation and example for each guarantee. In
+< particular, for our ACID guarantees, we draw largely on Atul Adya's
+< dissertation~\cite{adya}, Berenson et al.'s 1995 critique of the ANSI
+< SQL Specification~\cite{ansicritique}, and the ANSI SQL
+< specification~\cite{ansi-sql}. We provide a set of formal definitions
+< and semantics in our extended Technical Report~\cite{hat-tr}.
+---
+> When possible, we build on existing properties and definitions from the
+> database and distributed systems literature, providing a brief,
+> informal explanation and example for each guarantee. In particular,
+> care is needed for the DB isolation guarantees, since particular systems use the same terms for different mechanisms, and sometimes these have properties additional to those given in implementation-agnostic definitions (which may also differ among themselves, for same same isolation level name). 
+> We draw largely on Atul Adya's dissertation~\cite{adya}, and somewhat on its predecessor work:  the ANSI SQL
+> specification~\cite{ansi-sql} and Berenson et al.'s 1995 critique of this~\cite{ansicritique}. 
+> A set of formal definitions
+> and semantics are in our extended Technical Report~\cite{hat-tr}.
+32,33c30,32
+< To begin, we present achievable semantics, offering proof-of-concept
+< algorithms to demonstrate feasibility. These guarantees are fairly
+---
+> To begin, we present well-known semantics that can exist in a HAT system. We offer proof-of-concept
+> algorithms to demonstrate feasibility of implementing these to remain available through partitions. 
+> These guarantees are fairly
+45,48c44,45
+< To begin, Adya's \textit{Read Uncommitted} isolation requires a total
+< order among transactions and requires that each transaction's writes
+< are ordered consistently with this order (prohibiting ``Dirty
+< Writes,'' or $G0$)~\cite{adya}. If two transactions write to the same
+---
+> To begin,  \textbf{Read Uncommitted} isolation is captured by Adya as PL-1, requiring that each transaction's writes are ordered consistently with a single total order on transactions. This prohibits Adya's phenomenon $G0$, also called ``Dirty
+> Writes''  ~\cite{adya}. If two transactions write to the same
+51c48
+< the below example, $T_3$ should eventually only read $a=b=1$ or
+---
+> the below example, $T_3$ should \emph{eventually} only read $a=b=1$ or
+59,65c56,60
+< We will strengthen this property in later models, which will prevent,
+< for instance, reading $a=2, b=1$ at any time (not just
+< ``eventually''). The difference between this total order on
+< transactions and the total order required by serializability is that
+< the Read Uncommitted total order is completely arbitrary (i.e., an
+< order must exist), whereas a serializable total order must be
+< equivalent to a serial execution. Read Uncommitted is easily achieved
+---
+> All later properties will strengthen PL-1. 
+> %We will strengthen this property in later models, which will prevent,
+> % for instance, reading $a=2, b=1$ at any time (not just
+> % ``eventually''). 
+> Unlike the total order required by serializability, the order in PL-1 does not constrain the values seen in transaction's read operations. Read Uncommitted is easily achieved
+70,73c65,69
+< \textit{Read Committed} isolation requires that transactions do not
+< read uncommitted versions of data items (prohibiting both ``Dirty
+< Writes''---as above---and ``Dirty Reads'' phenomena; captured by
+< Adya's $G1a-c$, ANSI's $P1$, and ``broad'' $P1$ (2.2) from Berenson et
+---
+> \textbf{Read Committed} isolation is very important in practice, as it is the default of many DBMSs. Implementations differ, with some based on long-duration X-locks and short-duration S-locks, and others based on multiple versions. The implementations typically have recency and monotonicity properties beyond the simple meaning of the name, which is what is expressed in the implementation-agnostic definitions (requiring that transactions do not
+> access uncommitted or intermediate versions of data items; this prohibits both ``Dirty
+> Writes'', as above, and also ``Dirty Reads'' phenomena). 
+> This isolation is Adya's PL-2, and formalised by prohibiting 
+> Adya's $G1a-c$ (or ANSI's $P1$, or ``broad'' $P1$ (2.2) from Berenson et
+83c79
+< It is fairly easy to prvent ``Dirty Reads'': if each transaction never
+---
+> It is fairly easy for a HAT system to prevent ``Dirty Reads'': if each transaction never
+87c83
+< servers, who will not serve new writes until clients notify them that
+---
+> servers, who will not deliver their value to other readers until notified that
+90,95c86,87
+< \textit{Repeatable Read} isolation is a contentious property. As
+< Berenson et al. discuss~\cite{ansicritique}, Gray's original
+< Repeatable Read lock-based implementation provides substantially
+< richer guarantees than those that are required by the ANSI SQL
+< specification~\cite{gray-isolation}. Gray~\cite{gray-isolation},
+< Berenson et al.~\cite{ansicritique}, and Adya~\cite{adya} all
+---
+> Repeatable Read isolation is a confusing property. Some IBM products use the term for fully serializable isolation. Gray~\cite{gray-isolation},
+> Berenson et al.~\cite{ansicritique}, and Adya's PL-2.99~\cite{adya} all
+97,101c89,96
+< operations except predicate-based reads. However, in its description
+< of Repeatable Read, the ANSI SQL specification provides a useful
+< property which, although is not true to Gray's spirit of Repeatable
+< Read, is also commonly found in distributed consistency models: the
+< ANSI Repeatable Read guarantee requires that, along with observing
+---
+> operations except predicate-based reads (and so Repeatable Read is identical to serializability in a key-value store without predicate-based access). Thus the \textit{Phantom Problem}, whereby two
+> successive predicate-based reads return different
+> data~\cite{gray-isolation}, is the only kind of non-serializable behavior allowed. We will follow these definitions, which are for a property that can't be offered in a highly available way.
+> 
+> As
+> Berenson et al.~\cite{ansicritique} discuss,  the ANSI SQL
+> specification allows many additional behaviors under the term Repeatable Read isolation. 
+> \textbf{ANSI Repeatable Read} requires that, along with respecting
+104,111c99,107
+< Read,'' or P2). In the example below, $T_3$ must read $a=1$:
+< \begin{align*}
+< \small
+< T_1 &: w_x(1)
+< \\T_2 &: w_x(2)
+< \\T_3 &: r_x(1)~r_x(a)
+< \end{align*}
+< This isolation property is a literal interpretation of the phrase
+---
+> Read,'' or P2). 
+> %In the example below, $T_3$ must read $a=1$:
+> %\begin{align*}
+> %\small
+> %T_1 &: w_x(1)
+> %\\T_2 &: w_x(2)
+> %\\T_3 &: r_x(1)~r_x(a)
+> %\end{align*}
+> This is a literal interpretation of the phrase
+114,140c110,120
+< transaction. By itself, this property is rather weak---we can always
+< read $\bot$ for each data item. However, when coupled with additional
+< properties, like transactional atomicity, it is stronger: the repeated
+< reads must obey additional ordering constraints
+< (Section~\ref{sec:discussion}). In fact, distributed systems often
+< describe a ``consistent snapshot'' across a set of related events as a
+< \textit{cut} across a set of participants or, in our case, data
+< items. Accordingly, to capture the notion that the transaction should
+< read from a (non-changing) consistent cut over data items (and to
+< disambiguate from the aforementioned stronger Repeatable Read
+< properties), we call ANSI SQL ``Repeatable Read'' (i.e., preventing
+< P2) \textbf{Cut Isolation}. It is possible to satisfy cut isolation
+< with high availability by caching appropriate versions for each of a
+< transaction's reads or, alternatively, using multi-versioning on each
+< replica and ensuring that each of a transaction's successive reads
+< return the same version of each data item.
+< 
+< We can further consider two variants of Cut Isolation. The first is
+< relatively straightforward and provides a cut across individual data
+< items. We will call this \textit{Item Cut Isolation}. The second
+< provides a cut over individual data items and over logical ranges of
+< data items, or predicate-based reads (e.g., \texttt{SELECT
+<   WHERE}). This prevents the \textit{Phantom Problem}, whereby two
+< successive predicate-based reads return different
+< data~\cite{gray-isolation}. We call predicate-based cut isolation,
+< which prevents Phantoms, \textit{Predicate Cut
+<   Isolation}.\footnote{Oracle provides an isolation level called
+---
+> transaction. By itself, this property is extremely weak---we can always
+> read $\bot$ for each data item---and easily achieved in a HAT by caching the values read. 
+> 
+> Between our Repeatable Read (PL-2.99) and the ANSI definition, is the notion which we call \textbf{Item Cut Isolation}: that all the transaction's reads should see values from a non-changing consistent cut or snapshot over the data. It is possible to satisfy Item Cut Isolation
+> with high availability, by using multi-versioning on each
+> replica,  and ensuring that each of a transaction's reads
+> return an appropriately chosen version.
+> 
+> A stronger achievable property asks that a consistent cut provides all predicate-reads (e.g., \texttt{SELECT
+>   WHERE}) as well as the item reads that are done by a transaction. 
+> We call this \textit{Predicate Cut Isolation}\footnote{Oracle provides an isolation level called
+145,146c125,127
+<   our discussion is easily extended to incorporate it.}
+< 
+---
+>   our discussion is easily extended to incorporate it.} 
+> and it prohibits Phantoms.
+>   
+151c132
+< transactional atomicity restricts transactions' ability to view the
+---
+> transactional atomicity restricts the ability to view the
+153,159c134,135
+< atomicity, within each transaction, either all effects of another
+< transaction are observed, or none are (equivalently, once some of the
+< effects of a transaction are observed, all effects are observed). This
+< is a strictly stronger guarantee than Read Committed isolation: in
+< Read Committed, we can read a subset of another transaction's
+< committed writes whereas, with TA, we must read all or none of
+< them. Together with item cut isolation, TA prevents Read Skew
+---
+> atomicity, once some of the
+> effects of a transaction T are observed by another transaction U, thereafter all effects of T are observed by U. Together with item cut isolation, TA prevents Read Skew
+173c149
+< Perhaps perplexingly, discussions of TA are absent from existing
+---
+> Perplexingly, discussions of TA are absent from existing
+193,195c169,170
+< between transactions (other than that there exists some arbitrary
+< ordering). This is a natural concern in a distributed context, and, in
+< the distributed systems literature, many useful \textit{safety}
+---
+> between transactions, other than that there exists some arbitrary
+> ordering. In the distributed systems literature, many useful \textit{safety}
+203c178
+< ``log in'' and ``log out'' operations might form a session.
+---
+> ``log in'' and ``log out'' operations might form a session. 
+210c185
+< order. The ordering of reads should respect any total ordering on
+---
+> order. The ordering of reads should respect any externally observable total ordering on
+214,215c189,190
+< each session's writes be serialized. Any order on transactions should
+< also respect the order in which each session submitted transactions.
+---
+> each session's writes be applied to any replica in the order they were submitted by the client. Any order on transactions should
+> also be consistent with any precedence that a global observer would see.
+218c193
+< a session observes an effect of transaction $T_2$ and subsequently
+---
+> a session observes an effect of transaction $T_1$ and subsequently
+220,221c195,196
+< effects of $T_2$ if it can also observe $T_1$'s (or later values for
+< $T_1$'s effects). Any order on transactions should respect the
+---
+> effects of $T_2$ if it can also observe $T_1$'s effects (or later values that supercede $T_1$'s). 
+> Any order on transactions should respect the
+255c230
+< writes-follow-reads) and is also referred to as PL-2L
+---
+> writes-follow-reads) and is also referred to by Adya as PL-2L
+330c305
+< and one-copy serializability---requires unavailability.
+---
+> and one-copy serializability---inherently requires unavailability.
+384,385c359
+< $1$ at any given time, then this write skew would lead to a
+< non-serializable execution. Write skew in particular is a somewhat
+---
+> $1$ at any given time, then this write skew would violate the constraint (which is preserved in serializable executions). Write skew is a somewhat
+390c364
+< The inability to prevent Lost Update means that Consistent Read,
+---
+> Their need to prevent Lost Update means that Consistent Read,
+392,394c366,367
+< unavailable. The inability to prevent Lost Update or Write Skew means
+< that Repeatable Read and One-Copy Serializability guarantees are
+< unavailable~\cite{adya,ansicritique}.
+---
+> unavailable.  Repeatable Read (in the sense of Gray~\cite{gray-isolation} or Adya) and One-Copy Serializability need to prevent both Lost Update and Write Skew; this means
+> that they are also inherently unavailable.
+410c383
+< force a system to violate any recency bound, so recency bounds are not
+---
+> force an available system to violate any recency bound, so recency bounds are not
+442c415
+< models found in the literature. This taxonimization is \textit{not}
+---
+> models found in the literature. This taxonomy  is \textit{not}

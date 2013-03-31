@@ -43,23 +43,24 @@ tolerate these costs, Spanner, or similar strongly consistent,
 unavailable systems---including Calvin~\cite{calvin},
 G-Store~\cite{gstore}, Gemini~\cite{redblue}, Generalized Snapshot
 Isolation~\cite{generalizedsnapshot}, Granola~\cite{granola},
-HBase~\cite{hbase}, MDCC~\cite{mdcc}, Megastore~\cite{megastore},
-Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis}, and
-Walter~\cite{walter}---are a reasonable choice. We note that many
-replication techniques target variants of Snapshot
-Isolation~\cite{middleware-db}.
+HBase, MDCC~\cite{mdcc}, Megastore~\cite{megastore},
+Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis},
+Walter~\cite{walter}, and a range of snapshot isolation
+techniques~\cite{middleware-db, kemme-snapshot,
+  daudjee-snapshot}---are a reasonable choice.
 
-With HATs, we seek an alternative set of semantics that are
-still useful but do not violate requirements for high availability or
-low latency. Recent systems proposals such as Swift~\cite{swift},
+With HATs, we seek an alternative set of semantics that are still
+useful but do not violate requirements for high availability or low
+latency. Recent systems proposals such as Swift~\cite{swift},
 Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
 provide transactional causal consistency guarantees with varying
-availability and represent a new class of (sticky) HAT systems.
+availability and represent a new class of (sticky) HAT
+systems. 
 
 
 
 
-
+From Serializable to Causal Transactions for Collaborative Applications: Causal consistency with lost update
 
 
 Middleware-based Database Replication: The Gaps Between Theory and Practice

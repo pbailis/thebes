@@ -1,4 +1,14 @@
 
+
+RC*
+
+
+****"We outline the high-level gist of available implementations"
+
+"Goal here is not to provide optimal or even efficient implementations"
+
+
+
 INTRO
 
 references from start:
