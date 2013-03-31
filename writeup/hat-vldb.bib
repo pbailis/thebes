@@ -4,8 +4,50 @@
  booktitle = {SOSP 2011},
 } 
 
+@inproceedings{krikellas-bargain,
+  author    = {Konstantinos Krikellas and
+               Sameh Elnikety and
+               Zografoula Vagena and
+               Orion Hodson},
+  title     = {Strongly consistent replication for a bargain},
+  booktitle = {ICDE 2010},
+  pages     = {52-63},
+}
+
+@inproceedings{generalizedsnapshot,
+  author    = {Sameh Elnikety and
+               Willy Zwaenepoel and
+               Fernando Pedone},
+  title     = {Database Replication Using Generalized Snapshot Isolation},
+  booktitle = {SRDS 2005},
+  pages     = {73-84},
+}
+
+@article{kemme-snapshot,
+  author    = {Yi Lin and
+               Bettina Kemme and
+               Ricardo Jim{\'e}nez-Peris and
+               Marta Pati{\~n}o-Mart\'{\i}nez and
+               Jos{\'e} Enrique Armend{\'a}riz-I{\~n}igo},
+  title     = {Snapshot isolation and integrity constraints in replicated
+               databases},
+  journal   = {ACM TODS},
+  volume    = {34},
+  number    = {2},
+  year      = {2009},
+
+}
+
+@inproceedings{daudjee-snapshot,
+  author    = {Khuzaima Daudjee and
+               Kenneth Salem},
+  title     = {Lazy Database Replication with Snapshot Isolation},
+  booktitle = {VLDB 2006},
+  pages     = {715-726},
+}
+
 @inproceedings{pnuts,
-  title={PNUTS: {Yahoo!'s} hosted data serving platform},
+  title={{PNUTS}: {Yahoo!'s} hosted data serving platform},
   author={Cooper, B.F. and Ramakrishnan, R. and Srivastava, U. and Silberstein, A. and Bohannon, P. and Jacobsen, H.A. and Puz, N. and Weaver, D. and Yerneni, R.},
   booktitle = {VLDB 2008}
 }
@@ -164,10 +206,17 @@ howpublished={https://forums.aws.amazon.com/ann.jspa?annID=611}}
  journal = {SIGCOMM 2011}}
 } 
 
+@inproceedings{wisemann-survey,
+  title={Understanding replication in databases and distributed systems},
+  author={Wiesmann, Matthias and Pedone, Fernando and Schiper, Andr{\'e} and Kemme, Bettina and Alonso, Gustavo},
+  booktitle={ICDCS 2000},
+  pages={464--474},
+}
+
 
 @inproceedings{ip-backbone-failures,
  author = {Markopoulou, Athina and Iannaccone, Gianluca and Bhattacharyya, Supratik and Chuah, Chen-Nee and Ganjali, Yashar and Diot, Christophe},
- title = {Characterization of failures in an operational IP backbone network},
+ title = {Characterization of failures in an operational {IP} backbone network},
 journal = {IEEE/ACM Trans. Netw.},
  issue_date = {August 2008},
  volume = {16},
@@ -184,12 +233,10 @@ journal = {IEEE/ACM Trans. Netw.},
  booktitle = {NOSSDAV 2002}}
 
 
-@article{mdcc,
-  title={MDCC: Multi-Data Center Consistency},
+@inproceedings{mdcc,
+  title={{MDCC}: Multi-Data Center Consistency},
   author={Kraska, T. and Pang, G. and Franklin, M.J. and Madden, S.},
-  journal={arXiv preprint arXiv:1203.6049},
-  year={2012}
-}
+  booktitle={EuroSys 2013}}
 
 @TechReport{cac,
 author = {P. Mahajan and L. Alvisi and M. Dahlin}, 
@@ -202,6 +249,11 @@ author = {P. Mahajan and L. Alvisi and M. Dahlin},
  category = "recent,WANrepl,byz,PRACTI,webos" 
  } 
 
+@article{hstore,
+  title={H-store: a high-performance, distributed main memory transaction processing system},
+  author={Kallman, Robert and Kimura, Hideaki and Natkins, Jonathan and Pavlo, Andrew and Rasin, Alexander and Zdonik, Stanley and Jones, Evan PC and Madden, Samuel and Stonebraker, Michael and Zhang, Yang and others},
+  booktitle={VLDB 2008}
+}
 
 @inproceedings{calm,
 title = {Consistency Analysis in {Bloom}: a {CALM} and Collected Approach},
@@ -335,6 +387,39 @@ booktitle={SIGMOD 2013}}
   note={18.1: ``Distributed Concurrency Control (Goal and Overview)''}
 }
 
+@inproceedings{kemme-classification,
+  title={Database replication techniques: A three parameter classification},
+  author={Wiesmann, Matthias and Pedone, Fernando and Schiper, Andr{\'e} and Kemme, Bettina and Alonso, Gustavo},
+  booktitle={SRDS 2000},
+  pages={206--215},
+}
+
+@inproceedings{raynal-causal,
+  title={From serializable to causal transactions for collaborative applications},
+  author={Raynal, Michel and Thia-Kime, G{\'e}rard and Ahamad, Mustaque},
+  booktitle={EUROMICRO 1997},
+  pages={314--321},
+}
+
+@inproceedings{middleware-db,
+  title={Middleware-based database replication: the gaps between theory and practice},
+  author={Cecchet, Emmanuel and Candea, George and Ailamaki, Anastasia},
+  booktitle={SIGMOD 2008},
+  pages={739--752},
+}
+
+@phdthesis{kemme-thesis,
+  title={Database replication for clusters of workstations},
+  author={Kemme, Bettina},
+  year={2000},
+  school={EPFL}
+}
+
+@inproceedings{brewer-slides,
+  title={Towards robust distributed systems},
+  author={Brewer, Eric},
+  booktitle = {{Keynote at PODC 2000}}}
+
 @article{vogels-defs,
  author = {Vogels, Werner},
  title = {Eventually consistent},
@@ -413,9 +498,10 @@ note = {Note: version appearing on arXiv is a superset of conference submission 
 title={{Highly Available Transactions: Virtues and Limitations (Technical Report)}},
 note={TODO}}
 
+
 @online{tpcc,
 title={{TPC Benchmark C} revision 5.11},
-author={TCP Council},
+author={{TPC Council}},
 year=2010}
 
 
@@ -472,7 +558,7 @@ note={\url{http://voltdb.com/dig-deeper/faq.php}, also verified with VoltDB stak
 @article{davidson-survey,
   title={Consistency in partitioned networks},
   author={Davidson, S.B. and Garcia-Molina, H. and Skeen, D.},
-  journal={ACM Computing Surveys},
+  journal={ACM CSUR},
   volume={17},
   number={3},
   pages={341--370},
@@ -524,7 +610,7 @@ year = {2011}}
 @article{acid-define,
   title={Principles of transaction-oriented database recovery},
   author={Haerder, T. and Reuter, A.},
-  journal={ACM Computing Surveys (CSUR)},
+  journal={ACM CSUR},
   volume={15},
   number={4},
   pages={287--317},
@@ -577,6 +663,24 @@ title = {{ISO/IEC 9075-2:2011} \textit{Information technology -- Database langua
   institution={Princeton University, Department of Computer Science}
 }
 
+@techreport{ceri-mechanism,
+  title={A classification of update methods for replicated databases},
+  author={Ceri, Stefano and Houtsma, Maurice AW and Keller, Arthur M and Samarati, Pierangela},
+  year={1994},
+  number={CS-TR-91-1392},
+  intitution={Stanford University Department of Computer Science}
+}
+
+
+@techreport{chen-mechanism,
+  title={A structural classiﬁcation of integrated replica
+control mechanisms},
+  author={S. W. Chen and C. Pu},
+  year={1992},
+  number={CUCS-006-92},
+  intitution={Columbia University Department of Computer Science}
+}
+
 @inproceedings{kraska-s3,
   title={Building a database on {S3}},
   author={Brantner, M. and Florescu, D. and Graf, D. and Kossmann, D. and Kraska, T.},
@@ -610,7 +714,7 @@ note = {Personal communication and draft under submission (\url{http://asc.di.fc
 }
 
 @inproceedings{ansicritique,
-  title={A critique of ANSI SQL isolation levels},
+  title={A critique of {ANSI SQL} isolation levels},
   author={Berenson, H. and Bernstein, P. and Gray, J. and Melton, J. and O'Neil, E. and O'Neil, P.},
   booktitle={SIGMOD 1995}}
 
@@ -688,7 +792,7 @@ booktitle={PDP 2004}}
 
 @misc{abadi-pacelc, 
 author = {Daniel J. Abadi}, 
-title = {Consistency Tradeoffs in Modern Distributed Database System Design: CAP is Only Part of the Story}, 
+title = {Consistency Tradeoffs in Modern Distributed Database System Design: {CAP} is Only Part of the Story}, 
 howpublished = {IEEE Computer, 45(2)}, 
 year = {2012}, 
 pages = {37-42}, 
@@ -720,6 +824,13 @@ pages = {37-42},
   pages={223--234},
 }
 
+@inproceedings{gray-virtues,
+  title={The transaction concept: Virtues and limitations},
+  author={Gray, Jim},
+  booktitle={VLDB 1981},
+  pages={144--154},
+}
+
 @INPROCEEDINGS{sessionguarantees,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
@@ -746,7 +857,7 @@ year =  {1987}}
 @article{bernstein-concurrency,
   title={Concurrency control in distributed database systems},
   author={Bernstein, P.A. and Goodman, N.},
-  journal={ACM Computing Surveys (CSUR)},
+  journal={ACM CSUR},
   volume={13},
   number={2},
   pages={185--221},

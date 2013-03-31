@@ -1,4 +1,40 @@
 
+
+Deutsch concludes his list of ``Fallacies'' by noting that ignoring
+network failures and latency such as those in
+Section~\ref{sec:motivation} can ``cause big trouble and painful
+learning experiences''~\cite{fallacies-deutsch}. However, systems
+designers must make fundamental trade-offs between latency, system
+behavior during partitions, and achievable semantics. In this section,
+we briefly discuss known semantic limits for systems wishing to
+maintain high availability and their impact on modern database
+systems. We show that many database systems operate under weak model
+whose availability characteristics are unknown, motivating further
+study of these models in a highly available context in the remainder
+of this paper.
+
+One of the most popularly celebrated impossibility results in
+distributed systems is Brewer's CAP Theorem~\cite{brewer-slides},
+which, as formally proven by Gilbert and Lynch~\cite{gilbert-cap},
+states that it is impossible to maintain linearizability , or the
+ability to read the last completed write, (``C,'' or
+``consistency''---albeit poorly named) and replica availability, or a
+guaranteed response, (``A'') in the presence of network partitions
+(``P''). Brewer's Theorem has roots in decades of distributed database
+research~\cite{davidson-survey} and has had a substantial impact on
+recent large-scale distributed systems design~\cite{bigtable, pnuts,
+  dynamo}: while CAP is narrowly scoped to the impossibility of
+building highly available linearizable systems, it is often
+interpreted to preclude a larger set of guarantees, including ACID
+(transactional atomicity, consistency, isolation and durability
+guarantees). We are unlikely to determine the exact cause of this
+confusion, but it appears as early as the first public announcement of
+Brewer's result, in which ''distributed databases'' appear as an
+example of unavailable systems~\cite{brewer-slides}. While, in the
+same document, Brewer is careful to note that consistency and
+availability are a ``spectrum,'' all of ACID is often categorized as
+unavailable~\cite{hn, foundation-article}.
+
 Read Uncommitted is similar to the distributed systems
 concept of replica convergence, in which all replicas for a data item
 must end up with the same data item. This convergence is usually

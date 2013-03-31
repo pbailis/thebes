@@ -1,27 +1,32 @@
 
 \section{Conclusion}
+The current state of database software offers uncomfortable and unnecessary
+choices between availability and transactional semantics.
+In this paper we expose a broad design space of Highly Available Transactional 
+Systems (HATs), which can offer the key benefits of
+highly available distributed systems---partition tolerance and low-latency 
+writes---while also providing a family of transactional isolation 
+levels and replica semantics that have been widely used in practice. 
+In taxonomizing this design space, we show that many transactional 
+guarantees are achievable with high availability, while a few, 
+like preventing Lost Update and Write Skew, are not. 
 
-In this paper, we have begun to understand the relationship between
-multi-operation, multi-object transactions and high availability. We
-have outlined requirements for high availability in a transactional
-context, or Highly Available Transactions (HATs) and taxonomized
-guarantees spanning both distributed systems and ACID database
-literature accordingly. Many transactional guarantees are achievable
-with high availability, while a few, like preventing Lost Update and
-Write Skew, are not. To understand the benefits of high availability
-and low latency, we classified the prevalence and cost of partitions
-and network latency both in the literature and via experiment, while
-analyzing existing transactions to determine whether HATs were
-sufficient to ensure application consistency.
+There has been some debate in the database community regarding the importance
+of availability in modern databases; there is also concern about the utility of
+relaxed isolation.  Our analysis and experiments in Sections~\ref{sec:motivation} 
+and~\ref{sec:evaluation} convince us that the availability goals of the NoSQL
+movement will remain a critical aspect of many important systems going forward, and 
+that the isolation levels available via HATs can have significant practical impact
+in delivering useful transactional semantics to application developers.
 
-Fundamentally, high availability represents a new constraint for
-database designs. While the CAP Theorem has had a large impact on
-highly available distributed data storage design, our knowledge of
-database systems has not kept pace. The key distributed systems
-challenge of designing distributed algorithms and architectures for
-partial failure and network asynchrony is largely unaddressed in the
-literature on transaction processing systems. To fully realizing the
-potential of HAT systems will require further rearchitecture and study
-of existing database designs as well as better understanding of
-application semantics and their relationship to distributed
-consistency.
+Much of the prior research in distributed transactions has focused on prototyping 
+individual points in the design space, with a focus on providing serializability
+at the expense of availability.  Our goal in this paper has been to take a broader view. 
+We taxonomize the joint design space of replica consistency and transactional isolation,
+and identify what is possible and impossible to achieve semantically via HATs.  From
+a research perspective, this offers a long-overdue connection between storage 
+semantics studied in the database and distributed systems communities.
+With this understanding in hand, the next challenge is to return to issues of 
+performance and systems architecture within the HATs design space.  Based on our 
+understanding of what is desired in the field and what is possible to achieve, we 
+believe this is an area of great opportunity in the coming years.
