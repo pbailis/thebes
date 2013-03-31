@@ -5,7 +5,10 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
-\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, draftwatermarkbottom, draftwatermarktop}
+\let\proof\relax
+\let\endproof\relax
+
+\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, draftwatermarkbottom, draftwatermarktop, amsthm}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \usepackage{xspace}
 
@@ -15,6 +18,13 @@
 \newcommand{\versus}{{\em vs.}\xspace}
 \newcommand{\ie}{{\em i.e.,}\xspace}
 \newcommand{\eg}{{\em e.g.,}\xspace}
+
+\theoremstyle{definition}
+\newtheorem{observation}{Observation}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+
 
 \renewcommand{\ttdefault}{fi4}
 
@@ -65,20 +75,21 @@
 \maketitle
 
 \begin{abstract}
-To minimize network latency and handle the possibility of partial
-failure and network partitions, many modern distributed systems eschew
-transactional functionality, which provides strong semantic guarantees
-for groups of multiple operations over multiple data items. In this
-work, we consider the problem of achieving transactional guarantees
-with high availability, or without suffering from unavailability
-during system partitions or incurring high network latency.  We
-introduce a new taxonomy of high availability and analyze a
-combination of ACID and distributed consistency guarantees to identify
-which can and cannot be achieved by Highly Available Transaction (HAT)
-systems. In doing so, we analytically and experimentally quantify the
-benefit of providing high availability as well as the associated
-semantic compromises.
+To minimize network latency and remain online during partial failure
+and network partitions, many modern distributed data storage systems
+eschew transactional functionality, which provides strong semantic
+guarantees for groups of multiple operations over multiple data
+items. In this work, we consider the problem of providing Highly
+Available Transactions (HATs), or transactional guarantees that do not
+suffer from unavailability during system partitions or incur high
+network latency.  We introduce a new taxonomy of high availability and
+analyze a existing ACID and distributed consistency guarantees to
+identify which can and cannot be achieved in HAT systems. In doing so,
+we analytically and experimentally quantify the benefit of providing
+high availability as well as the associated semantic compromises.
 \end{abstract}
+
+In the debate over NoSQL systems versus traditional DBMS technologies for distributed data management, one key issue is that many NoSQL systems aim for availability in the face of partitions, and provide no, or restricted, support for transactions that group multiple operations over multiple data items. The authors recently advocated Highly Available Transaction (HAT) systems, where general transactions are provided with ACID-like semantic guarantees such as weak isolation levels, in ways that remain available during partitions and avoid high network latency. Here we introduce a new taxonomy of partition-availability properties. We analyse existing ACID and distributed consistency guarantees, showing the availability that can be achieved for each.  We analytically and experimentally estimate the performance gains and semantic compromises of providing high availability, compared to traditional serializable transactions in an internet-scale setting.
 
 \input{intro.tex}
 
@@ -112,10 +123,11 @@ semantic compromises.
 %APPENDIX is optional.
 % ****************** APPENDIX **************************************
 % Example of an appendix; typically would start on a new page
-%pagebreak
+\pagebreak
 
-%\begin{appendix}
+\begin{appendix}
+\input{availability-appendix.tex}
 
-%\end{appendix}
-
+\input{hat-appendix.tex}
+\end{appendix}
 \end{document}

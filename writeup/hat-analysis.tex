@@ -459,8 +459,8 @@ Causal\\\hline Unavailable & Cursor Stability (CS)\lostupdate,
 Snapshot Isolation (SI)\lostupdate, Repeatable Read
 (RR)\lostupdate\rwskew, One-Copy Serializability
 (1SR)\lostupdate\rwskew, Recency\linearizable, Safe\linearizable,
-Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
-\\\hline
+Regular\linearizable, Linearizability\linearizable, Strong
+1SR\lostupdate\rwskew\linearizable \\\hline
 \end{tabular}
 \caption{Summary of highly available, sticky highly available, and
   unavailable models considered in this paper. Unavailable models are
@@ -484,22 +484,23 @@ Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
  \node[draw=none,fill=none] (ru) at (-1.2, 0) {RU};
 
  \node[draw=none,fill=none] (ta) at (-.2, 1.3) {TA};
- \node[draw=none,fill=none] (mr) at (2.4, 0) {MR};
- \node[draw=none,fill=none] (mw) at (3.6, 0) {MW};
- \node[draw=none,fill=none] (wfr) at (6.3,0) {WFR};
- \node at (5,0) [sticky] (ryw) {RYW};
+
+ \node[draw=none,fill=none] (mr) at (3.6, 0) {MR};
+ \node[draw=none,fill=none] (mw) at (4.8, 0) {MW};
+ \node[draw=none,fill=none] (wfr) at (2.4,0) {WFR};
+ \node at (6.1,0) [sticky] (ryw) {RYW};
 
  \node[noha](recency) at (7.7, 0) {recency};
  \node[noha](safe) at (7.7, 1) {safe};
  \node[noha](regular) at (7.7, 2) {regular};
  \node[noha](linearizable) at (7.7, 3) {linearizable};
- \node at (3.6, 2) [sticky] (causal) {causal};
- \node at (3.6, 1) [sticky] (pram) {PRAM};
+ \node at (4.8, 2) [sticky] (causal) {causal};
+ \node at (4.8, 1) [sticky] (pram) {PRAM};
  \node[noha] (cs) at (-1.2, 1.8) {CS};
  \node[noha] (rr) at (-.2, 2.7) {RR};
  \node[noha] (si) at (2.2, 2.4) {SI};
  \node[noha] (1sr) at (1.2, 3.2) {1SR};
- \node[noha] (ssr) at (3.6, 3.6) {Strong-1SR};
+ \node[noha] (ssr) at (3.85, 3.6) {Strong-1SR};
 
  \draw [->, red] (recency) -- (safe);
  \draw [->, red] (safe) -- (regular);
@@ -538,7 +539,8 @@ Regular\linearizable, Strong 1SR\lostupdate\rwskew\linearizable
  \draw [->, red] (si) -- (1sr);
  \draw [->, red] (ta) -- (si);
  \draw [->, red] (ta) -- (rr);
- \draw [->, red] (causal) -- (ssr);
+ \draw [->, red] (causal) -- (linearizable);
+ \draw [->, red] (ryw) -- (safe);
 
 \end{tikzpicture}
 \label{fig:hat-order}
