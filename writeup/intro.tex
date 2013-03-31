@@ -39,7 +39,7 @@ provide serializability for general-purpose transactions, they are
 apparently strong enough to deliver acceptable behavior to many
 application programmers and are substantially stronger than the
 semantics of current highly available systems. This raises a natural
-question: which of these alaternative semantics can be provided while
+question: which of these alternative semantics can be provided while
 remaining highly available?
 
 Unfortunately, the relationship of the CAP Theorem and ACID semantics
@@ -67,25 +67,26 @@ so, we demonstrate that many \textit{implementations} of HAT semantics
 are not highly available but that their unavailability is not
 \textit{inherently} required. Our investigation shows, somewhat
 surprisingly, that besides serializability, only Snapshot Isolation
-(SI) and Repeatable Reads (RR) are unavailable. We also show that many
-of the weaker data consistency models from distributed systems are
-HAT-compliant.
+(SI) and Repeatable Reads (RR) are unavailable, with most other
+isolation levels being available. We also show that many of the weaker
+data consistency models from distributed systems are HAT-compliant.
 
-More precisely, highly available systems cannot detect conflicts
-between concurrent updates (as needed for preventing Lost Updates or
-Write Skew phenomena). However, Read Committed isolation,
-Transactional Atomicity, and many of the weaker data consistency
-models from database and distributed systems can be implemented in a
-highly available manner. For several of these guarantees, such as
-Transactional Causal Predicate Cut Isolation, we consider a modified
-form of high availiabity in which clients ``stick to'' (i.e., have
-affinity with) at least one server (a property which is often implicit
-in the distributed systems literature~\cite{herlihy-art, cops, eiger,
-  cac} but which requires \textit{explicit} consideration in a
-client-server replicated database context). This sticky availability
-is easily implementatable and widely employed~\cite{cops, eiger,
-  vogels-defs} but is strictly less available than traditional
-definitions of high availability.
+More precisely, the reason why fairly strong models like Snapshot
+Isolation (SI) and Repeatable Reads (RR) are not highly available is
+that they require detecting conflicts between concurrent updates (as
+needed for preventing Lost Updates or Write Skew phenomena). However,
+Read Committed isolation, Transactional Atomicity, and many of the
+weaker data consistency models from database and distributed systems
+can be implemented in a highly available manner. For several of these
+guarantees, such as Transactional Causal Predicate Cut Isolation, we
+consider a modified form of high availability in which clients ``stick
+to'' (i.e., have affinity with) at least one server (a property which
+is often implicit in the distributed systems
+literature~\cite{herlihy-art, cops, eiger, cac} but which requires
+\textit{explicit} consideration in a client-server replicated database
+context). This sticky availability is easily implementable and
+widely employed~\cite{cops, eiger, vogels-defs} but is strictly less
+available than traditional definitions of high availability.
 
 This taxonomy allows us to determine that a wide range of semantic
 guarantees can be delivered with availability in face of partitions,
