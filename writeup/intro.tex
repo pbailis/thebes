@@ -1,32 +1,38 @@
 
 \section{Introduction}
 
-Brewer's 2000 CAP Theorem stated that a highly available system cannot
-provide strong consistency guarantees in the presence of network
-partitions~\cite{gilbert-cap}. This result became a rallying call for
-a generation of highly scalable but semantically weak system
-designs. Most notably, the NoSQL movement embraced this approach,
-offering production-use data platforms that eschewed strong
-consistency guarantees but offered graceful scale-out to many
-servers~\cite{bigtable, pnuts, dynamo}. The consistency concept
-employed in the CAP Theorem came from the distributed systems
-community and concerned reading the most recent version of a data item
-that is replicated across servers.  However, the NoSQL movement
-implicitly used this fairly narrow result to justify a lack of
-general-purpose transactional functionality, or useful semantics for
-groups of operations over multiple data items~\cite{hn,
-  foundation-article}. Over a decade after CAP, we observe a dearth of
-highly available systems providing transactional functionality.
+The prior decade saw enormous churn in the design of widely-deployed
+database backends, from the de facto use of transactional
+RDBMSs~\cite{bernstein-concurrency, bernstein-book, gray-isolation,
+  gray-virtues} to the widespread adoption of loosely-consistent
+distributed key-value stores~\cite{bigtable, pnuts, dynamo}, with
+increasing interest in returning to transactional
+designs~\cite{spanner, walter, foundation-article, krikellas-bargain,
+  eiger}. Instrumental in these trends was the 2000 introduction of
+Brewer's CAP Theorem, which stated that a highly available system
+cannot provide strong consistency guarantees in the presence of
+network partitions~\cite{brewer-slides}. For distributed systems
+designers with requirements for ``always on,'' highly available and
+low latency operation, CAP became an easily understandable indication
+of the competing goals of semantic strength and availability. However,
+as formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
+linearizability, the ability to read the most recent write to a data
+item that is replicated across servers. Yet this result---regarding a
+fairly narrow form of distributed consistency---is often conflated
+with ACID database properties~\cite{brewer-slides, hn,
+  foundation-article}, leading to substantial confusion about the
+relationships between replica consistency, transactional isolation, and high
+availability.
 
 Serializability, the gold standard of traditional ACID transactions,
 is indeed not achievable given a requirement for high availability in
 the presence of partitions~\cite{davidson-survey}. However, database
 systems have a long tradition of providing weaker isolation and
-consistency guarantees~\cite{adya, ansicritique, gray-isolation}. Due
-to their concurrency and overall performance benefits, weak isolation
-models are widely employed, overwhelmingly as the default setting in
-today's traditional ``ACID'' and up-and-coming ``NewSQL'' databases
-and often as the maximum guarantee offered
+consistency guarantees~\cite{adya, ansicritique, gray-isolation,
+  gray-virtues}. Due to their concurrency and overall performance
+benefits, weak isolation models are widely employed, overwhelmingly as
+the default setting in today's traditional ``ACID'' and up-and-coming
+``NewSQL'' databases and often as the maximum guarantee offered
 (Section~\ref{sec:modernacid}). While weak isolation levels do not
 provide serializability for general-purpose transactions, they are
 apparently strong enough to deliver acceptable behavior to many
@@ -36,7 +42,7 @@ question: which of these alaternative semantics can be provided while
 remaining highly available?
 
 Unfortunately, the relationship of the CAP Theorem and ACID semantics
-has been poorly understood. We have a strong understanding of weak
+has not been well explored. We have a strong understanding of weak
 isolation in the single-server context from which it
 originated~\cite{adya, ansicritique, gray-isolation} and many papers
 offer techniques for providing distributed
@@ -74,9 +80,12 @@ systems can be implemented in a highly available manner. For several
 of these guarantees, such as Transactional Causal Predicate Cut
 Isolation, we consider a modified form of high availiabity in which
 clients ``stick to'' (i.e. have affinity with) at least one server (a
-property which is implicit in the distributed systems literature but
-which requires \textit{explicit} consideration in a client-server
-replicated database context).
+property which is often implicit in the distributed systems
+literature~\cite{herlihy-art, cops, eiger, cac} but which requires
+\textit{explicit} consideration in a client-server replicated database
+context). This sticky availability is easily implementatable and
+widely employed~\cite{cops, eiger, vogels-defs} but is strictly less
+available than traditional definitions of high availability.
 
 This taxonomy allows us to determine that a wide range of semantic
 guarantees can be delivered with availability in face of partitions,

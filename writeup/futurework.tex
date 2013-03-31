@@ -45,11 +45,12 @@ literature on semantics-based concurrency control provides hints as to
 when coordination can be avoided while providing ``strongly
 consistent'' outcomes for limited failure scenarios. We have performed
 a narrow case study in this work, but a general taxonomization of
-techniques such as escrow transactions~\cite{escrow} and
-Sagas~\cite{sagas} could help answer the challenge of programming in a
-weakly consistent environment. Additionally, HAT guarantees can be
-strengthened by considering failure models with, say, bounded
-asynchrony or service-level agreements from underlying
+techniques such as escrow transactions~\cite{escrow},
+Sagas~\cite{sagas}, and other long-running transaction
+support~\cite{gray-virtues} could help answer the challenge of
+programming in a weakly consistent environment. Additionally, HAT
+guarantees can be strengthened by considering failure models with,
+say, bounded asynchrony or service-level agreements from underlying
 hardware. Additionally, while we have focused on systems that provide
 a single availability mode, there are several interesting hybrids to
 consider. For example, a system may provide ``best-effort'' stickiness

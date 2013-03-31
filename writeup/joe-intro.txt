@@ -1,0 +1,33 @@
+
+emph distributed vs. transaction
+look at brewer's slides again---pump up Brewer's slides are fucked
+
+Symptom of a deeper problem: systems and 
+database communities are separate but 
+overlapping (with distinct vocabulary)
+
+Brewer, in his example, refers to a recency guarantee, but, at the
+same time, mentions distributed databases. However, when formalized,
+took a completely distributed computing point of view, where
+consistency meant linearizability.
+
+
+BACK TO DB
+
+
+I. Back to transactional systems is good, exploration of data semantics is not accurate
+
+II. Conflating of transactions and distributed guarantees are good
+
+III. Separate issues at work here
+
+
+1) The last decade has seen enormous churn in the design of widely-deployed scalable database backends: from de facto use of transactional DBMSs to widespread adoption of loosely-consistent distributed key-value stores, to a recent movement back to transactional designs.
+
+Among practitioners today, a wide range of desired semantics for distributed data are being explored, with two common desires being (1) Availability in the face of failures  (at the expense of full replica consistency) and (2) some degree of multi-action guarantees (at the expense of full transactional serializability).
+
+2) Unfortunately, these two goals have not been well separated in the popular "ACID vs. NoSQL"  debate.  The NoSQL camp often justifies its designs via the CAP theorem, which is an impossibility result regarding distributed updates to replicated objects during failures.  Transactional semantics, on the other hand, focus on multiple distinct updates, typically across multiple distinct objects.  This conflation of two concerns -- replica consistency and transactional isolation -- has been one of the most confusing aspects of this discussion.
+
+3) As we highlight in this paper, there are two separate issues at work here, with two rich traditions of research on storage semantics.  Various kinds of replica consistency have been studied in the distributed systems literature as *session guarantees* and *register semantics*.  Various degrees of transactional semantics have been studied in the database literature in the form of *isolation levels*.  To date, however, the connections between these two different research traditions have not been well explored.
+
+4) Building on these two strains of research, in this paper we taxonomize the space of designs for Highly Available Transaction Systems…
