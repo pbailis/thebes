@@ -3,7 +3,7 @@
 
 The prior decade saw a large shift in the design of large-scale
 database backends, from the use of transactional
-RDBMSs~\cite{bernstein-concurrency, bernstein-book, gray-isolation,
+RDBMSs~\cite{bernstein-book, gray-isolation,
   gray-virtues} to the widespread adoption of loosely-consistent
 distributed key-value stores~\cite{bigtable, pnuts,
   dynamo}. Instrumental in this trend was the 2000 introduction of
@@ -47,13 +47,13 @@ has not been well explored. We have a strong understanding of weak
 isolation in the single-server context from which it
 originated~\cite{adya, ansicritique, gray-isolation} and many papers
 offer techniques for providing distributed
-serializability~\cite{bernstein-concurrency, kemme-classification,
-  spanner, granola, daudjee-session, krikellas-bargain, calvin} or
+serializability~\cite{bernstein-book, hstore, kemme-classification,
+  spanner, daudjee-session, krikellas-bargain, calvin} or
 snapshot isolation~\cite{daudjee-snapshot,generalizedsnapshot,
   kemme-snapshot, walter}. The distributed computing, programming
 language, and parallel hardware literature also contains many
 consistency models for single operations on replicated
-objects~\cite{pnuts, herlihy-art, cops, eiger, cac, sessionguarantees,
+objects~\cite{pnuts, herlihy-art,  eiger, cac, sessionguarantees,
   ceri-mechanism, chen-mechanism}. However, the literature has largely
 ignored semantic guarantees for multiple operations operating on
 multiple data items in a highly available distributed environment.
@@ -82,10 +82,10 @@ guarantees, such as Transactional Causal Predicate Cut Isolation, we
 consider a modified form of high availability in which clients ``stick
 to'' (i.e., have affinity with) at least one server (a property which
 is often implicit in the distributed systems
-literature~\cite{herlihy-art, cops, eiger, cac} but which requires
+literature~\cite{herlihy-art,  eiger, cac} but which requires
 \textit{explicit} consideration in a client-server replicated database
 context). This sticky availability is easily implementable and
-widely employed~\cite{cops, eiger, vogels-defs} but is strictly less
+widely employed~\cite{eiger, vogels-defs} but is strictly less
 available than traditional definitions of high availability.
 
 This taxonomy allows us to determine that a wide range of semantic

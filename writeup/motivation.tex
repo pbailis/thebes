@@ -68,16 +68,15 @@ and 1000 seconds~\cite{ip-backbone-failures} as well as frequent path
 routing failures on the Internet~\cite{labovitz-failures}. Isolating,
 quantifying, and designing for these network failures is an area of
 active research in networking
-community~\cite{surviving-failures-bodik, uw-failure-networks}.
+community~\cite{uw-failure-networks}.
 
-These results---which do not consider server-level failures (another
-form of system partition that has also been studied at
-scale~\cite{google-availability})---indicate that network partitions
-\textit{do} occur within and across modern datacenters. We do not
-intend to fixate on any particular statistical behavior but instead
-observe that, as a general trend, partitions exist and must
-accordingly be met with either unavailability at some servers or, as
-we will discuss, relaxed semantic guarantees.
+These results---which do not even consider server-level
+failures---indicate that network partitions \textit{do} occur within
+and across modern datacenters. We do not intend to fixate on any
+particular statistical behavior but instead observe that, as a general
+trend, partitions exist and must accordingly be met with either
+unavailability at some servers or, as we will discuss, relaxed
+semantic guarantees.
 
 \subsection{Latency and Planet Earth}
 
@@ -165,8 +164,8 @@ communicating from S\~{a}o Paulo to Singapore is lower-bounded by
 speed-of-light transit RTT of 106.7ms but, on average, incurs a
 362.8ms RTT (95th percentile: 649ms). As shown in
 Figure~\ref{fig:rtt}, the distribution of latencies varies between
-links, but the trend---in line with other recent studies~\cite{mdcc,
-  redblue}---is clear: remote communication has a substantial cost.
+links, but the trend is clear: remote communication has a substantial
+cost.
 
 \section{When is ``ACID'' ACID?}
 \label{sec:modernacid}

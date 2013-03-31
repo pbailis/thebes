@@ -180,22 +180,21 @@ $a$. Notably, TA requires Read Committed isolation: observing all
 effects of a transaction implicitly requires observing the final
 (committed) effects of a transaction as well.
 
-Perplexingly, discussions of TA are absent from existing
-discussions of weak isolation. This is perhaps again due to the
-single-node context in which prior work was developed: on a single
-server (or a fully replicated database), TA is achievable via
-lightweight locking and/or local concurrency control over data
-items. In contrast, in a distributed environment, TA over arbitrary
-groups of non-colocated items is considerably more difficult to
-achieve with high availability: servers need to know when all of a
-transaction's updates are present on their respective
-replicas. However, replicas do not need to agree on when to reveal a
-new value to clients, which would require consensus; accordingly, TA
-only requires reliable broadcast (with some additional metadata for
-clients) and is achievable in a HAT system. We omit a full discussion
-of the algorithm and instead refer the reader to the extended version
-of this paper~\cite{hat-tr}.
-space{.5em}
+Perplexingly, discussions of TA are absent from existing discussions
+of weak isolation. This is perhaps again due to the single-node
+context in which prior work was developed: on a single server (or a
+fully replicated database), TA is achievable via lightweight locking
+and/or local concurrency control over data items~\cite{gstore}. In
+contrast, in a distributed environment, TA over arbitrary groups of
+non-colocated items is considerably more difficult to achieve with
+high availability: servers need to know when all of a transaction's
+updates are present on their respective replicas. However, replicas do
+not need to agree on when to reveal a new value to clients, which
+would require consensus; accordingly, TA only requires reliable
+broadcast (with some additional metadata for clients) and is
+achievable in a HAT system. We omit a full discussion of the algorithm
+and instead refer the reader to the extended version of this
+paper~\cite{hat-tr}.  space{.5em}
 
 \subsubsection{Session Guarantees}
 
