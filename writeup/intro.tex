@@ -39,7 +39,7 @@ provide serializability for general-purpose transactions, they are
 apparently strong enough to deliver acceptable behavior to many
 application programmers and are substantially stronger than the
 semantics of current highly available systems. This raises a natural
-question: which of these alaternative semantics can be provided while
+question: which of these alternative semantics can be provided while
 remaining highly available?
 
 Unfortunately, the relationship of the CAP Theorem and ACID semantics
@@ -78,12 +78,12 @@ Read Committed isolation, Transactional Atomicity, and many of the
 weaker data consistency models from database and distributed systems
 can be implemented in a highly available manner. For several of these
 guarantees, such as Transactional Causal Predicate Cut Isolation, we
-consider a modified form of high availiabity in which clients ``stick
+consider a modified form of high availability in which clients ``stick
 to'' (i.e., have affinity with) at least one server (a property which
 is often implicit in the distributed systems
 literature~\cite{herlihy-art, cops, eiger, cac} but which requires
 \textit{explicit} consideration in a client-server replicated database
-context). This sticky availability is easily implementatable and
+context). This sticky availability is easily implementable and
 widely employed~\cite{cops, eiger, vogels-defs} but is strictly less
 available than traditional definitions of high availability.
 
