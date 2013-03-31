@@ -82,7 +82,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
             client.open();
         } catch (Exception e) {
             System.out.println(e);
-            e.printStackTrace();
+//            e.printStackTrace();
             throw new DBException(e.getMessage());
         }
 	}
@@ -112,7 +112,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         	finalTransactionLength = -1;
             client.commitTransaction();
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             logger.warn(e.getMessage());
             return ERROR;
         }
@@ -137,7 +137,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
             client.unsafe_load(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
             return ERROR;
         }
 		return OK;
@@ -167,7 +167,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 
         } catch (Exception e) {
             logger.warn(e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
             return ERROR;
         }
 		return OK;
@@ -187,7 +187,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
             client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
             logger.warn(e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
             return ERROR;
         }
         return OK;
