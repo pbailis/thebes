@@ -58,7 +58,7 @@ public class AntiEntropyServiceRouter {
             new Thread() {
                 public void run() {
                     List<AntiEntropyService.Client> neighborClients =
-                            createClientsFromAddresses(Config.getSiblingServers());
+                            createClientsFromAddresses(Config.getServersInCluster());
                     while (true) {
                         announceNextQueuedPendingWrite(neighborClients);
                     }
