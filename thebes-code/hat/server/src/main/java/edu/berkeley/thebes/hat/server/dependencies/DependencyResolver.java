@@ -76,6 +76,10 @@ public class DependencyResolver {
         PendingWrite newPendingWrite = new PendingWrite(key, value);
         
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
+        if (transQueue == null) {
+            logger.error("Transaction queue was NULL -- violated assertion");
+            return;
+        }
         try {
             transQueue.add(newPendingWrite);
         } catch (Exception e) {
