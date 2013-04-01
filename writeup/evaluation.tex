@@ -106,7 +106,7 @@ unavailability.
 of HAT-compliance in an application context, we consider a concrete
 application: the TPC-C benchmark. Surprisingly, four of five
 transactions can be executed with HATs, while the fifth may require
-unavailablity.
+unavailability.
 
 TPC-C consists of five transactions, capturing the operation of a
 wholesale warehouse, including sales, payments, and deliveries. Two
@@ -118,7 +118,7 @@ transaction type, \textit{Payment}, updates running balances for
 warehouses, districts, and customer records as well as providing an
 audit trail. The transaction is increment- and append-only, so all
 balance increase operations commute, and TA allows the
-maintainence of any foreign-key constraints (e.g.,
+maintenance of any foreign-key constraints (e.g.,
 \texttt{UPDATE/DELETE CASCADE}).
 
 While three out of five transactions are easily achievable with
@@ -133,7 +133,7 @@ the pending list, updates the customer's balance, updates the order's
 carrier ID and delivery time, and updates the customer balance.
 
 New-Order presents two challenges: ID assignment and stock
-maintainence. First, each New-Order transaction requires a unique ID
+maintenance. First, each New-Order transaction requires a unique ID
 number for the order. We can create a unique number by, say,
 concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
@@ -159,7 +159,7 @@ alone. However, according to distributed transaction
 architects~\cite{entitygroup}, these compensatory actions are
 relatively common in real-world business processes.
 
-Throughout execution, TPC-C also requires the maintainence of several
+Throughout execution, TPC-C also requires the maintenance of several
 integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
 requires that each warehouse's sales count must reflect the sum of its
 subordinate sales districts. This integrity constraint spans two
