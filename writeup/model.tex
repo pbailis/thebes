@@ -115,9 +115,9 @@ seen all the prior operations from the client.
 
 \subsection{Transactional Availability}
 
-So far, we have focused on single-object, single-operation
-availability. This is standard in distributed systems literature
-(e.g., linearizable, regular, and safe register models all concern
+We have so far focused on single-object, single-operation
+availability. This is standard in the distributed systems literature
+(e.g., linearizable, and regular register models all concern
 single objects~\cite{herlihy-art}), yet the database literature
 largely focuses on transactions: groups of multiple operations over
 multiple objects. Accordingly, by itself, replica availability is
@@ -131,15 +131,15 @@ on multiple data items, then the client must be able to contact and
 receive a response from at least one replica for each data item. This
 may result in ``lower availability'' than a non-transactional
 requirement. Additionally, given the possibility of aborts, we need to
-ensure that the system makes useful forward progress: a system can
-trivially guarantee clients a response by always aborting all
+ensure useful forward progress: a system can trivially guarantee
+clients a response by always aborting all
 transactions~\cite{transaction-liveness}. However, this is an
 unsatisfactory system because nothing good (transaction commit) ever
-happens; we should require a \textit{liveness} property. We
-cannot guarantee that every transaction will commit---transactions may
-choose to abort themselves---but we need to make sure that the system
-will not indefinitely abort transactions on its own volition. We call
-a transaction abort due to a transaction's own choosing (e.g., as an
+happens; we should require a \textit{liveness} property. We cannot
+guarantee that every transaction will commit---transactions may choose
+to abort themselves---but we need to make sure that the system will
+not indefinitely abort transactions on its own volition. We call a
+transaction abort due to a transaction's own choosing (e.g., as an
 operation of the transaction itself or due to a would-be declared
 integrity constraint violation) an \textit{internal abort} and an
 abort due to system implementation an \textit{external abort}.

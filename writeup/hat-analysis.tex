@@ -179,8 +179,8 @@ $a$. Notably, TA requires Read Committed isolation: observing all
 effects of a transaction implicitly requires observing the final
 (committed) effects of a transaction as well.
 
-Perplexingly, discussions of TA are absent from existing discussions
-of weak isolation. This is perhaps again due to the single-node
+Perplexingly, discussions of TA are absent from existing ones of
+weak isolation. This is perhaps again due to the single-node
 context in which prior work was developed: on a single server (or a
 fully replicated database), TA is achievable via lightweight locking
 and/or local concurrency control over data items~\cite{gstore}. In
@@ -190,10 +190,11 @@ high availability: servers need to know when all of a transaction's
 updates are present on their respective replicas. However, replicas do
 not need to agree on when to reveal a new value to clients, which
 would require consensus; accordingly, TA only requires reliable
-broadcast (with some additional metadata for clients) and is
+broadcast (with some additional client metadata) and is
 achievable in HAT systems. We omit a full discussion of the algorithm
 and instead refer the reader to the extended version of this
-paper~\cite{hat-tr}.  space{.5em}
+paper~\cite{hat-tr}.  
+%space{.5em}
 
 \subsubsection{Session Guarantees}
 
@@ -232,11 +233,11 @@ effects of $T_2$ if it can also observe $T_1$'s effects (or later
 values that supercede $T_1$'s).  Any order on transactions should
 respect the reads-from order.\vspace{.5em}
 
-We can achieve the above guarantees by forcing servers to wait to
+The above guarantees can be achieved by forcing servers to wait to
 reveal new writes until each write's respective dependencies are
 fulfilled on all replicas. This mechanism effectively ensures that all
 clients read from a globally agreed upon lower bound on the versions
-written to the system. This \textit{is} highly available as a client
+written. This \textit{is} highly available as a client
 will never block due to inability to find a server with a sufficiently
 up-to-date version of a data item. However, it does not imply that
 transactions will read their own writes or, in the presence of
@@ -331,7 +332,7 @@ exhausted the range of achievable, previously defined (and useful)
 semantics that are available to HAT systems. Before summarizing our
 possibility results, we will present impossibility results for HATs,
 also defined in terms of previously identified isolation and
-consistency anomalies. Perhaps most notably, it is impossible to
+consistency anomalies. Most notably, it is impossible to
 prevent Lost Update or Write Skew in a HAT system.
 
 \subsubsection{Unachievable ACID Isolation}
