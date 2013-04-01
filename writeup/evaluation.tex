@@ -149,7 +149,7 @@ compliant, but a HAT system might end up with much more stock
 than in a non-HAT-compliant implementation.
 
 Delivery is challenging due to non-monotonicity. Each Delivery deletes
-a pending order from the NewOrder Table and should be idempotent in
+a pending order from the New-Order Table and should be idempotent in
 order to avoid billing a customer twice; this implies a need to
 prevent Lost Update. This issue  can be avoided  by moving the
 non-monotonicity to the real world---the carrier that picks up the
