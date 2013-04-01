@@ -3,18 +3,17 @@
 \label{sec:hats}
 
 HAT systems provide transactions with transactional availability and
-either high availability ($1$-available) or sticky high availability
-($1$-sticky-available). They offer substantial latency and
-availability benefits compared to traditional distributed databases,
-yet they cannot achieve all the traditional semantics. In this
-section, we delineate ACID, distributed consistency, and session
-consistency levels which can be achieved with high availability
-(transactional atomicity, variants of Repeatable Read isolation, and
-many session guarantees), those with sticky high availability (read
-your writes, PRAM and causal consistency) and the properties which
-cannot be provided in a HAT system (those preventing Lost Update and
-Write Skew, or with recency).  We present a full summary of these
-results in Section~\ref{sec:hat-summary}.
+either high availability or sticky high availability. They offer
+substantial latency and availability benefits compared to traditional
+distributed databases, yet they cannot achieve all the traditional
+semantics. In this section, we delineate ACID, distributed
+consistency, and session consistency levels which can be achieved with
+high availability (transactional atomicity, variants of Repeatable
+Read isolation, and many session guarantees), those with sticky high
+availability (read your writes, PRAM and causal consistency) and the
+properties which cannot be provided in a HAT system (those preventing
+Lost Update and Write Skew, or with recency).  We present a full
+summary of these results in Section~\ref{sec:hat-summary}.
 
 As Brewer states, ``systems and database communities are separate but
 overlapping (with distinct vocabulary)''~\cite{brewer-slides}. With
@@ -269,8 +268,8 @@ isolation~\cite{adya}).\vspace{.5em}
 
 
 Read your writes is not achievable in a highly available
-($1$-available) system. Consider a client that executes the following
-two transactions in succession:
+system. Consider a client that executes the following two transactions
+in succession:
 \vspace{-.5em}
 \begin{align*}
 \small
@@ -308,10 +307,9 @@ that are achievable (see Section~\ref{sec:futurework}). We
 specifically evaluate TPC-C transaction semantics under HAT
 consistency guarantees in Section~\ref{sec:evaluation}.
 
-\vspace{.5em}\noindent{\textbf{Durability}} As we briefly discussed in
-Section~\ref{sec:availability}, a client requiring that its
+\vspace{.5em}\noindent{\textbf{Durability}} A client requiring that its
 transactions' effects survive $F$ server faults requires at least
-($F+1$)-availability.
+$F+1$ correct nodes.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,
