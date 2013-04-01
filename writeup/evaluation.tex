@@ -52,7 +52,7 @@ cloud infrastructure in the next section.
 distributed implementations of weak isolation are not highly
 available. Lock-based proposals such as those used to provide weak
 isolation in Gray's original proposal~\cite{gray-isolation} do not
-degrade gracefully in the presence of partial failure. (Note, however,
+degrade gracefully in the presence of partial failures. (Note, however,
 that lock-based protocols \textit{do} offer the benefit of recency
 guarantees.) While multi-versioned storage systems allow for a variety
 of transactional guarantees, we have not seen proposals for truly weak
@@ -73,7 +73,7 @@ Brantner's S3 database~\cite{kraska-s3}, and
 Bayou~\cite{sessionguarantees} can all provide variants of session
 PL-2L with high availability, but none provide this HAT functionality
 without substantial modification; Swift~\cite{swift} is closest to
-providing full HAT operation in a sticky context. As we have seen, it
+providing full HAT operation in a sticky context. As  seen, it
 is possible to implement many guarantees weaker than
 serializability---including guarantees that are achievable with high
 availability---and still not achieve high availability.
