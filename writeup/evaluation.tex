@@ -145,13 +145,13 @@ Fortunately, TPC-C New-Order restocks each item's inventory count
 (increments by 91) if it would become negative as the result of
 placing an order. This means that, even in the presence of concurrent
 New-Orders, an item's stock will never fall below zero. This is TPC-C
-compliant, but a HAT system might end up with substantially more stock
+compliant, but a HAT system might end up with much more stock
 than in a non-HAT-compliant implementation.
 
 Delivery is challenging due to non-monotonicity. Each Delivery deletes
 a pending order from the NewOrder Table and should be idempotent in
 order to avoid billing a customer twice; this implies a need to
-prevent Lost Update. We can avoid this issue by moving the
+prevent Lost Update. This issue  can be avoided  by moving the
 non-monotonicity to the real world---the carrier that picks up the
 package for an order can ensure that she is the only carrier who has
 done so---but cannot provide a correct execution with HATs
@@ -206,11 +206,11 @@ of five trials per experiment.
 \hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
 \end{center}\vspace{-2em}
 \begin{center}\textbf{Within \texttt{us-east}}\end{center}\vspace{-1.5em}
-\includegraphics[width=\columnwidth]{figs/lan-threads-lats.pdf}\vspace{-1em}
-\includegraphics[width=\columnwidth]{figs/lan-threads-thru.pdf}
+\includegraphics[width=0.90\columnwidth]{figs/lan-threads-lats.pdf}\vspace{-1em}
+\includegraphics[width=0.90\columnwidth]{figs/lan-threads-thru.pdf}
 \begin{center}\textbf{Between \texttt{us-east} and \texttt{us-west-2}}\end{center}\vspace{-1.5em}
-\includegraphics[width=\columnwidth]{figs/wan-threads-lats.pdf}\vspace{-1em}
-\includegraphics[width=\columnwidth]{figs/wan-threads-thru.pdf}
+\includegraphics[width=0.90\columnwidth]{figs/wan-threads-lats.pdf}\vspace{-1em}
+\includegraphics[width=0.90\columnwidth]{figs/wan-threads-thru.pdf}
 \caption{YCSB performance for two clusters of three servers each
   deployed within a single datacenter and cross-datacenters.}
 \label{fig:wan-exp}

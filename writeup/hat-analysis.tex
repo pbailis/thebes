@@ -107,7 +107,7 @@ products use the term for fully serializable
 isolation~\cite{hat-hotos}. Gray~\cite{gray-isolation}, Berenson et
 al.~\cite{ansicritique}, and Adya's PL-2.99~\cite{adya} all interpret
 Repeatable Read as providing serializability for all operations except
-predicate-based reads (and so Repeatable Read is identical to
+for predicate-based reads (and so Repeatable Read is identical to
 serializability in a key-value store without predicate-based
 access). In this model, the \textit{Phantom Problem}, whereby two
 successive predicate-based reads return different
@@ -298,10 +298,11 @@ session guarantees.
 In this section, we briefly discuss additional noteworthy guarantees
 achievable by HAT systems.
 
+\vspace{0.5em}
 \noindent{\textbf{Consistency}} A HAT system can make limited
 consistency guarantees. It can often execute commutative and logically
 monotonic~\cite{calm} operations without the risk of invalidating
-(also monotonic) application-level integrity constraints. Our goal in
+ application-level integrity constraints. Our goal in
 this paper is not to sketch the entire space of consistency models
 that are achievable (see Section~\ref{sec:futurework}). We
 specifically evaluate TPC-C transaction semantics under HAT
@@ -370,7 +371,7 @@ $T_2$.\footnote{In this example, we assume that, as is standard in
   modern databases, replicas accept values as they are written (i.e.,
   register semantics). This particular example could be made
   serializable via the use of commutative updates
-  (Section~\ref{sec:eval}) but, as we show in the extended version of
+  (Section~\ref{sec:evaluation}) but, as we show in the extended version of
   the paper~\cite{hat-tr}, the problem persists in the general case.}
 To prevent this from happening, either $T_1$ or $T_2$ should not have
 committed. Each client's respective server might try to detect that
@@ -596,7 +597,7 @@ caching can alleviate some of these challenges~\cite{bolton, swift},
 but then the system becomes sticky high available.
 
 Composition cost also varies by combination. For instance, Charron-Bost
-has proven that, to capture causality between $N$ communicating
+ proved that, to capture causality between $N$ communicating
 processes, standard vector-based approaches face an upper bound of
 $O(N)$ storage per write~\cite{charron-bost}. This means that, with
 $100K$ clients, each write might be accompanied by $100K$ timestamps
