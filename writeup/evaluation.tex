@@ -185,21 +185,78 @@ transactions.
 
 \subsection{Experimental Costs}
 
-\begin{figure}
-\includegraphics[width=.8\columnwidth]{figs/macrotracelegend.pdf}\vspace{-2mm}
-\includegraphics[width=\columnwidth]{figs/lat-thru-trace-K0-SCALEMACRO.pdf}
-\includegraphics[width=\columnwidth]{figs/lat-thru-trace-K0-SCALEMACRO.pdf}
-\caption{Latency-throughput for database operation on EC2 (DUMMY FIG)}
+To better understand the impact of HAT versus non-HAT algorithms and
+validate the latency-based analysis in Section~\ref{sec:latency}, we
+deployed a basic distributed database prototype on public cloud
+infrastructure. We compared the behavior of eventual consistency,
+per-key mastering (wherein all operations required a RTT to a
+designated master server), Read Committed, and TA with read your
+writes guarantees. We deployed an experimental Java-based distributed
+datastore backed by LevelDB both within and across EC2 regions and ran
+the YCSB benchmark to determine the resulting performance impact. We
+partitioned the database into two fully replicated clusters of three
+\texttt{m1.xlarge} instances. For HAT, we stuck YCSB clients to their
+local cluster and, to provide transactional functionality, grouped
+every six YCSB operations from the default workload to form a
+transaction. We report the median of five trials per experiment.
+
+\begin{figure}[t!]
+\begin{center}
+\hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
+\end{center}\vspace{-2em}
+\begin{center}\textbf{Within \texttt{us-east}}\end{center}\vspace{-1.5em}
+\includegraphics[width=\columnwidth]{figs/lan-threads-lats.pdf}\vspace{-1em}
+\includegraphics[width=\columnwidth]{figs/lan-threads-thru.pdf}
+\begin{center}\textbf{Between \texttt{us-east} and \texttt{us-west-2}}\end{center}\vspace{-1.5em}
+\includegraphics[width=\columnwidth]{figs/wan-threads-lats.pdf}\vspace{-1em}
+\includegraphics[width=\columnwidth]{figs/wan-threads-thru.pdf}
+\caption{YCSB performance for two clusters of three servers each
+  deployed within a single datacenter and cross-datacenters.}
 \label{fig:wan-exp}
 \end{figure}
 
-2.) We ran YCSB on EC2 (and maybe TPC-C if we have time) with a few models:
-	- Eventual Consistency
-	- Eventual consistency with a "master" for updates--simulates the lower bound on a non-HAT system.
-	- Transactional Atomicity and Read Committed
-	
-	-This is going to look a lot like the ping tests: much higher latency for "non-HATs."
-	-Our Naive 2PL implementation bottlenecks extremely quickly.
-	-On, say, 5 servers, can get hundreds of thousands of TPS
+As Figure~\ref{fig:wan-exp} shows, within a single datacenter, a
+mastered implementation achieves approximately double the latency and
+slightly over half of the throughput of a HAT implementation. This is
+because, given two replicas for each key, the mastered implementation
+serves requests from only one. The mastered implementation still
+achieves $19,797$ transactions per second---over 6,000 per
+master---and is only $15.56$ms slower at peak compared to eventual
+consistency. However, eventual consistency and HAT models achieve
+substantially higher throughput--$37,575$ and $36,178$ transactions
+per second, respectively--and lower latency---$48.3\%$ and $47.2\%$
+respectively. This difference is unsurprising because, in these weaker
+models, all servers can serve both reads and writes, effectively
+doubling the capacity of the system. The weaker models still propagate
+new values between replicas, but this process is asynchronous and,
+aside from consuming disk I/O and network bandwidth, does not
+substantially impact clients. As expected, HAT models perform
+similarly to eventual consistency: our Read Committed implementation
+buffers client writes and adds no additional server-side overhead,
+while TA requires additional metadata with each write but has less
+than 5\% performance impact compared to eventual consistency.
 
-	-Not meant as an exhaustive study, but validates our intuitions. Coordination costs of non-HAT systems are unaccounted for, will only go up, and we haven't even talked about availability.
+In comparison, over multiple datacenters, the cost of coordination
+increases. The HAT and eventual consistency implementations continue
+to enjoy local RTTs only, and, with the exception of a slight
+performance degradation in TA---which we believe is attributable to
+Java garbage collection overheads in TA's inbound anti-entropy
+buffers---performance remains unchanged. However, each YCSB update to
+a remote replica ($\frac{2}{3}$ in one datacenter, $\frac{1}{3}$ in
+the other) of requiring a remote RTT between Virginia and Oregon (or
+vice-versa) to reach the master. This leads to a latency increase of
+around $166$ms ($746\%$) per transaction compared to a
+single-datacenter deployment. In order to attain reasonable throughput
+for the mastered deployment, we had to greatly increase the number of
+concurrent clients accessing the database, and we found that threading
+and socket overheads quickly overwhelmed the database server. Over a
+wide-area network, the increased cost of RTTs dramatically affects
+system efficiency.
+
+This brief set of experiments is not meant as an exhaustive study, but
+it validates our earlier intuition regarding the cost of violating
+HAT-compliance. As Deutsch points out, ignoring factors such as
+latency can ``cause big trouble and painful learning
+experiences''~\cite{fallacies-deutsch}---in a single-site context,
+paying the cost of coordination may be tenable, but, especially as
+services are geo-replicated, the costs increase. 
