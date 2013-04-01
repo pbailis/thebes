@@ -90,14 +90,13 @@ public class DependencyResolver {
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
         unresolvedAcksLock.lock();
-        boolean shouldCommit = false;
         try {
-            shouldCommit = ackUnresolved(transQueue, version);
+            ackUnresolved(transQueue, version);
         } finally {
             unresolvedAcksLock.unlock();
         }
         
-        if (shouldCommit) {
+        if (transQueue.canCommit()) {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
@@ -135,7 +134,8 @@ public class DependencyResolver {
     public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
         if (transactionQueue != null) {
-            if (transactionQueue.serverAcked()) {
+            transactionQueue.serverAcked();
+            if (transactionQueue.canCommit()) {
                 if (logger.isDebugEnabled()) { logger.debug("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
                 commit(transactionQueue);
             }
@@ -144,7 +144,6 @@ public class DependencyResolver {
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        boolean shouldCommit = false;
         unresolvedAcksLock.lock();
         try {
             unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
@@ -153,29 +152,27 @@ public class DependencyResolver {
             // Check for race conditions where the transaction arrived while we were adding this!
             transactionQueue = pendingTransactionsMap.get(transactionId);
             if (transactionQueue != null) {
-                shouldCommit = ackUnresolved(transactionQueue, transactionId);
+                ackUnresolved(transactionQueue, transactionId);
             }
         } finally {
             unresolvedAcksLock.unlock();
         }
         
-        if (shouldCommit) {
+        if (transactionQueue.canCommit()) {
             logger.debug("Committing via unresolved RACE: " + transactionId);
             commit(transactionQueue);
         }
     }
     
     /** Should own unresolvedAcksLock while calling this. */
-    private boolean ackUnresolved(TransactionQueue transQueue, Version version) {
-        boolean shouldCommit = false;
+    private void ackUnresolved(TransactionQueue transQueue, Version version) {
         if (unresolvedAcksMap.containsKey(version)) {
             AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
-            for (int i = 0; i < numAcksForTransaction.get() && !shouldCommit; i ++) {
-                shouldCommit = transQueue.serverAcked();
+            for (int i = 0; i < numAcksForTransaction.get(); i ++) {
+                transQueue.serverAcked();
             }
             unresolvedAcksMap.remove(version);
         }
-        return shouldCommit;
     }
     
     private static class TransactionQueue {
@@ -211,8 +208,12 @@ public class DependencyResolver {
             this.replicaIndicesInvolved = write.getReplicaIndicesInvolved();
         }
         
-        public boolean serverAcked() {
-            return numReplicasAcked.incrementAndGet() == numReplicasInvolved; 
+        public boolean canCommit() {
+            return numReplicasAcked.get() >= numReplicasInvolved && pendingWrites.size() == numKeysForThisReplica;
+        }
+        
+        public void serverAcked() {
+            numReplicasAcked.incrementAndGet(); 
         }
         
         public boolean shouldAnnounceTransactionReady() {
