@@ -119,14 +119,14 @@ seen all the prior operations from the client.
 
 We have so far focused on single-object, single-operation
 availability. This is standard in the distributed systems literature
-(e.g., linearizable, and regular register models all concern
-single objects~\cite{herlihy-art}), yet the database literature
-largely focuses on transactions: groups of multiple operations over
-multiple objects. Accordingly, by itself, replica availability is
-insufficient to describe availability guarantees for
-transactions. Additionally, given the choice of \textit{commit} and
-\textit{abort} responses---which signal transaction success or failure
-to a client---we must carefully define transactional availability.
+(e.g., linearizable and regular register models all concern single
+objects~\cite{herlihy-art}), yet the database literature largely
+focuses on transactions: groups of multiple operations over multiple
+objects. Accordingly, by itself, replica availability is insufficient
+to describe availability guarantees for transactions. Additionally,
+given the choice of \textit{commit} and \textit{abort}
+responses---which signal transaction success or failure to a
+client---we must carefully define transactional availability.
 
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and
