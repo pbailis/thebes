@@ -81,7 +81,7 @@ expressed in the implementation-agnostic definition: under Read
 Committed, transactions should do not access uncommitted or
 intermediate versions of data items. This prohibits both ``Dirty
 Writes'', as above, and also ``Dirty Reads'' phenomena.  This
-isolation is Adya's PL-2, and formalised by prohibiting Adya's $G1a-c$
+isolation is Adya's PL-2, and formalized by prohibiting Adya's $G1a-c$
 (or ANSI's $P1$, or ``broad'' $P1$ (2.2) from Berenson et al.). For
 instance, in the example below, $T_3$ should never see $a=1$, and, if
 $T_2$ aborts, $T_3$ should never read $a=3$:
