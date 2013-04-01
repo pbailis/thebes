@@ -212,8 +212,7 @@ a context that should persist between transactions: for example, on a
 social networking site, all of a user's transactions submitted between
 ``log in'' and ``log out'' operations might form a session.
 
-There are several session guarantees that we can make with high
-availability:
+Several session guarantees can be made with high availability:
 
 \vspace{.5em}\noindent\textit{{Monotonic reads}} requires that, within
 a session, subsequent reads to a given object ``never return any
