@@ -39,22 +39,21 @@ useful and achievable HAT guarantees will shed further light on this
 question.
 
 \textbf{Where do semantics-based concurrency control and weakened
-  failure models lie in the HAT landscape?} The vast
-literature on semantics-based concurrency control indicates 
-when coordination can be avoided while providing ``strongly
-consistent'' outcomes for limited failure scenarios. We have performed
-a narrow case study, but a general taxonomization of
-techniques such as escrow transactions~\cite{escrow},
-Sagas~\cite{sagas}, and other long-running transaction support could
-help answer the challenge of programming in a weakly consistent
-environment. HAT guarantees can also be strengthened by considering
-weaker failure models such as bounded asynchrony or models in which
-the underlying hardware provides explicit service-level
-agreements. Additionally, while we have focused on systems that
-provide a single availability mode, there are several interesting
-hybrids to consider. For example, a system may provide ``best-effort''
-stickiness (or serializability) in the absence of partitions, but, in
-the presence of partitions, ``lose'' guarantees by having clients
-reconnect to an available replica. This strategy provides stronger
-guarantees in the absence of partitions but, to provide availability,
-sacrifices them in the event of partitions.
+  failure models lie in the HAT landscape?} The vast literature on
+semantics-based concurrency control indicates when coordination can be
+avoided while providing ``strongly consistent'' outcomes for limited
+failure scenarios. We have performed a narrow case study, but a
+general taxonomization of techniques such as escrow
+transactions~\cite{escrow}, Sagas~\cite{sagas}, and other long-running
+transaction support could help answer the challenge of programming in
+a weakly consistent environment. HAT guarantees can also be
+strengthened by considering weaker failure models such as bounded
+asynchrony or models in which the underlying hardware provides
+explicit service-level agreements. Additionally, while we have focused
+on systems that provide a single availability mode, there are several
+interesting hybrids to consider. For example, a system may provide
+``best-effort'' stickiness (or serializability) in the absence of
+partitions, but, in the presence of partitions, ``lose'' guarantees by
+having clients reconnect to an available replica. This provides
+stronger guarantees in the absence of partitions but, to provide
+availability, sacrifices them in the event of partitions.
