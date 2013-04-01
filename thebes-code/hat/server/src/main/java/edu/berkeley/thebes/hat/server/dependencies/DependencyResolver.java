@@ -162,7 +162,7 @@ public class DependencyResolver {
             unresolvedAcksLock.unlock();
         }
         
-        if (transactionQueue.canCommit()) {
+        if (transactionQueue != null && transactionQueue.canCommit()) {
             logger.debug("Committing via unresolved RACE: " + transactionId);
             commit(transactionQueue);
         }
