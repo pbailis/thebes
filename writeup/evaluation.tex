@@ -2,16 +2,16 @@
 \section{HAT Implications}
 \label{sec:evaluation}
 
-With an understanding of which guarantees are and are not
-HAT-compliant, in this section, we analyze the implications of these
-results for existing systems and applications and briefly study HAT
-systems on public cloud infrastructure. Specifically:
+With an understanding of which guarantees are HAT-compliant, in this
+section, we analyze the implications of these results for existing
+systems and briefly study HAT systems on public cloud
+infrastructure. Specifically:
 
 \begin{myenumerate}
 \item We revisit traditional database concurrency control with a focus
   on coordination costs and on high availability.
 \item We examine the properties required by a realistic OLTP
-  application patterned on the TPC-C benchmark.
+  application based on the TPC-C benchmark.
 \item We perform a brief experimental evaluation of HAT versus non-HAT
   properties on public cloud infrastructure.
 \end{myenumerate}
@@ -20,7 +20,7 @@ systems on public cloud infrastructure. Specifically:
 
 Many existing database transaction and concurrency control algorithms
 are not designed for high availability. These algorithms often presume
-a single-server deployment or the requirement for serializability. As
+a single-server deployment or a requirement for serializability. As
 a consequence, traditional transaction processing systems are not
 well-optimized for a HAT context. In this section, we briefly discuss
 design decisions and algorithmic details that preclude high
@@ -31,16 +31,16 @@ order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
 setting~\cite{bernstein-book} may require at least one round trip time
 (RTT) before committing. As an example, traditional two-phase locking
-for a transaction of length $T$ requires $T$ \texttt{lock} operations
-and at least one \texttt{unlock} operation.  In a distributed
-environment, each of these operations requires coordination, either
-with other database replicas or with a lock service. If this
-coordination mechanism is unavailable, transactions cannot safely
-commit. Similarly, optimistic concurrency control requires
-coordinating via a validation step, while deterministic transaction
-scheduling~\cite{deterministic-scheduling} requires a
-scheduler. Serializability under multi-version concurrency control
-also requires checking for update conflicts. The reliance on a
+for a transaction of length $T$ may require $T$ \texttt{lock}
+operations and will require at least one \texttt{lock} and
+\texttt{unlock} operation.  In a distributed environment, each of
+these operations requires coordination, either with other database
+replicas or with a lock service. If this coordination mechanism is
+unavailable, transactions cannot safely commit. Similarly, optimistic
+concurrency control requires coordinating via a validation step, while
+deterministic transaction scheduling~\cite{deterministic-scheduling}
+requires a scheduler. Serializability under multi-version concurrency
+control also requires checking for update conflicts. The reliance on a
 globally agreed total order necessitates a minimum of one round-trip
 to a designated master or coordination service for each of these
 classic algorithms.  The cost of the (minimum one) round trip will be
@@ -185,20 +185,21 @@ transactions.
 
 \subsection{Experimental Costs}
 
-To better understand the impact of HAT versus non-HAT algorithms and
-validate the latency-based analysis in Section~\ref{sec:latency}, we
-deployed a basic distributed database prototype on public cloud
-infrastructure. We compared the behavior of eventual consistency,
-per-key mastering (wherein all operations required a RTT to a
-designated master server), Read Committed, and TA with read your
-writes guarantees. We deployed an experimental Java-based distributed
-datastore backed by LevelDB both within and across EC2 regions and ran
-the YCSB benchmark~\cite{ycsb} to determine the impact of latency. We
-partitioned the database into two fully replicated clusters of three
-\texttt{m1.xlarge} instances. For HAT, we stuck YCSB clients to their
-local cluster and, to provide transactional functionality, grouped
-every six YCSB operations from the default workload to form a
-transaction. We report the median of five trials per experiment.
+To better understand the performance implications of HAT guarantees in
+a real-world environment and to validate the latency-based analysis in
+Section~\ref{sec:latency}, we deployed a distributed database
+prototype on public cloud infrastructure. We compared the behavior of
+eventual consistency, per-item mastering (wherein all operations to a
+given item required contacting a designated master server), Read
+Committed, and TA with read your writes guarantees. We deployed an
+experimental Java-based distributed datastore backed by LevelDB both
+within and across EC2 regions and ran the YCSB benchmark~\cite{ycsb}
+to determine the impact of latency. We partitioned the database into
+two fully replicated clusters of three \texttt{m1.xlarge} instances
+each. For HAT, we stuck YCSB clients to their local cluster and, to
+provide transactional functionality, grouped every six YCSB operations
+from the default workload to form a transaction. We report the median
+of five trials per experiment.
 
 \begin{figure}[t!]
 \begin{center}

@@ -24,18 +24,20 @@ especially given the possibility of aborts.
 
 \subsection{Replica Availability}
 
-Traditionally, a system provides {\em  availability} if every user that
-can contact a correct server eventually receives a response from that server,
-even in the presence of arbitrary, indefinitely long network
-partitions between servers~\cite{gilbert-cap}. As in a standard
-distributed database, designated servers might handle operations on
-different data items;\footnote{There is a further distinction between
-  a \textit{fully replicated} system, in which all servers are
-  replicas for all data items, and a \textit{partially replicated}
-  system, in which at least one server acts as a replica for only a
-  subset of all data items. For generality, and, for applicability to
-  many modern ``sharded'' or ``partitioned'' data storage
-  systems~\cite{dynamo, pnuts, bigtable, spanner, hstore}, we consider partially
+Traditionally, a system provides {\em availability} if every user that
+can contact a correct server eventually receives a response from that
+server, even in the presence of arbitrary, indefinitely long network
+partitions between servers~\cite{gilbert-cap}.\footnote{Under this
+  definition, a system that requires a majority of servers to be
+  online is not availabile.} As in a standard distributed database,
+designated servers might handle operations on different data
+items;\footnote{There is a further distinction between a \textit{fully
+    replicated} system, in which all servers are replicas for all data
+  items, and a \textit{partially replicated} system, in which at least
+  one server acts as a replica for only a subset of all data
+  items. For generality, and, for applicability to many modern
+  ``sharded'' or ``partitioned'' data storage systems~\cite{dynamo,
+    pnuts, bigtable, spanner, hstore}, we consider partially
   replicated systems.} a server that can handle an operation for a
 given data item is called a \textit{replica} for that item. While this
 standard model is useful, there are several other cases we should
