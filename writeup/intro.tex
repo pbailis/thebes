@@ -1,18 +1,18 @@
 
 \section{Introduction}
 
-The prior decade saw a large shift in the design of large-scale
+The prior decade has seen a large shift in the design of large-scale
 database backends, from the use of transactional
 RDBMSs~\cite{bernstein-book, gray-isolation, gray-virtues} to the
 widespread adoption of loosely-consistent distributed key-value
-stores~\cite{bigtable, pnuts, dynamo}. Instrumental in this trend was
+stores~\cite{bigtable, pnuts, dynamo}. Fundamental to this trend was
 the 2000 introduction of Brewer's CAP Theorem, which stated that a
 highly available system cannot provide strong consistency guarantees
-in the presence of network partitions~\cite{brewer-slides}. However,
-as formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
-linearizability~\cite{herlihy-art}, the ability to read the most
-recent write to a data item that is replicated across servers. Yet
-this result---regarding a fairly narrow form of distributed
+in the presence of network partitions~\cite{brewer-slides}. As
+formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
+linearizability: the ability to read the most recent write to a data
+item that is replicated across servers~\cite{herlihy-art}. Yet this
+result---regarding a fairly narrow form of distributed
 consistency---is often conflated with ACID database
 properties~\cite{brewer-slides, hn, foundation-article}, leading to
 substantial confusion about the relationships between replica
@@ -20,11 +20,12 @@ consistency, transactional isolation, and high availability. However,
 transactions \textit{are} useful for programmers as evidenced by the
 recent resurgence of transactional data stores such as Google's
 Spanner~\cite{spanner}. Unfortunately, these systems are not highly
-available in the presence of partitions~\cite{ foundation-article,
-  mdcc, krikellas-bargain, eiger, walter}. (TODO:ADD more)
+available in the presence of partitions~\cite{middleware-db,
+  foundation-article, hstore,generalizedsnapshot, mdcc,
+  krikellas-bargain, eiger, walter, calvin}.
 
 Indeed, serializable transactions, the gold standard of traditional
-ACID databases, is indeed not achievable given a requirement for high
+ACID databases, are indeed not achievable given a requirement for high
 availability in the presence of
 partitions~\cite{davidson-survey}. However, database systems have a
 long tradition of providing weaker isolation and consistency
@@ -65,9 +66,10 @@ so, we demonstrate that many \textit{implementations} of HAT semantics
 are not highly available but that their unavailability is not
 \textit{inherently} required. Our investigation shows, somewhat
 surprisingly, that besides serializability, only Snapshot Isolation
-(SI) and Repeatable Reads (RR) are unavailable, with most other
-isolation levels being available. We also show that many of the weaker
-data consistency models from distributed systems are HAT-compliant.
+(SI) and Repeatable Reads (RR) are inherently unavailable, with most
+other isolation levels being available. We also show that many of the
+weaker data consistency models from distributed systems are
+HAT-compliant.
 
 More precisely, the reason why fairly strong models like Snapshot
 Isolation (SI) and Repeatable Reads (RR) are not highly available is
@@ -75,16 +77,16 @@ that they require detecting conflicts between concurrent updates (as
 needed for preventing Lost Updates or Write Skew phenomena). However,
 Read Committed isolation, Transactional Atomicity, and many of the
 weaker data consistency models from database and distributed systems
-can be implemented in a highly available manner. For several of these
+can be implemented in a highly available manner. For several
 guarantees, such as Transactional Causal Predicate Cut Isolation, we
 consider a modified form of high availability in which clients ``stick
 to'' (i.e., have affinity with) at least one server (a property which
 is often implicit in the distributed systems
-literature~\cite{herlihy-art,  eiger, cac} but which requires
+literature~\cite{herlihy-art, eiger, cac} but which requires
 \textit{explicit} consideration in a client-server replicated database
-context). This sticky availability is easily implementable and
-widely employed~\cite{eiger, vogels-defs} but is strictly less
-available than traditional definitions of high availability.
+context). This sticky availability is easily implementable and widely
+employed~\cite{eiger, vogels-defs} but is strictly less available than
+traditional definitions of high availability.
 
 This taxonomy allows us to determine that a wide range of semantic
 guarantees can be delivered with availability in face of partitions,
@@ -103,7 +105,7 @@ constraints on multi-item updates and sometimes provide limited
 uniqueness guarantees. However, particularly for programs with
 non-monotonic logic, HATs may fall short, requiring
 sometimes-unavailable mechanisms that are more
-coordination-intensive. Overall, this paper quantifies the benefits
+coordination intensive. Overall, this paper quantifies the benefits
 Highly Available Transactions can offer as well as the necessary
 semantic restrictions they place on applications.
 

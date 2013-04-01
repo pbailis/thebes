@@ -30,9 +30,9 @@ to full site disruptions for popular web services like Reddit,
 Foursquare, and Heroku~\cite{ec2-downsites}. At a global scale,
 hardware failures---like the 2011 outages in Internet backbones in
 North America and Europe due a router
-bug~\cite{juniper-partition}---and misconfigurations---such as BGP
+bug~\cite{juniper-partition}---and misconfigurations such as BGP
 faults in 2008~\cite{pakistan-youtube} and
-2010~\cite{research-experiment-partition}---can cause widespread
+2010~\cite{research-experiment-partition} can cause widespread
 partitions.
 
 Many of our discussions with practitioners---especially those
@@ -86,13 +86,13 @@ of communication latency, Deutsch's second ``Fallacy.'' In this
 section, we quantify round-trip latencies, which are often
 large---hundreds of milliseconds---in a geo-replicated context.
 Fundamentally, the speed at which two servers can communicate is
-(according to modern physics) bounded by the speed of light. Two
-servers located on opposite sides of the Earth face, in the best
-case---communicating via a hypothetical link crossing through the
-center of the planet---require a minimum 85.1 ms RTT (133.7 ms if sent
-at ground level). As services are replicated to multiple,
-geographically distinct sites, the cost of communication increases to
-this lower bound.
+(according to modern physics) bounded by the speed of light. In the
+best case, two servers on opposite sides of the Earth's
+surface---communicating via a hypothetical link traversing the
+planet's diamater---require a minimum 85.1 ms RTT (133.7 ms if sent at
+ground level). As services are replicated to multiple, geographically
+distinct sites, the cost of communication increases to this lower
+bound.
 
 
 \definecolor{min-lat-color}{HTML}{B2FF99}

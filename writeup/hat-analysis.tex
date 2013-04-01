@@ -438,10 +438,11 @@ unavailable consistency models we have discussed in
 Figure~\ref{fig:hatcompared}. Many models are simultaneously
 achievable, but we find several particularly compelling. If we combine
 all sticky-HAT guarantees, we have transactional, causal snapshot
-reads. If we combine TA and P-CI, we have transactional snapshot
-reads. We can achieve RC, MR, and RYW by simply sticking clients to
-servers. And we can also combine unavailable models---for example, an
-unavailable system might provide PRAM and One-Copy
+reads (i.e., Causal Transactional Predicate Cut Isolation). If we
+combine TA and P-CI, we have transactional snapshot reads. We can
+achieve RC, MR, and RYW by simply sticking clients to servers. And we
+can also combine unavailable models---for example, an unavailable
+system might provide PRAM and One-Copy
 Serializability~\cite{daudjee-session}.
 
 To the best of our knowledge, this is the first unification of
