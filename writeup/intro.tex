@@ -3,14 +3,13 @@
 
 The prior decade saw a large shift in the design of large-scale
 database backends, from the use of transactional
-RDBMSs~\cite{bernstein-book, gray-isolation,
-  gray-virtues} to the widespread adoption of loosely-consistent
-distributed key-value stores~\cite{bigtable, pnuts,
-  dynamo}. Instrumental in this trend was the 2000 introduction of
-Brewer's CAP Theorem, which stated that a highly available system
-cannot provide strong consistency guarantees in the presence of
-network partitions~\cite{brewer-slides}. However, as formally
-proven~\cite{gilbert-cap}, the CAP Theorem concerns
+RDBMSs~\cite{bernstein-book, gray-isolation, gray-virtues} to the
+widespread adoption of loosely-consistent distributed key-value
+stores~\cite{bigtable, pnuts, dynamo}. Instrumental in this trend was
+the 2000 introduction of Brewer's CAP Theorem, which stated that a
+highly available system cannot provide strong consistency guarantees
+in the presence of network partitions~\cite{brewer-slides}. However,
+as formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
 linearizability~\cite{herlihy-art}, the ability to read the most
 recent write to a data item that is replicated across servers. Yet
 this result---regarding a fairly narrow form of distributed
@@ -21,16 +20,16 @@ consistency, transactional isolation, and high availability. However,
 transactions \textit{are} useful for programmers as evidenced by the
 recent resurgence of transactional data stores such as Google's
 Spanner~\cite{spanner}. Unfortunately, these systems are not highly
-available in the presence of partitions~\cite{walter, mdcc,
-  foundation-article, krikellas-bargain, eiger}. (TODO:ADD more)
+available in the presence of partitions~\cite{ foundation-article,
+  mdcc, krikellas-bargain, eiger, walter}. (TODO:ADD more)
 
 Indeed, serializable transactions, the gold standard of traditional
 ACID databases, is indeed not achievable given a requirement for high
 availability in the presence of
 partitions~\cite{davidson-survey}. However, database systems have a
 long tradition of providing weaker isolation and consistency
-guarantees~\cite{adya, ansicritique, gray-isolation,
-  gray-virtues} (TODO: kemme). Due to their concurrency and overall performance
+guarantees~\cite{adya, ansicritique, gray-virtues, gray-isolation,
+  kemme-thesis}. Due to their concurrency and overall performance
 benefits, weak isolation models are widely employed, overwhelmingly as
 the default setting in today's traditional ``ACID'' and up-and-coming
 ``NewSQL'' databases and often as the maximum guarantee offered
@@ -47,18 +46,17 @@ has not been well explored. We have a strong understanding of weak
 isolation in the single-server context from which it
 originated~\cite{adya, ansicritique, gray-isolation} and many papers
 offer techniques for providing distributed
-serializability~\cite{bernstein-book, hstore, kemme-classification,
-  spanner, daudjee-session, krikellas-bargain, calvin} or
-snapshot isolation~\cite{daudjee-snapshot,generalizedsnapshot,
-  kemme-snapshot, walter}. The distributed computing, programming
-language, and parallel hardware literature also contains many
-consistency models for single operations on replicated
-objects~\cite{pnuts, herlihy-art,  eiger, cac, sessionguarantees,
-  ceri-mechanism, chen-mechanism}. However, the literature has largely
-ignored semantic guarantees for multiple operations operating on
-multiple data items in a highly available distributed environment.
+serializability~\cite{bernstein-book, spanner, daudjee-session,
+  hstore, krikellas-bargain, calvin, kemme-classification} or snapshot
+isolation~\cite{daudjee-snapshot,generalizedsnapshot, kemme-snapshot,
+  walter}. The distributed computing, programming language, and
+parallel hardware literature also contains many consistency models for
+single operations on replicated objects~\cite{ ceri-mechanism,
+  chen-mechanism, pnuts, herlihy-art, eiger, cac, sessionguarantees}. However, the literature has largely ignored semantic guarantees for
+multiple operations operating on multiple data items in a highly
+available distributed environment.
 
-Our main contributions are as follows. We fill gap between, on one
+Our main contributions are as follows. We fill the gap between, on one
 hand, the plethora of previously proposed isolation and consistency
 models, and, on the other hand, the goal of high availability.  We
 classify which, among the wide array of models, are highly available,

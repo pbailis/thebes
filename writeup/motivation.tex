@@ -38,7 +38,7 @@ partitions.
 Many of our discussions with practitioners---especially those
 operating on public cloud infrastructure---as well as reports from
 large-scale operators like Google~\cite{dean-keynote} confirm that
-partition management is an important consideration service operators
+partition management is an important consideration for service operators
 today. As an example of an actual system rearchitecture resulting from
 partitions, less than one year after its announcement, Yahoo!'s PNUTS
 developers explicitly added support for weaker, highly available
@@ -176,12 +176,12 @@ address partitions and latency: what does this mean for distributed
 databases? Database researchers and designers have long realized that
 serializability is not achievable in a highly available
 system~\cite{davidson-survey}, meaning it will be expensive in the
-environments from Section~\ref{sec:motivation}. However, even a
+environments from Section~\ref{sec:motivation}. However, even in a
 single-node database, the coordination penalties associated with
 serializability can be severe, manifesting themselves in the form of
 decreased concurrency (and, subsequently, performance degradation,
 scalability limitations, and, often, external aborts like
-deadlocks)~\cite{gray-isolation}. Accordingly, o increase concurrency,
+deadlocks)~\cite{gray-isolation}. Accordingly, to increase concurrency,
 database systems offer a range of ACID properties weaker than
 serializability.  Instead, databases offer a host of so-called
 \textit{weak isolation} models that allow varying restrictions on the
@@ -250,7 +250,7 @@ algorithms for providing weak isolation are typically designed for a
 single-node context and are, to the best of our knowledge, unavailable
 due to a reliance on concurrency control mechanisms like locking that
 are not resilient to partial failure
-(Section~\ref{sec:evaluation}). Morever, we are not aware of any prior
+(Section~\ref{sec:evaluation}). Moreover, we are not aware of any prior
 literature that provides guidance as to the relationship between weak
 isolation and high availability: prior work has examined the
 relationship between serializability and high

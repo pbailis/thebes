@@ -5,7 +5,7 @@
 To understand which guarantees can be provided with high availabilty,
 we must first define what high availability means. In this section, we
 will formulate a model that captures a range of availability models,
-including ``true'' high availability, availablility with stickiness,
+including ``true'' high availability, availability with stickiness,
 and several other useful variants.
 
 Informally, highly available algorithms ensure ``always on'' operation
@@ -16,7 +16,7 @@ others. If servers are partitioned from one another, they do not need
 to stall in order to provide a ``safe'' query response. This lack of
 fast-path coordination also means that a highly available system also
 provides low latency~\cite{abadi-pacelc}; in a wide-area setting, this
-means that clients need not need to wait for cross-datacenter
+means that clients need not wait for cross-datacenter
 communication. To properly describe whether a \textit{transactional}
 system is highly available, we need to describe what servers a client
 must contact as well as what kinds of responses a server can provide,

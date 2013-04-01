@@ -114,7 +114,7 @@ successive predicate-based reads return different
 data~\cite{gray-isolation}, is the only kind of non-serializable
 behavior allowed. When referring to ``Repeatable Read,'' we will
 follow these definitions, which, as we will soon show, are for a
-property that be offered in a highly available way.
+property that can be offered in a highly available way.
 
 However, As Berenson et al.~\cite{ansicritique} discuss, the ANSI SQL
 specification allows many additional behaviors under the term
@@ -153,8 +153,8 @@ its item reads.  We call this \textit{Predicate Cut
   a multi-operation transaction. We do not consider this isolation
   model here as it is subsumed by standard Snapshot Isolation and we
   believe our discussion is easily extended to incorporate it.} and it
-prohibits Phantoms. Predict Cut Isolation is also achievable in HAT
-system via similar multi-versioning as above.
+prohibits Phantoms. Predicate Cut Isolation is also achievable in HAT
+systems via similar multi-versioning as above.
 
 \subsubsection{ACID Atomicity Guarantees}
 
@@ -191,7 +191,7 @@ updates are present on their respective replicas. However, replicas do
 not need to agree on when to reveal a new value to clients, which
 would require consensus; accordingly, TA only requires reliable
 broadcast (with some additional metadata for clients) and is
-achievable in a HAT system. We omit a full discussion of the algorithm
+achievable in HAT systems. We omit a full discussion of the algorithm
 and instead refer the reader to the extended version of this
 paper~\cite{hat-tr}.  space{.5em}
 
@@ -570,7 +570,7 @@ Regular\linearizable, Linearizability\linearizable, Strong
 \subsection{Discussion}
 \label{sec:discussion}
 
-In this section, we discuss several subleties in our results,
+In this section, we discuss several subtleties in our results,
 specifically addressing model composition, transactional atomicity
 versus linearizability, and stickiness requirements.
 
@@ -619,7 +619,7 @@ clients see all writes at the same time. With transactional atomicity,
 clients may see writes at different times depending on which replicas
 they contact. We are not aware of an analogous model in the
 distributed systems literature. Accordingly, despite apparent
-similarities, transactional atomicity incomparable with and much
+similarities, transactional atomicity is incomparable with and much
 cheaper (by availability standards) than linearizability.
 
 \vspace{.5em}\noindent\textbf{Visibility and Stickiness} Sticky
