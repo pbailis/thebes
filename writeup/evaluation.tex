@@ -193,7 +193,7 @@ per-key mastering (wherein all operations required a RTT to a
 designated master server), Read Committed, and TA with read your
 writes guarantees. We deployed an experimental Java-based distributed
 datastore backed by LevelDB both within and across EC2 regions and ran
-the YCSB benchmark to determine the resulting performance impact. We
+the YCSB benchmark~\cite{ycsb} to determine the impact of latency. We
 partitioned the database into two fully replicated clusters of three
 \texttt{m1.xlarge} instances. For HAT, we stuck YCSB clients to their
 local cluster and, to provide transactional functionality, grouped
