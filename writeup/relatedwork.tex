@@ -13,17 +13,17 @@ weak consistency models in a distributed setting~\cite{calm, crdt} and
 high availability is relatively unexplored. With the exception of a
 preliminary workshop paper introducing HATs~\cite{hat-hotos}--- which
 this work expands, providing impossibility results, a full
-taxonomization, and experimental and application analysis (basically
-all but Section 4.1)---we believe this paper is the first to explore
-this area. Nonetheless, several studies rigorously classify non-HAT
-semantics: Wisemann et al. have proposed a three parameter
-classification for one-copy serializable database systems, performing
-a more extensive classification than our overview in
-Section~\ref{sec:evaluation}, including eager database replication
-techniques~\cite{kemme-classification}. Additionally several earlier
-surveys discuss distributed mechanisms for achieving one-copy
-serializability~\cite{wisemann-survey}, linearizability, consistent
-snapshots, and recency bounds~\cite{ceri-mechanism}.
+taxonomization, and experimental and application analysis---we believe
+this paper is the first to explore this area. Nonetheless, several
+studies rigorously classify non-HAT semantics: Wisemann et al. have
+proposed a three parameter classification for one-copy serializable
+database systems, performing a more extensive classification than our
+overview in Section~\ref{sec:evaluation}, including eager database
+replication techniques~\cite{kemme-classification}. Additionally
+several earlier surveys discuss distributed mechanisms for achieving
+one-copy serializability~\cite{wisemann-survey}, linearizability,
+consistent snapshots, and recency bounds~\cite{ceri-mechanism,
+  chen-mechanism}.
 
 There has been a recent resurgence of interest in distributed
 multi-object semantics, both in academia~\cite{kraska-s3, gstore,
