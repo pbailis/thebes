@@ -602,7 +602,7 @@ $O(N)$ storage per write~\cite{charron-bost}. This means that, with
 $100K$ clients, each write might be accompanied by $100K$ timestamps
 per vector. This is difficult to scale. By compromising on
 availability (e.g., treating a datacenter as a linearizable cluster),
-this overhead can be reduced~\cite{cops, eiger}, but it is much
+this overhead can be reduced~\cite{eiger}, but it is much
 cheaper to provide, say, read your writes, than full causal
 consistency.
 

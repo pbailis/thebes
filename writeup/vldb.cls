@@ -1259,7 +1259,7 @@
 \ifnum\addauflag=0\addauthorsection\global\addauflag=1\fi
      \section[References]{%    <=== OPTIONAL ARGUMENT ADDED HERE
         {References} % was uppercased but this affects pdf bookmarks (SP/GM October 2004)
-          \vskip -9pt  % GM July 2000 (for tighter spacing)
+          \vskip -0pt  % GM July 2000 (for tighter spacing)
          \@mkboth{{\refname}}{{\refname}}%
      }%
      \list{[\arabic{enumi}]}{%
@@ -1365,7 +1365,7 @@
 \baselineskip=11pt
 \let\thepage\relax % For NO page numbers - GM Nov. 30th. 1999 and July 2000
 \def\setpagenumber#1{\global\setcounter{page}{#1}}
-%\pagenumbering{arabic}  % Arabic page numbers GM July 2000
+\pagenumbering{arabic}  % Arabic page numbers GM July 2000
 \twocolumn             % Double column.
 \flushbottom           % Even bottom -- alas, does not balance columns at end of document
 \pagestyle{plain}
@@ -1401,8 +1401,8 @@
 \newtoks\copyrightetc
 \global\copyrightetc{Copyright 2013 VLDB Endowment 2150-8097/13/03... \$ 10.00}
 		
-\toappear{\the\boilerplate\par
-\confname{\the\conf} \the\confinfo\par \the\copyrightetc.}
+%\toappear{\the\boilerplate\par
+%\confname{\the\conf} \the\confinfo\par \the\copyrightetc.}
 %
 %% End of vldb.cls -- V1.8c - 05/15/2011 --
 %% Stratis Viglas -- October 2012 (re-enabled the copyright blurb until further notice)

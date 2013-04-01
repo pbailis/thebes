@@ -113,7 +113,10 @@ semantic compromises.
 \bibliographystyle{abbrv}
 % vldb_sample.bib is the name of the Bibliography in this case
 \footnotesize
+\balance
 \bibliography{hat-vldb}  
+
+
 % You must have a proper ".bib" file
 %  and remember to run:
 % latex bibtex latex latex
@@ -122,13 +125,13 @@ semantic compromises.
 %APPENDIX is optional.
 % ****************** APPENDIX **************************************
 % Example of an appendix; typically would start on a new page
-\pagebreak
+%\pagebreak
+%
+%\begin{appendix}
+%\input{availability-appendix.tex}
 
-\begin{appendix}
-\input{availability-appendix.tex}
-
-\input{hat-appendix.tex}
-\end{appendix}
+%\input{hat-appendix.tex}
+%\end{appendix}
 \end{document}
 
 % megastore
