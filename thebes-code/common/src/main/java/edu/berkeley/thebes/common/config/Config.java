@@ -66,8 +66,10 @@ public class Config {
         
         configureGraphite();
 
-        if(getMetricsToConsole())
-            ConsoleReporter.enable(5, TimeUnit.SECONDS);
+        if(getMetricsToConsole()) {
+            ConsoleReporter reporter = new ConsoleReporter(System.err);
+            reporter.enable(5, TimeUnit.SECONDS);
+        }
     }
 
     private static Boolean getMetricsToConsole() {
