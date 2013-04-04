@@ -68,13 +68,34 @@ public class DependencyResolver {
         this.unresolvedAcksLock = new ReentrantLock();
     }
 
+    private String getPendingKeyForVersion(String key, Version version) {
+        return "VERSION"+key+version;
+    }
+
+    private String getPendingKeyForValue(String key, DataItem value) {
+        return getPendingKeyForVersion(key, value.getVersion());
+    }
+
+    private void persistPendingWrite(String key, DataItem value) throws TException {
+        persistenceEngine.put(getPendingKeyForValue(key, value), value);
+    }
+
+    private DataItem getPendingWrite(String key, Version version) throws TException {
+        return persistenceEngine.get(getPendingKeyForVersion(key, version));
+    }
+
+    private void deletePendingWrite(String key, Version version) throws TException {
+        persistenceEngine.delete(getPendingKeyForVersion(key, version));
+    }
+
     public void addPendingWrite(String key, DataItem value) throws TException {
         Version version = value.getVersion();
         
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
+        persistPendingWrite(key, value);
         
         PendingWrite newPendingWrite = new PendingWrite(key, value);
-        
+
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
             logger.error("Transaction queue was NULL -- violated assertion");
@@ -116,19 +137,20 @@ public class DependencyResolver {
     
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
-            persistenceEngine.put(write.getKey(), write.getValue());
+            persistenceEngine.put(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
+            deletePendingWrite(write.getKey(), write.getVersion());
         }
         pendingTransactionsMap.remove(queue.version);
     }
     
-    public DataItem retrievePendingItem(String key, Version version) {
+    public DataItem retrievePendingItem(String key, Version version) throws TException {
         if (!pendingTransactionsMap.containsKey(version)) {
             return null;
         }
         
         for (PendingWrite pendingWrite : pendingTransactionsMap.get(version).pendingWrites) {
             if (key.equals(pendingWrite.getKey())) {
-                return pendingWrite.getValue();
+                return getPendingWrite(pendingWrite.getKey(), pendingWrite.getVersion());
             }
         }
         
@@ -198,12 +220,12 @@ public class DependencyResolver {
             pendingWrites.add(write);
             if (!(numKeysForThisReplica == 0 ||
                     numKeysForThisReplica == write.getNumKeysForThisReplica())) {
-                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
+                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion()));
                 assert(false);
             }
             if (!(numReplicasInvolved == 0 ||
                     numReplicasInvolved == write.getReplicaIndicesInvolved().size())) {
-                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
+                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion()));
                 assert(false);
             }
             

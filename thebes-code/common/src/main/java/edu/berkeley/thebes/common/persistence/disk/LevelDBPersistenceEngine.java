@@ -89,6 +89,15 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         return new DataItem(tdrRet);
     }
 
+    public void delete(String key) throws TException {
+        lockManager.lock(key);
+        try {
+            db.delete(key.getBytes());
+        } finally {
+            lockManager.unlock(key);
+        }
+    }
+
     public void close() throws IOException {
         db.close();
     }
