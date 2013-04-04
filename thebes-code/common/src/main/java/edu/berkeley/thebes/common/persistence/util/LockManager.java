@@ -34,6 +34,10 @@ public class LockManager {
         }
     }
 
+    public int getSize() {
+        return lockTable.size();
+    }
+
     private Map<String, LockWaiting> lockTable;
     private Lock tableLock = new ReentrantLock();
 

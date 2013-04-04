@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.ConfigurationException;
 
+import com.yammer.metrics.core.Histogram;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
@@ -72,7 +73,7 @@ public class ThebesHATClient implements IThebesClient {
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact",
                                                                      TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
     private final Timer latencyPerOperationMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-op", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-    
+
     private static final AtomicInteger LOGICAL_CLOCK = new AtomicInteger(0);
 
     private ReplicaRouter router;
@@ -92,45 +93,6 @@ public class ThebesHATClient implements IThebesClient {
     //Atomicity data structures
     private AtomicityLevel atomicityLevel = Config.getThebesAtomicityLevel();
     private VersionVector atomicityVersionVector;
-
-    private class TransactionMultiPutCallback implements AsyncMethodCallback<ReplicaService.AsyncClient.put_call> {
-        private Semaphore blockFor;
-        private final int numWrites;
-        private List<Exception> exceptionList = Lists.newArrayList();
-
-        public TransactionMultiPutCallback(int numWrites) {
-            blockFor = new Semaphore(numWrites);
-            this.numWrites = numWrites;
-        }
-
-        @Override
-        public void onComplete(ReplicaService.AsyncClient.put_call put_call) {
-            blockFor.release();
-        }
-
-        @Override
-        public void onError(Exception e) {
-            exceptionList.add(e);
-            blockFor.release();
-        }
-
-        public void blockForWrites() throws TException {
-            try {
-                blockFor.acquire(numWrites);
-            } catch (InterruptedException e) {
-                exceptionList.add(e);
-            } finally {
-                if(!exceptionList.isEmpty()) {
-                    String exceptionString = "Exceptions occured in processing write: ";
-                    for(Exception e : exceptionList) {
-                        exceptionString += e.getMessage() + e.getStackTrace();
-                    }
-
-                    throw new TException(exceptionString);
-                }
-            }
-        }
-    }
 
     public ThebesHATClient() {
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY &&
@@ -178,20 +140,10 @@ public class ThebesHATClient implements IThebesClient {
             doPutSync(key,
                       queuedWrite);
 
-            /*
-            doPutAsync(key,
-                       queuedWrite,
-                       transactionKeys,
-                       callback);
-                       */
-
-        }
-
-        //callback.blockForWrites();
-
         if(atomicityLevel == AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
                                                 transactionVersion);
+        }
     }
 
     @Override
@@ -321,27 +273,6 @@ public class ThebesHATClient implements IThebesClient {
         return ret;
     }
 
-//    private boolean doPutAsync(String key,
-//                               DataItem value,
-//                               TransactionMultiPutCallback callback) throws TException {
-//        TimerContext timer = latencyPerOperationMetric.time();
-//
-//        try {
-//            router.put(key,
-//                                                 value.toThrift(),
-//                                                 callback);
-//        } catch (RuntimeException e) {
-//            errorMetric.mark();
-//            throw e;
-//        } catch (TException e) {
-//            errorMetric.mark();
-//            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
-//        } finally {
-//            timer.stop();
-//        }
-//        return true;
-//    }
-    
     private DataItem doGet(String key) throws TException {
         TimerContext timer = latencyPerOperationMetric.time();
         DataItem ret;

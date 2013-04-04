@@ -1,5 +1,8 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Meter;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceR
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -58,7 +62,17 @@ public class DependencyResolver {
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
     private final Lock unresolvedAcksLock;
-    
+
+    Meter commitCount = Metrics.newMeter(DependencyResolver.class,
+                                         "dgood-transaction-total",
+                                         "transactions",
+                                         TimeUnit.SECONDS);
+
+    Meter retrievePendingCount = Metrics.newMeter(DependencyResolver.class,
+                                                 "dpending-retrieval-count",
+                                                 "retrievals",
+                                                 TimeUnit.SECONDS);
+
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
@@ -66,6 +80,13 @@ public class DependencyResolver {
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         this.unresolvedAcksLock = new ReentrantLock();
+
+        Metrics.newGauge(DependencyResolver.class, "num-pending-versions", new Gauge<Integer>() {
+            @Override
+            public Integer value() {
+                return pendingTransactionsMap.size();
+            }
+        });
     }
 
     public void addPendingWrite(String key, DataItem value) throws TException {
@@ -104,14 +125,6 @@ public class DependencyResolver {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
-        
-//        if (Math.random() < .001) {
-//            int numPendingWrites = 0;
-//            for (Set<PendingWrite> pendingWrites : pendingWritesMap.values()) {
-//                numPendingWrites += pendingWrites.size();
-//            }
-//            logger.debug("Currently have " + numPendingWrites + " pending writes!");
-//        }
     }
     
     private void commit(TransactionQueue queue) throws TException {
@@ -119,9 +132,13 @@ public class DependencyResolver {
             persistenceEngine.put(write.getKey(), write.getValue());
         }
         pendingTransactionsMap.remove(queue.version);
+
+        commitCount.mark();
     }
     
     public DataItem retrievePendingItem(String key, Version version) {
+        retrievePendingCount.mark();
+
         if (!pendingTransactionsMap.containsKey(version)) {
             return null;
         }
