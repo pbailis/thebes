@@ -27,12 +27,15 @@ import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import org.slf4j.LoggerFactory;
 
 public class Config {
     private static TransactionMode txnMode;
     private static List<ServerAddress> clusterServers;
     private static List<ServerAddress> siblingServers = null;
     private static List<ServerAddress> masterServers;
+
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
     
     private static String HOST_NAME;
 
@@ -68,7 +71,8 @@ public class Config {
         if (graphiteIP.equals("")) {
         	return;
         }
-    	
+
+        logger.debug("Connecting to graphite on host "+graphiteIP);
         GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003, HOST_NAME);
     }
 
