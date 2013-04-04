@@ -56,7 +56,7 @@ public class MasteredReplicaRouter extends ReplicaRouter {
 
     private ServerAddress getReplicaIPByKey(String key) {
         int hash = RoutingHash.hashKey(key, numNeighbors);
-        int clusterID = (hash % numClusters) + 1;
+        int clusterID = RoutingHash.hashKey(key, numClusters) + 1;
         return replicaAddressesByCluster.get(clusterID).get(hash);
     }
 
