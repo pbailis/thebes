@@ -65,6 +65,13 @@ public class Config {
         masterServers = getMasterServers();
         
         configureGraphite();
+
+        if(getMetricsToConsole())
+            ConsoleReporter.enable(5, TimeUnit.SECONDS);
+    }
+
+    private static Boolean getMetricsToConsole() {
+        return getOption(ConfigParameters.METRICS_TO_CONSOLE);
     }
     
     private static void configureGraphite() {
