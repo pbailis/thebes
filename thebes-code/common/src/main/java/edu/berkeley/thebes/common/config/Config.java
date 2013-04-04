@@ -27,6 +27,7 @@ import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Config {
@@ -35,7 +36,7 @@ public class Config {
     private static List<ServerAddress> siblingServers = null;
     private static List<ServerAddress> masterServers;
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
+    private static Logger logger = LoggerFactory.getLogger(Config.class);
     
     private static String HOST_NAME;
 

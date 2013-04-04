@@ -94,7 +94,10 @@ public class ThebesHATClient implements IThebesClient {
     private AtomicityLevel atomicityLevel = Config.getThebesAtomicityLevel();
     private VersionVector atomicityVersionVector;
 
-    public ThebesHATClient() {
+    public ThebesHATClient() throws FileNotFoundException, ConfigurationException {
+        Log4JConfig.configureLog4J();
+        Config.initializeClient();
+
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY &&
            !isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
             /*
