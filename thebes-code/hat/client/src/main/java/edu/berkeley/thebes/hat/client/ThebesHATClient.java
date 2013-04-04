@@ -127,11 +127,10 @@ public class ThebesHATClient implements IThebesClient {
                 System.currentTimeMillis());
         List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
 
-        //TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
+        logger.trace("Batch put of "+transactionKeys.size()+" keys.");
+
         for(String key : transactionKeys) {
             DataItem queuedWrite = transactionWriteBuffer.get(key);
-
-            List<String> transactionalDependencies = null;
 
             if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
                 queuedWrite.setVersion(transactionVersion);
@@ -142,11 +141,11 @@ public class ThebesHATClient implements IThebesClient {
 
             doPutSync(key,
                       queuedWrite);
+        }
 
         if(atomicityLevel == AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
                                                 transactionVersion);
-        }
     }
 
     @Override

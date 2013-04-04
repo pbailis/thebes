@@ -74,7 +74,7 @@ public class Config {
         }
 
         logger.debug("Connecting to graphite on host "+graphiteIP);
-        GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003, HOST_NAME);
+        GraphiteReporter.enable(20, TimeUnit.SECONDS, graphiteIP, 2003, HOST_NAME);
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
