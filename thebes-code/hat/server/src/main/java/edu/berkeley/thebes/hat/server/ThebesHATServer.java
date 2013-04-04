@@ -25,8 +25,8 @@ public class ThebesHATServer {
 
     public static void main(String[] args) {
         try {
-            Config.initializeServer(TransactionMode.HAT);
             Log4JConfig.configureLog4J();
+            Config.initializeServer(TransactionMode.HAT);
 
             IPersistenceEngine engine = Config.getPersistenceEngine();
             engine.open();

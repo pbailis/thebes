@@ -2,7 +2,10 @@ package edu.berkeley.thebes.hat.server.antientropy;
 
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Meter;
 import edu.berkeley.thebes.hat.common.thrift.DataDependencyRequest;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 import org.apache.thrift.TException;
@@ -26,6 +29,17 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     AntiEntropyServiceRouter router;
     IPersistenceEngine persistenceEngine;
 
+    Meter putRequests = Metrics.newMeter(AntiEntropyServiceHandler.class,
+                                         "put-requests",
+                                         "requests",
+                                         TimeUnit.SECONDS);
+
+    Meter ackTransactionPending = Metrics.newMeter(AntiEntropyServiceHandler.class,
+                                                   "ack-transaction-pending-requests",
+                                                   "requests",
+                                                   TimeUnit.SECONDS);
+
+
     public AntiEntropyServiceHandler(AntiEntropyServiceRouter router,
             DependencyResolver dependencyResolver, IPersistenceEngine persistenceEngine) {
         this.dependencyResolver = dependencyResolver;
@@ -36,6 +50,7 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     @Override
     public void put(String key,
                     ThriftDataItem valueThrift) throws TException{
+        putRequests.mark();
     	logger.trace("Received anti-entropy put for key " + key);
         DataItem value = new DataItem(valueThrift);
         if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
@@ -47,6 +62,7 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
 
     @Override
     public void ackTransactionPending(ThriftVersion transactionId) throws TException {
+        ackTransactionPending.mark();
         dependencyResolver.ackTransactionPending(Version.fromThrift(transactionId));
     }
 }

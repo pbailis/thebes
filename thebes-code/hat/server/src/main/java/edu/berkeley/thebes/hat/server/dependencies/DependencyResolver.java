@@ -1,5 +1,8 @@
 package edu.berkeley.thebes.hat.server.dependencies;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Meter;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceR
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -58,7 +62,22 @@ public class DependencyResolver {
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
     private final Lock unresolvedAcksLock;
+
+    Meter commitCount = Metrics.newMeter(DependencyResolver.class,
+                                         "dgood-transaction-total",
+                                         "transactions",
+                                         TimeUnit.SECONDS);
+
+    Meter retrievePendingCount = Metrics.newMeter(DependencyResolver.class,
+                                                 "dpending-retrieval-count",
+                                                 "retrievals",
+                                                 TimeUnit.SECONDS);
     
+    Meter weirdErrorCount = Metrics.newMeter(DependencyResolver.class,
+                                             "assertion-violation",
+                                             "retrievals",
+                                             TimeUnit.SECONDS);
+
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
@@ -66,17 +85,46 @@ public class DependencyResolver {
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         this.unresolvedAcksLock = new ReentrantLock();
+
+        Metrics.newGauge(DependencyResolver.class, "num-pending-versions", new Gauge<Integer>() {
+            @Override
+            public Integer value() {
+                return pendingTransactionsMap.size();
+            }
+        });
+    }
+
+    private String getPendingKeyForVersion(String key, Version version) {
+        return "VERSION"+key+version;
+    }
+
+    private String getPendingKeyForValue(String key, DataItem value) {
+        return getPendingKeyForVersion(key, value.getVersion());
+    }
+
+    private void persistPendingWrite(String key, DataItem value) throws TException {
+        persistenceEngine.put(getPendingKeyForValue(key, value), value);
+    }
+
+    private DataItem getPendingWrite(String key, Version version) throws TException {
+        return persistenceEngine.get(getPendingKeyForVersion(key, version));
+    }
+
+    private void deletePendingWrite(String key, Version version) throws TException {
+        persistenceEngine.delete(getPendingKeyForVersion(key, version));
     }
 
     public void addPendingWrite(String key, DataItem value) throws TException {
         Version version = value.getVersion();
         
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
+        persistPendingWrite(key, value);
         
         PendingWrite newPendingWrite = new PendingWrite(key, value);
-        
+
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
+            weirdErrorCount.mark();
             logger.error("Transaction queue was NULL -- violated assertion");
             return;
         }
@@ -101,34 +149,32 @@ public class DependencyResolver {
         }
         
         if (transQueue.canCommit()) {
-            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
+            logger.trace("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
-        
-//        if (Math.random() < .001) {
-//            int numPendingWrites = 0;
-//            for (Set<PendingWrite> pendingWrites : pendingWritesMap.values()) {
-//                numPendingWrites += pendingWrites.size();
-//            }
-//            logger.debug("Currently have " + numPendingWrites + " pending writes!");
-//        }
     }
     
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
-            persistenceEngine.put(write.getKey(), write.getValue());
+            persistenceEngine.put(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
+            deletePendingWrite(write.getKey(), write.getVersion());
         }
         pendingTransactionsMap.remove(queue.version);
+
+        commitCount.mark();
     }
-    
-    public DataItem retrievePendingItem(String key, Version version) {
+
+    public DataItem retrievePendingItem(String key, Version version) throws TException {
+
+        retrievePendingCount.mark();
+
         if (!pendingTransactionsMap.containsKey(version)) {
             return null;
         }
         
         for (PendingWrite pendingWrite : pendingTransactionsMap.get(version).pendingWrites) {
             if (key.equals(pendingWrite.getKey())) {
-                return pendingWrite.getValue();
+                return getPendingWrite(pendingWrite.getKey(), pendingWrite.getVersion());
             }
         }
         
@@ -140,7 +186,7 @@ public class DependencyResolver {
         if (transactionQueue != null) {
             transactionQueue.serverAcked();
             if (transactionQueue.canCommit()) {
-                if (logger.isDebugEnabled()) { logger.debug("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
+                if (logger.isDebugEnabled()) { logger.trace("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
                 commit(transactionQueue);
             }
             return;
@@ -198,12 +244,12 @@ public class DependencyResolver {
             pendingWrites.add(write);
             if (!(numKeysForThisReplica == 0 ||
                     numKeysForThisReplica == write.getNumKeysForThisReplica())) {
-                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
+                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion()));
                 assert(false);
             }
             if (!(numReplicasInvolved == 0 ||
                     numReplicasInvolved == write.getReplicaIndicesInvolved().size())) {
-                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s, txn keys are %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion(), write.getValue().getTransactionKeys()));
+                logger.error(String.format("numReplicasInvolved is %d, replicaIndicesInvolved is %d, key is %s, version is %s", numReplicasInvolved, write.getReplicaIndicesInvolved().size(), write.getKey(), write.getVersion()));
                 assert(false);
             }
             

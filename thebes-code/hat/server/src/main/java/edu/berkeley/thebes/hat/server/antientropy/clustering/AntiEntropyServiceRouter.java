@@ -1,6 +1,8 @@
 package edu.berkeley.thebes.hat.server.antientropy.clustering;
 
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Meter;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -27,6 +29,15 @@ import java.util.concurrent.TimeUnit;
 public class AntiEntropyServiceRouter {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceRouter.class);
 
+    Meter writeForwardCount = Metrics.newMeter(AntiEntropyServiceRouter.class,
+                                               "write-forward-events",
+                                               "events",
+                                               TimeUnit.SECONDS);
+
+    Meter announceWriteCount = Metrics.newMeter(AntiEntropyServiceRouter.class,
+                                               "write-announce-events",
+                                               "events",
+                                               TimeUnit.SECONDS);
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
@@ -47,6 +58,8 @@ public class AntiEntropyServiceRouter {
                     List<AntiEntropyService.Client> replicaSiblingClients =
                             createClientsFromAddresses(Config.getSiblingServers());
                     while (true) {
+                        writeForwardCount.mark();
+
                         forwardNextQueuedWriteToSiblings(replicaSiblingClients);
                     }
                 }
@@ -60,6 +73,8 @@ public class AntiEntropyServiceRouter {
                     List<AntiEntropyService.Client> neighborClients =
                             createClientsFromAddresses(Config.getServersInCluster());
                     while (true) {
+                        announceWriteCount.mark();
+
                         announceNextQueuedPendingWrite(neighborClients);
                     }
                 }
