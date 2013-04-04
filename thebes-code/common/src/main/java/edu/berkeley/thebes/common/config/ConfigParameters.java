@@ -49,7 +49,8 @@ public enum ConfigParameters {
     LOGGER_LEVEL(String.class, "WARN"),
     DISK_DATABASE_FILE(String.class, "/tmp/thebes.db"),
     DO_CLEAN_DATABASE_FILE(Boolean.class, true),
-    DATABASE_CACHE_SIZE(Integer.class, -1);
+    DATABASE_CACHE_SIZE(Integer.class, -1),
+    METRICS_TO_CONSOLE(Boolean.class, false);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;

@@ -1,5 +1,7 @@
 package edu.berkeley.thebes.hat.server.replica;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Meter;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +15,23 @@ import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
 
+import java.util.concurrent.TimeUnit;
+
 public class ReplicaServiceHandler implements ReplicaService.Iface {
     private IPersistenceEngine persistenceEngine;
     private AntiEntropyServiceRouter antiEntropyRouter;
     private DependencyResolver dependencyResolver;
     private static Logger logger = LoggerFactory.getLogger(ReplicaServiceHandler.class);
 
+    Meter putMeter = Metrics.newMeter(ReplicaServiceHandler.class,
+                                      "put-requests",
+                                      "requests",
+                                      TimeUnit.SECONDS);
+
+    Meter getMeter = Metrics.newMeter(ReplicaServiceHandler.class,
+                                      "get-requests",
+                                      "requests",
+                                      TimeUnit.SECONDS);
 
     public ReplicaServiceHandler(IPersistenceEngine persistenceEngine,
                                  AntiEntropyServiceRouter antiEntropyRouter,
@@ -45,6 +58,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         } else {
             dependencyResolver.addPendingWrite(key, value);
         }
+
+        putMeter.mark();
 
         // todo: remove this return value--it's really not necessary
         return true;
@@ -81,6 +96,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
         if(ret == null) {
             return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
         }
+
+        getMeter.mark();
 
         return ret.toThrift();
     }
