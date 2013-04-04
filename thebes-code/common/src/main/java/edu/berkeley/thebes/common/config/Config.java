@@ -68,7 +68,7 @@ public class Config {
 
         if(getMetricsToConsole()) {
             ConsoleReporter reporter = new ConsoleReporter(System.err);
-            reporter.enable(5, TimeUnit.SECONDS);
+            reporter.start(5, TimeUnit.SECONDS);
         }
     }
 
