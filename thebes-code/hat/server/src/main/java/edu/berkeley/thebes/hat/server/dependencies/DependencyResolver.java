@@ -72,6 +72,11 @@ public class DependencyResolver {
                                                  "dpending-retrieval-count",
                                                  "retrievals",
                                                  TimeUnit.SECONDS);
+    
+    Meter weirdErrorCount = Metrics.newMeter(DependencyResolver.class,
+                                             "assertion-violation",
+                                             "retrievals",
+                                             TimeUnit.SECONDS);
 
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
@@ -98,6 +103,7 @@ public class DependencyResolver {
         
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
+            weirdErrorCount.mark();
             logger.error("Transaction queue was NULL -- violated assertion");
             return;
         }
