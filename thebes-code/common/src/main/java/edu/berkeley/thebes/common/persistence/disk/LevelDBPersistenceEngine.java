@@ -117,7 +117,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     public DataItem get(String key) throws TException {
         getCount.mark();
 
-        TimerContext context = putLatencyTimer.time();
+        TimerContext context = getLatencyTimer.time();
 
         try {
             byte[] byteRet = db.get(key.getBytes());
