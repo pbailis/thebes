@@ -122,7 +122,7 @@ public class DependencyResolver {
         }
         
         if (transQueue.canCommit()) {
-            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
+            logger.trace("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
     }
@@ -157,7 +157,7 @@ public class DependencyResolver {
         if (transactionQueue != null) {
             transactionQueue.serverAcked();
             if (transactionQueue.canCommit()) {
-                if (logger.isDebugEnabled()) { logger.debug("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
+                if (logger.isDebugEnabled()) { logger.trace("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
                 commit(transactionQueue);
             }
             return;
