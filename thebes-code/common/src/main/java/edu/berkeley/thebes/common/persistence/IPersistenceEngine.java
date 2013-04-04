@@ -12,5 +12,7 @@ public interface IPersistenceEngine {
 
     public DataItem get(String key) throws TException;
 
+    public void delete(String key) throws TException;
+
     public void close() throws IOException;
 }

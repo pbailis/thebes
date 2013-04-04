@@ -61,6 +61,10 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
         return ret;
     }
 
+    public void delete(String key) {
+        map.remove(key);
+    }
+
     public void close() {
         return;
     }

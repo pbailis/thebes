@@ -15,7 +15,6 @@ import java.util.Set;
 
 public class PendingWrite implements Comparable<PendingWrite> {
     private final String key;
-    private final DataItem value;
     private final Version transactionVersion;
     
     private int numKeysForThisReplica;
@@ -27,7 +26,6 @@ public class PendingWrite implements Comparable<PendingWrite> {
         }
         
         this.key = key;
-        this.value = value;
         this.transactionVersion = value.getVersion();
 
         examineReplicasInvolved(key, value.getTransactionKeys());
@@ -64,10 +62,6 @@ public class PendingWrite implements Comparable<PendingWrite> {
         return key;
     }
 
-    public DataItem getValue() {
-        return value;
-    }
-
     public Version getVersion() {
         return transactionVersion;
     }
@@ -76,7 +70,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
     public int compareTo(PendingWrite o) {
         return ComparisonChain.start()
                 .compare(getKey(), o.getKey())
-                .compare(getValue(),  o.getValue())
+                .compare(getVersion(),  o.getVersion())
                 .result();
     }
 }

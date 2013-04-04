@@ -133,6 +133,15 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         }
     }
 
+    public void delete(String key) throws TException {
+        lockManager.lock(key);
+        try {
+            db.delete(key.getBytes());
+        } finally {
+            lockManager.unlock(key);
+        }
+    }
+
     public void close() throws IOException {
         db.close();
     }

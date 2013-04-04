@@ -127,6 +127,14 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
         return new DataItem(tdrRet);
     }
 
+    public void delete(String key) throws TException {
+        DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
+        DatabaseEntry dataEntry = new DatabaseEntry();
+
+        OperationStatus status = db.delete(null, keyEntry);
+        return;
+    }
+
     public void close() throws IOException {
         db.close();
         env.close();
