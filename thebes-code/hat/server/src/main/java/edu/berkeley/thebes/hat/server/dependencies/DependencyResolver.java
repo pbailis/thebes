@@ -162,7 +162,7 @@ public class DependencyResolver {
         }
         
         if (transQueue.canCommit()) {
-            logger.trace("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
+            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
     }
@@ -277,7 +277,8 @@ public class DependencyResolver {
         }
         
         public boolean canCommit() {
-            return numReplicasAcked.get() >= numReplicasInvolved && pendingWrites.size() == numKeysForThisReplica
+            return pendingWrites.size() > 0 && 
+                    numReplicasAcked.get() >= numReplicasInvolved && pendingWrites.size() == numKeysForThisReplica
                     && !alreadyCommitted.getAndSet(true);
         }
         
