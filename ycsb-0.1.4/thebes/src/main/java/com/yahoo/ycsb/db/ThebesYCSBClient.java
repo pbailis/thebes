@@ -29,36 +29,10 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
     public static final int NOT_FOUND = -2;
 
     private IntegerGenerator transactionLengthGenerator;
-
-    private int currentTransactionLength = -1;
-    private int finalTransactionLength = -1;
-
-    public boolean checkStartTransaction() {
-        if(currentTransactionLength < finalTransactionLength) {
-            currentTransactionLength++;
-            return false;
-        }
-        else {
-            if(finalTransactionLength != -1)
-                endTransaction();
-
-            finalTransactionLength = transactionLengthGenerator.nextInt();
-            beginTransaction();
-            currentTransactionLength = 0;
-            return true;
-        }
-    }
     
     @Override
     public int getNextTransactionLength() {
-    	if (finalTransactionLength == -1) { 
-            finalTransactionLength = transactionLengthGenerator.nextInt();
-    	}
-    	return finalTransactionLength;
-    }
-
-    public boolean transactionFinished() {
-        return checkStartTransaction();
+    	return transactionLengthGenerator.nextInt();
     }
     
 	public void init() throws DBException {
@@ -109,7 +83,6 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 
     public int endTransaction() {
         try {
-        	finalTransactionLength = -1;
             client.commitTransaction();
         } catch (Exception e) {
 //            e.printStackTrace();
