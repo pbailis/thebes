@@ -13,6 +13,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.iq80.leveldb.*;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Histogram;
 import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
@@ -38,11 +39,27 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
                                                     "requests",
                                                     TimeUnit.SECONDS);
 
+    private final Meter obsoletePutCount = Metrics.newMeter(LevelDBPersistenceEngine.class,
+                                                            "obsolete-put-requests",
+                                                            "requests",
+                                                            TimeUnit.SECONDS);
+
+    private final Meter nullGetCount = Metrics.newMeter(LevelDBPersistenceEngine.class,
+                                                        "null-get-requests",
+                                                        "requests",
+                                                        TimeUnit.SECONDS);
+
     private final Timer putLatencyTimer = Metrics.newTimer(LevelDBPersistenceEngine.class,
                                                            "leveldb-put-latencies");
 
     private final Timer getLatencyTimer = Metrics.newTimer(LevelDBPersistenceEngine.class,
                                                            "leveldb-get-latencies");
+
+    private final Histogram putSizeHistogram = Metrics.newHistogram(LevelDBPersistenceEngine.class,
+                                                                    "leveldb-put-size-histogram");
+
+    private final Histogram getSizeHistogram = Metrics.newHistogram(LevelDBPersistenceEngine.class,
+                                                                    "leveldb-get-size-histogram");
 
     ThreadLocal<TSerializer> serializer = new ThreadLocal<TSerializer>() {
         @Override
@@ -100,10 +117,15 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
                 DataItem curItem = get(key);
 
                 if (curItem != null && curItem.getVersion().compareTo(value.getVersion()) > 0) {
+                    obsoletePutCount.mark();
                     return false;
                 }
                 else {
-                    db.put(key.getBytes(), serializer.get().serialize(value.toThrift()));
+
+                    byte[] putBytes = serializer.get().serialize(value.toThrift());
+                    getSizeHistogram.update(putBytes.length);
+
+                    db.put(key.getBytes(), putBytes);
                     return true;
                 }
             } finally {
@@ -122,8 +144,12 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         try {
             byte[] byteRet = db.get(key.getBytes());
 
-            if(byteRet == null)
+            if(byteRet == null) {
+                nullGetCount.mark();
                 return null;
+            }
+
+            getSizeHistogram.update(byteRet.length);
 
             ThriftDataItem tdrRet = new ThriftDataItem();
             deserializer.get().deserialize(tdrRet, byteRet);
