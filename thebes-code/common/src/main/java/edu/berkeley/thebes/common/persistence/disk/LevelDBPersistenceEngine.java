@@ -123,7 +123,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
                 else {
 
                     byte[] putBytes = serializer.get().serialize(value.toThrift());
-                    getSizeHistogram.update(putBytes.length);
+                    putSizeHistogram.update(putBytes.length);
 
                     db.put(key.getBytes(), putBytes);
                     return true;

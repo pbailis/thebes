@@ -59,6 +59,7 @@ public class DependencyResolver {
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
     private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
+    private final ConcurrentMap<Version, TransactionQueue> tempMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
     private final Lock unresolvedAcksLock;
@@ -83,6 +84,7 @@ public class DependencyResolver {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
         this.pendingTransactionsMap = Maps.newConcurrentMap();
+        this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         this.unresolvedAcksLock = new ReentrantLock();
 
@@ -125,7 +127,14 @@ public class DependencyResolver {
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
             weirdErrorCount.mark();
-            logger.error("Transaction queue was NULL -- violated assertion");
+            String message = "XACT NULL ERROR. ";
+//            logger.error("Transaction queue was NULL -- violated assertion");
+            message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
+            if (tempMap.containsKey(version)) {
+                TransactionQueue prevQueue = tempMap.get(version);
+                message += prevQueue;
+            }
+            logger.error(message);
             return;
         }
         try {
@@ -159,6 +168,7 @@ public class DependencyResolver {
             persistenceEngine.put(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             deletePendingWrite(write.getKey(), write.getVersion());
         }
+        assert(null == tempMap.put(queue.version, queue));
         pendingTransactionsMap.remove(queue.version);
 
         commitCount.mark();
@@ -269,6 +279,16 @@ public class DependencyResolver {
         public boolean shouldAnnounceTransactionReady() {
             return pendingWrites.size() == numKeysForThisReplica
                     && !alreadySentAnnouncement.getAndSet(true);
+        }
+        
+        public String toString() {
+            String ret = String.format("[LocalKeys: %d/%d (aSa?: %s), Replicas: %d/%d (cC?: %s)]",
+                    pendingWrites.size(), numKeysForThisReplica, alreadySentAnnouncement.get(),
+                    numReplicasAcked.get(), numReplicasInvolved, canCommit());
+            for (PendingWrite pw : pendingWrites) {
+                ret += "\n -> " + pw;
+            }
+            return ret;
         }
     }
 }

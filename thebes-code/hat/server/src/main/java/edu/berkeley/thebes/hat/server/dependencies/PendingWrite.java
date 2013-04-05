@@ -19,6 +19,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
     
     private int numKeysForThisReplica;
     private Set<Integer> replicaIndicesInvolved;
+    private List<String> transactionKeys;
     
     public PendingWrite(String key, DataItem value) {
         if (value.getTransactionKeys().isEmpty()) {
@@ -27,6 +28,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
         
         this.key = key;
         this.transactionVersion = value.getVersion();
+        this.transactionKeys = value.getTransactionKeys();
 
         examineReplicasInvolved(key, value.getTransactionKeys());
     }
@@ -72,5 +74,10 @@ public class PendingWrite implements Comparable<PendingWrite> {
                 .compare(getKey(), o.getKey())
                 .compare(getVersion(),  o.getVersion())
                 .result();
+    }
+    
+    public String toString() {
+        return String.format("[Key: %s, Version: %s, Deps: %s / LocalKeys: %d, Replicas: %d", 
+                key, transactionVersion, transactionKeys, numKeysForThisReplica, replicaIndicesInvolved.size());
     }
 }
