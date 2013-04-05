@@ -21,6 +21,11 @@
       <artifactId>jackson-mapper-asl</artifactId>
       <version>${jackson.api.version}</version>
     </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.16</version>
+      </dependency>
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
