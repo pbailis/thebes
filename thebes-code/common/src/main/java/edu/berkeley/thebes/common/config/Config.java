@@ -369,4 +369,8 @@ public class Config {
     public static Integer getDatabaseCacheSize() {
         return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
     }
+
+    public static Boolean shouldStorePendingInMemory() {
+        return getOption(ConfigParameters.STORE_PENDING_IN_MEMORY);
+    }
 }

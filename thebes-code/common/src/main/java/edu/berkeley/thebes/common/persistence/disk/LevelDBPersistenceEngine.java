@@ -101,8 +101,22 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
             }
         });
     }
+    
+    @Override
+    public boolean force_put(String key, DataItem value) throws TException {
+        TimerContext context = putLatencyTimer.time();
+        lockManager.lock(key);
+        try {
+            doPut(key, value);
+        } finally {
+            lockManager.unlock(key);
+            context.stop();
+        }
+        return true;
+    }
 
-    public boolean put(String key, DataItem value) throws TException {
+    @Override
+    public boolean put_if_newer(String key, DataItem value) throws TException {
         putCount.mark();
         TimerContext context = putLatencyTimer.time();
 
@@ -119,13 +133,8 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
                 if (curItem != null && curItem.getVersion().compareTo(value.getVersion()) > 0) {
                     obsoletePutCount.mark();
                     return false;
-                }
-                else {
-
-                    byte[] putBytes = serializer.get().serialize(value.toThrift());
-                    putSizeHistogram.update(putBytes.length);
-
-                    db.put(key.getBytes(), putBytes);
+                } else {
+                    doPut(key, value);
                     return true;
                 }
             } finally {
@@ -134,6 +143,13 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
         } finally {
             context.stop();
         }
+    }
+    
+    /** Please own the lock! */
+    public void doPut(String key, DataItem value) throws TException {
+        byte[] putBytes = serializer.get().serialize(value.toThrift());
+        putSizeHistogram.update(putBytes.length);
+        db.put(key.getBytes(), putBytes);
     }
 
     public DataItem get(String key) throws TException {

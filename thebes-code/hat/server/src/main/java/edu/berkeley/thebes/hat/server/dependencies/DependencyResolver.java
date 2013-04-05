@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
+import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
 import java.util.Set;
@@ -58,6 +60,7 @@ public class DependencyResolver {
     
     private final AntiEntropyServiceRouter router;
     private final IPersistenceEngine persistenceEngine;
+    private final IPersistenceEngine pendingPersistenceEngine;
     private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
     private final ConcurrentMap<Version, TransactionQueue> tempMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
@@ -87,6 +90,12 @@ public class DependencyResolver {
         this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         this.unresolvedAcksLock = new ReentrantLock();
+        
+        if (Config.shouldStorePendingInMemory()) {
+            pendingPersistenceEngine = new MemoryPersistenceEngine();
+        } else {
+            pendingPersistenceEngine = persistenceEngine;
+        }
 
         Metrics.newGauge(DependencyResolver.class, "num-pending-versions", new Gauge<Integer>() {
             @Override
@@ -105,11 +114,11 @@ public class DependencyResolver {
     }
 
     private void persistPendingWrite(String key, DataItem value) throws TException {
-        persistenceEngine.put(getPendingKeyForValue(key, value), value);
+        pendingPersistenceEngine.force_put(getPendingKeyForValue(key, value), value);
     }
 
     private DataItem getPendingWrite(String key, Version version) throws TException {
-        DataItem d = persistenceEngine.get(getPendingKeyForVersion(key, version));
+        DataItem d = pendingPersistenceEngine.get(getPendingKeyForVersion(key, version));
         if (d == null || d.getVersion() == Version.NULL_VERSION || d.getVersion() == null) {
             logger.error("Returning NULL data for key=" + key + ", version=" + version);
         }
@@ -117,7 +126,7 @@ public class DependencyResolver {
     }
 
     private void deletePendingWrite(String key, Version version) throws TException {
-        persistenceEngine.delete(getPendingKeyForVersion(key, version));
+        pendingPersistenceEngine.delete(getPendingKeyForVersion(key, version));
     }
 
     public void addPendingWrite(String key, DataItem value) throws TException {
@@ -169,7 +178,7 @@ public class DependencyResolver {
     
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
-            persistenceEngine.put(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
+            persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             deletePendingWrite(write.getKey(), write.getVersion());
         }
         TransactionQueue prevQueue = tempMap.put(queue.version, queue);

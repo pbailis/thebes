@@ -29,12 +29,19 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
             }
         });
     }
+    
+    public boolean force_put(String key, DataItem value) {
+        putsMetric.mark();
+        map.put(key, value);
+        return true;
+    }
 
     /**
      * Puts the given value for our key.
      * Does not update the value if the key already exists with a later timestamp.
      */
-    public boolean put(String key, DataItem value) {
+    @Override
+    public boolean put_if_newer(String key, DataItem value) {
         putsMetric.mark();
         synchronized (map) {
             // If we already have this key, ensure new item is a more recent version
