@@ -1,5 +1,6 @@
 package edu.berkeley.thebes.hat.client.clustering;
 
+import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -31,8 +32,11 @@ public class NearestReplicaRouter extends ReplicaRouter {
         asyncReplicas = new ArrayList<ReplicaService.AsyncClient>(serverIPs.size());
 
         for (ServerAddress server : serverIPs) {
+            Logger.getLogger(this.getClass()).debug("Connecting to " + server);
             syncReplicas.add(ThriftUtil.getReplicaServiceSyncClient(server.getIP(), server.getPort()));
+            Logger.getLogger(this.getClass()).debug("Connecting to (async) " + server);
             asyncReplicas.add(ThriftUtil.getReplicaServiceAsyncClient(server.getIP(), server.getPort()));
+            Logger.getLogger(this.getClass()).debug("Done!");
         }
     }
     
