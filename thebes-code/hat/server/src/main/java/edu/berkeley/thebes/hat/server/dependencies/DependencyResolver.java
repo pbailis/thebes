@@ -249,6 +249,7 @@ public class DependencyResolver {
         private Set<Integer> replicaIndicesInvolved;
         private final Set<PendingWrite> pendingWrites;
         private AtomicBoolean alreadySentAnnouncement = new AtomicBoolean(false);
+        private AtomicBoolean alreadyCommitted = new AtomicBoolean(false);
         private AtomicInteger numReplicasAcked;
         
         public TransactionQueue(Version version) {
@@ -276,7 +277,8 @@ public class DependencyResolver {
         }
         
         public boolean canCommit() {
-            return numReplicasAcked.get() >= numReplicasInvolved && pendingWrites.size() == numKeysForThisReplica;
+            return numReplicasAcked.get() >= numReplicasInvolved && pendingWrites.size() == numKeysForThisReplica
+                    && !alreadyCommitted.getAndSet(true);
         }
         
         public void serverAcked() {
@@ -289,9 +291,9 @@ public class DependencyResolver {
         }
         
         public String toString() {
-            String ret = String.format("[LocalKeys: %d/%d (aSa?: %s), Replicas: %d/%d (cC?: %s)]",
+            String ret = String.format("[LocalKeys: %d/%d (aSa?: %s), Replicas: %d/%d (aC?: %s)]",
                     pendingWrites.size(), numKeysForThisReplica, alreadySentAnnouncement.get(),
-                    numReplicasAcked.get(), numReplicasInvolved, canCommit());
+                    numReplicasAcked.get(), numReplicasInvolved, alreadyCommitted.get());
             for (PendingWrite pw : pendingWrites) {
                 ret += "\n -> " + pw;
             }
