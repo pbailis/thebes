@@ -16,6 +16,7 @@ import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
+import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -93,6 +94,11 @@ public class DependencyResolver {
         
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
+            try {
+                pendingPersistenceEngine.open();
+            } catch (IOException e) {
+                logger.error("Failed to make MemoryPersistenceEngine: ", e);
+            }
         } else {
             pendingPersistenceEngine = persistenceEngine;
         }
