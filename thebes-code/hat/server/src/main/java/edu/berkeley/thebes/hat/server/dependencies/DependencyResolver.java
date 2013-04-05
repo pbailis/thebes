@@ -109,7 +109,11 @@ public class DependencyResolver {
     }
 
     private DataItem getPendingWrite(String key, Version version) throws TException {
-        return persistenceEngine.get(getPendingKeyForVersion(key, version));
+        DataItem d = persistenceEngine.get(getPendingKeyForVersion(key, version));
+        if (d == null || d.getVersion() == Version.NULL_VERSION || d.getVersion() == null) {
+            logger.error("Returning NULL data for key=" + key + ", version=" + version);
+        }
+        return d;
     }
 
     private void deletePendingWrite(String key, Version version) throws TException {
@@ -168,7 +172,10 @@ public class DependencyResolver {
             persistenceEngine.put(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             deletePendingWrite(write.getKey(), write.getVersion());
         }
-        assert(null == tempMap.put(queue.version, queue));
+        TransactionQueue prevQueue = tempMap.put(queue.version, queue);
+        if (prevQueue != null) {
+            logger.error("Tried to commit twice for same version (" + queue.version + ") ???: " + prevQueue);
+        }
         pendingTransactionsMap.remove(queue.version);
 
         commitCount.mark();

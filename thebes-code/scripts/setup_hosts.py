@@ -104,7 +104,6 @@ def get_instances(regionName, tag):
     for line in open("instances.txt"):
         line = line.split()
         if line[0] == "INSTANCE":
-            print 'hi... %s' % line[3]
             ip = line[3]
             if ip == "terminated":
                 continue
@@ -116,17 +115,14 @@ def get_instances(regionName, tag):
             status = line[5]
             hosts.append(Host(ip, region, instanceid, status))
         elif line[0] == "TAG":
-            print 'hiz... %s' % line[2]
             if line[3] == tag:
                 allowed_hosts.append(line[2])
             else:
                 ignored_hosts.append(line[2])
 
     if tag != None:
-        pprint('All hosts: %s / Allowed hosts: %s' % ([host for host in hosts], [host for host in allowed_hosts]))
         return [host for host in hosts if host.instanceid in allowed_hosts]
     else:
-        pprint('All hosts: %s / Ignored hosts: %s' % ([host for host in hosts], [host for host in ignored_hosts]))
         return [host for host in hosts if host.instanceid not in ignored_hosts]
         
 
