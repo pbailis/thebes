@@ -70,6 +70,8 @@ public class Config {
             ConsoleReporter reporter = new ConsoleReporter(System.err);
             reporter.start(5, TimeUnit.SECONDS);
         }
+        
+        new IOReporter().start();
     }
 
     private static Boolean getMetricsToConsole() {

@@ -3,6 +3,9 @@ package edu.berkeley.thebes.hat.server.dependencies;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
 import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
+
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,7 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 
@@ -82,6 +86,9 @@ public class DependencyResolver {
                                              "assertion-violation",
                                              "retrievals",
                                              TimeUnit.SECONDS);
+
+    private final Timer ackLockDelayTimer = Metrics.newTimer(DependencyResolver.class,
+                                                           "ack-lock-delay");
 
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
@@ -169,7 +176,9 @@ public class DependencyResolver {
         
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
+        TimerContext context = ackLockDelayTimer.time();
         unresolvedAcksLock.lock();
+        context.stop();
         try {
             ackUnresolved(transQueue, version);
         } finally {
@@ -226,7 +235,9 @@ public class DependencyResolver {
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
+        TimerContext context = ackLockDelayTimer.time();
         unresolvedAcksLock.lock();
+        context.stop();
         try {
             unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
             unresolvedAcksMap.get(transactionId).incrementAndGet();
