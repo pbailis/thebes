@@ -2,6 +2,9 @@ package edu.berkeley.thebes.hat.server.replica;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
+
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,9 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                                       "requests",
                                       TimeUnit.SECONDS);
 
+    private final Timer putTimer = Metrics.newTimer(ReplicaServiceHandler.class, "put-latency");
+    private final Timer getTimer = Metrics.newTimer(ReplicaServiceHandler.class, "get-latency");
+
     public ReplicaServiceHandler(IPersistenceEngine persistenceEngine,
                                  AntiEntropyServiceRouter antiEntropyRouter,
                                  DependencyResolver dependencyResolver) {
@@ -44,61 +50,71 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
     @Override
     public boolean put(String key,
                        ThriftDataItem valueThrift) throws TException {
-        DataItem value = new DataItem(valueThrift);
-        if(logger.isTraceEnabled())
-            logger.trace("received PUT request for key: '"+key+
-                         "' value: '"+value+
-                         "' transactionKeys: "+value.getTransactionKeys());
-
-        antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
-
-        // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
-        if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
-            persistenceEngine.put_if_newer(key, value);
-        } else {
-            dependencyResolver.addPendingWrite(key, value);
+        TimerContext context = putTimer.time();
+        try {
+            DataItem value = new DataItem(valueThrift);
+            if(logger.isTraceEnabled())
+                logger.trace("received PUT request for key: '"+key+
+                             "' value: '"+value+
+                             "' transactionKeys: "+value.getTransactionKeys());
+    
+            antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
+    
+            // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
+            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
+                persistenceEngine.put_if_newer(key, value);
+            } else {
+                dependencyResolver.addPendingWrite(key, value);
+            }
+    
+            putMeter.mark();
+    
+            // todo: remove this return value--it's really not necessary
+        } finally {
+            context.stop();
         }
-
-        putMeter.mark();
-
-        // todo: remove this return value--it's really not necessary
         return true;
     }
 
     @Override
     public ThriftDataItem get(String key, ThriftVersion requiredVersionThrift) throws TException {
-        DataItem ret = persistenceEngine.get(key);
-        Version requiredVersion = Version.fromThrift(requiredVersionThrift);
-        
-        if(logger.isTraceEnabled())
-            logger.trace("received GET request for key: '"+key+
-                         "' requiredVersion: "+ requiredVersion+
-                         ", found version: " + (ret == null ? null : ret.getVersion()));
-
-        if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
-                (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
-            ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
-
-            // race?
+        TimerContext context = getTimer.time();
+        try {
+            DataItem ret = persistenceEngine.get(key);
+            Version requiredVersion = Version.fromThrift(requiredVersionThrift);
+            
+            if(logger.isTraceEnabled())
+                logger.trace("received GET request for key: '"+key+
+                             "' requiredVersion: "+ requiredVersion+
+                             ", found version: " + (ret == null ? null : ret.getVersion()));
+    
+            if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
+                    (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
+                ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
+    
+                // race?
+                if(ret == null) {
+                    logger.warn(String.format("Didn't find suitable version (timestamp=%d) for key %s in pending or persistenceEngine, so fetching again", requiredVersion.getTimestamp(), key));
+                    ret = persistenceEngine.get(key);
+                }
+    
+                if(ret == null || requiredVersion.compareTo(ret.getVersion()) > 0) {
+                    logger.error(String.format("suitable version was not found! required time: %d clientID: %d only got %s",
+                                                       requiredVersion.getTimestamp(), requiredVersion.getClientID(),
+                                                       ret == null ? "null" : Long.toString(ret.getVersion().getTimestamp())));
+                    ret = null;
+                }
+            }
+    
             if(ret == null) {
-                logger.warn(String.format("Didn't find suitable version (timestamp=%d) for key %s in pending or persistenceEngine, so fetching again", requiredVersion.getTimestamp(), key));
-                ret = persistenceEngine.get(key);
+                return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
             }
-
-            if(ret == null || requiredVersion.compareTo(ret.getVersion()) > 0) {
-                logger.error(String.format("suitable version was not found! required time: %d clientID: %d only got %s",
-                                                   requiredVersion.getTimestamp(), requiredVersion.getClientID(),
-                                                   ret == null ? "null" : Long.toString(ret.getVersion().getTimestamp())));
-                ret = null;
-            }
+    
+            getMeter.mark();
+    
+            return ret.toThrift();
+        } finally {
+            context.stop();
         }
-
-        if(ret == null) {
-            return new ThriftDataItem().setVersion(Version.toThrift(Version.NULL_VERSION));
-        }
-
-        getMeter.mark();
-
-        return ret.toThrift();
     }
 }
