@@ -72,8 +72,6 @@ public class DependencyResolver {
     private final ConcurrentMap<Version, TransactionQueue> tempMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
-    private final ReadWriteLock unresolvedAcksLock;
-
     Meter commitCount = Metrics.newMeter(DependencyResolver.class,
                                          "dgood-transaction-total",
                                          "transactions",
@@ -87,9 +85,6 @@ public class DependencyResolver {
                                              "violations",
                                              TimeUnit.SECONDS);
 
-    private final Timer ackLockDelayTimer = Metrics.newTimer(DependencyResolver.class,
-                                                           "ack-lock-delay");
-
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
@@ -97,7 +92,6 @@ public class DependencyResolver {
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
-        this.unresolvedAcksLock = new ReentrantReadWriteLock();
         
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
@@ -176,12 +170,7 @@ public class DependencyResolver {
         
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
-        lockAndTime(unresolvedAcksLock.readLock());
-        try {
-            ackUnresolved(transQueue, version);
-        } finally {
-            unresolvedAcksLock.readLock().unlock();
-        }
+        ackUnresolved(transQueue, version);
         
         if (transQueue.canCommit()) {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
@@ -202,12 +191,7 @@ public class DependencyResolver {
 
         // Remove all state re: this version
         pendingTransactionsMap.remove(queue.version);
-        lockAndTime(unresolvedAcksLock.writeLock());
-        try {
-            unresolvedAcksMap.remove(queue.version);
-        } finally {
-            unresolvedAcksLock.writeLock().unlock();
-        }
+        unresolvedAcksMap.remove(queue.version);
     }
 
     public DataItem retrievePendingItem(String key, Version version) throws TException {
@@ -244,19 +228,14 @@ public class DependencyResolver {
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        lockAndTime(unresolvedAcksLock.readLock());
-        try {
-            unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
-            unresolvedAcksMap.get(transactionId).incrementAndGet();
-            
-            // Check for race conditions where the transaction arrived while we were adding this!
-            transactionQueue = pendingTransactionsMap.get(transactionId);
-            
-            if (transactionQueue != null) {
-                ackUnresolved(transactionQueue, transactionId);
-            }
-        } finally {
-            unresolvedAcksLock.readLock().unlock();
+        unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
+        unresolvedAcksMap.get(transactionId).incrementAndGet();
+        
+        // Check for race conditions where the transaction arrived while we were adding this!
+        transactionQueue = pendingTransactionsMap.get(transactionId);
+        
+        if (transactionQueue != null) {
+            ackUnresolved(transactionQueue, transactionId);
         }
         
         if (transactionQueue != null && transactionQueue.canCommit()) {
@@ -274,12 +253,6 @@ public class DependencyResolver {
                 transQueue.serverAcked();
             }
         }
-    }
-    
-    private void lockAndTime(Lock l) {
-        TimerContext context = ackLockDelayTimer.time();
-        l.lock();
-        context.stop();
     }
     
     private static class TransactionQueue {
