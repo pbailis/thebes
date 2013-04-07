@@ -28,7 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /*
 The following class does most of the heavy lifting for the HAT
@@ -70,21 +72,19 @@ public class DependencyResolver {
     private final ConcurrentMap<Version, TransactionQueue> tempMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
-    private final Lock unresolvedAcksLock;
+    private final ReadWriteLock unresolvedAcksLock;
 
     Meter commitCount = Metrics.newMeter(DependencyResolver.class,
                                          "dgood-transaction-total",
                                          "transactions",
                                          TimeUnit.SECONDS);
 
-    Meter retrievePendingCount = Metrics.newMeter(DependencyResolver.class,
-                                                 "dpending-retrieval-count",
-                                                 "retrievals",
-                                                 TimeUnit.SECONDS);
+    Timer retrievePendingTimer = Metrics.newTimer(DependencyResolver.class,
+                                             "dpending-retrieval");
     
     Meter weirdErrorCount = Metrics.newMeter(DependencyResolver.class,
                                              "assertion-violation",
-                                             "retrievals",
+                                             "violations",
                                              TimeUnit.SECONDS);
 
     private final Timer ackLockDelayTimer = Metrics.newTimer(DependencyResolver.class,
@@ -97,7 +97,7 @@ public class DependencyResolver {
         this.pendingTransactionsMap = Maps.newConcurrentMap();
         this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
-        this.unresolvedAcksLock = new ReentrantLock();
+        this.unresolvedAcksLock = new ReentrantReadWriteLock();
         
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
@@ -176,13 +176,11 @@ public class DependencyResolver {
         
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
-        TimerContext context = ackLockDelayTimer.time();
-        unresolvedAcksLock.lock();
-        context.stop();
+        lockAndTime(unresolvedAcksLock.readLock());
         try {
             ackUnresolved(transQueue, version);
         } finally {
-            unresolvedAcksLock.unlock();
+            unresolvedAcksLock.readLock().unlock();
         }
         
         if (transQueue.canCommit()) {
@@ -200,26 +198,37 @@ public class DependencyResolver {
         if (prevQueue != null) {
             logger.error("Tried to commit twice for same version (" + queue.version + ") ???: " + prevQueue);
         }
-        pendingTransactionsMap.remove(queue.version);
-
         commitCount.mark();
+
+        // Remove all state re: this version
+        pendingTransactionsMap.remove(queue.version);
+        lockAndTime(unresolvedAcksLock.writeLock());
+        try {
+            unresolvedAcksMap.remove(queue.version);
+        } finally {
+            unresolvedAcksLock.writeLock().unlock();
+        }
     }
 
     public DataItem retrievePendingItem(String key, Version version) throws TException {
 
-        retrievePendingCount.mark();
+        TimerContext context = retrievePendingTimer.time();
 
-        if (!pendingTransactionsMap.containsKey(version)) {
-            return null;
-        }
-        
-        for (PendingWrite pendingWrite : pendingTransactionsMap.get(version).pendingWrites) {
-            if (key.equals(pendingWrite.getKey())) {
-                return getPendingWrite(pendingWrite.getKey(), pendingWrite.getVersion());
+        try {
+            if (!pendingTransactionsMap.containsKey(version)) {
+                return null;
             }
+            
+            for (PendingWrite pendingWrite : pendingTransactionsMap.get(version).pendingWrites) {
+                if (key.equals(pendingWrite.getKey())) {
+                    return getPendingWrite(pendingWrite.getKey(), pendingWrite.getVersion());
+                }
+            }
+            
+            return null;
+        } finally {
+            context.stop();
         }
-        
-        return null;
     }
 
     public void ackTransactionPending(Version transactionId) throws TException {
@@ -235,20 +244,19 @@ public class DependencyResolver {
         
         // No currently known PendingWrites wanted our ack!
         // Hopefully we'll soon have one that does, so keep it around.
-        TimerContext context = ackLockDelayTimer.time();
-        unresolvedAcksLock.lock();
-        context.stop();
+        lockAndTime(unresolvedAcksLock.readLock());
         try {
             unresolvedAcksMap.putIfAbsent(transactionId, new AtomicInteger(0));
             unresolvedAcksMap.get(transactionId).incrementAndGet();
             
             // Check for race conditions where the transaction arrived while we were adding this!
             transactionQueue = pendingTransactionsMap.get(transactionId);
+            
             if (transactionQueue != null) {
                 ackUnresolved(transactionQueue, transactionId);
             }
         } finally {
-            unresolvedAcksLock.unlock();
+            unresolvedAcksLock.readLock().unlock();
         }
         
         if (transactionQueue != null && transactionQueue.canCommit()) {
@@ -260,12 +268,18 @@ public class DependencyResolver {
     /** Should own unresolvedAcksLock while calling this. */
     private void ackUnresolved(TransactionQueue transQueue, Version version) {
         if (unresolvedAcksMap.containsKey(version)) {
-            AtomicInteger numAcksForTransaction = unresolvedAcksMap.get(version);
-            for (int i = 0; i < numAcksForTransaction.get(); i ++) {
+            // I'm pretty sure the next line is the most beautiful code since sliced bread.
+            int numAcksForTransaction = unresolvedAcksMap.get(version).getAndSet(0);
+            for (int i = 0; i < numAcksForTransaction; i ++) {
                 transQueue.serverAcked();
             }
-            unresolvedAcksMap.remove(version);
         }
+    }
+    
+    private void lockAndTime(Lock l) {
+        TimerContext context = ackLockDelayTimer.time();
+        l.lock();
+        context.stop();
     }
     
     private static class TransactionQueue {

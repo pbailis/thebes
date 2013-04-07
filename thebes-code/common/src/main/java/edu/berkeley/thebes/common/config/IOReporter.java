@@ -64,7 +64,7 @@ public class IOReporter {
         if (lastRun != 0) {
             long timeDiff = curTime - lastRun;
             double instantRxKbs = (rxBytes-lastRxBytes) / 1000d / timeDiff;
-            double instantTxKbs = (rxBytes-lastTxBytes) / 1000d / timeDiff;
+            double instantTxKbs = (txBytes-lastTxBytes) / 1000d / timeDiff;
             
             rxRateKbs = EMA_ALPHA * instantRxKbs + (1-EMA_ALPHA) * rxRateKbs;
             rxRateHistogram.update((long) rxRateKbs);
