@@ -36,6 +36,12 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                                       "requests",
                                       TimeUnit.SECONDS);
 
+    Meter nullVersionsMeter = Metrics.newMeter(ReplicaServiceHandler.class, "num-null-get-versions",
+                                               "requests", TimeUnit.SECONDS);
+
+    Meter depResRequestsMeter = Metrics.newMeter(ReplicaServiceHandler.class, "dep-res-requests",
+                                               "requests", TimeUnit.SECONDS);
+
     private final Timer putTimer = Metrics.newTimer(ReplicaServiceHandler.class, "put-latency");
     private final Timer getTimer = Metrics.newTimer(ReplicaServiceHandler.class, "get-latency");
 
@@ -88,8 +94,10 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                              "' requiredVersion: "+ requiredVersion+
                              ", found version: " + (ret == null ? null : ret.getVersion()));
     
+            nullVersionsMeter.mark();
             if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
                     (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
+                depResRequestsMeter.mark();
                 ret = dependencyResolver.retrievePendingItem(key, requiredVersion);
     
                 // race?
