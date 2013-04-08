@@ -146,10 +146,6 @@ public class DependencyResolver {
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
-
-        /*
-
-        TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
             weirdErrorCount.mark();
             String message = "XACT NULL ERROR. ";
@@ -162,6 +158,8 @@ public class DependencyResolver {
             logger.error(message);
             return;
         }
+
+        /*
 
 
         try {
