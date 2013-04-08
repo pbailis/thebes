@@ -247,8 +247,8 @@ public class DependencyResolver {
     /** Should own unresolvedAcksLock while calling this. */
     private void ackUnresolved(TransactionQueue transQueue, Version version) {
         if (unresolvedAcksMap.containsKey(version)) {
-            // I'm pretty sure the next line is the most beautiful code since sliced bread.
-            int numAcksForTransaction = unresolvedAcksMap.get(version).getAndSet(0);
+            AtomicInteger numAcksForTransactionAtomic = unresolvedAcksMap.get(version);
+            int numAcksForTransaction = numAcksForTransactionAtomic.getAndSet(0);
             for (int i = 0; i < numAcksForTransaction; i ++) {
                 transQueue.serverAcked();
             }
