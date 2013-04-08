@@ -166,9 +166,6 @@ public class DependencyResolver {
             logger.error("Error on version " + version + ": ", e);
         }
 
-        /*
-
-
         if (transQueue.shouldAnnounceTransactionReady()) {
             router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
         }
@@ -179,6 +176,7 @@ public class DependencyResolver {
         // TODO: Examine the implications of this!
         ackUnresolved(transQueue, version);
 
+        /*
 
         if (transQueue.canCommit()) {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
