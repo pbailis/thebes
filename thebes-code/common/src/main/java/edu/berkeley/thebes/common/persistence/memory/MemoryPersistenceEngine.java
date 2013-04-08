@@ -43,6 +43,7 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
     @Override
     public boolean put_if_newer(String key, DataItem value) {
         putsMetric.mark();
+        // TODO: Some form of synchronization is necessary
 //        synchronized (map) {
             // If we already have this key, ensure new item is a more recent version
             if (map.containsKey(key)) {
