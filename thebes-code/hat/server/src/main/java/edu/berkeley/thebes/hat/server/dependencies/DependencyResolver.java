@@ -22,6 +22,7 @@ import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceR
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +90,7 @@ public class DependencyResolver {
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
-        this.pendingTransactionsMap = Maps.newConcurrentMap();
+        this.pendingTransactionsMap = new ConcurrentHashMap(1024, .9f, 512);
         this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         
@@ -144,7 +145,6 @@ public class DependencyResolver {
 
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
-                /*
 
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
@@ -183,7 +183,6 @@ public class DependencyResolver {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
-        */
     }
     
     private void commit(TransactionQueue queue) throws TException {
