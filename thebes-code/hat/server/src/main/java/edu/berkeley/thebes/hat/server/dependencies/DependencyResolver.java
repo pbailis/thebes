@@ -144,6 +144,8 @@ public class DependencyResolver {
 
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
+                /*
+
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
         if (transQueue == null) {
             weirdErrorCount.mark();
@@ -158,7 +160,6 @@ public class DependencyResolver {
             return;
         }
 
-                                /*
 
         try {
             transQueue.add(newPendingWrite);
