@@ -248,6 +248,10 @@ public class DependencyResolver {
     private void ackUnresolved(TransactionQueue transQueue, Version version) {
         if (unresolvedAcksMap.containsKey(version)) {
             AtomicInteger numAcksForTransactionAtomic = unresolvedAcksMap.get(version);
+            if (numAcksForTransactionAtomic == null) {
+                return;
+            }
+            
             int numAcksForTransaction = numAcksForTransactionAtomic.getAndSet(0);
             for (int i = 0; i < numAcksForTransaction; i ++) {
                 transQueue.serverAcked();
