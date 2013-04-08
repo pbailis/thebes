@@ -70,7 +70,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
             // TODO RC_KEYS_TEST            
             List<String> transKeys = value.getTransactionKeys();
             if (transKeys != null && !transKeys.isEmpty() && transKeys.get(0).startsWith("!")) {
-                value.getTransactionKeys().clear();
+//                value.getTransactionKeys().clear();
+                value.setTransactionKeys(null);
             }
     
             // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
