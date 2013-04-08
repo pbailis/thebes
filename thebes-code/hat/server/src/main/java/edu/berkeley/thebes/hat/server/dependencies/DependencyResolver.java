@@ -145,6 +145,8 @@ public class DependencyResolver {
 
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
+        TransactionQueue transQueue = pendingTransactionsMap.get(version);
+
         /*
 
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
