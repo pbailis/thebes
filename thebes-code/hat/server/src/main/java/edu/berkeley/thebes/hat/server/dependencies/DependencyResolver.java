@@ -141,6 +141,8 @@ public class DependencyResolver {
         
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
         persistPendingWrite(key, value);
+
+        /*
         
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
@@ -176,6 +178,7 @@ public class DependencyResolver {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
         }
+        */
     }
     
     private void commit(TransactionQueue queue) throws TException {
