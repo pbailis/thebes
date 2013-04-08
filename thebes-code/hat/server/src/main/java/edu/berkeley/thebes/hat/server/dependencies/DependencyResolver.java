@@ -142,8 +142,6 @@ public class DependencyResolver {
         pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
         persistPendingWrite(key, value);
 
-        /*
-        
         PendingWrite newPendingWrite = new PendingWrite(key, value);
 
         TransactionQueue transQueue = pendingTransactionsMap.get(version);
@@ -173,7 +171,9 @@ public class DependencyResolver {
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
         ackUnresolved(transQueue, version);
-        
+
+        /*
+
         if (transQueue.canCommit()) {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
             commit(transQueue);
