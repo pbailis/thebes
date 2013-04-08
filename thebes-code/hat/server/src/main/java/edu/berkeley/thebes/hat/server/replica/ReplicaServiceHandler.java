@@ -64,8 +64,6 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                 logger.trace("received PUT request for key: '"+key+
                              "' value: '"+value+
                              "' transactionKeys: "+value.getTransactionKeys());
-    
-            antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
             
             // TODO RC_KEYS_TEST            
             List<String> transKeys = value.getTransactionKeys();
@@ -73,6 +71,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
 //                value.getTransactionKeys().clear();
                 value.setTransactionKeys(null);
             }
+            
+            antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
     
             // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
             if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
