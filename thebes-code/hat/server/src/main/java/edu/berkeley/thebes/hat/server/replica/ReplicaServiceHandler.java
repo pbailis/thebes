@@ -18,6 +18,7 @@ import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ReplicaServiceHandler implements ReplicaService.Iface {
@@ -65,6 +66,12 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                              "' transactionKeys: "+value.getTransactionKeys());
     
             antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
+            
+            // TODO RC_KEYS_TEST            
+            List<String> transKeys = value.getTransactionKeys();
+            if (transKeys != null && !transKeys.isEmpty() && transKeys.get(0).startsWith("!")) {
+                value.getTransactionKeys().clear();
+            }
     
             // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
             if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {

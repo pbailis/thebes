@@ -122,4 +122,4 @@ if $cygwin; then
 fi
 
 echo "Executing command $CLASS with options $JAVA_HEAP_MAX $YCSB_OPTS $CLASS $@"
-exec "$JAVA" $JAVA_HEAP_MAX $YCSB_OPTS -classpath "$CLASSPATH" $CLASS "$@"
+exec "$JAVA" -XX:+PrintGCDetails $JAVA_HEAP_MAX $YCSB_OPTS -classpath "$CLASSPATH" $CLASS "$@"

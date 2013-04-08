@@ -138,6 +138,14 @@ public class ThebesHATClient implements IThebesClient {
             }
             if(atomicityLevel == AtomicityLevel.CLIENT) {
                 queuedWrite.setTransactionKeys(transactionKeys);
+            } else if (isolationLevel == IsolationLevel.READ_COMMITTED) {
+                // TODO RC_KEYS_TEST
+                // RC but not TA
+                List<String> mutatedKeys = Lists.newArrayList();
+                for (String s : transactionKeys) {
+                    mutatedKeys.add("!" + s.substring(1));
+                }
+                queuedWrite.setTransactionKeys(mutatedKeys);
             }
 
             doPutSync(key,
