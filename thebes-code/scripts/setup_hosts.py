@@ -713,7 +713,7 @@ def parseArgs(args):
 
     return regions, clusters, use2PL, graphiteRegion, args.tag
 
-
+# apt-get install sysstat
 def pprint(str):
     global USE_COLOR
     if USE_COLOR:
