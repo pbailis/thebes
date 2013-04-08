@@ -157,14 +157,16 @@ public class DependencyResolver {
             logger.error(message);
             return;
         }
+
+                                /*
+
         try {
             transQueue.add(newPendingWrite);
         } catch (Exception e) {
             logger.error("Error on version " + version + ": ", e);
         }
 
-                        /*
-        
+
         if (transQueue.shouldAnnounceTransactionReady()) {
             router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
         }
