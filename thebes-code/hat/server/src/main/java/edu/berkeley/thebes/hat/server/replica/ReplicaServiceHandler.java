@@ -94,7 +94,8 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                              "' requiredVersion: "+ requiredVersion+
                              ", found version: " + (ret == null ? null : ret.getVersion()));
     
-            nullVersionsMeter.mark();
+            if ((ret == null || requiredVersion.compareTo(ret.getVersion()) > 0))
+                nullVersionsMeter.mark();
             if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
                     (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
                 depResRequestsMeter.mark();
