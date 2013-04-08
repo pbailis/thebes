@@ -72,7 +72,8 @@ public class ThebesHATClient implements IThebesClient {
     private final Meter errorMetric = Metrics.newMeter(ThebesHATClient.class, "hat-errors", "errors", TimeUnit.SECONDS);
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact",
                                                                      TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-    private final Timer latencyPerOperationMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-op", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Timer latencyPerPutTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-put", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Timer latencyPerGetTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-get", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
 
     private static final AtomicInteger LOGICAL_CLOCK = new AtomicInteger(0);
 
@@ -258,7 +259,7 @@ public class ThebesHATClient implements IThebesClient {
 
     private boolean doPutSync(String key,
                               DataItem value) throws TException {
-        TimerContext timer = latencyPerOperationMetric.time();
+        TimerContext timer = latencyPerPutTimer.time();
         boolean ret;
 
         try {
@@ -276,7 +277,7 @@ public class ThebesHATClient implements IThebesClient {
     }
 
     private DataItem doGet(String key) throws TException {
-        TimerContext timer = latencyPerOperationMetric.time();
+        TimerContext timer = latencyPerGetTimer.time();
         DataItem ret;
         try {
             ThriftDataItem tdrRet = router.get(key, atomicityVersionVector.getVersion(key));
