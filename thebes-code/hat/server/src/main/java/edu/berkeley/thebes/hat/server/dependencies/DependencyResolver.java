@@ -162,13 +162,14 @@ public class DependencyResolver {
         } catch (Exception e) {
             logger.error("Error on version " + version + ": ", e);
         }
+
+                        /*
         
         if (transQueue.shouldAnnounceTransactionReady()) {
             router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
         }
         // TODO: if it's still there after a while, can resend
 
-                /*
 
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
