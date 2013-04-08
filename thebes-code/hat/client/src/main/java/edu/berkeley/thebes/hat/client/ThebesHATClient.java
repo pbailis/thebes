@@ -18,6 +18,7 @@ import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -73,7 +74,9 @@ public class ThebesHATClient implements IThebesClient {
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact",
                                                                      TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
     private final Timer latencyPerPutTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-put", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Histogram putSizeHistogram = Metrics.newHistogram(ThebesHATClient.class, "hat-put-size");
     private final Timer latencyPerGetTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-get", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Histogram getSizeHistogram = Metrics.newHistogram(ThebesHATClient.class, "hat-get-size");
 
     private static final AtomicInteger LOGICAL_CLOCK = new AtomicInteger(0);
 
@@ -264,11 +267,16 @@ public class ThebesHATClient implements IThebesClient {
 
         return ret == null ? null : ret.getData();
     }
+    
 
+    TSerializer serializer = new TSerializer();
     private boolean doPutSync(String key,
                               DataItem value) throws TException {
         TimerContext timer = latencyPerPutTimer.time();
         boolean ret;
+        
+        byte[] putBytes = serializer.serialize(value.toThrift());
+        putSizeHistogram.update(putBytes.length);
 
         try {
             ret = router.put(key, value);
@@ -287,12 +295,16 @@ public class ThebesHATClient implements IThebesClient {
     private DataItem doGet(String key) throws TException {
         TimerContext timer = latencyPerGetTimer.time();
         DataItem ret;
+        
         try {
             ThriftDataItem tdrRet = router.get(key, atomicityVersionVector.getVersion(key));
             if(tdrRet.getData() == null)
                 return null;
 
             ret = new DataItem(tdrRet);
+            
+            byte[] getBytes = serializer.serialize(ret.toThrift());
+            getSizeHistogram.update(getBytes.length);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;
