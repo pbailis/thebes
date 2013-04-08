@@ -171,12 +171,12 @@ public class DependencyResolver {
         }
         // TODO: if it's still there after a while, can resend
 
+                /*
 
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
         ackUnresolved(transQueue, version);
 
-        /*
 
         if (transQueue.canCommit()) {
             logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
