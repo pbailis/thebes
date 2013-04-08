@@ -90,7 +90,7 @@ public class DependencyResolver {
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
-        this.pendingTransactionsMap = new ConcurrentHashMap(1024, .9f, 512);
+        this.pendingTransactionsMap = new ConcurrentHashMap(36000, .9f, 512);
         this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         
