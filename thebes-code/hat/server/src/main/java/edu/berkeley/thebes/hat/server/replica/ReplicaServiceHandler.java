@@ -68,11 +68,15 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
             antiEntropyRouter.sendWriteToSiblings(key, valueThrift);
     
             // TODO: Hmm, if siblings included us, we wouldn't even need to do this...
+
+            persistenceEngine.put_if_newer(key, value);
+            /*
             if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
                 persistenceEngine.put_if_newer(key, value);
             } else {
                 dependencyResolver.addPendingWrite(key, value);
             }
+            */
     
             putMeter.mark();
     
