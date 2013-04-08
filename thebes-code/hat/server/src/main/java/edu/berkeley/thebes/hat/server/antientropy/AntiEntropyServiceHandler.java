@@ -53,11 +53,18 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
         putRequests.mark();
     	logger.trace("Received anti-entropy put for key " + key);
         DataItem value = new DataItem(valueThrift);
+
+        persistenceEngine.put_if_newer(key, value);
+
+        return;
+        /*
+
         if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
             persistenceEngine.put_if_newer(key, value);
         } else {
             dependencyResolver.addPendingWrite(key, value);
         }
+        */
     }
 
     @Override
