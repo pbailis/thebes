@@ -28,5 +28,5 @@ service AntiEntropyService {
   oneway void put(1: string key,
                   2: dataitem.ThriftDataItem value);
                                          
-  oneway void ackTransactionPending(1: version.ThriftVersion transactionId)
+  oneway void ackTransactionPending(1: list<version.ThriftVersion> transactionId)
 }

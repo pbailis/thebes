@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.Uninterruptibles;
 
@@ -17,11 +18,14 @@ import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
+import edu.berkeley.thebes.common.thrift.ThriftVersion;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.dependencies.PendingWrite;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -130,11 +134,23 @@ public class AntiEntropyServiceRouter {
         ServerAddress tryServer = null;
 
         try {
-            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
-            for (Integer serverIndex : announcement.servers) {
+            List<QueuedTransactionAnnouncement> announcements = Lists.newArrayList();
+            announcements.add(pendingTransactionAnnouncements.take());
+            pendingTransactionAnnouncements.drainTo(announcements);
+            
+            Map<Integer, List<ThriftVersion>> versionByServer = Maps.newHashMap();
+            
+            for (QueuedTransactionAnnouncement ann : announcements) {
+                for (Integer serverIndex : ann.servers) {
+                    if (!versionByServer.containsKey(serverIndex)) {
+                        versionByServer.put(serverIndex, new ArrayList<ThriftVersion>());
+                    }
+                    versionByServer.get(serverIndex).add(ann.transactionID.getThriftVersion());
+                }
+            }
+            for (Integer serverIndex : versionByServer.keySet()) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
-                tryServer = Config.getServersInCluster().get(serverIndex);
-                neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
+                neighborClient.ackTransactionPending(versionByServer.get(serverIndex));
             }
         } catch (TException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
