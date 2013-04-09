@@ -125,12 +125,10 @@ public class AntiEntropyServiceRouter {
 
     /** Announce that a transaction is ready to some set of servers. */
     public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
-        dummyLBQ.add(new QueuedTransactionAnnouncement(transactionID, servers));
-        /*
+        //dummyLBQ.add(new QueuedTransactionAnnouncement(transactionID, servers));
         pendingTransactionAnnouncements.add(
                 new QueuedTransactionAnnouncement(transactionID, servers));
         announceSemaphore.release();
-        */
     }
     
     /** Actually does the announcement! Called in its own thread. */
@@ -138,9 +136,9 @@ public class AntiEntropyServiceRouter {
         ServerAddress tryServer = null;
 
         try {
-            QueuedTransactionAnnouncement announcement = dummyLBQ.take();
-            //announceSemaphore.acquireUninterruptibly();
-            //QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
+            //QueuedTransactionAnnouncement announcement = dummyLBQ.take();
+            announceSemaphore.acquireUninterruptibly();
+            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
 
 
             if(announcement == null)
