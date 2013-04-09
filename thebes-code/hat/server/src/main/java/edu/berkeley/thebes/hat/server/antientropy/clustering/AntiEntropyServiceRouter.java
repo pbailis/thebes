@@ -125,6 +125,7 @@ public class AntiEntropyServiceRouter {
     
     /** Actually does the announcement! Called in its own thread. */
     private void announceNextQueuedPendingWrite(List<AntiEntropyService.Client> neighbors) {
+        /*
         ServerAddress tryServer = null;
         try {
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
@@ -139,6 +140,7 @@ public class AntiEntropyServiceRouter {
         } catch (InterruptedException e) {
             logger.error("Interrupted: ", e);
         }
+        */
     }
     
     private List<AntiEntropyService.Client> createClientsFromAddresses(
