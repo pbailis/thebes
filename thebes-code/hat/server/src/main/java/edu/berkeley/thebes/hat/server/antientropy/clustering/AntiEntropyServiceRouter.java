@@ -134,6 +134,8 @@ public class AntiEntropyServiceRouter {
                 tryServer = Config.getServersInCluster().get(serverIndex);
                 neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
+
+            Thread.sleep(1000);
         } catch (TException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         } catch (InterruptedException e) {
