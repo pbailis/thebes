@@ -183,8 +183,6 @@ public class DependencyResolver {
     }
     
     private void commit(TransactionQueue queue) throws TException {
-        /*
-
         for (PendingWrite write : queue.pendingWrites) {
             persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             deletePendingWrite(write.getKey(), write.getVersion());
@@ -198,7 +196,6 @@ public class DependencyResolver {
         // Remove all state re: this version
         pendingTransactionsMap.remove(queue.version);
         unresolvedAcksMap.remove(queue.version);
-        */
     }
 
     public DataItem retrievePendingItem(String key, Version version) throws TException {
