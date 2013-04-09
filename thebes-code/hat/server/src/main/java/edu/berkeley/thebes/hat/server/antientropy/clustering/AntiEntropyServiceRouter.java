@@ -130,12 +130,17 @@ public class AntiEntropyServiceRouter {
     
     /** Actually does the announcement! Called in its own thread. */
     private void announceNextQueuedPendingWrite(List<AntiEntropyService.Client> neighbors) {
+
+        announceSemaphore.acquireUninterruptibly();
+        QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
+
+
         ServerAddress tryServer = null;
+        /*
         try {
             announceSemaphore.acquireUninterruptibly();
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
 
-            /*
             if(announcement == null)
                 logger.error("Got a null announcement");
 
@@ -144,10 +149,10 @@ public class AntiEntropyServiceRouter {
                 tryServer = Config.getServersInCluster().get(serverIndex);
                 neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
-            */
         } catch (TException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         }
+        */
     }
     
     private List<AntiEntropyService.Client> createClientsFromAddresses(
