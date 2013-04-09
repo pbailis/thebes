@@ -63,6 +63,6 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     @Override
     public void ackTransactionPending(ThriftVersion transactionId) throws TException {
         ackTransactionPending.mark();
-        //dependencyResolver.ackTransactionPending(Version.fromThrift(transactionId));
+        dependencyResolver.ackTransactionPending(Version.fromThrift(transactionId));
     }
 }
