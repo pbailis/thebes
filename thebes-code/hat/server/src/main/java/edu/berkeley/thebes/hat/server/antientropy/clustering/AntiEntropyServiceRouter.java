@@ -125,7 +125,7 @@ public class AntiEntropyServiceRouter {
     public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
         pendingTransactionAnnouncements.add(
                 new QueuedTransactionAnnouncement(transactionID, servers));
-        announceSemaphore.release();
+        //announceSemaphore.release();
     }
     
     /** Actually does the announcement! Called in its own thread. */
