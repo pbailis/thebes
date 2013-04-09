@@ -121,10 +121,8 @@ public class AntiEntropyServiceRouter {
 
     /** Announce that a transaction is ready to some set of servers. */
     public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
-        /*
         pendingTransactionAnnouncements.add(
                 new QueuedTransactionAnnouncement(transactionID, servers));
-                */
     }
     
     /** Actually does the announcement! Called in its own thread. */
@@ -133,13 +131,14 @@ public class AntiEntropyServiceRouter {
 
         try {
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
-
+                /*
             for (Integer serverIndex : announcement.servers) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
                 tryServer = Config.getServersInCluster().get(serverIndex);
                 neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
-        } catch (TException e) {
+            */
+        } catch (RuntimeException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         } catch (InterruptedException e) {
                     logger.error("Interrupted: ", e);
