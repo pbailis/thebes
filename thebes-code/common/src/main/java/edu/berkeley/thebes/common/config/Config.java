@@ -293,6 +293,10 @@ public class Config {
     public static Integer getNumAntiEntropyThreads() {
         return getOption(ConfigParameters.ANTI_ENTROPY_THREADS);
     }
+
+    public static Integer getNumTAAntiEntropyThreads() {
+        return getOption(ConfigParameters.TA_ANTI_ENTROPY_THREADS);
+    }
     
     public static Integer getNumQuorumThreads() {
         return getOption(ConfigParameters.QUORUM_THREADS);

@@ -73,7 +73,7 @@ public class AntiEntropyServiceRouter {
         }
 
         logger.trace("Starting thread to announce new pending writes...");
-        for (int i = 0; i < Config.getNumAntiEntropyThreads(); i ++) {
+        for (int i = 0; i < Config.getNumTAAntiEntropyThreads(); i ++) {
             new Thread() {
                 public void run() {
                     List<AntiEntropyService.Client> neighborClients =
@@ -136,6 +136,7 @@ public class AntiEntropyServiceRouter {
         try {
             List<QueuedTransactionAnnouncement> announcements = Lists.newArrayList();
             announcements.add(pendingTransactionAnnouncements.take());
+            Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
             pendingTransactionAnnouncements.drainTo(announcements);
             
             Map<Integer, List<ThriftVersion>> versionByServer = Maps.newHashMap();

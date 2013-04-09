@@ -32,6 +32,7 @@ public enum ConfigParameters {
     SERVER_PORT(Integer.class, 8080),
     ANTI_ENTROPY_PORT(Integer.class, 8081),
     ANTI_ENTROPY_THREADS(Integer.class, 10),
+    TA_ANTI_ENTROPY_THREADS(Integer.class, 4),
     STANDALONE(Boolean.class, false),
     ROUTING_MODE(RoutingMode.class, RoutingMode.NEAREST),
     QUORUM_THREADS(Integer.class, 10),
