@@ -92,11 +92,13 @@ public class AntiEntropyServiceRouter {
     /** Stores the writes we've put into pending, and need to notify all dependent neighbors. */
     private final ConcurrentLinkedQueue<QueuedTransactionAnnouncement> pendingTransactionAnnouncements;
     private final Semaphore announceSemaphore;
+    private final LinkedBlockingQueue<QueuedTransactionAnnouncement> dummyLBQ;
     
     public AntiEntropyServiceRouter() {
         this.writesToForwardSiblings = Queues.newLinkedBlockingQueue();
         this.pendingTransactionAnnouncements = Queues.newConcurrentLinkedQueue();
         this.announceSemaphore = new Semaphore(0);
+        this.dummyLBQ = Queues.newLinkedBlockingQueue();
     }
     
     /** Our cluster got a new write, forward to the replicas in other clusters. */
@@ -123,9 +125,12 @@ public class AntiEntropyServiceRouter {
 
     /** Announce that a transaction is ready to some set of servers. */
     public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
+        dummyLBQ.add(new QueuedTransactionAnnouncement(transactionID, servers));
+        /*
         pendingTransactionAnnouncements.add(
                 new QueuedTransactionAnnouncement(transactionID, servers));
         announceSemaphore.release();
+        */
     }
     
     /** Actually does the announcement! Called in its own thread. */
@@ -133,8 +138,9 @@ public class AntiEntropyServiceRouter {
         ServerAddress tryServer = null;
 
         try {
-            announceSemaphore.acquireUninterruptibly();
-            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
+            QueuedTransactionAnnouncement announcement = dummyLBQ.take();
+            //announceSemaphore.acquireUninterruptibly();
+            //QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
 
 
             if(announcement == null)
