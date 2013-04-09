@@ -131,13 +131,11 @@ public class AntiEntropyServiceRouter {
 
         try {
             QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
-                /*
             for (Integer serverIndex : announcement.servers) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
                 tryServer = Config.getServersInCluster().get(serverIndex);
-                neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
+                //neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
-            */
         } catch (RuntimeException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         } catch (InterruptedException e) {
