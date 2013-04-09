@@ -90,15 +90,11 @@ public class AntiEntropyServiceRouter {
     /** Stores the writes we receive and need to forward to all siblings */
     private final LinkedBlockingQueue<QueuedWrite> writesToForwardSiblings;
     /** Stores the writes we've put into pending, and need to notify all dependent neighbors. */
-    private final ConcurrentLinkedQueue<QueuedTransactionAnnouncement> pendingTransactionAnnouncements;
-    private final Semaphore announceSemaphore;
-    private final LinkedBlockingQueue<QueuedTransactionAnnouncement> dummyLBQ;
-    
+    private final LinkedBlockingQueue<QueuedTransactionAnnouncement> pendingTransactionAnnouncements;
+
     public AntiEntropyServiceRouter() {
         this.writesToForwardSiblings = Queues.newLinkedBlockingQueue();
-        this.pendingTransactionAnnouncements = Queues.newConcurrentLinkedQueue();
-        this.announceSemaphore = new Semaphore(0);
-        this.dummyLBQ = Queues.newLinkedBlockingQueue();
+        this.pendingTransactionAnnouncements = Queues.newLinkedBlockingQueue();
     }
     
     /** Our cluster got a new write, forward to the replicas in other clusters. */
@@ -125,10 +121,8 @@ public class AntiEntropyServiceRouter {
 
     /** Announce that a transaction is ready to some set of servers. */
     public void announceTransactionReady(Version transactionID, Set<Integer> servers) {
-        //dummyLBQ.add(new QueuedTransactionAnnouncement(transactionID, servers));
         pendingTransactionAnnouncements.add(
                 new QueuedTransactionAnnouncement(transactionID, servers));
-        announceSemaphore.release();
     }
     
     /** Actually does the announcement! Called in its own thread. */
@@ -136,21 +130,17 @@ public class AntiEntropyServiceRouter {
         ServerAddress tryServer = null;
 
         try {
-            //QueuedTransactionAnnouncement announcement = dummyLBQ.take();
-            announceSemaphore.acquireUninterruptibly();
-            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.poll();
-
-
-            if(announcement == null)
-                logger.error("Got a null announcement");
+            QueuedTransactionAnnouncement announcement = pendingTransactionAnnouncements.take();
 
             for (Integer serverIndex : announcement.servers) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
                 tryServer = Config.getServersInCluster().get(serverIndex);
-                neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
+                //neighborClient.ackTransactionPending(Version.toThrift(announcement.transactionID));
             }
-        } catch (Exception e) {
+        } catch (TException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
+        } catch (InterruptedException e) {
+                    logger.error("Interrupted: ", e);
         }
     }
     
