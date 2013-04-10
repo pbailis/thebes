@@ -23,7 +23,12 @@ import edu.berkeley.thebes.common.thrift.ThriftVersion;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.common.thrift.ThriftUtil;
 import edu.berkeley.thebes.hat.server.dependencies.PendingWrite;
+import org.xerial.snappy.Snappy;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,15 +47,15 @@ public class AntiEntropyServiceRouter {
                                                TimeUnit.SECONDS);
 
     Meter announceWriteCount = Metrics.newMeter(AntiEntropyServiceRouter.class,
-                                               "write-announce-events",
-                                               "events",
-                                               TimeUnit.SECONDS);
+                                                "write-announce-events",
+                                                "events",
+                                                TimeUnit.SECONDS);
 
     Histogram aeBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
-                                                "anti-entropy-batch-size");
+                                                 "anti-entropy-batch-size");
 
     Histogram taBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
-                                                "ta-batch-size");
+                                                 "ta-batch-size");
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
@@ -160,23 +165,35 @@ public class AntiEntropyServiceRouter {
             Uninterruptibles.sleepUninterruptibly(Config.getTABatchTime(), TimeUnit.MILLISECONDS);
             pendingTransactionAnnouncements.drainTo(announcements);
             
-            Map<Integer, List<ThriftVersion>> versionByServer = Maps.newHashMap();
+            Map<Integer, List<Long>> versionByServer = Maps.newHashMap();
             
             int numSending = 0;
             for (QueuedTransactionAnnouncement ann : announcements) {
                 for (Integer serverIndex : ann.servers) {
                     if (!versionByServer.containsKey(serverIndex)) {
-                        versionByServer.put(serverIndex, new ArrayList<ThriftVersion>());
+                        versionByServer.put(serverIndex, new ArrayList<Long>());
                     }
                     numSending ++;
-                    versionByServer.get(serverIndex).add(ann.transactionID.getThriftVersion());
+                    versionByServer.get(serverIndex).add(ann.transactionID.getThriftVersion().getVersion());
                 }
             }
             taBatchSize.update(numSending);
             for (Integer serverIndex : versionByServer.keySet()) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
-                neighborClient.ackTransactionPending(versionByServer.get(serverIndex));
+
+                List<Long> versionsToSend = versionByServer.get(serverIndex);
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(versionsToSend.size()*Long.SIZE);
+                DataOutputStream dos = new DataOutputStream(baos);
+
+                for(long toSend : versionByServer.get(serverIndex)) {
+                    dos.writeLong(toSend);
+                }
+
+                neighborClient.ackTransactionPending(ByteBuffer.wrap(Snappy.compress(baos.toByteArray())));
             }
+        } catch (IOException e) {
+            logger.error("Failure while serializing ", e);
         } catch (TException e) {
             logger.error("Failure while announcing dpending write to " + tryServer + ": ", e);
         } catch (InterruptedException e) {
