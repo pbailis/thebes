@@ -136,7 +136,7 @@ public class AntiEntropyServiceRouter {
         try {
             List<QueuedTransactionAnnouncement> announcements = Lists.newArrayList();
             announcements.add(pendingTransactionAnnouncements.take());
-            Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+            Uninterruptibles.sleepUninterruptibly(1000, TimeUnit.MILLISECONDS);
             pendingTransactionAnnouncements.drainTo(announcements);
             
             Map<Integer, List<ThriftVersion>> versionByServer = Maps.newHashMap();
