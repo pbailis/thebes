@@ -379,4 +379,8 @@ public class Config {
     public static Boolean shouldStorePendingInMemory() {
         return getOption(ConfigParameters.STORE_PENDING_IN_MEMORY);
     }
+
+    public static Integer getTABatchTime() {
+        return getOption(ConfigParameters.TA_BATCH_TIME);
+    }
 }

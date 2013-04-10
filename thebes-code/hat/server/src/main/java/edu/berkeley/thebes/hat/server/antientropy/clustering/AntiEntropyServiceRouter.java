@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.server.antientropy.clustering;
 
 
 import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Histogram;
 import com.yammer.metrics.core.Meter;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -44,6 +45,9 @@ public class AntiEntropyServiceRouter {
                                                "write-announce-events",
                                                "events",
                                                TimeUnit.SECONDS);
+
+    Histogram taBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
+                                                "ta-batch-size");
 
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
@@ -136,19 +140,22 @@ public class AntiEntropyServiceRouter {
         try {
             List<QueuedTransactionAnnouncement> announcements = Lists.newArrayList();
             announcements.add(pendingTransactionAnnouncements.take());
-            Uninterruptibles.sleepUninterruptibly(1000, TimeUnit.MILLISECONDS);
+            Uninterruptibles.sleepUninterruptibly(Config.getTABatchTime(), TimeUnit.MILLISECONDS);
             pendingTransactionAnnouncements.drainTo(announcements);
             
             Map<Integer, List<ThriftVersion>> versionByServer = Maps.newHashMap();
             
+            int numSending = 0;
             for (QueuedTransactionAnnouncement ann : announcements) {
                 for (Integer serverIndex : ann.servers) {
                     if (!versionByServer.containsKey(serverIndex)) {
                         versionByServer.put(serverIndex, new ArrayList<ThriftVersion>());
                     }
+                    numSending ++;
                     versionByServer.get(serverIndex).add(ann.transactionID.getThriftVersion());
                 }
             }
+            taBatchSize.update(numSending);
             for (Integer serverIndex : versionByServer.keySet()) {
                 AntiEntropyService.Client neighborClient = neighbors.get(serverIndex);
                 neighborClient.ackTransactionPending(versionByServer.get(serverIndex));
