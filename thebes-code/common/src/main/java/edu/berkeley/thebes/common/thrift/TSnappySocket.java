@@ -183,12 +183,23 @@ public class TSnappySocket extends TIOStreamTransport {
 
     try {
       socket_.connect(new InetSocketAddress(host_, port_), timeout_);
-      inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-      outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
     } catch (IOException iox) {
+      LOGGER.error("Socket IOException", iox);
       close();
       throw new TTransportException(TTransportException.NOT_OPEN, iox);
     }
+
+    try {
+        socket_.setSoTimeout(10);
+        inputStream_ = new SnappyInputStream(new BufferedInputStream(socket_.getInputStream(), 1024));
+    } catch (IOException e) {};
+      try {
+          socket_.setSoTimeout(10);
+          outputStream_ = new SnappyOutputStream(new BufferedOutputStream(socket_.getOutputStream(), 1024));
+      } catch (IOException e) {};
+
+    try { socket_.setSoTimeout(timeout_); } catch (SocketException e) {};
+
   }
 
   /**
