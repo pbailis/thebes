@@ -57,6 +57,14 @@ public class AntiEntropyServiceRouter {
     Histogram taBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
                                                  "ta-batch-size");
 
+    Histogram taUncompressedSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
+                                                     "ta-uncompressed-batch-bytes");
+
+    Histogram taCompressedSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
+                                                     "ta-compressed-batch-bytes");
+
+
+
     public void bootstrapAntiEntropyRouting() throws TTransportException {
         if (Config.isStandaloneServer()) {
             logger.debug("Server marked as standalone; not starting anti-entropy (jk)!");
@@ -190,7 +198,13 @@ public class AntiEntropyServiceRouter {
                     dos.writeLong(toSend);
                 }
 
-                neighborClient.ackTransactionPending(ByteBuffer.wrap(Snappy.compress(baos.toByteArray())));
+                byte[] uncompressedIds = baos.toByteArray();
+                byte[] compressedIds = Snappy.compress(uncompressedIds);
+
+                taUncompressedSize.update(uncompressedIds.length);
+                taCompressedSize.update(compressedIds.length);
+
+                neighborClient.ackTransactionPending(ByteBuffer.wrap(compressedIds));
             }
         } catch (IOException e) {
             logger.error("Failure while serializing ", e);
