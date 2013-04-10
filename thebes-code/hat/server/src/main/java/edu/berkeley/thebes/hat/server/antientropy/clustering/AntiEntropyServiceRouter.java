@@ -46,6 +46,9 @@ public class AntiEntropyServiceRouter {
                                                "events",
                                                TimeUnit.SECONDS);
 
+    Histogram aeBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
+                                                "anti-entropy-batch-size");
+
     Histogram taBatchSize = Metrics.newHistogram(AntiEntropyServiceRouter.class,
                                                 "ta-batch-size");
 
@@ -114,11 +117,25 @@ public class AntiEntropyServiceRouter {
     private void forwardNextQueuedWriteToSiblings(List<AntiEntropyService.Client> siblings) {
         ServerAddress tryServer = null;
         try {
-            QueuedWrite writeToForward = writesToForwardSiblings.take();
+            List<QueuedWrite> writes = Lists.newArrayList();
+            writes.add(writesToForwardSiblings.take());
+            Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
+            writesToForwardSiblings.drainTo(writes);
+
+            List<String> keys = Lists.newArrayListWithExpectedSize(writes.size());
+            List<ThriftDataItem> values = Lists.newArrayListWithExpectedSize(writes.size());
+            
+            for (QueuedWrite write : writes) {
+                keys.add(write.key);
+                values.add(write.value);
+            }
+            
+            aeBatchSize.update(writes.size());
+            
             int i = 0;
             for (AntiEntropyService.Client sibling : siblings) {
                 tryServer = Config.getSiblingServers().get(i++);
-                sibling.put(writeToForward.key, writeToForward.value);
+                sibling.put(keys, values);
             }
         } catch (TException e) {
             logger.error("Failure while forwarding write to siblings (" + tryServer + "): ", e);

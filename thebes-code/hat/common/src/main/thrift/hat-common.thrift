@@ -25,8 +25,8 @@ service ReplicaService {
 }
 
 service AntiEntropyService {
-  oneway void put(1: string key,
-                  2: dataitem.ThriftDataItem value);
+  oneway void put(1: list<string> key,
+                  2: list<dataitem.ThriftDataItem> value);
                                          
   oneway void ackTransactionPending(1: list<version.ThriftVersion> transactionId)
 }
