@@ -31,19 +31,21 @@ public class Version implements Comparable<Version> {
     public ThriftVersion getThriftVersion() {
         return thriftVersion;
     }
+
+    public static Version fromLong(long version) {
+        short clientID = (short) (pow2Less1(numBitsClientID) & version);
+        version >>= numBitsClientID;
+        long logicalTime = pow2Less1(numBitsLogicalTime) & version;
+        version >>= numBitsLogicalTime;
+        long timestamp = pow2Less1(numBitsTimestamp) & version;
+        return new Version(clientID, logicalTime, timestamp);
+    }
 	
 	public static Version fromThrift(ThriftVersion thriftVersion) {
         if(thriftVersion == null)
             return null;
 
-        long version = thriftVersion.getVersion();
-	    
-	    short clientID = (short) (pow2Less1(numBitsClientID) & version);
-	    version >>= numBitsClientID;
-	    long logicalTime = pow2Less1(numBitsLogicalTime) & version;
-	    version >>= numBitsLogicalTime;
-	    long timestamp = pow2Less1(numBitsTimestamp) & version;
-	    return new Version(clientID, logicalTime, timestamp);
+        return fromLong(thriftVersion.getVersion());
 	}
 	
 	public static ThriftVersion toThrift(Version version) {
