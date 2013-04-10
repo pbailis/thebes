@@ -187,10 +187,10 @@ public class DependencyResolver {
             persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             deletePendingWrite(write.getKey(), write.getVersion());
         }
-        TransactionQueue prevQueue = tempMap.put(queue.version, queue);
-        if (prevQueue != null) {
-            logger.error("Tried to commit twice for same version (" + queue.version + ") ???: " + prevQueue);
-        }
+//        TransactionQueue prevQueue = tempMap.put(queue.version, queue);
+//        if (prevQueue != null) {
+//            logger.error("Tried to commit twice for same version (" + queue.version + ") ???: " + prevQueue);
+//        }
         commitCount.mark();
 
         // Remove all state re: this version
