@@ -334,6 +334,10 @@ public class Config {
         return getOption(ConfigParameters.DO_CLEAN_DATABASE_FILE);
     }
 
+    public static Boolean useCompressedTransport() {
+        return getOption(ConfigParameters.USE_COMPRESSED_TRANSPORT);
+    }
+
     public static IPersistenceEngine getPersistenceEngine() throws ConfigurationException {
         PersistenceEngine engineType = Config.getPersistenceType();
         switch (engineType) {

@@ -2,6 +2,7 @@ package edu.berkeley.thebes.hat.common.thrift;
 
 import java.io.IOException;
 
+import edu.berkeley.thebes.common.thrift.TSnappySocket;
 import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -39,16 +40,21 @@ public class ThriftUtil {
                                                   new TNonblockingSocket(host, port, Config.getSocketTimeout()));
     }
 
+    private static TTransport getTransport(String host, int port, int timeout) {
+        return Config.useCompressedTransport()? new TSnappySocket(host, port, timeout) :
+                                                new TSocket(host, port, timeout);
+    }
+
     private static TProtocol createProtocol(String host, int port, int timeout)
             throws TTransportException {
-        TTransport transport = new TSocket(host, port, timeout);
+        TTransport transport = getTransport(host, port, timeout);
         transport.open();
         return new TBinaryProtocol(transport);
     }
     
     private static TProtocol createFramedProtocol(String host, int port, int timeout)
             throws TTransportException {
-        TTransport transport = new TSocket(host, port, timeout);
+        TTransport transport = getTransport(host, port, timeout);
         transport.open();
         return new TBinaryProtocol(new TFramedTransport(transport));
     }
