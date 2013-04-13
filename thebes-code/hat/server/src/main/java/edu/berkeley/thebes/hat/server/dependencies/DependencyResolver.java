@@ -108,7 +108,7 @@ public class DependencyResolver {
         Metrics.newGauge(DependencyResolver.class, "num-pending-versions", new Gauge<Integer>() {
             @Override
             public Integer value() {
-                return 0;//pendingTransactionsMap.size();
+                return pendingTransactionsMap.size();
             }
         });
     }
