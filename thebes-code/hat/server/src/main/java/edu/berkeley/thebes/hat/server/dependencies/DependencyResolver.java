@@ -19,6 +19,7 @@ import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
+import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
 
 import java.io.IOException;
 import java.util.Set;
@@ -86,6 +87,8 @@ public class DependencyResolver {
                                              "violations",
                                              TimeUnit.SECONDS);
 
+    private final Timer addPendingTimer = Metrics.newTimer(DependencyResolver.class, "add-pending-latency");
+
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
         this.persistenceEngine = persistenceEngine;
@@ -138,36 +141,41 @@ public class DependencyResolver {
     }
 
     public void addPendingWrite(String key, DataItem value) throws TException {
-        Version version = value.getVersion();
-        
-        pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
-        persistPendingWrite(key, value);
-
-        PendingWrite newPendingWrite = new PendingWrite(key, value);
-
-        TransactionQueue transQueue = pendingTransactionsMap.get(version);
-        if (transQueue == null) {
-            weirdErrorCount.mark();
-            String message = "XACT NULL ERROR. ";
-//            logger.error("Transaction queue was NULL -- violated assertion");
-            message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
-            if (tempMap.containsKey(version)) {
-                TransactionQueue prevQueue = tempMap.get(version);
-                message += prevQueue;
-            }
-            logger.error(message);
-            return;
-        }
-
-
+        TimerContext context = addPendingTimer.time();
         try {
-            transQueue.add(newPendingWrite);
-        } catch (Exception e) {
-            logger.error("Error on version " + version + ": ", e);
-        }
-
-        if (transQueue.shouldAnnounceTransactionReady()) {
-            router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
+            Version version = value.getVersion();
+            
+            pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
+            persistPendingWrite(key, value);
+    
+            PendingWrite newPendingWrite = new PendingWrite(key, value);
+    
+            TransactionQueue transQueue = pendingTransactionsMap.get(version);
+            if (transQueue == null) {
+                weirdErrorCount.mark();
+                String message = "XACT NULL ERROR. ";
+    //            logger.error("Transaction queue was NULL -- violated assertion");
+                message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
+                if (tempMap.containsKey(version)) {
+                    TransactionQueue prevQueue = tempMap.get(version);
+                    message += prevQueue;
+                }
+                logger.error(message);
+                return;
+            }
+    
+    
+            try {
+                transQueue.add(newPendingWrite);
+            } catch (Exception e) {
+                logger.error("Error on version " + version + ": ", e);
+            }
+    
+            if (transQueue.shouldAnnounceTransactionReady()) {
+                router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
+            }
+        } finally {
+            context.stop();
         }
         // TODO: if it's still there after a while, can resend
 
