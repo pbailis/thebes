@@ -33,7 +33,7 @@ public class NearestReplicaRouter extends ReplicaRouter {
 
     private static final double ALPHA = .95;
     private static final double TIME_BETWEEN_CHECKS = 10000;
-    private static final double WARNING_THRESHOLD = 2;
+    private static final double WARNING_THRESHOLD = 10;
     private List<ReplicaService.Client> syncReplicas;
     
     private static ConcurrentMap<ServerAddress, Double> averageLatencyByServer = Maps.newConcurrentMap();
