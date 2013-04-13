@@ -30,7 +30,7 @@ public class NearestReplicaRouter extends ReplicaRouter {
     private static Logger logger = LoggerFactory.getLogger(NearestReplicaRouter.class);
 
     private static final double ALPHA = .95;
-    private static final double TIME_BETWEEN_CHECKS = 5000;
+    private static final double TIME_BETWEEN_CHECKS = 10000;
     private static final double WARNING_THRESHOLD = 2;
     private List<ReplicaService.Client> syncReplicas;
     private Map<ServerAddress, Double> averageLatencyByServer;
@@ -103,6 +103,8 @@ public class NearestReplicaRouter extends ReplicaRouter {
             if (latency > WARNING_THRESHOLD * minLatency) {
                 logger.warn("Server " + server + " has high avg put latency: " + latency
                         + " (min avg latency=" + minLatency + ")");
+            } else if (logger.isDebugEnabled()) {
+                logger.debug("Server " + server + " has avg put latency: " + latency);
             }
         }
         
