@@ -125,7 +125,7 @@ public class DependencyResolver {
     }
 
     private String getPendingKeyForVersion(String key, Version version) {
-        return "VERSION"+key+version;
+        return new StringBuilder().append("VERSION").append(key).append(version).toString();
     }
 
     private String getPendingKeyForValue(String key, DataItem value) {

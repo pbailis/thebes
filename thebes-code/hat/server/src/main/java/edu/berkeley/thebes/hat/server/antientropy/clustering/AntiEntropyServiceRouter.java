@@ -79,7 +79,7 @@ public class AntiEntropyServiceRouter {
 
         logger.trace("Starting thread to forward writes to siblings...");
         for (int i = 0; i < Config.getNumAntiEntropyThreads(); i ++) {
-            new Thread() {
+            Thread t = new Thread() {
                 public void run() {
                     List<AntiEntropyService.Client> replicaSiblingClients =
                             createClientsFromAddresses(Config.getSiblingServers());
@@ -89,12 +89,14 @@ public class AntiEntropyServiceRouter {
                         forwardNextQueuedWriteToSiblings(replicaSiblingClients);
                     }
                 }
-            }.start();
+            };
+            t.setPriority(Thread.NORM_PRIORITY-2);
+            t.start();
         }
 
         logger.trace("Starting thread to announce new pending writes...");
         for (int i = 0; i < Config.getNumTAAntiEntropyThreads(); i ++) {
-            new Thread() {
+            Thread t = new Thread() {
                 public void run() {
                     List<AntiEntropyService.Client> neighborClients =
                             createClientsFromAddresses(Config.getServersInCluster());
@@ -104,7 +106,9 @@ public class AntiEntropyServiceRouter {
                         announceNextQueuedPendingWrite(neighborClients);
                     }
                 }
-            }.start();
+            };
+            t.setPriority(Thread.NORM_PRIORITY-3);
+            t.start();
         }
 
         logger.debug("...anti-entropy bootstrapped");
