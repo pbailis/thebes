@@ -71,7 +71,6 @@ public class DependencyResolver {
     private final IPersistenceEngine persistenceEngine;
     private final IPersistenceEngine pendingPersistenceEngine;
     private final ConcurrentMap<Version, TransactionQueue> pendingTransactionsMap;
-    private final ConcurrentMap<Version, TransactionQueue> tempMap;
     private final ConcurrentMap<Version, AtomicInteger> unresolvedAcksMap;
     
     Meter commitCount = Metrics.newMeter(DependencyResolver.class,
@@ -102,7 +101,6 @@ public class DependencyResolver {
         this.persistenceEngine = persistenceEngine;
         this.router = router;
         this.pendingTransactionsMap = Maps.newConcurrentMap();
-        this.tempMap = Maps.newConcurrentMap();
         this.unresolvedAcksMap = Maps.newConcurrentMap();
         
         if (Config.shouldStorePendingInMemory()) {
@@ -122,10 +120,19 @@ public class DependencyResolver {
                 return pendingTransactionsMap.size();
             }
         });
+
+        Metrics.newGauge(DependencyResolver.class, "num-unresolved-versions", new Gauge<Integer>() {
+            @Override
+            public Integer value() {
+                return unresolvedAcksMap.size();
+            }
+        });
     }
 
     private String getPendingKeyForVersion(String key, Version version) {
-        return new StringBuilder().append("VERSION").append(key).append(version).toString();
+//        return new StringBuilder().append("VERSION").append(key).append(version).toString();
+        //TODO
+        return key;
     }
 
     private String getPendingKeyForValue(String key, DataItem value) {
@@ -133,6 +140,7 @@ public class DependencyResolver {
     }
 
     private void persistPendingWrite(String key, DataItem value) throws TException {
+//        pendingPersistenceEngine.force_put(getPendingKeyForValue(key, value), value);
         pendingPersistenceEngine.force_put(getPendingKeyForValue(key, value), value);
     }
 
@@ -178,12 +186,6 @@ public class DependencyResolver {
                 if (transQueue == null) {
                     weirdErrorCount.mark();
                     String message = "XACT NULL ERROR. ";
-        //            logger.error("Transaction queue was NULL -- violated assertion");
-                    message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
-                    if (tempMap.containsKey(version)) {
-                        TransactionQueue prevQueue = tempMap.get(version);
-                        message += prevQueue;
-                    }
                     logger.error(message);
                     return;
                 }
