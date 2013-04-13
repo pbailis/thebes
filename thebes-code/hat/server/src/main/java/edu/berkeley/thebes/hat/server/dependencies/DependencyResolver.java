@@ -88,6 +88,14 @@ public class DependencyResolver {
                                              TimeUnit.SECONDS);
 
     private final Timer addPendingTimer = Metrics.newTimer(DependencyResolver.class, "add-pending-latency");
+    
+
+    private final Timer stage1Timer = Metrics.newTimer(DependencyResolver.class, "stage-1");
+    private final Timer stage2Timer = Metrics.newTimer(DependencyResolver.class, "stage-2");
+    private final Timer stage3Timer = Metrics.newTimer(DependencyResolver.class, "stage-3");
+    private final Timer stage4Timer = Metrics.newTimer(DependencyResolver.class, "stage-4");
+    private final Timer stage5Timer = Metrics.newTimer(DependencyResolver.class, "stage-5");
+    private final Timer stage6Timer = Metrics.newTimer(DependencyResolver.class, "stage-6");
 
     public DependencyResolver(AntiEntropyServiceRouter router,
             IPersistenceEngine persistenceEngine) {
@@ -145,34 +153,60 @@ public class DependencyResolver {
         try {
             Version version = value.getVersion();
             
-            pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
-            persistPendingWrite(key, value);
-    
-            PendingWrite newPendingWrite = new PendingWrite(key, value);
-    
-            TransactionQueue transQueue = pendingTransactionsMap.get(version);
-            if (transQueue == null) {
-                weirdErrorCount.mark();
-                String message = "XACT NULL ERROR. ";
-    //            logger.error("Transaction queue was NULL -- violated assertion");
-                message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
-                if (tempMap.containsKey(version)) {
-                    TransactionQueue prevQueue = tempMap.get(version);
-                    message += prevQueue;
+            {
+                TimerContext s1 = stage1Timer.time();
+                pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
+                s1.stop();
+            }
+            {
+                TimerContext s2 = stage2Timer.time();
+                persistPendingWrite(key, value);
+                s2.stop();
+            }
+
+            PendingWrite newPendingWrite;
+            {
+                TimerContext s3 = stage3Timer.time();
+                newPendingWrite = new PendingWrite(key, value);
+                s3.stop();
+            }
+
+            TransactionQueue transQueue;
+            {
+                TimerContext s4 = stage4Timer.time();
+                transQueue = pendingTransactionsMap.get(version);
+                if (transQueue == null) {
+                    weirdErrorCount.mark();
+                    String message = "XACT NULL ERROR. ";
+        //            logger.error("Transaction queue was NULL -- violated assertion");
+                    message += tempMap.containsKey(version) ? "Contained: " : "Not contained.";
+                    if (tempMap.containsKey(version)) {
+                        TransactionQueue prevQueue = tempMap.get(version);
+                        message += prevQueue;
+                    }
+                    logger.error(message);
+                    return;
                 }
-                logger.error(message);
-                return;
+                s4.stop();
             }
     
-    
-            try {
-                transQueue.add(newPendingWrite);
-            } catch (Exception e) {
-                logger.error("Error on version " + version + ": ", e);
+
+            {
+                TimerContext s5 = stage5Timer.time();
+                try {
+                    transQueue.add(newPendingWrite);
+                } catch (Exception e) {
+                    logger.error("Error on version " + version + ": ", e);
+                }
+                s5.stop();
             }
     
-            if (transQueue.shouldAnnounceTransactionReady()) {
-                router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
+            {
+                TimerContext s6 = stage6Timer.time();
+                if (transQueue.shouldAnnounceTransactionReady()) {
+                    router.announceTransactionReady(version, transQueue.replicaIndicesInvolved);
+                }
+                s6.stop();
             }
         } finally {
             context.stop();
