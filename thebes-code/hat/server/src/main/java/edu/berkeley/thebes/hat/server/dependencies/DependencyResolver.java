@@ -130,9 +130,7 @@ public class DependencyResolver {
     }
 
     private String getPendingKeyForVersion(String key, Version version) {
-//        return new StringBuilder().append("VERSION").append(key).append(version).toString();
-        //TODO
-        return key;
+        return new StringBuilder().append("VERSION").append(key).append(version).toString();
     }
 
     private String getPendingKeyForValue(String key, DataItem value) {
@@ -140,7 +138,6 @@ public class DependencyResolver {
     }
 
     private void persistPendingWrite(String key, DataItem value) throws TException {
-//        pendingPersistenceEngine.force_put(getPendingKeyForValue(key, value), value);
         pendingPersistenceEngine.force_put(getPendingKeyForValue(key, value), value);
     }
 
