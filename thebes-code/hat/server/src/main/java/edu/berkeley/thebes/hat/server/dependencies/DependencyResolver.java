@@ -173,13 +173,12 @@ public class DependencyResolver {
 
         // Check any unresolved acks associated with this key
         // TODO: Examine the implications of this!
-        ackUnresolved(transQueue, version);
-
-
-        if (transQueue.canCommit()) {
-            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
-            commit(transQueue);
-        }
+//        ackUnresolved(transQueue, version);
+//
+//        if (transQueue.canCommit()) {
+//            logger.debug("Committing via unresolved: " + version + " / " + transQueue.numReplicasInvolved + " / " + newPendingWrite.getReplicaIndicesInvolved().size());
+//            commit(transQueue);
+//        }
     }
     
     private void commit(TransactionQueue queue) throws TException {
@@ -222,6 +221,7 @@ public class DependencyResolver {
     public void ackTransactionPending(Version transactionId) throws TException {
         TransactionQueue transactionQueue = pendingTransactionsMap.get(transactionId);
         if (transactionQueue != null) {
+            ackUnresolved(transactionQueue, transactionId);
             transactionQueue.serverAcked();
             if (transactionQueue.canCommit()) {
                 if (logger.isDebugEnabled()) { logger.trace("Committing via ack: " + transactionId + " / " + transactionQueue.numReplicasInvolved); }
