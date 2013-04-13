@@ -57,7 +57,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         } catch (Exception e) {
 //            System.out.println(e);
 //            e.printStackTrace();
-            logger.warn("Error on insert:", e);
+            logger.warn("Error on init:", e);
             throw new DBException(e.getMessage());
         }
 	}
@@ -66,7 +66,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         try {
             client.commitTransaction();
         } catch(Exception e) {
-            logger.warn("Error on insert:", e);
+            logger.warn("Error on cleanup:", e);
             throw new DBException(e.getMessage());
         }
         client.close();
@@ -88,7 +88,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
             client.commitTransaction();
         } catch (Exception e) {
 //            e.printStackTrace();
-            logger.warn("Error on insert:", e);
+            logger.warn("Error on commit:", e);
             return ERROR;
         }
 
@@ -100,7 +100,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         try {
             client.put(key, null);
         } catch (Exception e) {
-            logger.warn("Error on insert:", e);
+            logger.warn("Error on delete:", e);
             return ERROR;
         }
         return OK;
@@ -141,7 +141,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
 
 
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            logger.warn("Error on read:", e);
 //            e.printStackTrace();
             return ERROR;
         }
@@ -161,7 +161,7 @@ public class ThebesYCSBClient extends DB implements TransactionalDB {
         try {
             client.put(key, ByteBuffer.wrap(values.values().iterator().next().toArray()));
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            logger.warn("Error on update:", e);
 //            e.printStackTrace();
             return ERROR;
         }
