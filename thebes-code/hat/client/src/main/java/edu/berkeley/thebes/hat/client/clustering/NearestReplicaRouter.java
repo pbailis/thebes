@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class NearestReplicaRouter extends ReplicaRouter {
     
@@ -33,9 +35,10 @@ public class NearestReplicaRouter extends ReplicaRouter {
     private static final double TIME_BETWEEN_CHECKS = 10000;
     private static final double WARNING_THRESHOLD = 2;
     private List<ReplicaService.Client> syncReplicas;
-    private Map<ServerAddress, Double> averageLatencyByServer;
     
-    private long timeSinceLastCheck;
+    private ConcurrentMap<ServerAddress, Double> averageLatencyByServer;
+    
+    private static AtomicLong timeSinceLastCheck;
 
     public NearestReplicaRouter() throws TTransportException, IOException {
         assert(Config.getRoutingMode() == RoutingMode.NEAREST);
@@ -43,15 +46,15 @@ public class NearestReplicaRouter extends ReplicaRouter {
         List<ServerAddress> serverIPs = Config.getServersInCluster();
         
         syncReplicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
-        averageLatencyByServer = Maps.newHashMap();
+        averageLatencyByServer = Maps.newConcurrentMap();
 
         for (ServerAddress server : serverIPs) {
             syncReplicas.add(ThriftUtil.getReplicaServiceSyncClient(server.getIP(), server.getPort()));
-            averageLatencyByServer.put(server, 0d);
+            averageLatencyByServer.putIfAbsent(server, 0d);
             logger.trace("Connected to " + server);
         }
         
-        timeSinceLastCheck = 0;
+        timeSinceLastCheck = new AtomicLong();
     }
     
     private ReplicaService.Client getSyncReplicaByKey(String key) {
@@ -82,14 +85,15 @@ public class NearestReplicaRouter extends ReplicaRouter {
     }
     
     private void checkLatencies() {
-        if (timeSinceLastCheck == 0) {
-            timeSinceLastCheck = System.currentTimeMillis();
+        if (timeSinceLastCheck.get() == 0) {
+            timeSinceLastCheck.set(System.currentTimeMillis());
         }
         
-        if (System.currentTimeMillis() - timeSinceLastCheck < TIME_BETWEEN_CHECKS) {
+        if (System.currentTimeMillis() - timeSinceLastCheck.get() < TIME_BETWEEN_CHECKS) {
             return;
+        } else {
+            timeSinceLastCheck.set(System.currentTimeMillis());
         }
-        
         
         double minLatency = -1;
         for (double latency : averageLatencyByServer.values()) {
@@ -107,8 +111,6 @@ public class NearestReplicaRouter extends ReplicaRouter {
                 logger.debug("Server " + server + " has avg put latency: " + latency);
             }
         }
-        
-        timeSinceLastCheck = System.currentTimeMillis();
     }
 
     @Override
