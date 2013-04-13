@@ -36,7 +36,7 @@ public class NearestReplicaRouter extends ReplicaRouter {
     private static final double WARNING_THRESHOLD = 2;
     private List<ReplicaService.Client> syncReplicas;
     
-    private ConcurrentMap<ServerAddress, Double> averageLatencyByServer;
+    private static ConcurrentMap<ServerAddress, Double> averageLatencyByServer = Maps.newConcurrentMap();
     
     private static AtomicLong timeSinceLastCheck;
 
@@ -46,7 +46,6 @@ public class NearestReplicaRouter extends ReplicaRouter {
         List<ServerAddress> serverIPs = Config.getServersInCluster();
         
         syncReplicas = new ArrayList<ReplicaService.Client>(serverIPs.size());
-        averageLatencyByServer = Maps.newConcurrentMap();
 
         for (ServerAddress server : serverIPs) {
             syncReplicas.add(ThriftUtil.getReplicaServiceSyncClient(server.getIP(), server.getPort()));
@@ -75,7 +74,7 @@ public class NearestReplicaRouter extends ReplicaRouter {
             
             long duration = System.currentTimeMillis() - startTime;
             averageLatencyByServer.put(serverAddress,
-                    averageLatencyByServer.get(key)*ALPHA + duration*(1-ALPHA));
+                    averageLatencyByServer.get(serverAddress)*ALPHA + duration*(1-ALPHA));
             
             checkLatencies();
             return ret;
