@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.naming.ConfigurationException;
 
@@ -39,8 +40,14 @@ public class Config {
     private static Logger logger = LoggerFactory.getLogger(Config.class);
     
     private static String HOST_NAME;
+    
+    private static AtomicBoolean initialized = new AtomicBoolean(false);
 
     private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+        if (initialized.getAndSet(true)) {
+            return;
+        }
+        
         YamlConfig.initialize((String) getOptionNoYaml(ConfigParameters.CONFIG_FILE));
 
         List<ConfigParameters> missingFields = Lists.newArrayList();
