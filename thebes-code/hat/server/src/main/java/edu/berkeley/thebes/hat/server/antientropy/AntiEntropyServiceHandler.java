@@ -58,41 +58,42 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     public void put(List<String> keys,
                     List<ThriftDataItem> values) throws TException{
         putRequests.mark();
-        return;
-//        for (int i = 0; i < keys.size(); i ++) {
-//            String key = keys.get(i);
-//            DataItem value = new DataItem(values.get(i));
-//            logger.trace("Received anti-entropy put for key " + key);
-//            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
-//                persistenceEngine.put_if_newer(key, value);
-//            } else {
-//                dependencyResolver.addPendingWrite(key, value);
-//            }
-//        }
+        for (int i = 0; i < keys.size(); i ++) {
+            String key = keys.get(i);
+            DataItem value = new DataItem(values.get(i));
+            logger.trace("Received anti-entropy put for key " + key);
+            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
+                persistenceEngine.put_if_newer(key, value);
+            } else {
+                dependencyResolver.addPendingWrite(key, value);
+            }
+        }
     }
 
     @Override
     public void ackTransactionPending(ByteBuffer transactionIdList) throws TException {
         ackTransactionPending.mark();
+        
+        return;
 
-        List<Version> transactionVersions = Lists.newArrayList();
-
-        try {
-            byte[] uncompressedList = Snappy.uncompress(transactionIdList.array());
-
-            ByteArrayInputStream bis = new ByteArrayInputStream(uncompressedList);
-            DataInputStream dis = new DataInputStream(bis);
-
-            while(bis.available() > 0) {
-                transactionVersions.add(Version.fromLong(dis.readLong()));
-            }
-
-        } catch (IOException e) {
-            logger.error("Error in deserialization", e);
-        }
-
-        for (Version transactionId : transactionVersions) {
-            dependencyResolver.ackTransactionPending(transactionId);
-        }
+//        List<Version> transactionVersions = Lists.newArrayList();
+//
+//        try {
+//            byte[] uncompressedList = Snappy.uncompress(transactionIdList.array());
+//
+//            ByteArrayInputStream bis = new ByteArrayInputStream(uncompressedList);
+//            DataInputStream dis = new DataInputStream(bis);
+//
+//            while(bis.available() > 0) {
+//                transactionVersions.add(Version.fromLong(dis.readLong()));
+//            }
+//
+//        } catch (IOException e) {
+//            logger.error("Error in deserialization", e);
+//        }
+//
+//        for (Version transactionId : transactionVersions) {
+//            dependencyResolver.ackTransactionPending(transactionId);
+//        }
     }
 }
