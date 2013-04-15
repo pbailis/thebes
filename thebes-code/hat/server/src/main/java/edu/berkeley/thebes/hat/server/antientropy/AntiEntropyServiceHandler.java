@@ -58,16 +58,17 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     public void put(List<String> keys,
                     List<ThriftDataItem> values) throws TException{
         putRequests.mark();
-        for (int i = 0; i < keys.size(); i ++) {
-            String key = keys.get(i);
-            DataItem value = new DataItem(values.get(i));
-            logger.trace("Received anti-entropy put for key " + key);
-            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
-                persistenceEngine.put_if_newer(key, value);
-            } else {
-                dependencyResolver.addPendingWrite(key, value);
-            }
-        }
+        return;
+//        for (int i = 0; i < keys.size(); i ++) {
+//            String key = keys.get(i);
+//            DataItem value = new DataItem(values.get(i));
+//            logger.trace("Received anti-entropy put for key " + key);
+//            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
+//                persistenceEngine.put_if_newer(key, value);
+//            } else {
+//                dependencyResolver.addPendingWrite(key, value);
+//            }
+//        }
     }
 
     @Override
