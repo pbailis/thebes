@@ -108,7 +108,7 @@ public class AntiEntropyServiceRouter {
                 }
             };
             t.setPriority(Thread.NORM_PRIORITY-3);
-//            t.start(); TODO
+            t.start();
         }
 
         logger.debug("...anti-entropy bootstrapped");
