@@ -74,26 +74,24 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     public void ackTransactionPending(ByteBuffer transactionIdList) throws TException {
         ackTransactionPending.mark();
         
-        return;
+        List<Version> transactionVersions = Lists.newArrayList();
 
-//        List<Version> transactionVersions = Lists.newArrayList();
-//
-//        try {
-//            byte[] uncompressedList = Snappy.uncompress(transactionIdList.array());
-//
-//            ByteArrayInputStream bis = new ByteArrayInputStream(uncompressedList);
-//            DataInputStream dis = new DataInputStream(bis);
-//
-//            while(bis.available() > 0) {
-//                transactionVersions.add(Version.fromLong(dis.readLong()));
-//            }
-//
-//        } catch (IOException e) {
-//            logger.error("Error in deserialization", e);
-//        }
-//
-//        for (Version transactionId : transactionVersions) {
-//            dependencyResolver.ackTransactionPending(transactionId);
-//        }
+        try {
+            byte[] uncompressedList = Snappy.uncompress(transactionIdList.array());
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(uncompressedList);
+            DataInputStream dis = new DataInputStream(bis);
+
+            while(bis.available() > 0) {
+                transactionVersions.add(Version.fromLong(dis.readLong()));
+            }
+
+        } catch (IOException e) {
+            logger.error("Error in deserialization", e);
+        }
+
+        for (Version transactionId : transactionVersions) {
+            dependencyResolver.ackTransactionPending(transactionId);
+        }
     }
 }
