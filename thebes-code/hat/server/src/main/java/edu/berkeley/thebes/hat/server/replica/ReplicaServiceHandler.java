@@ -98,8 +98,10 @@ public class ReplicaServiceHandler implements ReplicaService.Iface {
                              "' requiredVersion: "+ requiredVersion+
                              ", found version: " + (ret == null ? null : ret.getVersion()));
     
-            if (ret == null || ret.getVersion().compareTo(Version.NULL_VERSION) == 0)
+            if (ret == null || ret.getVersion().compareTo(Version.NULL_VERSION) == 0) {
+                logger.debug("Could not find key " + key);
                 nullVersionsMeter.mark();
+            }
             if (requiredVersion != null && requiredVersion.compareTo(Version.NULL_VERSION) != 0 &&
                     (ret == null || requiredVersion.compareTo(ret.getVersion()) > 0)) {
                 depResRequestsMeter.mark();
