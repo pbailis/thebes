@@ -11,6 +11,7 @@ from common_funcs import fetch_file_single
 from common_funcs import fetch_file_single_compressed
 from threading import Thread, Lock
 import os
+import itertools
 from datetime import datetime
 from os import system # my pycharm sucks and can't find system by itself...
 from time import sleep
@@ -169,7 +170,7 @@ def check_for_instances(regions, tag):
         if f != "Y" and f != "y":
             exit(-1)
     if numUntagged > 0:
-        pprint("NOTICE: You appear to have %d UNTAGGED instances up already." % numRunningAnywhere)
+        pprint("NOTICE: You appear to have %d UNTAGGED instances up already." % numUntagged)
         f = raw_input("Continue without terminating/claiming them? ")
         if f != "Y" and f != "y":
             exit(-1)
@@ -325,6 +326,11 @@ def jumpstart_hosts(clusters):
     run_script("all-hosts", SCRIPTS_DIR + "/resources/enable_root_ssh.sh", user="ubuntu")
     pprint("Done")
 
+    pprint("Installing extra packages...")
+    run_cmd("all-hosts", "apt-get update", user="root")
+    run_cmd("all-hosts", "apt-get -q -y install sysstat", user="root")
+    pprint("Done")
+
     pprint("Exporting keys...")
     run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /root/.bashrc", user="root")
     run_cmd("all-hosts", "echo export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >> /home/ubuntu/.bashrc", user="root")
@@ -347,9 +353,9 @@ def jumpstart_hosts(clusters):
     pprint("Done")
 
     pprint("Building ycsb...")
-    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'mvn package', user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'mvn package', user="ubuntu")
     pprint("Done")
 
 
@@ -406,19 +412,19 @@ def rebuild_all(clusters):
     run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
     run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
     run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
-    run_cmd_in_ycsb("all-clients", "mvn package", user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb("all-hosts", "mvn package", user="ubuntu")
     pprint('Servers re-built!')
 
 def rebuild_clients(clusters):
     pprint('Rebuilding clients...')
-    run_cmd_in_thebes("all-clients", "git stash", user="ubuntu")
-    run_cmd_in_thebes("all-clients", "git pull", user="ubuntu")
-    run_cmd_in_thebes("all-clients", "mvn package", user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'mvn clean', user="ubuntu")
-    run_cmd_in_ycsb('all-clients', 'bash fetch-thebes-jar.sh', user="ubuntu")
-    run_cmd_in_ycsb("all-clients", "mvn package", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git stash", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "git pull", user="ubuntu")
+    run_cmd_in_thebes("all-hosts", "mvn package", user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'mvn clean', user="ubuntu")
+    run_cmd_in_ycsb('all-hosts', 'bash fetch-thebes-jar.sh', user="ubuntu")
+    run_cmd_in_ycsb("all-hosts", "mvn package", user="ubuntu")
     pprint('Clients re-built!')
 
 def rebuild_servers(clusters):
@@ -442,6 +448,7 @@ def getNextClientID():
 def start_servers(clusters, use2PL, thebesArgString):
     baseCmd = "ulimit -u unlimited; cd /home/ubuntu/thebes/thebes-code; rm *.log;"
     if not use2PL:
+        runServerCmd = baseCmd + "java        -agentlib:hprof=cpu=samples,thread=y,monitor=y -XX:+PrintGCDetails -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>server_err.log & disown"
         runServerCmd = baseCmd + "java        -XX:+PrintGCDetails -XX:+UseParallelGC -Xms15G -Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar hat/server/target/hat-server-1.0-SNAPSHOT.jar 1>server.log 2>server_err.log & disown"
     else:
         runServerCmd = baseCmd + "java -XX:+UseParallelGC -Xms15G Xmx15G -ea -Dclusterid=%d -Dserverid=%d %s -jar twopl/server/target/twopl-server-1.0-SNAPSHOT.jar 1>server.log 2>&1"
@@ -453,7 +460,7 @@ def start_servers(clusters, use2PL, thebesArgString):
     for cluster in clusters:
         for sid, server in enumerate(cluster.servers):
             myCmd = runServerCmd
-            if server.ip == 'ec2-23-23-69-16.compute-1.amazonaws.com':
+            if server.ip == 'ec2-107-21-148-83.compute-1.amazonaws.com':
                 myCmd = runServerCmd.replace('      ', ' -agentpath:/home/ubuntu/thebes/yjp-12.0.3/bin/linux-x86-64/libyjpagent.so=disablestacktelemetry,disableexceptiontelemetry,builtinprobes=none,delay=10000')
             pprint("Starting kv-server on [%s]" % server.ip)
             run_cmd_single(server.ip, myCmd % (cluster.clusterID, sid, thebesArgString), user="root")
@@ -469,7 +476,7 @@ def start_servers(clusters, use2PL, thebesArgString):
 
 
     pprint('Waiting for things to settle down...')
-    sleep(15)
+    sleep(75)
     pprint('Servers started!')
 
 
@@ -500,14 +507,16 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     def startYCSB(runType, cluster, client, clientID):
         hosts = ','.join([host.ip for host in cluster.servers])
         run_cmd_single(client.ip,
-                       'ulimit -u unlimited; cd /home/ubuntu/thebes/ycsb-0.1.4;' \
+                       'ulimit -Hn 100000; cd /home/ubuntu/thebes/ycsb-0.1.4;' \
 #                           'rm *.log;' \
-                           'bin/ycsb %s thebes -p hosts=%s -threads %d -p fieldlength=%d -p histogram.buckets=10000 -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
+                           'bin/ycsb %s thebes -p hosts=%s -threads %d -p readproportion=%s -p updateproportion=%s -p fieldlength=%d -p histogram.buckets=10000 -p fieldcount=1 -p operationcount=100000000 -p recordcount=%d -t ' \
                            ' -p requestdistribution=%s -p maxexecutiontime=%d -P %s -Dsocket_timeout=%d ' \
                            ' -DtransactionLengthDistributionType=%s -DtransactionLengthDistributionParameter=%d -Dclientid=%d -Dtxn_mode=%s -Dclusterid=%d -Dhat_isolation_level=%s -Datomicity_level=%s -Dconfig_file=../thebes-code/conf/thebes.yaml -Drouting_mode=%s %s' \
                            ' 1>%s_out.log 2>%s_err.log' % (runType,
                                                            hosts,
                                                            kwargs.get("threads", 10) if runType != 'load' else 50,
+                                                           kwargs.get("readprop", .5),
+                                                           1-kwargs.get("readprop", .5),
                                                            kwargs.get("fieldlength", 1),
                                                            kwargs.get("recordcount", 10000),
                                                            kwargs.get("keydistribution", "uniform"),
@@ -530,6 +539,7 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
     pprint("Loading YCSB on single client: %s." % (cluster.clients[0].ip))
     startYCSB('load', cluster, cluster.clients[0], getNextClientID())
     pprint("Done")
+    sleep(10)
 
     ths = []
     pprint("Running YCSB on all clients.")
@@ -538,9 +548,10 @@ def start_ycsb_clients(clusters, use2PL, thebesArgString, **kwargs):
         for i,client in enumerate(cluster.clients):
             t = Thread(target=startYCSB, args=('run', cluster, client, getNextClientID()))
             t.start()
-            ths.append(t)
+            ths.append((t,client))
 
-    for th in ths:
+    for th,client in ths:
+        pprint("Waiting on %s" % client.ip)
         th.join()
     pprint("Done")
 
@@ -593,11 +604,13 @@ def fetch_logs(runid, clusters):
         client_dir = rundir+"/"+"C"+client.ip
         system("mkdir -p "+client_dir)
         fetch_file_single_compressed(client.ip, "/home/ubuntu/thebes/ycsb-0.1.4/*.log", client_dir)
+        fetch_file_single_compressed(client.ip, "/home/ubuntu/thebes/ycsb-0.1.4/*.hprof.txt", client_dir)
 
     def fetchThebes(rundir, server, symbol):
         server_dir = rundir+"/"+symbol+server.ip
         system("mkdir -p "+server_dir)
         fetch_file_single_compressed(server.ip, "/home/ubuntu/thebes/thebes-code/*.log", server_dir)
+        fetch_file_single_compressed(server.ip, "/home/ubuntu/thebes/thebes-code/*.hprof.txt", server_dir)
 
     outroot = args.output_dir+'/'+runid
 
@@ -723,13 +736,14 @@ def pprint(str):
 
 def run_ycsb_trial(use2PL, tag, serverArgs="", **kwargs):
     pprint("Restarting thebes clusters %s" % tag)
-    assign_hosts(regions, tag)
     stop_thebes_processes(clusters)
     write_config(clusters, graphiteRegion)
     restart_graphite(graphiteRegion)
     start_servers(clusters, use2PL, thebesArgString+" "+serverArgs)
     start_ycsb_clients(clusters, use2PL, thebesArgString+" -Dpersistence_engine=leveldb -Ddisk_database_file=/mnt/md0/thebes.db", **kwargs)
     runid = kwargs.get("runid", str(datetime.now()).replace(' ', '_'))
+    print "KILLING JAVA"
+    run_cmd("all-servers", "pkill --signal SIGQUIT java")
     fetch_logs(runid, clusters)
 
 def run_tpcc_trial(use2PL, tag, serverArgs="", **kwargs):
@@ -797,6 +811,7 @@ if __name__ == "__main__":
     parser.add_argument('--ycsb_vary_constants_experiment', action='store_true', help='run experiment for varying constants')
     parser.add_argument('--tpcc_experiment', action='store_true', help='run experiment for tpcc')
     parser.add_argument('--ycsb_test_backend_experiment', action='store_true', help='run experiment for varying backends')
+    parser.add_argument('--scale_out', action='store_true', help='ignore the given num servers/clients for a test')
 
     args,unknown = parser.parse_known_args()
 
@@ -875,76 +890,98 @@ if __name__ == "__main__":
         terminate_clusters(tag)
 
     if args.ycsb_vary_constants_experiment:
-        for iteration in range(0, 5):
-            for transaction_length in [6]:
-                for threads in [1, 10, 25, 50, 75, 100]:
-                    isolation_level = "READ_COMMITTED"
-                    atomicity_level = "CLIENT"
-                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
-                                                                                              isolation_level,
-                                                                                              atomicity_level,
-                                                                                              threads, 
-                                                                                              iteration)),
-                                   threads=threads,
-                                   distributionparameter=transaction_length,
-                                   atomicity_level=atomicity_level,
-                                   isolation_level=isolation_level,
-                                   recordcount=100000,
-                                   time=60,
-                                   fieldlength=1,
-                                   timeout=120*10000,
-                                   keydistribution="uniform")
+        assign_hosts(regions, tag)
 
-                    isolation_level = "READ_COMMITTED"
-                    atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-IT%d" % (transaction_length, 
-                                                                                              isolation_level,
-                                                                                              atomicity_level,
-                                                                                              threads, 
-                                                                                              iteration)),
-                                   threads=threads,
-                                   distributionparameter=transaction_length,
-                                   atomicity_level=atomicity_level,
-                                   isolation_level=isolation_level,
-                                   recordcount=100000,
-                                   time=60,
-                                   timeout=120*10000,
-                                   keydistribution="uniform")
+        if args.scale_out:
+            serversList = [(5, 5), (10, 10), (15, 15), (20, 20), (25, 25)]
+        else:
+            serversList = [(args.clients, args.servers)]
 
-                    
+        for iteration in range(0,3):
+            for transaction_length, readprop, (nc, ns) in itertools.product([6], [.5], serversList):
+                if args.scale_out:
+                    args.servers = ns
+                    args.clients = nc
+                    (regions, clusters, use2PL, graphiteRegion, tag) = parseArgs(args)
+                    assign_hosts(regions, tag)
+
+                for threads in [1, 10, 25, 35, 40, 50, 75, 100, 150, 200]: #1, 10, 25, 50, 75, 100
+
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, tag, runid=("MASTERED_EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
-                                                                                           threads,
+                    run_ycsb_trial(False, tag, runid=("EVENTUAL-%d-THREADS%d-RPROP%s-NS%s-IT%d" % (transaction_length, 
+                                                                                           threads, readprop, ns,
+                                                                            iteration)),
+                                   threads=threads,
+                                   distributionparameter=transaction_length,
+                                   atomicity_level=atomicity_level,
+                                   isolation_level=isolation_level,
+                                   readprop=readprop,
+                                   recordcount=100000,
+                                   time=60,
+                                   fieldlength=1024,
+                                   timeout=120*10000,
+                                   keydistribution="uniform")
+
+                    isolation_level = "READ_COMMITTED"
+                    atomicity_level = "CLIENT"
+                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-RPROP%s-NS%s-IT%d" % (transaction_length, 
+                                                                                              isolation_level,
+                                                                                              atomicity_level,
+                                                                                              threads, readprop, ns,
+                                                                                              iteration)),
+                                   threads=threads,
+                                   distributionparameter=transaction_length,
+                                   atomicity_level=atomicity_level,
+                                   isolation_level=isolation_level,
+                                   readprop=readprop,
+                                   recordcount=100000,
+                                   time=60,
+                                   fieldlength=1024,
+                                   timeout=120*10000,
+                                   keydistribution="uniform")
+
+                    isolation_level = "READ_COMMITTED"
+                    atomicity_level = "NO_ATOMICITY"
+                    run_ycsb_trial(False, tag, runid=("CONSTANT_TRANSACTION-%d-%s-%s-THREADS%d-RPROP%s-NS%s-IT%d" % (transaction_length, 
+                                                                                              isolation_level,
+                                                                                              atomicity_level,
+                                                                                              threads, readprop, ns,
+                                                                                              iteration)),
+                                   threads=threads,
+                                   distributionparameter=transaction_length,
+                                   atomicity_level=atomicity_level,
+                                   isolation_level=isolation_level,
+                                   readprop=readprop,
+                                   recordcount=100000,
+                                   time=60,
+                                   timeout=120*10000,
+                                   fieldlength=1024,
+                                   keydistribution="uniform")
+
+
+                    isolation_level = "NO_ISOLATION"
+                    atomicity_level = "NO_ATOMICITY"
+                    run_ycsb_trial(False, tag, runid=("MASTERED_EVENTUAL-%d-THREADS%d-RPROP%s-NS%s-IT%d" % (transaction_length, 
+                                                                                           threads, readprop, ns,
                                                                                           iteration)),
                                    threads=threads,
                                    distributionparameter=transaction_length,
                                    atomicity_level=atomicity_level,
                                    isolation_level=isolation_level,
                                    recordcount=100000,
-                                   time=120,
+                                   time=60,
                                    timeout=120*10000,
                                    keydistribution="uniform",
+                                   fieldlength=1024,
                                    routing_mode="MASTERED")
-
-
-                    isolation_level = "NO_ISOLATION"
-                    atomicity_level = "NO_ATOMICITY"
-                    run_ycsb_trial(False, tag, runid=("EVENTUAL-%d-THREADS%d-IT%d" % (transaction_length, 
-                                                                                           threads,
-                                                                            iteration)),
-                                   threads=threads,
-                                   distributionparameter=transaction_length,
-                                   atomicity_level=atomicity_level,
-                                   isolation_level=isolation_level,
-                                   recordcount=100000,
-                                   time=120,
-                                   timeout=120*10000,
-                                   keydistribution="uniform")
-
-
                     continue
+
+
+
+
+
 
                     isolation_level = "NO_ISOLATION"
                     atomicity_level = "NO_ATOMICITY"
@@ -990,8 +1027,8 @@ if __name__ == "__main__":
                                            timeout=120*10000,
                                            keydistribution="uniform")
 
-    if not args.launch and not args.rebuild and not args.restart and not args.terminate:
-        parser.print_help()
+    #if not args.launch and not args.rebuild and not args.restart and not args.terminate:
+    #    parser.print_help()
 
     if args.ycsb_test_backend_experiment:
         transaction_length=4
