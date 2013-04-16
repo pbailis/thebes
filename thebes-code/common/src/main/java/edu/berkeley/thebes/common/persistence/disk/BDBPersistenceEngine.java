@@ -8,6 +8,8 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
+import com.yammer.metrics.core.TimerContext;
+
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
@@ -69,7 +71,13 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
 
     }
 
-    public boolean put(String key, DataItem value) throws TException {
+    @Override
+    public boolean force_put(String key, DataItem value) throws TException {
+        throw new UnsupportedOperationException("Figure it out if you want it.");
+    }
+
+    @Override
+    public boolean put_if_newer(String key, DataItem value) throws TException {
         if(value == null) {
             logger.warn("NULL write to key "+key);
             return true;

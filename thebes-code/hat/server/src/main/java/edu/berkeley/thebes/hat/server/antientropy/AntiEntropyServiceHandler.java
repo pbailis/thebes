@@ -1,9 +1,15 @@
 package edu.berkeley.thebes.hat.server.antientropy;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Lists;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Meter;
 import edu.berkeley.thebes.hat.common.thrift.DataDependencyRequest;
@@ -21,6 +27,7 @@ import edu.berkeley.thebes.common.thrift.ThriftVersion;
 import edu.berkeley.thebes.hat.common.data.DataDependency;
 import edu.berkeley.thebes.hat.common.thrift.AntiEntropyService;
 import edu.berkeley.thebes.hat.server.dependencies.DependencyResolver;
+import org.xerial.snappy.Snappy;
 
 public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     private static Logger logger = LoggerFactory.getLogger(AntiEntropyServiceHandler.class);
@@ -48,21 +55,43 @@ public class AntiEntropyServiceHandler implements AntiEntropyService.Iface {
     }
 
     @Override
-    public void put(String key,
-                    ThriftDataItem valueThrift) throws TException{
+    public void put(List<String> keys,
+                    List<ThriftDataItem> values) throws TException{
         putRequests.mark();
-    	logger.trace("Received anti-entropy put for key " + key);
-        DataItem value = new DataItem(valueThrift);
-        if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
-            persistenceEngine.put(key, value);
-        } else {
-            dependencyResolver.addPendingWrite(key, value);
+        for (int i = 0; i < keys.size(); i ++) {
+            String key = keys.get(i);
+            DataItem value = new DataItem(values.get(i));
+            logger.trace("Received anti-entropy put for key " + key);
+            if (value.getTransactionKeys() == null || value.getTransactionKeys().isEmpty()) {
+                persistenceEngine.put_if_newer(key, value);
+            } else {
+                dependencyResolver.addPendingWrite(key, value);
+            }
         }
     }
 
     @Override
-    public void ackTransactionPending(ThriftVersion transactionId) throws TException {
+    public void ackTransactionPending(ByteBuffer transactionIdList) throws TException {
         ackTransactionPending.mark();
-        dependencyResolver.ackTransactionPending(Version.fromThrift(transactionId));
+        
+        List<Version> transactionVersions = Lists.newArrayList();
+
+        try {
+            byte[] uncompressedList = Snappy.uncompress(transactionIdList.array());
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(uncompressedList);
+            DataInputStream dis = new DataInputStream(bis);
+
+            while(bis.available() > 0) {
+                transactionVersions.add(Version.fromLong(dis.readLong()));
+            }
+
+        } catch (IOException e) {
+            logger.error("Error in deserialization", e);
+        }
+
+        for (Version transactionId : transactionVersions) {
+            dependencyResolver.ackTransactionPending(transactionId);
+        }
     }
 }

@@ -34,17 +34,17 @@ public class AntiEntropyService {
 
   public interface Iface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException;
+    public void put(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value) throws org.apache.thrift.TException;
 
-    public void ackTransactionPending(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId) throws org.apache.thrift.TException;
+    public void ackTransactionPending(ByteBuffer transactionIds) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
+    public void put(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.put_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void ackTransactionPending(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ackTransactionPending_call> resultHandler) throws org.apache.thrift.TException;
+    public void ackTransactionPending(ByteBuffer transactionIds, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.ackTransactionPending_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -68,12 +68,12 @@ public class AntiEntropyService {
       super(iprot, oprot);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
+    public void put(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value) throws org.apache.thrift.TException
     {
       send_put(key, value);
     }
 
-    public void send_put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value) throws org.apache.thrift.TException
+    public void send_put(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value) throws org.apache.thrift.TException
     {
       put_args args = new put_args();
       args.setKey(key);
@@ -81,15 +81,15 @@ public class AntiEntropyService {
       sendBase("put", args);
     }
 
-    public void ackTransactionPending(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId) throws org.apache.thrift.TException
+    public void ackTransactionPending(ByteBuffer transactionIds) throws org.apache.thrift.TException
     {
-      send_ackTransactionPending(transactionId);
+      send_ackTransactionPending(transactionIds);
     }
 
-    public void send_ackTransactionPending(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId) throws org.apache.thrift.TException
+    public void send_ackTransactionPending(ByteBuffer transactionIds) throws org.apache.thrift.TException
     {
       ackTransactionPending_args args = new ackTransactionPending_args();
-      args.setTransactionId(transactionId);
+      args.setTransactionIds(transactionIds);
       sendBase("ackTransactionPending", args);
     }
 
@@ -111,7 +111,7 @@ public class AntiEntropyService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void put(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
+    public void put(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       put_call method_call = new put_call(key, value, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -119,9 +119,9 @@ public class AntiEntropyService {
     }
 
     public static class put_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String key;
-      private edu.berkeley.thebes.common.thrift.ThriftDataItem value;
-      public put_call(String key, edu.berkeley.thebes.common.thrift.ThriftDataItem value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private List<String> key;
+      private List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value;
+      public put_call(List<String> key, List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value, org.apache.thrift.async.AsyncMethodCallback<put_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
         this.key = key;
         this.value = value;
@@ -145,24 +145,24 @@ public class AntiEntropyService {
       }
     }
 
-    public void ackTransactionPending(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId, org.apache.thrift.async.AsyncMethodCallback<ackTransactionPending_call> resultHandler) throws org.apache.thrift.TException {
+    public void ackTransactionPending(ByteBuffer transactionIds, org.apache.thrift.async.AsyncMethodCallback<ackTransactionPending_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      ackTransactionPending_call method_call = new ackTransactionPending_call(transactionId, resultHandler, this, ___protocolFactory, ___transport);
+      ackTransactionPending_call method_call = new ackTransactionPending_call(transactionIds, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class ackTransactionPending_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private edu.berkeley.thebes.common.thrift.ThriftVersion transactionId;
-      public ackTransactionPending_call(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId, org.apache.thrift.async.AsyncMethodCallback<ackTransactionPending_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private ByteBuffer transactionIds;
+      public ackTransactionPending_call(ByteBuffer transactionIds, org.apache.thrift.async.AsyncMethodCallback<ackTransactionPending_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
-        this.transactionId = transactionId;
+        this.transactionIds = transactionIds;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("ackTransactionPending", org.apache.thrift.protocol.TMessageType.CALL, 0));
         ackTransactionPending_args args = new ackTransactionPending_args();
-        args.setTransactionId(transactionId);
+        args.setTransactionIds(transactionIds);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -227,7 +227,7 @@ public class AntiEntropyService {
       }
 
       public org.apache.thrift.TBase getResult(I iface, ackTransactionPending_args args) throws org.apache.thrift.TException {
-        iface.ackTransactionPending(args.transactionId);
+        iface.ackTransactionPending(args.transactionIds);
         return null;
       }
     }
@@ -237,8 +237,8 @@ public class AntiEntropyService {
   public static class put_args implements org.apache.thrift.TBase<put_args, put_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("put_args");
 
-    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.LIST, (short)1);
+    private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.LIST, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -246,8 +246,8 @@ public class AntiEntropyService {
       schemes.put(TupleScheme.class, new put_argsTupleSchemeFactory());
     }
 
-    public String key; // required
-    public edu.berkeley.thebes.common.thrift.ThriftDataItem value; // required
+    public List<String> key; // required
+    public List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -315,9 +315,11 @@ public class AntiEntropyService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
       tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class)));
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftDataItem.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(put_args.class, metaDataMap);
     }
@@ -326,8 +328,8 @@ public class AntiEntropyService {
     }
 
     public put_args(
-      String key,
-      edu.berkeley.thebes.common.thrift.ThriftDataItem value)
+      List<String> key,
+      List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value)
     {
       this();
       this.key = key;
@@ -339,10 +341,18 @@ public class AntiEntropyService {
      */
     public put_args(put_args other) {
       if (other.isSetKey()) {
-        this.key = other.key;
+        List<String> __this__key = new ArrayList<String>();
+        for (String other_element : other.key) {
+          __this__key.add(other_element);
+        }
+        this.key = __this__key;
       }
       if (other.isSetValue()) {
-        this.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem(other.value);
+        List<edu.berkeley.thebes.common.thrift.ThriftDataItem> __this__value = new ArrayList<edu.berkeley.thebes.common.thrift.ThriftDataItem>();
+        for (edu.berkeley.thebes.common.thrift.ThriftDataItem other_element : other.value) {
+          __this__value.add(new edu.berkeley.thebes.common.thrift.ThriftDataItem(other_element));
+        }
+        this.value = __this__value;
       }
     }
 
@@ -356,11 +366,26 @@ public class AntiEntropyService {
       this.value = null;
     }
 
-    public String getKey() {
+    public int getKeySize() {
+      return (this.key == null) ? 0 : this.key.size();
+    }
+
+    public java.util.Iterator<String> getKeyIterator() {
+      return (this.key == null) ? null : this.key.iterator();
+    }
+
+    public void addToKey(String elem) {
+      if (this.key == null) {
+        this.key = new ArrayList<String>();
+      }
+      this.key.add(elem);
+    }
+
+    public List<String> getKey() {
       return this.key;
     }
 
-    public put_args setKey(String key) {
+    public put_args setKey(List<String> key) {
       this.key = key;
       return this;
     }
@@ -380,11 +405,26 @@ public class AntiEntropyService {
       }
     }
 
-    public edu.berkeley.thebes.common.thrift.ThriftDataItem getValue() {
+    public int getValueSize() {
+      return (this.value == null) ? 0 : this.value.size();
+    }
+
+    public java.util.Iterator<edu.berkeley.thebes.common.thrift.ThriftDataItem> getValueIterator() {
+      return (this.value == null) ? null : this.value.iterator();
+    }
+
+    public void addToValue(edu.berkeley.thebes.common.thrift.ThriftDataItem elem) {
+      if (this.value == null) {
+        this.value = new ArrayList<edu.berkeley.thebes.common.thrift.ThriftDataItem>();
+      }
+      this.value.add(elem);
+    }
+
+    public List<edu.berkeley.thebes.common.thrift.ThriftDataItem> getValue() {
       return this.value;
     }
 
-    public put_args setValue(edu.berkeley.thebes.common.thrift.ThriftDataItem value) {
+    public put_args setValue(List<edu.berkeley.thebes.common.thrift.ThriftDataItem> value) {
       this.value = value;
       return this;
     }
@@ -410,7 +450,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetKey();
         } else {
-          setKey((String)value);
+          setKey((List<String>)value);
         }
         break;
 
@@ -418,7 +458,7 @@ public class AntiEntropyService {
         if (value == null) {
           unsetValue();
         } else {
-          setValue((edu.berkeley.thebes.common.thrift.ThriftDataItem)value);
+          setValue((List<edu.berkeley.thebes.common.thrift.ThriftDataItem>)value);
         }
         break;
 
@@ -561,9 +601,6 @@ public class AntiEntropyService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
-      if (value != null) {
-        value.validate();
-      }
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -601,17 +638,37 @@ public class AntiEntropyService {
           }
           switch (schemeField.id) {
             case 1: // KEY
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.key = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                  struct.key = new ArrayList<String>(_list0.size);
+                  for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                  {
+                    String _elem2; // required
+                    _elem2 = iprot.readString();
+                    struct.key.add(_elem2);
+                  }
+                  iprot.readListEnd();
+                }
                 struct.setKeyIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
             case 2: // VALUE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-                struct.value.read(iprot);
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list3 = iprot.readListBegin();
+                  struct.value = new ArrayList<edu.berkeley.thebes.common.thrift.ThriftDataItem>(_list3.size);
+                  for (int _i4 = 0; _i4 < _list3.size; ++_i4)
+                  {
+                    edu.berkeley.thebes.common.thrift.ThriftDataItem _elem5; // required
+                    _elem5 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+                    _elem5.read(iprot);
+                    struct.value.add(_elem5);
+                  }
+                  iprot.readListEnd();
+                }
                 struct.setValueIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -634,12 +691,26 @@ public class AntiEntropyService {
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.key != null) {
           oprot.writeFieldBegin(KEY_FIELD_DESC);
-          oprot.writeString(struct.key);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.key.size()));
+            for (String _iter6 : struct.key)
+            {
+              oprot.writeString(_iter6);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         if (struct.value != null) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
-          struct.value.write(oprot);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.value.size()));
+            for (edu.berkeley.thebes.common.thrift.ThriftDataItem _iter7 : struct.value)
+            {
+              _iter7.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -668,10 +739,22 @@ public class AntiEntropyService {
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetKey()) {
-          oprot.writeString(struct.key);
+          {
+            oprot.writeI32(struct.key.size());
+            for (String _iter8 : struct.key)
+            {
+              oprot.writeString(_iter8);
+            }
+          }
         }
         if (struct.isSetValue()) {
-          struct.value.write(oprot);
+          {
+            oprot.writeI32(struct.value.size());
+            for (edu.berkeley.thebes.common.thrift.ThriftDataItem _iter9 : struct.value)
+            {
+              _iter9.write(oprot);
+            }
+          }
         }
       }
 
@@ -680,12 +763,30 @@ public class AntiEntropyService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.key = iprot.readString();
+          {
+            org.apache.thrift.protocol.TList _list10 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.key = new ArrayList<String>(_list10.size);
+            for (int _i11 = 0; _i11 < _list10.size; ++_i11)
+            {
+              String _elem12; // required
+              _elem12 = iprot.readString();
+              struct.key.add(_elem12);
+            }
+          }
           struct.setKeyIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.value = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
-          struct.value.read(iprot);
+          {
+            org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.value = new ArrayList<edu.berkeley.thebes.common.thrift.ThriftDataItem>(_list13.size);
+            for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+            {
+              edu.berkeley.thebes.common.thrift.ThriftDataItem _elem15; // required
+              _elem15 = new edu.berkeley.thebes.common.thrift.ThriftDataItem();
+              _elem15.read(iprot);
+              struct.value.add(_elem15);
+            }
+          }
           struct.setValueIsSet(true);
         }
       }
@@ -696,7 +797,7 @@ public class AntiEntropyService {
   public static class ackTransactionPending_args implements org.apache.thrift.TBase<ackTransactionPending_args, ackTransactionPending_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ackTransactionPending_args");
 
-    private static final org.apache.thrift.protocol.TField TRANSACTION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionId", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField TRANSACTION_IDS_FIELD_DESC = new org.apache.thrift.protocol.TField("transactionIds", org.apache.thrift.protocol.TType.STRING, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -704,11 +805,11 @@ public class AntiEntropyService {
       schemes.put(TupleScheme.class, new ackTransactionPending_argsTupleSchemeFactory());
     }
 
-    public edu.berkeley.thebes.common.thrift.ThriftVersion transactionId; // required
+    public ByteBuffer transactionIds; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TRANSACTION_ID((short)1, "transactionId");
+      TRANSACTION_IDS((short)1, "transactionIds");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -723,8 +824,8 @@ public class AntiEntropyService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TRANSACTION_ID
-            return TRANSACTION_ID;
+          case 1: // TRANSACTION_IDS
+            return TRANSACTION_IDS;
           default:
             return null;
         }
@@ -768,8 +869,8 @@ public class AntiEntropyService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TRANSACTION_ID, new org.apache.thrift.meta_data.FieldMetaData("transactionId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.thebes.common.thrift.ThriftVersion.class)));
+      tmpMap.put(_Fields.TRANSACTION_IDS, new org.apache.thrift.meta_data.FieldMetaData("transactionIds", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ackTransactionPending_args.class, metaDataMap);
     }
@@ -778,18 +879,19 @@ public class AntiEntropyService {
     }
 
     public ackTransactionPending_args(
-      edu.berkeley.thebes.common.thrift.ThriftVersion transactionId)
+      ByteBuffer transactionIds)
     {
       this();
-      this.transactionId = transactionId;
+      this.transactionIds = transactionIds;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public ackTransactionPending_args(ackTransactionPending_args other) {
-      if (other.isSetTransactionId()) {
-        this.transactionId = new edu.berkeley.thebes.common.thrift.ThriftVersion(other.transactionId);
+      if (other.isSetTransactionIds()) {
+        this.transactionIds = org.apache.thrift.TBaseHelper.copyBinary(other.transactionIds);
+;
       }
     }
 
@@ -799,40 +901,50 @@ public class AntiEntropyService {
 
     @Override
     public void clear() {
-      this.transactionId = null;
+      this.transactionIds = null;
     }
 
-    public edu.berkeley.thebes.common.thrift.ThriftVersion getTransactionId() {
-      return this.transactionId;
+    public byte[] getTransactionIds() {
+      setTransactionIds(org.apache.thrift.TBaseHelper.rightSize(transactionIds));
+      return transactionIds == null ? null : transactionIds.array();
     }
 
-    public ackTransactionPending_args setTransactionId(edu.berkeley.thebes.common.thrift.ThriftVersion transactionId) {
-      this.transactionId = transactionId;
+    public ByteBuffer bufferForTransactionIds() {
+      return transactionIds;
+    }
+
+    public ackTransactionPending_args setTransactionIds(byte[] transactionIds) {
+      setTransactionIds(transactionIds == null ? (ByteBuffer)null : ByteBuffer.wrap(transactionIds));
       return this;
     }
 
-    public void unsetTransactionId() {
-      this.transactionId = null;
+    public ackTransactionPending_args setTransactionIds(ByteBuffer transactionIds) {
+      this.transactionIds = transactionIds;
+      return this;
     }
 
-    /** Returns true if field transactionId is set (has been assigned a value) and false otherwise */
-    public boolean isSetTransactionId() {
-      return this.transactionId != null;
+    public void unsetTransactionIds() {
+      this.transactionIds = null;
     }
 
-    public void setTransactionIdIsSet(boolean value) {
+    /** Returns true if field transactionIds is set (has been assigned a value) and false otherwise */
+    public boolean isSetTransactionIds() {
+      return this.transactionIds != null;
+    }
+
+    public void setTransactionIdsIsSet(boolean value) {
       if (!value) {
-        this.transactionId = null;
+        this.transactionIds = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TRANSACTION_ID:
+      case TRANSACTION_IDS:
         if (value == null) {
-          unsetTransactionId();
+          unsetTransactionIds();
         } else {
-          setTransactionId((edu.berkeley.thebes.common.thrift.ThriftVersion)value);
+          setTransactionIds((ByteBuffer)value);
         }
         break;
 
@@ -841,8 +953,8 @@ public class AntiEntropyService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TRANSACTION_ID:
-        return getTransactionId();
+      case TRANSACTION_IDS:
+        return getTransactionIds();
 
       }
       throw new IllegalStateException();
@@ -855,8 +967,8 @@ public class AntiEntropyService {
       }
 
       switch (field) {
-      case TRANSACTION_ID:
-        return isSetTransactionId();
+      case TRANSACTION_IDS:
+        return isSetTransactionIds();
       }
       throw new IllegalStateException();
     }
@@ -874,12 +986,12 @@ public class AntiEntropyService {
       if (that == null)
         return false;
 
-      boolean this_present_transactionId = true && this.isSetTransactionId();
-      boolean that_present_transactionId = true && that.isSetTransactionId();
-      if (this_present_transactionId || that_present_transactionId) {
-        if (!(this_present_transactionId && that_present_transactionId))
+      boolean this_present_transactionIds = true && this.isSetTransactionIds();
+      boolean that_present_transactionIds = true && that.isSetTransactionIds();
+      if (this_present_transactionIds || that_present_transactionIds) {
+        if (!(this_present_transactionIds && that_present_transactionIds))
           return false;
-        if (!this.transactionId.equals(that.transactionId))
+        if (!this.transactionIds.equals(that.transactionIds))
           return false;
       }
 
@@ -899,12 +1011,12 @@ public class AntiEntropyService {
       int lastComparison = 0;
       ackTransactionPending_args typedOther = (ackTransactionPending_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTransactionId()).compareTo(typedOther.isSetTransactionId());
+      lastComparison = Boolean.valueOf(isSetTransactionIds()).compareTo(typedOther.isSetTransactionIds());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTransactionId()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionId, typedOther.transactionId);
+      if (isSetTransactionIds()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.transactionIds, typedOther.transactionIds);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -929,11 +1041,11 @@ public class AntiEntropyService {
       StringBuilder sb = new StringBuilder("ackTransactionPending_args(");
       boolean first = true;
 
-      sb.append("transactionId:");
-      if (this.transactionId == null) {
+      sb.append("transactionIds:");
+      if (this.transactionIds == null) {
         sb.append("null");
       } else {
-        sb.append(this.transactionId);
+        org.apache.thrift.TBaseHelper.toString(this.transactionIds, sb);
       }
       first = false;
       sb.append(")");
@@ -943,9 +1055,6 @@ public class AntiEntropyService {
     public void validate() throws org.apache.thrift.TException {
       // check for required fields
       // check for sub-struct validity
-      if (transactionId != null) {
-        transactionId.validate();
-      }
     }
 
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -982,11 +1091,10 @@ public class AntiEntropyService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // TRANSACTION_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.transactionId = new edu.berkeley.thebes.common.thrift.ThriftVersion();
-                struct.transactionId.read(iprot);
-                struct.setTransactionIdIsSet(true);
+            case 1: // TRANSACTION_IDS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.transactionIds = iprot.readBinary();
+                struct.setTransactionIdsIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -1006,9 +1114,9 @@ public class AntiEntropyService {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.transactionId != null) {
-          oprot.writeFieldBegin(TRANSACTION_ID_FIELD_DESC);
-          struct.transactionId.write(oprot);
+        if (struct.transactionIds != null) {
+          oprot.writeFieldBegin(TRANSACTION_IDS_FIELD_DESC);
+          oprot.writeBinary(struct.transactionIds);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1029,12 +1137,12 @@ public class AntiEntropyService {
       public void write(org.apache.thrift.protocol.TProtocol prot, ackTransactionPending_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetTransactionId()) {
+        if (struct.isSetTransactionIds()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetTransactionId()) {
-          struct.transactionId.write(oprot);
+        if (struct.isSetTransactionIds()) {
+          oprot.writeBinary(struct.transactionIds);
         }
       }
 
@@ -1043,9 +1151,8 @@ public class AntiEntropyService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.transactionId = new edu.berkeley.thebes.common.thrift.ThriftVersion();
-          struct.transactionId.read(iprot);
-          struct.setTransactionIdIsSet(true);
+          struct.transactionIds = iprot.readBinary();
+          struct.setTransactionIdsIsSet(true);
         }
       }
     }

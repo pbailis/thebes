@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.naming.ConfigurationException;
 
@@ -39,8 +40,14 @@ public class Config {
     private static Logger logger = LoggerFactory.getLogger(Config.class);
     
     private static String HOST_NAME;
+    
+    private static AtomicBoolean initialized = new AtomicBoolean(false);
 
     private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+        if (initialized.getAndSet(true)) {
+            return;
+        }
+        
         YamlConfig.initialize((String) getOptionNoYaml(ConfigParameters.CONFIG_FILE));
 
         List<ConfigParameters> missingFields = Lists.newArrayList();
@@ -70,6 +77,8 @@ public class Config {
             ConsoleReporter reporter = new ConsoleReporter(System.err);
             reporter.start(5, TimeUnit.SECONDS);
         }
+        
+        new IOReporter().start();
     }
 
     private static Boolean getMetricsToConsole() {
@@ -291,6 +300,10 @@ public class Config {
     public static Integer getNumAntiEntropyThreads() {
         return getOption(ConfigParameters.ANTI_ENTROPY_THREADS);
     }
+
+    public static Integer getNumTAAntiEntropyThreads() {
+        return getOption(ConfigParameters.TA_ANTI_ENTROPY_THREADS);
+    }
     
     public static Integer getNumQuorumThreads() {
         return getOption(ConfigParameters.QUORUM_THREADS);
@@ -368,5 +381,13 @@ public class Config {
 
     public static Integer getDatabaseCacheSize() {
         return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
+    }
+
+    public static Boolean shouldStorePendingInMemory() {
+        return getOption(ConfigParameters.STORE_PENDING_IN_MEMORY);
+    }
+
+    public static Integer getTABatchTime() {
+        return getOption(ConfigParameters.TA_BATCH_TIME);
     }
 }
