@@ -7,6 +7,7 @@ matplotlib.rcParams['lines.linewidth'] = 2
 from pylab import *
 from os import listdir
 from sys import argv
+import re
 
 if len(argv) == 1:
     rootdir = "../output-wan"
@@ -20,6 +21,8 @@ class RunResult:
         self.lats = lats
         self.avg = avg
         self.merges = 0
+        self.thrus = []
+        self.lat_all = []
 
     def get_thru(self):
         return self.ops/(self.time/1000.)*self.merges
@@ -40,6 +43,8 @@ class RunResult:
         self.merges += 1
         self.time += other.time
         self.ops += other.ops
+        self.thrus.append(other.ops/other.time*1000.)
+        self.lat_all.append(other.get_pctile_latency(.99))#avg/1000.)
 
         totalops = float(self.ops+other.ops)
         self.avg = self.avg*(self.ops/totalops)+other.avg*(other.ops/totalops)
@@ -108,6 +113,9 @@ def processConfig(d):
                 print "MERGING FAILED ON", d
                 return None
 
+    #combinedResult.thrus.sort()
+    #print d, combinedResult.thrus
+    print d, combinedResult.lat_all
     return combinedResult
 
 results = {}
@@ -121,16 +129,32 @@ for config in listdir(rootdir):
     continue
     '''
 
-    configsplit=config.split("-THREADS")
-    nthreads = int(configsplit[1].split("-IT")[0])
-    txnlength = configsplit[0].split('-')[1]
-    it = int(config.split("-IT")[1])
+    match = re.match("[A-Z_]+-([0-9]+)-([A-Z_]+-[A-Z_]+-)?THREADS([0-9]+)-RPROP([\.0-9]+)-NS([0-9]+)-IT([0-9]+)$", config)
+    if match:
+        txnlength = int(match.group(1))
+        nthreads = int(match.group(3))
+        rprop = float(match.group(4))
+        ns = int(match.group(5))
+        it  = int(match.group(6))
+    else:
+        # Legacy -- remove eventually
+        match = re.match("[A-Z_]+-([0-9]+)-([A-Z_]+-[A-Z_]+-)?THREADS([0-9]+)-IT([0-9]+)$", config)
+        if match:
+            txnlength = int(match.group(1))
+            nthreads = int(match.group(3))
+            rprop = 0.5
+            ns = '?'
+            it  = int(match.group(4))
+        else:
+            print 'Error: Could not pattern match configuration: %s' % config
+            continue
 
     if int(txnlength) not in txnlens:
         txnlens.append(int(txnlength))
 
-    configstr = configsplit[0].replace("-"+txnlength+"-", "")
-    configstr = configstr.replace("-"+txnlength, "")
+    configsplit=config.split("-THREADS")
+    configstr = configsplit[0].replace("-%d-" % txnlength, "")
+    configstr = configstr.replace("-%d" % txnlength, "")
 
     r = processConfig(rootdir+"/"+config)
     if r is None:
@@ -142,13 +166,19 @@ for config in listdir(rootdir):
         continue
     r.threads = nthreads
     r.txnlength = int(txnlength)
+    r.rprop = rprop
+    r.ns = ns
 
     if configstr not in results:
         results[configstr] = {}
     if nthreads not in results[configstr]:
-        results[configstr][nthreads] = []
+        results[configstr][nthreads] = {}
+    if rprop not in results[configstr][nthreads]:
+        results[configstr][nthreads][rprop] = {}
+    if ns not in results[configstr][nthreads][rprop]:
+        results[configstr][nthreads][rprop][ns] = []
 
-    results[configstr][nthreads].append(r)
+    results[configstr][nthreads][rprop][ns].append(r)
 
 txnlens.sort()
 
@@ -174,27 +204,31 @@ for latplot in [AVG]:
                 threadresultthru[cs] = []
                 threadresultlat[cs] = []
             
-            for nthreads in results[cs]:
+            for nthreads in results[cs].keys():
+                for rprop in results[cs][nthreads]:
+                    for ns in results[cs][nthreads][rprop]:
 
-                tresults = results[cs][nthreads]
-                
-                avgthru = median([r.get_thru() for r in tresults])
-                avglat = median([r.get_average_latency() for r in tresults])
-                #todo, fix
+                        tresults = results[cs][nthreads][rprop][ns]
+                        avgthru = median([r.get_thru() for r in tresults])
+                        avglat = median([r.get_average_latency() for r in tresults])
+                        #todo, fix
 
-                threadresultthru[cs].append([nthreads*6, avgthru/1000.0])
-                threadresultlat[cs].append([nthreads*6, avglat])
+                        threadresultthru[cs].append([nthreads*6, avgthru/1000.0])
+                        threadresultlat[cs].append([nthreads*6, avglat])
 
-                r = results[cs][nthreads][0]
+                        r = results[cs][nthreads][rprop][ns][0]
 
-                if str(r.txnlength) != str(txnlen):
-                    continue
+                        if str(r.txnlength) != str(txnlen):
+                            continue
 
-                print cs, txnlen, "THREADS", r.threads, "THRU", avgthru, "LATS", avglat, len(results[cs][nthreads]), [r.get_thru() for r in tresults]# r.get_average_latency(), r.get_pctile_latency(.999)
+                        print cs, txnlen, "THREADS", r.threads, "RPROP", r.rprop,
+                        if ns != '?':
+                            print "NS", r.ns,
+                        print "THRU", avgthru, "LATS", avglat, len(results[cs][nthreads]), [r.get_thru() for r in tresults]# r.get_average_latency(), r.get_pctile_latency(.999)
 
-                lat = avglat
+                        lat = avglat
 
-                pairs.append([avgthru, lat])
+                        pairs.append([avgthru, lat])
 
             pairs.sort(key=lambda x: x[1])
 
@@ -229,11 +263,12 @@ for latplot in [AVG]:
         savefig(str(txnlen)+legstr+"-plot.pdf", transparent=True, bbox_inches='tight', pad_inches=.1)
         clf()
 
+print 'Prepare for trouble!'
 for cs in threadresultthru:
-    if cs.find("QUORUM") != -1:
-        continue
+    print 'And make it double!'
     results = threadresultthru[cs]
     results.sort(key=lambda x: x[0])
+    print cs,results
     
     plot([p[0] for p in results], [p[1] for p in results],  fmtdict[cs][1], color=fmtdict[cs][0], markeredgecolor=fmtdict[cs][0], markerfacecolor='None')
 
@@ -241,11 +276,10 @@ ylabel("Throughput (1000 Txns/s)")
 xlabel("Number of Clients")
 xlim(xmax=600)
 savefig("threads-thru.pdf", transparent=True, bbox_inches='tight', pad_inches=.1)
+print 'ok...'
 clf()
 
 for cs in threadresultlat:
-    if cs.find("QUORUM") != -1:
-        continue
     results = threadresultlat[cs]
     results.sort(key=lambda x: x[0])
     
