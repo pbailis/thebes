@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,7 +44,7 @@ public class Config {
     
     private static AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+    private synchronized static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
         if (initialized.getAndSet(true)) {
             return;
         }
