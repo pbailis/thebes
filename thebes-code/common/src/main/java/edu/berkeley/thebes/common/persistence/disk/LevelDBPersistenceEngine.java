@@ -105,11 +105,9 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     @Override
     public boolean force_put(String key, DataItem value) throws TException {
         TimerContext context = putLatencyTimer.time();
-        lockManager.lock(key);
         try {
             doPut(key, value);
         } finally {
-            lockManager.unlock(key);
             context.stop();
         }
         return true;
