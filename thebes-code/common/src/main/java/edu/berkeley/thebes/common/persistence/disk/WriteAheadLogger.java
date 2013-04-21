@@ -109,8 +109,8 @@ public class WriteAheadLogger {
             // Actually store them on disk.
             for (LogEntry logEntry : logEntries) {
                 dbStream.println(logEntry.toLogLine());
-                dbStream.flush();
             }
+            dbStream.flush();
     
             // Notify waiting threads.
             latch.lock();
