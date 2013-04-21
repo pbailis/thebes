@@ -15,7 +15,7 @@ import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 
 public class WALBackedPersistenceEngine implements IPersistenceEngine {
 
-    private final Timer putLatencyTimer = Metrics.newTimer(WriteAheadLogger.class, "put-latencies");
+    private final Timer putLatencyTimer = Metrics.newTimer(WALBackedPersistenceEngine.class, "put-latencies");
     
     private MemoryPersistenceEngine inMemoryStore;
     private WriteAheadLogger writeAheadLogger;

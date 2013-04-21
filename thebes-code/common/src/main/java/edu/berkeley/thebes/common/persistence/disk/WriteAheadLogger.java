@@ -106,16 +106,12 @@ public class WriteAheadLogger {
             pendingLogEntryQueue.drainTo(logEntries);
             batchSize.update(logEntries.size());
             
-            // Actually store them on disk.
-            for (LogEntry logEntry : logEntries) {
-                dbStream.println(logEntry.toLogLine());
-            }
-            dbStream.flush();
-    
-            // Notify waiting threads.
             latch.lock();
             try {
+                // Actually store them on disk.
                 for (LogEntry logEntry : logEntries) {
+                    dbStream.println(logEntry.toLogLine());
+                    dbStream.flush();
                     logEntry.writeCompleted();
                 }
             } finally {
