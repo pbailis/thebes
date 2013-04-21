@@ -98,11 +98,11 @@ public class WriteAheadLogger {
     }
     
     public void writeWaitingEntries() {
-        TimerContext context = batchPutLatency.time();
+        List<LogEntry> logEntries = Lists.newArrayList(); 
+        logEntries.add(Uninterruptibles.takeUninterruptibly(pendingLogEntryQueue));
         
+        TimerContext context = batchPutLatency.time();
         try {
-            List<LogEntry> logEntries = Lists.newArrayList(); 
-            logEntries.add(Uninterruptibles.takeUninterruptibly(pendingLogEntryQueue));
             pendingLogEntryQueue.drainTo(logEntries);
             batchSize.update(logEntries.size());
             
