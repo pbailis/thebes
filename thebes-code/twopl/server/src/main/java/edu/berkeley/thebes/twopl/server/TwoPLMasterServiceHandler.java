@@ -48,11 +48,9 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public boolean put(long sessionId, String key, ThriftDataItem value) throws TException {
         if (lockManager.ownsLock(LockType.WRITE, key, sessionId)) {
-            boolean success = persistenceEngine.put_if_newer(key, new DataItem(value));
-            if (success) {
-                slaveReplicationService.sendToSlaves(key, value);
-            }
-            return success;
+            persistenceEngine.put_if_newer(key, new DataItem(value));
+            slaveReplicationService.sendToSlaves(key, value);
+            return true;
         } else {
             throw new TException("Session " + sessionId + " does not own PUT lock on '" + key + "'");
         }
@@ -61,10 +59,8 @@ public class TwoPLMasterServiceHandler implements TwoPLMasterReplicaService.Ifac
     @Override
     public boolean unsafe_load(String key, ThriftDataItem value)
             throws TException {
-        boolean success = persistenceEngine.put_if_newer(key, new DataItem(value));
-        if (success) {
-            slaveReplicationService.sendToSlaves(key, value);
-        }
-        return success;
+        persistenceEngine.put_if_newer(key, new DataItem(value));
+        slaveReplicationService.sendToSlaves(key, value);
+        return true;
     }
 }

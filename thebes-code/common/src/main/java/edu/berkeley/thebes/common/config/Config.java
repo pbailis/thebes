@@ -391,4 +391,8 @@ public class Config {
     public static Integer getTABatchTime() {
         return getOption(ConfigParameters.TA_BATCH_TIME);
     }
+
+    public static String getPendingWritesDB() {
+        return getOption(ConfigParameters.PENDING_WRITES_DB);
+    }
 }

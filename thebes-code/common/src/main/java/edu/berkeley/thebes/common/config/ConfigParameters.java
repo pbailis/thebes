@@ -28,6 +28,7 @@ public enum ConfigParameters {
     CLUSTER_CONFIG(Map.class, RequirementLevel.HAT_COMMON),
     GRAPHITE_IP(String.class, ""),
     PERSISTENCE_ENGINE(PersistenceEngine.class, PersistenceEngine.MEMORY),
+    PENDING_WRITES_DB(String.class, "pending.db"),
     SOCKET_TIMEOUT(Integer.class, 4000),
     SERVER_PORT(Integer.class, 8080),
     ANTI_ENTROPY_PORT(Integer.class, 8081),

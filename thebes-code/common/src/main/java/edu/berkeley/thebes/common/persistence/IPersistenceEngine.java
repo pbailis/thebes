@@ -8,8 +8,8 @@ import java.io.IOException;
 public interface IPersistenceEngine {
     public void open() throws IOException;
 
-    public boolean put_if_newer(String key, DataItem value) throws TException;
-    public boolean force_put(String key, DataItem value) throws TException;
+    public void put_if_newer(String key, DataItem value) throws TException;
+    public void force_put(String key, DataItem value) throws TException;
 
     public DataItem get(String key) throws TException;
 

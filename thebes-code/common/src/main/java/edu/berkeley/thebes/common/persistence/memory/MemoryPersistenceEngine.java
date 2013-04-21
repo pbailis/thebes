@@ -30,10 +30,9 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
         });
     }
     
-    public boolean force_put(String key, DataItem value) {
+    public void force_put(String key, DataItem value) {
         putsMetric.mark();
         map.put(key, value);
-        return true;
     }
 
     /**
@@ -41,7 +40,7 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
      * Does not update the value if the key already exists with a later timestamp.
      */
     @Override
-    public boolean put_if_newer(String key, DataItem value) {
+    public void put_if_newer(String key, DataItem value) {
         putsMetric.mark();
         // TODO: Some form of synchronization is necessary
 //        synchronized (map) {
@@ -49,15 +48,13 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
             if (map.containsKey(key)) {
                 DataItem curItem = map.get(key);
                 if (curItem.getVersion().compareTo(value.getVersion()) <= 0) {
-                    return false;
+                    return;
                 }
             }
 
             // New key or newer timestamp.
             map.put(key, value);
 //        }
-
-        return true;
     }
 
     public DataItem get(String key) {

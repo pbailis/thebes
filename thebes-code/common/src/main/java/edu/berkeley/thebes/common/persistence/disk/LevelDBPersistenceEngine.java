@@ -103,25 +103,24 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     }
     
     @Override
-    public boolean force_put(String key, DataItem value) throws TException {
+    public void force_put(String key, DataItem value) throws TException {
         TimerContext context = putLatencyTimer.time();
         try {
             doPut(key, value);
         } finally {
             context.stop();
         }
-        return true;
     }
 
     @Override
-    public boolean put_if_newer(String key, DataItem value) throws TException {
+    public void put_if_newer(String key, DataItem value) throws TException {
         putCount.mark();
         TimerContext context = putLatencyTimer.time();
 
         try {
             if(value == null) {
                 logger.warn("NULL write to key "+key);
-                return true;
+                return;
             }
 
             lockManager.lock(key);
@@ -130,10 +129,10 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
                 if (curItem != null && curItem.getVersion().compareTo(value.getVersion()) > 0) {
                     obsoletePutCount.mark();
-                    return false;
+                    return;
                 } else {
                     doPut(key, value);
-                    return true;
+                    return;
                 }
             } finally {
                 lockManager.unlock(key);

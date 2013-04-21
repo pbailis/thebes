@@ -17,6 +17,8 @@ import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.data.Version;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.WALBackedPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.WriteAheadLogger;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.hat.server.antientropy.clustering.AntiEntropyServiceRouter;
 import edu.berkeley.thebes.hat.server.replica.ReplicaServiceHandler;
@@ -105,14 +107,15 @@ public class DependencyResolver {
         
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
-            try {
-                pendingPersistenceEngine.open();
-            } catch (IOException e) {
-                logger.error("Failed to make MemoryPersistenceEngine: ", e);
-            }
         } else {
-            pendingPersistenceEngine = persistenceEngine;
+            pendingPersistenceEngine = new WALBackedPersistenceEngine(Config.getPendingWritesDB());
         }
+        try {
+            pendingPersistenceEngine.open();
+        } catch (IOException e) {
+            logger.error("Failed to make pending PersistenceEngine: ", e);
+        }
+
 
         Metrics.newGauge(DependencyResolver.class, "num-pending-versions", new Gauge<Integer>() {
             @Override

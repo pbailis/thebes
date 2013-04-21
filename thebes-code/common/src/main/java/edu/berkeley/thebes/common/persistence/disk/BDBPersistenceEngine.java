@@ -72,15 +72,15 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
     }
 
     @Override
-    public boolean force_put(String key, DataItem value) throws TException {
+    public void force_put(String key, DataItem value) throws TException {
         throw new UnsupportedOperationException("Figure it out if you want it.");
     }
 
     @Override
-    public boolean put_if_newer(String key, DataItem value) throws TException {
+    public void put_if_newer(String key, DataItem value) throws TException {
         if(value == null) {
             logger.warn("NULL write to key "+key);
-            return true;
+            return;
         }
 
 
@@ -99,7 +99,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 DataItem existingDataItem = new DataItem(existingThriftItem);
 
                 if (existingDataItem.getVersion().compareTo(value.getVersion()) > 0) {
-                    return false;
+                    return;
                 }
             }
 
@@ -113,12 +113,12 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 putTxn = null;
             }
 
-            return false;
+            return;
         } finally {
             if(putTxn != null)
                 putTxn.commit();
         }
-        return true;
+        return;
     }
 
     public DataItem get(String key) throws TException {

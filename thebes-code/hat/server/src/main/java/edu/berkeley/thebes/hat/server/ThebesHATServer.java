@@ -2,6 +2,8 @@ package edu.berkeley.thebes.hat.server;
 
 import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
+import edu.berkeley.thebes.common.persistence.disk.WriteAheadLogger;
+
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;

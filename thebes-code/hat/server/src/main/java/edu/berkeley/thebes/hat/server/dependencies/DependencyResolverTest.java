@@ -246,18 +246,17 @@ public class DependencyResolverTest extends TestCase {
     private static class MockPersistenceEngine implements IPersistenceEngine {
         private final Map<String, DataItem> data = Maps.newHashMap();
         @Override
-        public boolean force_put(String key, DataItem value) {
+        public void force_put(String key, DataItem value) {
             throw new UnsupportedOperationException();
         }
         @Override
-        public boolean put_if_newer(String key, DataItem value) {
+        public void put_if_newer(String key, DataItem value) {
             if (!data.containsKey(key)) {
                 data.put(key, value);
             } else if (data.get(key).getVersion().compareTo(value.getVersion()) <= 0) {
                 data.put(key, value);
             }
             
-            return true;
         }
 
         @Override
