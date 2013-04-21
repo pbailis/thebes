@@ -54,7 +54,6 @@ public class WriteAheadLogger {
         }
         
         public void writeCompleted() {
-            assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
         }
         
