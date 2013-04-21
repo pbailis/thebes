@@ -16,7 +16,8 @@ import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 public class WALBackedPersistenceEngine implements IPersistenceEngine {
 
     private final Timer putLatencyTimer = Metrics.newTimer(WALBackedPersistenceEngine.class, "put-latencies");
-    
+    private final Timer forcePutLatencyTimer = Metrics.newTimer(WALBackedPersistenceEngine.class, "force-put-latencies");
+
     private MemoryPersistenceEngine inMemoryStore;
     private WriteAheadLogger writeAheadLogger;
 
@@ -39,7 +40,7 @@ public class WALBackedPersistenceEngine implements IPersistenceEngine {
 
     @Override
     public void force_put(String key, DataItem value) throws TException {
-        TimerContext context = putLatencyTimer.time();
+        TimerContext context = forcePutLatencyTimer.time();
         try {
             LogEntry logEntry = writeAheadLogger.startLogPut(key, value);
             inMemoryStore.force_put(key, value);
