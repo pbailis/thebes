@@ -62,10 +62,8 @@ public class WriteAheadLogger {
             latch.lock();
             try {
                 while (!writeCompleted.get()) {
-                    writeCompleteCondition.await();
+                    writeCompleteCondition.awaitUninterruptibly();
                 }
-            } catch (InterruptedException e) {
-                logger.error("InterruptedException:", e);
             } finally {
                 latch.unlock();
             }
@@ -86,18 +84,16 @@ public class WriteAheadLogger {
     }
 
     public void open() throws IOException {
-        dbStream = new PrintWriter(new FileOutputStream(new File(dbFilename), true));
+        dbStream = new PrintWriter(new FileOutputStream(new File(dbFilename), true /* append */));
         
         new Thread() {
             @Override
             public void run() {
-                writeWaitingEntries();
+                while (true) {
+                    writeWaitingEntries();
+                }
             }
         }.start();
-    }
-
-    public void close() throws IOException {
-        dbStream.close();
     }
     
     public void writeWaitingEntries() {
@@ -135,5 +131,9 @@ public class WriteAheadLogger {
         LogEntry logEntry = new LogEntry(key, serializedValue, latch);
         pendingLogEntryQueue.add(logEntry);
         return logEntry;
+    }
+
+    public void close() throws IOException {
+        dbStream.close();
     }
 }
