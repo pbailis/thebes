@@ -17,6 +17,11 @@ public class WALBackedPersistenceEngine implements IPersistenceEngine {
 
     private final Timer putLatencyTimer = Metrics.newTimer(WALBackedPersistenceEngine.class, "put-latencies");
     private final Timer forcePutLatencyTimer = Metrics.newTimer(WALBackedPersistenceEngine.class, "force-put-latencies");
+    
+    private final Timer stage1Timer = Metrics.newTimer(WALBackedPersistenceEngine.class, "stage1-put-latency");
+    private final Timer stage2Timer = Metrics.newTimer(WALBackedPersistenceEngine.class, "stage2-put-latency");
+    private final Timer stage3Timer = Metrics.newTimer(WALBackedPersistenceEngine.class, "stage3-put-latency");
+
 
     private MemoryPersistenceEngine inMemoryStore;
     private WriteAheadLogger writeAheadLogger;
@@ -42,9 +47,13 @@ public class WALBackedPersistenceEngine implements IPersistenceEngine {
     public void force_put(String key, DataItem value) throws TException {
         TimerContext context = forcePutLatencyTimer.time();
         try {
+            TimerContext stageContext = stage1Timer.time();
             LogEntry logEntry = writeAheadLogger.startLogPut(key, value);
+            stageContext.stop(); stageContext = stage2Timer.time();
             inMemoryStore.force_put(key, value);
+            stageContext.stop(); stageContext = stage3Timer.time();
             logEntry.waitUntilPersisted();
+            stageContext.stop();
         } finally {
             context.stop();
         }
