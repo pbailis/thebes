@@ -35,17 +35,17 @@ public class WriteAheadLogger {
     private final String dbFilename;
     private final LinkedBlockingQueue<LogEntry> pendingLogEntryQueue;
     private final TSerializer serializer;
-    private final Lock latch = new ReentrantLock();
+    private final ReentrantLock latch = new ReentrantLock();
     private PrintWriter dbStream;
     
     public static class LogEntry {
         private final String key;
-        private final Lock latch; 
+        private final ReentrantLock latch; 
         private final String serializedValue;
         private final Condition writeCompleteCondition;
         private final AtomicBoolean writeCompleted;
         
-        public LogEntry(String key, String serializedValue, Lock latch) {
+        public LogEntry(String key, String serializedValue, ReentrantLock latch) {
             this.key = key;
             this.serializedValue = serializedValue;
             this.latch = latch;
@@ -54,6 +54,7 @@ public class WriteAheadLogger {
         }
         
         public void writeCompleted() {
+            assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
             this.writeCompleteCondition.signal();
         }
