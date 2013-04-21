@@ -51,6 +51,8 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
     private final Timer putLatencyTimer = Metrics.newTimer(LevelDBPersistenceEngine.class,
                                                            "leveldb-put-latencies");
+    private final Timer forcePutLatencyTimer = Metrics.newTimer(LevelDBPersistenceEngine.class,
+            "leveldb-force-put-latencies");
 
     private final Timer getLatencyTimer = Metrics.newTimer(LevelDBPersistenceEngine.class,
                                                            "leveldb-get-latencies");
@@ -104,7 +106,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
     
     @Override
     public void force_put(String key, DataItem value) throws TException {
-        TimerContext context = putLatencyTimer.time();
+        TimerContext context = forcePutLatencyTimer.time();
         try {
             doPut(key, value);
         } finally {
