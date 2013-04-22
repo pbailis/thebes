@@ -30,6 +30,8 @@ public class WriteAheadLogger {
 
     private final Timer batchPutLatency = Metrics.newTimer(WriteAheadLogger.class, "batch-put-latencies");
     private final Histogram batchSize = Metrics.newHistogram(WriteAheadLogger.class, "batch-size");
+    private static final Timer putE2ELatency = Metrics.newTimer(WriteAheadLogger.class, "e2e-put-latency");
+
 
     
     private final String dbFilename;
@@ -44,6 +46,7 @@ public class WriteAheadLogger {
         private final String serializedValue;
         private final Condition writeCompleteCondition;
         private final AtomicBoolean writeCompleted;
+        private TimerContext e2eLatency;
         
         public LogEntry(String key, String serializedValue, ReentrantLock latch) {
             this.key = key;
@@ -51,12 +54,14 @@ public class WriteAheadLogger {
             this.latch = latch;
             this.writeCompleteCondition = latch.newCondition();
             this.writeCompleted = new AtomicBoolean(false);
+            e2eLatency = putE2ELatency.time();
         }
         
         public void writeCompleted() {
             assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
             this.writeCompleteCondition.signal();
+            e2eLatency.stop();
         }
         
         public void waitUntilPersisted() {
