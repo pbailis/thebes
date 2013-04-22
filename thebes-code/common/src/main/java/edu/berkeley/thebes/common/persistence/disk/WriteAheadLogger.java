@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,6 +40,8 @@ public class WriteAheadLogger {
     private final LinkedBlockingQueue<LogEntry> pendingLogEntryQueue;
     private final TSerializer serializer;
     private final ReentrantLock latch = new ReentrantLock();
+    private final ReentrantLock dbLock = new ReentrantLock();
+    private final AtomicInteger numLogsEnqueued = new AtomicInteger(0);
     private PrintWriter dbStream;
     
     public static class LogEntry {
@@ -117,6 +120,7 @@ public class WriteAheadLogger {
                 dbStream.println(logEntry.toLogLine());
             }
             dbStream.flush();
+            numLogsEnqueued.addAndGet(-logEntries.size());
     
             // Notify waiting threads.
             latch.lock();
@@ -136,7 +140,16 @@ public class WriteAheadLogger {
     public LogEntry startLogPut(String key, DataItem value) throws TException {
         String serializedValue = new String(serializer.serialize(value.toThrift()));
         LogEntry logEntry = new LogEntry(key, serializedValue, latch);
-        pendingLogEntryQueue.add(logEntry);
+        
+        if (numLogsEnqueued.getAndIncrement() == 0) {
+            // We're the only one asking for the disk right now, so go ahead and use it!
+            dbStream.println(logEntry.toLogLine());
+            dbStream.flush();
+            numLogsEnqueued.decrementAndGet();
+            logEntry.writeCompleted();
+        } else {
+            pendingLogEntryQueue.add(logEntry);
+        }
         return logEntry;
     }
 
