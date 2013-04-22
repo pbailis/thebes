@@ -108,8 +108,8 @@ public class DependencyResolver {
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
         } else {
-//            pendingPersistenceEngine = new WALBackedPersistenceEngine(Config.getPendingWritesDB());
-            pendingPersistenceEngine = new LevelDBPersistenceEngine(Config.getPendingWritesDB());
+            pendingPersistenceEngine = new WALBackedPersistenceEngine(Config.getPendingWritesDB());
+//            pendingPersistenceEngine = new LevelDBPersistenceEngine(Config.getPendingWritesDB());
         }
         try {
             pendingPersistenceEngine.open();
