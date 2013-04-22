@@ -348,7 +348,7 @@ public class Config {
             case MEMORY:
                 return new MemoryPersistenceEngine();
             case LEVELDB:
-                return new LevelDBPersistenceEngine();
+                return new LevelDBPersistenceEngine(Config.getDiskDatabaseFile());
             case BDB:
                 return new BDBPersistenceEngine();
             default:

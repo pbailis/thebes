@@ -76,6 +76,12 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
             return new TDeserializer();
         }
     };
+    
+    private final String dbFilename;
+    
+    public LevelDBPersistenceEngine(String dbFilename) {
+        this.dbFilename = dbFilename;
+    }
 
     public void open() throws IOException {
         Options options = new Options();
@@ -87,7 +93,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
 
         if(Config.doCleanDatabaseFile()) {
             try {
-                FileUtils.forceDelete(new File(Config.getDiskDatabaseFile()));
+                FileUtils.forceDelete(new File(dbFilename));
             } catch(Exception e) {
                 if (!(e instanceof FileNotFoundException))
                     logger.warn("error: ", e) ;
