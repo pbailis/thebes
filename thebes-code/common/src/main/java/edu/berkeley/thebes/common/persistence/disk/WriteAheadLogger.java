@@ -59,7 +59,7 @@ public class WriteAheadLogger {
         }
         
         public void writeCompleted() {
-            assert latch.isHeldByCurrentThread();
+//            assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
 //            this.writeCompleteCondition.signal();
             e2eLatency.stop();
