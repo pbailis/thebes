@@ -59,21 +59,20 @@ public class WriteAheadLogger {
         }
         
         public void writeCompleted() {
-//            assert latch.isHeldByCurrentThread();
+            assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
-//            this.writeCompleteCondition.signal();
+            this.writeCompleteCondition.signal();
             e2eLatency.stop();
         }
         
         public void waitUntilPersisted() {
-            synchronized (latch) {
+            latch.lock();
+            try {
                 while (!writeCompleted.get()) {
-                    try {
-                        latch.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    writeCompleteCondition.awaitUninterruptibly();
                 }
+            } finally {
+                latch.unlock();
             }
         }
         
@@ -120,12 +119,13 @@ public class WriteAheadLogger {
             dbStream.flush();
     
             // Notify waiting threads.
-            for (LogEntry logEntry : logEntries) {
-                logEntry.writeCompleted();
-            }
-
-            synchronized (latch) {
-                latch.notifyAll();
+            latch.lock();
+            try {
+                for (LogEntry logEntry : logEntries) {
+                    logEntry.writeCompleted();
+                }
+            } finally {
+                latch.unlock();
             }
         } finally {
             context.stop();
