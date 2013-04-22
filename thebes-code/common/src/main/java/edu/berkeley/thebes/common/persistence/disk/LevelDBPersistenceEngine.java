@@ -100,7 +100,7 @@ public class LevelDBPersistenceEngine implements IPersistenceEngine {
             }
         }
 
-        db = factory.open(new File(Config.getDiskDatabaseFile()), options);
+        db = factory.open(new File(dbFilename), options);
 
         Metrics.newGauge(LevelDBPersistenceEngine.class, "locktable-size", new Gauge<Integer>() {
             @Override
