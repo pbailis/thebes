@@ -30,6 +30,7 @@ public class WriteAheadLogger {
 
     private final Timer batchPutLatency = Metrics.newTimer(WriteAheadLogger.class, "batch-put-latencies");
     private final Histogram batchSize = Metrics.newHistogram(WriteAheadLogger.class, "batch-size");
+    private final Histogram waitingSize = Metrics.newHistogram(WriteAheadLogger.class, "waiting-size");
     private static final Timer putE2ELatency = Metrics.newTimer(WriteAheadLogger.class, "e2e-put-latency");
 
 
@@ -108,6 +109,7 @@ public class WriteAheadLogger {
         
         TimerContext context = batchPutLatency.time();
         try {
+            waitingSize.update(pendingLogEntryQueue.size());
             pendingLogEntryQueue.drainTo(logEntries);
             batchSize.update(logEntries.size());
             
