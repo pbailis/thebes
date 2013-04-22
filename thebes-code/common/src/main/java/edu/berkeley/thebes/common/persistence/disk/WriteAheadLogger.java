@@ -54,12 +54,19 @@ public class WriteAheadLogger {
         }
         
         public void writeCompleted() {
+            assert latch.isHeldByCurrentThread();
             this.writeCompleted.set(true);
+            this.writeCompleteCondition.signal();
         }
         
         public void waitUntilPersisted() {
-            while (!writeCompleted.get()) {
-                Thread.yield();
+            latch.lock();
+            try {
+                while (!writeCompleted.get()) {
+                    writeCompleteCondition.awaitUninterruptibly();
+                }
+            } finally {
+                latch.unlock();
             }
         }
         
@@ -106,13 +113,13 @@ public class WriteAheadLogger {
             dbStream.flush();
     
             // Notify waiting threads.
-//            latch.lock();
+            latch.lock();
             try {
                 for (LogEntry logEntry : logEntries) {
                     logEntry.writeCompleted();
                 }
             } finally {
-//                latch.unlock();
+                latch.unlock();
             }
         } finally {
             context.stop();
