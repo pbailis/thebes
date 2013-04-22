@@ -61,10 +61,12 @@ public class WriteAheadLogger {
             e2eLatency = putE2ELatency.time();
         }
         
-        public void writeCompleted() {
-            assert latch.isHeldByCurrentThread();
+        public void writeCompleted(boolean signal) {
+            assert !signal || latch.isHeldByCurrentThread() : "To signal, we need to own the lock";
             this.writeCompleted.set(true);
-            this.writeCompleteCondition.signal();
+            if (signal) {
+                this.writeCompleteCondition.signal();
+            }
             e2eLatency.stop();
         }
         
@@ -126,7 +128,7 @@ public class WriteAheadLogger {
             latch.lock();
             try {
                 for (LogEntry logEntry : logEntries) {
-                    logEntry.writeCompleted();
+                    logEntry.writeCompleted(true /* signal */);
                 }
             } finally {
                 latch.unlock();
@@ -146,7 +148,13 @@ public class WriteAheadLogger {
             dbStream.println(logEntry.toLogLine());
             dbStream.flush();
             numLogsEnqueued.decrementAndGet();
-            logEntry.writeCompleted();
+            
+            latch.lock();
+            try {
+                logEntry.writeCompleted(false /* don't signal */);
+            } finally {
+                latch.unlock();
+            }
         } else {
             pendingLogEntryQueue.add(logEntry);
         }
