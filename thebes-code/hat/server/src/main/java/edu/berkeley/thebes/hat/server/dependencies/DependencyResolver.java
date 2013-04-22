@@ -108,8 +108,8 @@ public class DependencyResolver {
         if (Config.shouldStorePendingInMemory()) {
             pendingPersistenceEngine = new MemoryPersistenceEngine();
         } else {
-            pendingPersistenceEngine = new WALBackedPersistenceEngine(Config.getPendingWritesDB());
-//            pendingPersistenceEngine = new LevelDBPersistenceEngine(Config.getPendingWritesDB());
+//            pendingPersistenceEngine = new WALBackedPersistenceEngine(Config.getPendingWritesDB());
+            pendingPersistenceEngine = new LevelDBPersistenceEngine(Config.getPendingWritesDB());
         }
         try {
             pendingPersistenceEngine.open();
@@ -229,7 +229,7 @@ public class DependencyResolver {
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
             persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
-            deletePendingWrite(write.getKey(), write.getVersion());
+//            deletePendingWrite(write.getKey(), write.getVersion());
         }
 //        TransactionQueue prevQueue = tempMap.put(queue.version, queue);
 //        if (prevQueue != null) {
