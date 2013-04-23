@@ -114,8 +114,9 @@ A system that provides Item Cut Isolation prohibits phenomenon N-ICI.
 
 \begin{definition}[Predicate Cut Non-Isolation (N-ICI)]
 A history $H$ exhibits phenomenon N-ICI if there exists a transaction
-$T_i$ such that $P= \{p \mid T_i$ directly predicate-depends by $p$ on another
-other transaction$\}$ and $\bigcap_{p\in P} P \neq \emptyset$.
+$T_i$ such that $P= \{p \mid T_i$ directly predicate-read-depends by
+$p$ on another other transaction$\}$ and $\bigcap_{p\in P} P \neq
+\emptyset$. (TODO: this isn't necessarily it)
 \end{definition}
 
 \begin{definition}[Predicate Cut Isolation (ICI)]

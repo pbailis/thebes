@@ -43,28 +43,24 @@ given data item is called a \textit{replica} for that item. While this
 standard model is useful, there are several other cases we should
 consider.
 
-Some algorithms assume a model in which the client always contacts the
-same server across subsequent operations. As we will discuss in
-Section~\ref{sec:hats}, clients can ensure continuity between
-operations (e.g., reading their prior updates to a data item) by
-maintaining affinity or ``stickiness'' with a server or set of
-servers~\cite{vogels-defs}. Simultaneously maintaining availability
-and stickiness entails fate-sharing between the client and its 
-server: if a client's sticky server fail, or, equivalently, if the
-client is partitioned from its sticky server, then it may face
+Many distributed algorithms assume a model in which clients always
+contact the same (sets of) server(s) across subsequent operations. As
+we will discuss in Section~\ref{sec:hats}, clients can ensure
+continuity between operations (e.g., reading their prior updates to a
+data item) by maintaining affinity or ``stickiness'' with a server or
+set of servers~\cite{vogels-defs}. Simultaneously maintaining
+availability and stickiness requires fate-sharing between the client
+and its server: if a client's sticky servers fail or if the client is
+partitioned from its sticky servers, then it may face
 unavailability. We say that a system provides \textit{sticky
   availability} if, whenever a client's operation is executed against
-a correct server that has observed all of its prior operations, it eventually
-receives a response, even in the presence of indefinitely long
-partitions. A client may choose to become sticky available by acting
-as a server itself; for example, a client might cache its reads and
-writes~\cite{bolton, sessionguarantees, swift}. 
-
-Availability implies sticky availability, since availability does not
-require that the contacted server has seen all the previous operations
-of a client, whereas sticky availability is the special case in which
-the system only guarantees correctness if the contacted server has
-seen all the prior operations from the client.
+a correct server that has observed all of its prior operations, it
+eventually receives a response, even in the presence of indefinitely
+long partitions. A client may choose to become sticky available by
+acting as a server itself; for example, a client might cache its reads
+and writes~\cite{bolton, sessionguarantees, swift}. Any guarantee
+achievable in a highly available system is achievable in a sticky high
+availability system but not vice-versa.
 
 %% \begin{figure}
 %% \centering
@@ -119,14 +115,14 @@ seen all the prior operations from the client.
 
 We have so far focused on single-object, single-operation
 availability. This is standard in the distributed systems literature
-(e.g., linearizable and regular register models all concern single
-objects~\cite{herlihy-art}), yet the database literature largely
-focuses on transactions: groups of multiple operations over multiple
-objects. Accordingly, by itself, replica availability is insufficient
-to describe availability guarantees for transactions. Additionally,
-given the choice of \textit{commit} and \textit{abort}
-responses---which signal transaction success or failure to a
-client---we must carefully define transactional availability.
+(e.g., distributed register models such as linearizability all
+concern single objects~\cite{herlihy-art}), yet the database
+literature largely focuses on transactions: groups of multiple
+operations over multiple objects. Accordingly, by itself, replica
+availability is insufficient to describe availability guarantees for
+transactions. Additionally, given the choice of \textit{commit} and
+\textit{abort} responses---which signal transaction success or failure
+to a client---we must take care in defining transactional availability.
 
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and

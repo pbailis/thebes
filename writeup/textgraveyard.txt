@@ -1,4 +1,9 @@
-
+\footnote{Oracle provides an isolation level called
+  ``Statement Level Read Consistency''~\cite{adya}; this is analogous
+  to Predicate Cut Isolation at the level of a single operation within
+  a multi-operation transaction. We do not consider this isolation
+  model here as it is subsumed by standard Snapshot Isolation; we
+  believe our discussion is easily extended to incorporate it.}
 
 Deutsch concludes his list of ``Fallacies'' by noting that ignoring
 network failures and latency such as those in
