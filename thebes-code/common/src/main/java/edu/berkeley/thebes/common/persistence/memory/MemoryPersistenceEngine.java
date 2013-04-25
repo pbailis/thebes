@@ -57,7 +57,7 @@ public class MemoryPersistenceEngine implements IPersistenceEngine {
                 // If we already have this key, ensure new item is a more recent version
                 if (map.containsKey(key)) {
                     DataItem curItem = map.get(key);
-                    if (curItem.getVersion().compareTo(value.getVersion()) <= 0) {
+                    if (curItem.getVersion().compareTo(value.getVersion()) > 0) {
                         return;
                     }
                 }

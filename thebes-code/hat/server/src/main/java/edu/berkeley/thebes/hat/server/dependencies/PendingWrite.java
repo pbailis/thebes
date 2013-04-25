@@ -20,8 +20,9 @@ public class PendingWrite implements Comparable<PendingWrite> {
     private int numKeysForThisReplica;
     private Set<Integer> replicaIndicesInvolved;
     private List<String> transactionKeys;
+    private boolean obsoleted;
     
-    public PendingWrite(String key, DataItem value) {
+    public PendingWrite(String key, DataItem value, boolean obsoleted) {
         if (value.getTransactionKeys().isEmpty()) {
             throw new IllegalStateException("Pending writes must be waiting on at least one other key.");
         }
@@ -29,6 +30,7 @@ public class PendingWrite implements Comparable<PendingWrite> {
         this.key = key;
         this.transactionVersion = value.getVersion();
         this.transactionKeys = value.getTransactionKeys();
+        this.obsoleted = obsoleted;
 
         examineReplicasInvolved(key, value.getTransactionKeys());
     }
@@ -66,6 +68,10 @@ public class PendingWrite implements Comparable<PendingWrite> {
 
     public Version getVersion() {
         return transactionVersion;
+    }
+    
+    public boolean isObsoleted() {
+        return obsoleted;
     }
 
     @Override

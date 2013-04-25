@@ -87,11 +87,16 @@ public class DependencyResolver {
                                              "assertion-violation",
                                              "violations",
                                              TimeUnit.SECONDS);
+    Meter obsoletePuts = Metrics.newMeter(DependencyResolver.class,
+                                          "obsolete-puts",
+                                          "puts",
+                                          TimeUnit.SECONDS);
 
     private final Timer addPendingTimer = Metrics.newTimer(DependencyResolver.class, "add-pending-latency");
     
 
     private final Timer stage1Timer = Metrics.newTimer(DependencyResolver.class, "stage-1");
+    private final Timer stage15Timer = Metrics.newTimer(DependencyResolver.class, "stage-1.5");
     private final Timer stage2Timer = Metrics.newTimer(DependencyResolver.class, "stage-2");
     private final Timer stage3Timer = Metrics.newTimer(DependencyResolver.class, "stage-3");
     private final Timer stage4Timer = Metrics.newTimer(DependencyResolver.class, "stage-4");
@@ -161,14 +166,26 @@ public class DependencyResolver {
         TimerContext context = addPendingTimer.time();
         try {
             Version version = value.getVersion();
+            boolean obsoletedWrite = false;
             
             {
                 TimerContext s1 = stage1Timer.time();
                 pendingTransactionsMap.putIfAbsent(version, new TransactionQueue(version));
                 s1.stop();
             }
+            
             {
+                TimerContext s15 = stage15Timer.time();
+                if (persistenceEngine.get(key).getVersion().compareTo(version) > 0) {
+                    obsoletePuts.count();
+                    obsoletedWrite = true;
+                }
+                s15.stop();
+            }
+            
+            if (!obsoletedWrite) {
                 TimerContext s2 = stage2Timer.time();
+                
                 persistPendingWrite(key, value);
                 s2.stop();
             }
@@ -176,7 +193,7 @@ public class DependencyResolver {
             PendingWrite newPendingWrite;
             {
                 TimerContext s3 = stage3Timer.time();
-                newPendingWrite = new PendingWrite(key, value);
+                newPendingWrite = new PendingWrite(key, value, obsoletedWrite);
                 s3.stop();
             }
 
@@ -193,7 +210,6 @@ public class DependencyResolver {
                 s4.stop();
             }
     
-
             {
                 TimerContext s5 = stage5Timer.time();
                 try {
@@ -228,7 +244,9 @@ public class DependencyResolver {
     
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
-            persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
+            if (write.isObsoleted()) {
+                persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
+            }
             deletePendingWrite(write.getKey(), write.getVersion());
         }
 //        TransactionQueue prevQueue = tempMap.put(queue.version, queue);
