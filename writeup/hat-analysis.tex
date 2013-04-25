@@ -36,15 +36,12 @@ presentation here.
 To begin, we present well-known semantics that can be achieved in HAT
 systems. We offer proof-of-concept highly available algorithms, but
 our goal is \textit{not} to provide optimal or even efficient
-implementations. As is standard in the distributed database
-literature, in our sample implementations, we consider a set of
-servers acting as replicas for a set of data items with which
-non-co-located clients interact. In our examples, we exclusively
-consider read and write operations, denoting a write of value $v$ to
-data item $d$ as $w_d(v)$ and a read from data item $d$ returning $v$
-as $r_d(v)$. We assume that all data items have the null value,
-$\bot$, at database initialization, and, unless otherwise specified,
-all transactions in the examples commit.
+implementations. In our examples, we exclusively consider read and
+write operations, denoting a write of value $v$ to data item $d$ as
+$w_d(v)$ and a read from data item $d$ returning $v$ as $r_d(v)$. We
+assume that all data items have the null value, $\bot$, at database
+initialization, and, unless otherwise specified, all transactions in
+the examples commit.
 
 \subsubsection{ACID Isolation Guarantees}
 

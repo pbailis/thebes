@@ -243,6 +243,35 @@ consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$ and at least one write-dependency edge.
 \end{definition}
 
+
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)\\
+T_2 &: w_y(1)\\
+T_3 &: r_y(1)~r_x(0)
+\end{align*}
+\caption{Example of \textit{N-MW} anomaly if $T_2$ directly session-depends on $T_1$.}
+\label{fig:nmw-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (2,0) {$T_2$};
+\node[tx] (T3) at (2,-1) {$T_3$};
+
+\draw[->] (T1) edge node[above]{$s_i$} (T2);
+\draw[->] (T2) edge node[right]{$wr_y$} (T3);
+\draw[->, dashed] (T3) edge node[below, sloped]{$rw_x$} (T1);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nmw-history}.}
+\label{fig:nmw-dsg}
+\end{figure}
+
+
 \begin{definition}[Monotonic Writes (MW)]
 A system provides Monotonic Writes if it prohibits phenomenon N-MW.
 \end{definition}
@@ -252,6 +281,34 @@ A history exhibits phenomenon N-WFR if, for all committed transactions
 $T_1$, $T_2$, $T_3$ such that $T_2$ write-depends on $T_1$ and $T_3$
 write-depends on $T_2$, $T_3$ does not directly anti-depend on $T_1$.
 \end{definition}
+
+
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)\\
+T_2 &: r_x(1) w_y(1)\\
+T_3 &: r_y(1)~r_x(0)
+\end{align*}
+\caption{Example of \textit{N-WFR} anomaly.}
+\label{fig:nwfr-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (2,0) {$T_2$};
+\node[tx] (T3) at (2,-1) {$T_3$};
+
+\draw[->] (T1) edge node[above]{$wr_x$} (T2);
+\draw[->] (T2) edge node[right]{$wr_y$} (T3);
+\draw[->, dashed] (T3) edge node[below, sloped]{$rw_x$} (T1);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nwfr-history}.}
+\label{fig:nwfr-dsg}
+\end{figure}
 
 \begin{definition}[Writes Follow Reads (WFR)]
 A system provides Writes Follow Reads if it prohibits phenomenon N-WFR.
@@ -263,6 +320,31 @@ consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$, at least one anti-dependency edge, and the remainder
 anti-dependency or write-dependency edges.
 \end{definition}
+
+
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)\\
+T_2 &: r_x(0)\\
+\end{align*}
+\caption{Example of \textit{N-RYW} anomaly if $T_2$ directly session-depends on $T_1$.}
+\label{fig:nryw-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (2,0) {$T_2$};
+
+\draw[->] (T1) edge node[above]{$s_i$} (T2);
+\draw[dashed, ->] (T2) edge [bend left] node[below]{$rw_x$} (T1);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nwfr-history}.}
+\label{fig:nryw-dsg}
+\end{figure}
 
 \begin{definition}[Read Your Writes (RYW)]
 A system provides Read Your Writes if it prohibits phenomenon N-RYW.
