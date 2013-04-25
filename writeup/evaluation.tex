@@ -29,9 +29,9 @@ availability.
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
-setting~\cite{bernstein-book} can require at least one round trip time
+setting~\cite{bernstein-book} requires at least one round trip time
 (RTT) before committing. As an example, traditional two-phase locking
-for a transaction of length $T$ can require $T$ \texttt{lock}
+for a transaction of length $T$ may require $T$ \texttt{lock}
 operations and will require at least one \texttt{lock} and
 \texttt{unlock} operation.  In a distributed environment, each of
 these operations requires coordination, either with other database
@@ -40,52 +40,52 @@ unavailable, transactions cannot safely commit. Similarly, optimistic
 concurrency control requires coordinating via a validation step, while
 deterministic transaction scheduling~\cite{deterministic-scheduling}
 requires a scheduler. Serializability under multi-version concurrency
-control also requires checking for update conflicts. The reliance on a
-globally agreed total order necessitates a minimum of one round-trip
-to a designated master or coordination service for each of these
-classic algorithms.  The cost of round trips will be determined by the
-deployment environment, as we saw in Section~\ref{sec:motivation}; we
-will demonstrate this cost on public cloud infrastructure in the next
-section.
+control requires checking for update conflicts. All told, the reliance
+on a globally agreed total order necessitates a minimum of one
+round-trip to a designated master or coordination service for each of
+these classic algorithms.  The cost of round trips will be determined
+by the deployment environment, as we saw in
+Section~\ref{sec:motivation}; we will demonstrate this cost on public
+cloud infrastructure in Section~\ref{sec:prototype}.
 
-\vspace{.5em}\noindent\textbf{Non-serializability} Many existing
+\vspace{.5em}\noindent\textbf{Non-serializability} Most existing
 distributed implementations of weak isolation are not highly
 available. Lock-based proposals such as those used to provide weak
 isolation in Gray's original proposal~\cite{gray-isolation} do not
 degrade gracefully in the presence of partial failures. (Note,
 however, that lock-based protocols \textit{do} offer the benefit of
 recency guarantees.) While multi-versioned storage systems allow for a
-variety of transactional guarantees, we have not seen proposals for
-truly weak isolation (e.g., non-``tentative update'' schemes) in this
-context.  The MDCC~\cite{mdcc} protocol offers Read Committed
-isolation with Lost Update avoidance but is similarly unavailable due
-to its reliance on preventing write conflicts. Chan and Gray's
-read-only transactions provide read-only transactions with item-cut
-isolation, causal consistency, and transactional atomicity (session
-PL-2L~\cite{adya}) but are unavailable in the presence of coordinator
+variety of transactional guarantees, few offer traditional weak
+isolation (e.g., non-``tentative update'' schemes) in this context.
+The MDCC~\cite{mdcc} protocol offers Read Committed isolation with
+Lost Update avoidance but is similarly unavailable due to its reliance
+on preventing write conflicts. Chan and Gray's read-only transactions
+provide read-only transactions with item-cut isolation, causal
+consistency, and transactional atomicity (session PL-2L~\cite{adya})
+but are unavailable in the presence of coordinator
 failure~\cite{readonly}, similar to read-only and write-only
-transactions more recently proposed by Eiger~\cite{eiger}; Causal
+transactions more recently proposed by Eiger~\cite{eiger}. Causal
 Serializability offers a similar model (with unavailable
 implementation): causal consistency with a variant of Read Uncommitted
 between transactions that write to the same data
 item~\cite{raynal-causal}.  Brantner's S3 database~\cite{kraska-s3}
 and Bayou~\cite{sessionguarantees} can all provide variants of session
 PL-2L with high availability, but none provide this HAT functionality
-without substantial modification; Swift~\cite{swift} and bolt-on
-causal consistency~\cite{bolton} are closest to providing full HAT
-semantics operation in a sticky context. As seen, it is possible to
-implement many guarantees weaker than serializability---including
-guarantees that are achievable with high availability---and still not
-achieve high availability.
+without substantial modification. Swift~\cite{swift} and bolt-on
+causal consistency~\cite{bolton} are closest to providing maximum
+sticky HAT semantics. As we have seen, it is possible to implement many
+guarantees weaker than serializability---including guarantees that are
+achievable with high availability---and still not achieve high
+availability.
 
 \subsection{Application Requirements}
 
-Thus far, we have largely ignored the question of which applications
-require semantics that are unavailable to HATs. As we showed in
-Section~\ref{sec:hats}, the main cost of choosing HATs comes in the
-inability to prevent Lost Update, Write Skew, and provide recency
-bounds. In this section, we attempt to understand when these
-guarantees matter both abstractly and in a representative
+Thus far, we have largely ignored the question of when HAT semantics
+are useful (or otherwise are too weak). As we showed in
+Section~\ref{sec:hats}, the main cost of high availability and low
+latency comes in the inability to prevent Lost Update, Write Skew, and
+provide recency bounds. In this section, we attempt to understand when
+these guarantees matter both abstractly and in a representative
 transactional application based on the TPC-C benchmark~\cite{tpcc}.
 
 \vspace{.5em}\noindent\textbf{Commutativity and Monotonicity} Recent
@@ -98,28 +98,27 @@ with commutative operators may not suffer from application-level
 consistency anomalies as a result of Lost Update or Write Skew
 anomalies. However, applications with non-monotonic state mutation
 will not, in general, be able to maintain application-level
-consistency constraints with HATs alone--in particular, applications
+consistency constraints with HATs alone---in particular, applications
 requiring bounded update visibility latency should opt for
 unavailability.
 
 \vspace{.5em}\noindent\textbf{TPC-C} To better understand the impact
 of HAT-compliance in an application context, we consider a concrete
-application: the TPC-C benchmark~\cite{tpcc}. Surprisingly, four of
-five transactions can be executed with HATs, while the fifth may
-require unavailability.
+application: the TPC-C benchmark. In brief, we find that four of five
+transactions can be executed with HATs, while the fifth may require
+unavailability.
 
 TPC-C consists of five transactions, capturing the operation of a
 wholesale warehouse, including sales, payments, and deliveries. Two
 transactions---\textit{Order-Status} and \textit{Stock-Level}---are
-read-only and can be executed safely under HATs. Clients may read
-stale data, but this does not violate TPC-C requirements and clients
-will read their writes if they are sticky-available. Another
-transaction type, \textit{Payment}, updates running balances for
-warehouses, districts, and customer records as well as providing an
-audit trail. The transaction is increment- and append-only, so all
-balance increase operations commute, and TA allows the
-maintenance of any foreign-key constraints (e.g.,
-\texttt{UPDATE/DELETE CASCADE}).
+read-only and can be executed safely with HATs. Clients may read stale
+data, but this does not violate TPC-C requirements and clients will
+read their writes if they are sticky-available. Another transaction
+type, \textit{Payment}, updates running balances for warehouses,
+districts, and customer records and provides an audit trail. The
+transaction is increment- and append-only, so all balance increase
+operations commute, and TA allows the maintenance of foreign-key
+integrity constraints (e.g., via \texttt{UPDATE/DELETE CASCADE}).
 
 While three out of five transactions are easily achievable with
 HATs, the remaining two transactions---\textit{New-Order} and
@@ -132,26 +131,26 @@ represents the fulfillment of a New-Order: it deletes the order from
 the pending list, updates the customer's balance, updates the order's
 carrier ID and delivery time, and updates the customer balance.
 
-New-Order presents two challenges: ID assignment and stock
-maintenance. First, each New-Order transaction requires a unique ID
-number for the order. We can create a unique number by, say,
+The New-Order transaction presents two challenges: ID assignment and
+stock maintenance. First, each New-Order transaction requires a unique
+ID number for the order. We can create a unique number by, say,
 concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
 assigned within a district, which requires preventing Lost
 Update. Accordingly, HATs cannot provide compliant TPC-C execution but
-can stil maintain uniqueness constraints. Second, the New-Order transaction
-decrements inventory counts: what if the count becomes negative?
-Fortunately, TPC-C New-Order restocks each item's inventory count
-(increments by 91) if it would become negative as the result of
+can stil maintain uniqueness constraints. Second, the New-Order
+transaction decrements inventory counts: what if the count becomes
+negative?  Fortunately, TPC-C New-Order restocks each item's inventory
+count (increments by 91) if it would become negative as the result of
 placing an order. This means that, even in the presence of concurrent
 New-Orders, an item's stock will never fall below zero. This is TPC-C
-compliant, but a HAT system might end up with more stock
-than in a non-HAT-compliant implementation.
+compliant, but a HAT system might end up with more stock than in a
+non-HAT-compliant implementation.
 
-Delivery is challenging due to non-monotonicity. Each Delivery deletes
-a pending order from the New-Order table and should be idempotent in
-order to avoid billing a customer twice; this implies a need to
-prevent Lost Update. This issue  can be avoided  by moving the
+The Delivery transaction is challenging due to non-monotonicity. Each
+Delivery deletes a pending order from the New-Order table and should
+be idempotent in order to avoid billing a customer twice; this implies
+a need to prevent Lost Update. This issue can be avoided by moving the
 non-monotonicity to the real world---the carrier that picks up the
 package for an order can ensure that she is the only carrier who has
 done so---but cannot provide a correct execution with HATs
@@ -174,15 +173,16 @@ thumbnail) are also achievable using HATs.
 
 In summary, many---but not all---TPC-C transactions are well-served by
 HATs. The two problematic transactions---New-Order and Payment---rely
-on non-monotonic state update. The former transaction can be modified
-to ensure ID uniqueness at the expense of sequential per-district ID
-ordering, while the latter is an inherently non-monotonic action
-requiring external compensation or stronger consistency protocols. We
-expect that, especially for read-dominated workloads found in many
-online services, HAT guarantees will suffice for many application
-transactions.
+on non-monotonic state update. The former can be modified to ensure ID
+uniqueness but not sequential ID ordering, while the latter is an
+inherently non-monotonic action requiring external compensation or
+stronger consistency protocols. Based on these experiences and
+discussions with practitioners, we expect that, especially for
+read-dominated workloads found in many online services, HAT guarantees
+will provide useful semantics for many applications.
 
 \subsection{Experimental Costs}
+\label{sec:prototype}
 
 To better understand the performance implications of HAT guarantees in
 a real-world environment and to validate the latency-based analysis in

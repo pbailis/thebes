@@ -13,7 +13,7 @@
 
 \interfootnotelinepenalty=10000
 
-\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, amsthm}
+\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, amsthm, float}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \usepackage{xspace}
 
@@ -44,6 +44,10 @@
 \renewcommand{\ttdefault}{fi4}
 
 \usetikzlibrary{positioning, snakes, shapes}
+
+\tikzset{>=latex}
+
+
 
 \newenvironment{myitemize}
 {
@@ -95,14 +99,14 @@ and network partitions, many modern distributed data storage systems
 eschew transactional functionality, which provides strong semantic
 guarantees for groups of multiple operations over multiple data
 items. In this work, we consider the problem of providing Highly
-Available Transactions (HATs), or transactional guarantees that do not
+Available Transactions (HATs): transactional guarantees that do not
 suffer unavailability during system partitions or incur high network
 latency.  We introduce a new taxonomy of highly available systems and
 analyze existing ACID and distributed consistency guarantees to
 identify which can and cannot be achieved in HAT systems. We
-analytically and experimentally quantify the performance and
-availability benefits of HATs as well as their necessary semantic
-compromises.
+analytically and experimentally quantify the availability and
+performance benefits of HATs---often several orders of magnitude over
+wide-area networks---as well as their necessary semantic compromises.
 \end{abstract}
 
 \input{intro.tex}

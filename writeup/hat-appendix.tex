@@ -108,6 +108,32 @@ $T_i$ such that $T_i$ directly item-depends by $x$ on more than one
 other transaction.
 \end{definition}
 
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)\\
+T_2 &: w_x(2)\\
+T_3 &: r_x(1)~r_x(2)
+\end{align*}
+\caption{Example of \textit{N-ICI} anomaly.}
+\label{fig:nici-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (0,-1) {$T_2$};
+\node[tx] (T3) at (2,-.5) {$T_3$};
+
+\draw[->] (T1) edge node[above]{$wr_x$} (T3);
+\draw[->] (T2) edge node[below]{$wr_x$} (T3);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nici-history}.}
+\label{fig:nici-dsg}
+\end{figure}
+
 \begin{definition}[Item Cut Isolation (ICI)]
 A system that provides Item Cut Isolation prohibits phenomenon N-ICI.
 \end{definition}
@@ -125,9 +151,40 @@ A system that provides Predicate Cut Isolation prohibits phenomenon N-ICI.
 
 \begin{definition}[Non-transactional Atomicity (N-TA)]
 A history exhibits phenomenon N-TA if it contains a directed cycle
-consisting of exactly one read-dependency edge and one anti-dependency
-edge.
+consisting of exactly one read-dependency edge by $x$ from $T_i$ to
+$T_j$ and one anti-dependency edge by $y$ from $T_j$ to $T_i$ and
+$T_i$'s corresponding read from $x$ does not precede its corresponding
+read from $y$.
 \end{definition}
+
+
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)~w_y(1)\\
+T_2 &: w_x(2)~w_y(2)\\
+T_3 &: r_x(2)~r_y(1)
+\end{align*}
+\caption{Example of \textit{N-TA} anomaly.}
+\label{fig:nta-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (2,0) {$T_2$};
+\node[tx] (T3) at (2,-1.5) {$T_3$};
+
+\draw[->] (T1) edge node[sloped, above]{$ww_{\{x, y\}}$} (T2);
+\draw[->] (T1) edge [bend right] node[sloped, below]{$wr_y$} (T3);
+\draw[->] (T2) edge [bend right] node[left]{$wr_x$} (T3);
+\draw[dashed, ->] (T3) edge [bend right] node[right]{$rw_y$} (T2);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nta-history}.}
+\label{fig:nta-dsg}
+\end{figure}
 
 \begin{definition}[Transactional Atomicity (TA)]
 A system that provides transactional atomicity prohibits phenomenon
@@ -144,6 +201,41 @@ read-dependency edge by $i$ into $T_i$.
 \begin{definition}[Monotonic Reads (MR)]
 A system provides Monotonic Reads if it prohibits phenomenon N-MR.
 \end{definition}
+
+
+\begin{figure}[H]
+\begin{align*}
+\small
+T_1 &: w_x(1)\\
+T_2 &: w_x(2)\\
+T_3 &: r_x(2)\\
+T_4 &: r_x(1)
+\end{align*}
+\caption{Example of \textit{N-MR} violation when $w_x(1) \ll w_x(2)$ and $T_4$ directly session-depends on $T_3$.}
+\label{fig:nmr-history}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm]
+\tikzstyle{tx}=[draw=none, fill=none]
+\node[tx] (T1) at (0,0) {$T_1$};
+\node[tx] (T2) at (2,0) {$T_2$};
+
+\node[tx] (T3) at (0,-1) {$T_3$};
+\node[tx] (T4) at (2,-1) {$T_4$};
+
+\draw[->] (T1) edge node[above]{$ww_x$} (T2);
+\draw[->] (T3) edge node[below]{$s_i$} (T4);
+
+\draw[->] (T2) edge node[sloped, above]{$wr_x$} (T3);
+%\draw[->] (T2) edge [bend right] node[left]{$wr_x$} (T4);
+%\draw[->] (T1) edge [bend right]node[right]{$wr_x$} (T4);
+\draw[dashed, ->] (T4) edge [bend right]node[right]{$rw_x$} (T2);
+\end{tikzpicture}
+\caption{DSG for Figure~\ref{fig:nmr-history}. $wr_x$ dependency from $T_1$ to $T_4$ omitted.} 
+\label{fig:nmr-dsg}
+\end{figure}
 
 \begin{definition}[Non-monotonic Writes (N-MW)]
 A history exhibits phenomenon N-MW if it contains a directed cycle

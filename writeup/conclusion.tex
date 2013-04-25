@@ -2,25 +2,23 @@
 \section{Conclusion}
 The current state of database software offers uncomfortable and
 unnecessary choices between availability and transactional semantics.
-However, through our analysis and experiments, we have demonstrated
-that the NoSQL movement's goals of high availability will remain a
-critical aspect of many future data storage systems. Accordingly, we
-expose a broad design space of Highly Available Transactions (HATs),
-which can offer the key benefits of highly available distributed
-systems---''always on'' operation during partitions and low-latency
-operations---while also providing a family of transactional isolation
-levels and replica semantics that have been adopted in practice.  In
-taxonomizing this design space, we show that many transactional
-guarantees are achievable with high availability, while a few, like
-preventing Lost Update and Write Skew, are not. From a research
-perspective, this offers a long-overdue connection between storage
-semantics studied in the database and distributed systems communities.
-
-With the above understanding in hand, the next challenge is to return
-to issues of performance and systems architecture within the HAT
-design space.  Based on our understanding of what is desired in the
-field and newfound knowledge of what is possible to achieve, we
-believe HATs will be an area of great opportunity in the coming years.
+Through our analysis and experiments, we have demonstrated how goals
+of high availability will remain a critical aspect of many future data
+storage systems. Accordingly, we expose a broad design space of Highly
+Available Transactions (HATs), which can offer the key benefits of
+highly available distributed systems---''always on'' operation during
+partitions and low-latency operations---while also providing a family
+of transactional isolation levels and replica semantics that have been
+adopted in practice.  In taxonomizing this design space, we show that
+many transactional guarantees are achievable with high availability,
+while a few, like preventing Lost Update and Write Skew, are not. This
+offers a long-overdue connection between storage semantics studied in
+the database and distributed systems communities. The subsequent
+challenge is to return to issues of performance and systems
+architecture within the HAT design space.  Based on our understanding
+of what is desired in the field and newfound knowledge of what is
+possible to achieve, we believe HATs will be an area of great
+opportunity in the coming years.
 
 %% In this paper we expose a broad design space of Highly Available Transactional 
 %% Systems (HATs), which can offer the key benefits of
