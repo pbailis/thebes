@@ -1,26 +1,31 @@
 
 \section{Related Work}
 
+There is a growing body related work on highly available semantics,
+mechanisms for concurrency control, and techniques for scalable
+distributed operations.
+
 Weak consistency and high availability have been well
 studied. Serializability has long been known to be
 unachievable~\cite{davidson-survey} and Brewer's CAP Theorem has
-attracted considerable attention~\cite{gilbert-cap}. The research has
-begun to offer hints regarding the connection between ``weak
+attracted considerable attention~\cite{gilbert-cap}. Recent work on
+PACELC expands CAP by considering connections between ``weak
 consistency'' and low latency~\cite{abadi-pacelc}, while several
 studies examine weak isolation guarantees~\cite{adya,
   ansicritique}. However, as we have discussed, the connection between
-weak consistency models in a distributed setting~\cite{calm, crdt} and
-high availability is relatively unexplored. With the exception of a
-preliminary workshop paper introducing HATs~\cite{hat-hotos}--- which
-this work expands, providing impossibility results, a full
+weak, multi-object consistency models in a distributed setting and
+high availability is relatively unexplored. With the exception of our
+preliminary workshop paper discussing transactional availability and
+HAT RC and I-CI~\cite{hat-hotos}--- which this work expands, providing
+additional algorithms and impossibility results, a full
 taxonomization, and experimental and application analysis---we believe
-this paper is the first to explore this area. Nonetheless, several
-studies rigorously classify non-HAT semantics: Wisemann et al. have
+this paper is the first to explore this area. However, several studies
+rigorously classify \textit{non-HAT} semantics: Wisemann et al. have
 proposed a three parameter classification for one-copy serializable
 database systems, performing a more extensive classification than our
 overview in Section~\ref{sec:evaluation}, including eager database
 replication techniques~\cite{kemme-classification}. Additionally
-several earlier surveys discuss distributed mechanisms for achieving
+several earlier surveys consider distributed mechanisms for achieving
 one-copy serializability~\cite{wisemann-survey}, linearizability,
 consistent snapshots, and recency bounds~\cite{ceri-mechanism,
   chen-mechanism}.
@@ -51,10 +56,9 @@ useful but do not violate requirements for high availability or low
 latency. Recent systems proposals such as Swift~\cite{swift},
 Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
 provide transactional causal consistency guarantees with varying
-availability and represent a new class of (sticky) HAT
-systems. 
+availability and represent a new class of sticky HAT systems.
 
-
+\pbnote{add TA stuff}
 
 
 % Ceri discuss distributed database update mechanisms with respect to
