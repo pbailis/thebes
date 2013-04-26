@@ -176,7 +176,9 @@ public class DependencyResolver {
             
             {
                 TimerContext s15 = stage15Timer.time();
-                if (persistenceEngine.get(key).getVersion().compareTo(version) > 0) {
+                DataItem curItem = persistenceEngine.get(key);
+                if (curItem != null && curItem.getVersion() != null && 
+                        curItem.getVersion().compareTo(version) > 0) {
                     obsoletePuts.count();
                     obsoletedWrite = true;
                 }
