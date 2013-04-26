@@ -246,7 +246,7 @@ public class DependencyResolver {
     
     private void commit(TransactionQueue queue) throws TException {
         for (PendingWrite write : queue.pendingWrites) {
-            if (write.isObsoleted()) {
+            if (!write.isObsoleted()) {
                 persistenceEngine.put_if_newer(write.getKey(), getPendingWrite(write.getKey(), write.getVersion()));
             }
             deletePendingWrite(write.getKey(), write.getVersion());
