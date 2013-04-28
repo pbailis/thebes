@@ -28,19 +28,21 @@ Traditionally, a system provides {\em availability} if every user that
 can contact a correct server eventually receives a response from that
 server, even in the presence of arbitrary, indefinitely long network
 partitions between servers~\cite{gilbert-cap}.\footnote{Under this
-  definition, a system that requires a majority of servers to be
-  online is not available.} As in a standard distributed database,
-designated servers might perform operations for different data items;
-a server that can handle an operation for a given data item is called
-a \textit{replica} for that item.\footnote{There is a further
-  distinction between a \textit{fully replicated} system, in which all
-  servers are replicas for all data items, and a \textit{partially
-    replicated} system, in which at least one server acts as a replica
-  for only a subset of all data items. For generality, and, for
-  applicability to many modern ``sharded'' or ``partitioned'' data
-  storage systems~\cite{dynamo, pnuts, bigtable, spanner, hstore}, we
-  consider partially replicated systems.} While this standard model is
-useful, there are several other cases we should consider.
+  definition, systems that require a majority of servers to be online
+  or that require the database to function correctly with high (but
+  not perfect) probability are not available.} As in a standard
+distributed database, designated servers might perform operations for
+different data items; a server that can handle an operation for a
+given data item is called a \textit{replica} for that
+item.\footnote{There is a further distinction between a \textit{fully
+    replicated} system, in which all servers are replicas for all data
+  items, and a \textit{partially replicated} system, in which at least
+  one server acts as a replica for only a subset of all data
+  items. For generality, and, for applicability to many modern
+  ``sharded'' or ``partitioned'' data storage systems~\cite{dynamo,
+    pnuts, bigtable, spanner, hstore}, we consider partially
+  replicated systems.} While this standard model is useful, there are
+several other cases we should consider.
 
 Many distributed algorithms assume a model in which clients always
 contact the same (sets of) server(s) across subsequent operations. As
@@ -128,12 +130,12 @@ If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and
 receive a response from at least one replica for each data item. This
 may result in ``lower availability'' than a non-transactional
-requirement. Additionally, given the possibility of aborts, we need to
-ensure useful forward progress: a system can trivially guarantee
-clients a response by always aborting all
-transactions~\cite{transaction-liveness}. However, this is an
-unsatisfactory system because nothing good (transaction commit) ever
-happens; we should require a \textit{liveness} property. We cannot
+requirement. Additionally, given the possibility of system-initiated
+aborts, we need to ensure useful forward progress: a system can
+trivially guarantee clients a response by always aborting all
+transactions. However, this is an unsatisfactory system because
+nothing good (transaction commit) ever happens; we should require a
+\textit{liveness} property~\cite{transaction-liveness}. We cannot
 guarantee that every transaction will commit---transactions may choose
 to abort themselves---but we need to make sure that the system will
 not indefinitely abort transactions on its own volition. We call a
@@ -144,9 +146,9 @@ abort due to system implementation an \textit{external abort}.
 
 We say that a system provides \textit{transactional availability} if,
 given replica availability for every data item in a transaction, the
-transaction eventually commits or internally
-aborts~\cite{hat-hotos}. For example, a system will violate
-transactional availability if a client that can contact two
-servers for each of the data items in its transaction does not
+transaction eventually commits (possibly after multiple client
+retries) or internally aborts~\cite{hat-hotos}. For example, a system
+will violate transactional availability if a client that can contact
+two servers for each of the data items in its transaction does not
 eventually commit in the absence of internal aborts.
 

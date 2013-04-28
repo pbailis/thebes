@@ -4,26 +4,20 @@
 
 There are several promising avenues for future work in HATs:
 
-\textbf{What are the limits of HAT semantics?}  In this work, we have
-taxonomized several well-defined and well-documented semantic
-properties. This is useful as it contextualizes existing database and
-distributed systems semantics but does not provide guidance as to what
-consistency models are the ``strongest''---or admit the smallest set
-of executions---within each availability class. A recent report from
-UT Austin shows that no model stronger than causal consistency can be
-achieved in a sticky highly available, one-way convergent
-system~\cite{cac}, but there are infinite highly available and sticky
-highly available models to consider. For example, always returning the
-value $1$ in response to reads is incomparable with (i.e., neither
-stronger nor weaker than) causal consistency: returning $1$ does not
-respect causality, and causal consistency returns values other than
-$1$. There are actually infintely many incomparable models (vacuously:
-return $1$, return $2$, and so on). Are there \textit{meaningful}
-properties that delineate the boundaries between availability levels?
-Is there a ``meta-property'' that exactly characterizes what
-properties are achievable with high availability or sticky high
-availability? This is an area of ongoing research within the Berkeley
-HAT project. \pbnote{SHORTEN}
+ A recent report from UT Austin shows that no model stronger than
+ causal consistency can be achieved in a sticky highly available,
+ one-way convergent system~\cite{cac}, but there are infinite highly
+ available and sticky highly available models to consider. For
+ example, always returning the value $1$ in response to reads is
+ incomparable with (i.e., neither stronger nor weaker than) causal
+ consistency: returning $1$ does not respect causality, and causal
+ consistency returns values other than $1$. There are actually
+ infintely many incomparable models (vacuously: return $1$, return
+ $2$, and so on). \textbf{What are the limits of HAT semantics?}  Are
+ there \textit{meaningful} properties that delineate the boundaries
+ between availability levels?  Is there a ``meta-property'' that
+ exactly characterizes what properties are achievable with high
+ availability or sticky high availability?
 
 \textbf{What are the costs and benefits within HAT designs?} There are
 many possible combinations of HAT guarantees, and the performance and
@@ -40,8 +34,8 @@ question.
   failure models lie in the HAT landscape?} The vast literature on
 semantics-based concurrency control indicates when coordination can be
 avoided while providing ``consistent'' operation for limited failure
-scenarios. We have performed a narrow case study, but a general
-taxonomization of techniques such as escrow
+scenarios. We have performed a narrow case study of TPC-C, but a
+general taxonomization of techniques such as escrow
 transactions~\cite{escrow}, Sagas~\cite{sagas}, and other long-running
 transaction support could help address the challenge of programming in
 a weakly consistent environment. HAT guarantees can also be

@@ -29,10 +29,10 @@ availability.
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
-setting~\cite{bernstein-book} requires at least one round trip time
+setting~\cite{bernstein-book} require at least one round trip time
 (RTT) before committing. As an example, traditional two-phase locking
 for a transaction of length $T$ may require $T$ \texttt{lock}
-operations and will require at least one \texttt{lock} and
+operations and will require at least one \texttt{lock} and one
 \texttt{unlock} operation.  In a distributed environment, each of
 these operations requires coordination, either with other database
 servers or with a lock service. If this coordination mechanism is
@@ -116,29 +116,30 @@ data, but this does not violate TPC-C requirements and clients will
 read their writes if they are sticky-available. Another transaction
 type, \textit{Payment}, updates running balances for warehouses,
 districts, and customer records and provides an audit trail. The
-transaction is increment- and append-only, so all balance increase
-operations commute, and TA allows the maintenance of foreign-key
-integrity constraints (e.g., via \texttt{UPDATE/DELETE CASCADE}).
+transaction is monotonic---increment- and append-only---so all balance
+increase operations commute, and TA allows the maintenance of
+foreign-key integrity constraints (e.g., via \texttt{UPDATE/DELETE
+  CASCADE}).
 
-While three out of five transactions are easily achievable with
-HATs, the remaining two transactions---\textit{New-Order} and
-\textit{Delivery}---are not as simple. The New-Order transaction
-places an order for a variable quantity of data items, updating
-warehouse stock as needed. It selects a sales district, assigns the
-order an ID number, adjusts the remaining warehouse stock, and writes
-a placeholder entry for the pending order. The Delivery transaction
+\vspace{.5em}\noindent\textit{New-Order and Delivery.} While three out of
+five transactions are easily achievable with HATs, the remaining two
+transactions are not as simple. The New-Order transaction places an
+order for a variable quantity of data items, updating warehouse stock
+as needed. It selects a sales district, assigns the order an ID
+number, adjusts the remaining warehouse stock, and writes a
+placeholder entry for the pending order. The Delivery transaction
 represents the fulfillment of a New-Order: it deletes the order from
 the pending list, updates the customer's balance, updates the order's
 carrier ID and delivery time, and updates the customer balance.
 
-The New-Order transaction presents two challenges: ID assignment and
+\vspace{.5em}\noindent\textit{IDs and decrements.} The New-Order transaction presents two challenges: ID assignment and
 stock maintenance. First, each New-Order transaction requires a unique
 ID number for the order. We can create a unique number by, say,
 concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
 assigned within a district, which requires preventing Lost
 Update. Accordingly, HATs cannot provide compliant TPC-C execution but
-can stil maintain uniqueness constraints. Second, the New-Order
+can still maintain uniqueness constraints. Second, the New-Order
 transaction decrements inventory counts: what if the count becomes
 negative?  Fortunately, TPC-C New-Order restocks each item's inventory
 count (increments by 91) if it would become negative as the result of
@@ -147,18 +148,19 @@ New-Orders, an item's stock will never fall below zero. This is TPC-C
 compliant, but a HAT system might end up with more stock than in a
 non-HAT-compliant implementation.
 
-The Delivery transaction is challenging due to non-monotonicity. Each
-Delivery deletes a pending order from the New-Order table and should
-be idempotent in order to avoid billing a customer twice; this implies
-a need to prevent Lost Update. This issue can be avoided by moving the
+\vspace{.5em}\noindent\textit{TPC-C Non-monotonicity.} The Delivery
+transaction is challenging due to non-monotonicity. Each Delivery
+deletes a pending order from the New-Order table and should be
+idempotent in order to avoid billing a customer twice; this implies a
+need to prevent Lost Update. This issue can be avoided by moving the
 non-monotonicity to the real world---the carrier that picks up the
-package for an order can ensure that she is the only carrier who has
-done so---but cannot provide a correct execution with HATs
-alone. However, according to distributed transaction
-architects~\cite{entitygroup}, these compensatory actions are
-relatively common in real-world business processes.
+package for an order can ensure that no other carrier will do so---but
+cannot provide a correct execution with HATs alone. However, according
+to distributed transaction architects~\cite{entitygroup}, these
+compensatory actions are relatively common in real-world business
+processes.
 
-Throughout execution, TPC-C also requires the maintenance of several
+\vspace{.5em}\noindent\textit{Integrity Constraints.} Throughout execution, TPC-C also requires the maintenance of several
 integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
 requires that each warehouse's sales count must reflect the sum of its
 subordinate sales districts. This integrity constraint spans two
@@ -171,7 +173,7 @@ subject to multi-key anomalies, we note that many TPC-E isolation
 tests (i.e., simultaneously modifying a product description and its
 thumbnail) are also achievable using HATs.
 
-In summary, many---but not all---TPC-C transactions are well-served by
+\vspace{.5em}\noindent\textit{Summary.} Many---but not all---TPC-C transactions are well-served by
 HATs. The two problematic transactions---New-Order and Payment---rely
 on non-monotonic state update. The former can be modified to ensure ID
 uniqueness but not sequential ID ordering, while the latter is an
@@ -202,18 +204,47 @@ of five trials per experiment.
 
 \begin{figure}[t!]
 \begin{center}
-\hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
+\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
 \end{center}\vspace{-2em}
-\begin{center}\textbf{Within \texttt{us-east}}\end{center}\vspace{-1.5em}
-\includegraphics[width=0.90\columnwidth]{figs/lan-threads-lats.pdf}\vspace{-1em}
-\includegraphics[width=0.90\columnwidth]{figs/lan-threads-thru.pdf}
-\begin{center}\textbf{Between \texttt{us-east} and \texttt{us-west-2}}\end{center}\vspace{-1.5em}
-\includegraphics[width=0.90\columnwidth]{figs/wan-threads-lats.pdf}\vspace{-1em}
-\includegraphics[width=0.90\columnwidth]{figs/wan-threads-thru.pdf}
-\caption{YCSB performance for two clusters of three servers each
+\begin{center}\small\textbf{Within \texttt{us-east (VA)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/2lan-threads-lats-log.pdf}\vspace{-.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/2lan-threads-thru.pdf}
+\begin{center}\small\textbf{Between \texttt{us-east (CA)} and \texttt{us-west-2 (OR)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/2wan-threads-lats-log.pdf}\vspace{-.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/2wan-threads-thru.pdf}
+\begin{center}\small Between \textbf{\texttt{us-east} \texttt{(VA)}, \texttt{us-west-1} \texttt{(CA)},\\ \texttt{us-west-2} \texttt{(OR)}, \texttt{eu-west} \texttt{(IR)}, \texttt{ap-northeast} \texttt{(SI)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/5wan-threads-lats-log.pdf}\vspace{--.5em}
+\includegraphics[width=0.90\columnwidth]{figs/finals/5wan-threads-thru.pdf}
+\caption{YCSB performance for two clusters of five servers each
   deployed within a single datacenter and cross-datacenters.}
 \label{fig:wan-exp}
 \end{figure}
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=0.90\columnwidth]{figs/finals/scaleout-thru.pdf}
+%\includegraphics[width=0.90\columnwidth]{figs/finals/scaleout-thru-perserver.pdf}
+\end{center}\vspace{-2em}
+\caption{Scale-out of TA, Eventual, and RC.}
+\label{fig:scaleout}
+\end{figure}
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=0.90\columnwidth]{figs/finals/txnlen-thru.pdf}
+\end{center}\vspace{-2em}
+\caption{Transaction length versus throughput.}
+\label{fig:txlen}
+\end{figure}
+
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=0.90\columnwidth]{figs/finals/wprop-thru.pdf}
+\end{center}\vspace{-2em}
+\caption{Proportion of reads and writes versus throughput.}
+\label{fig:rprop}
+\end{figure}
+
 
 As Figure~\ref{fig:wan-exp} shows, within a single datacenter, a
 mastered implementation achieves approximately double the latency and
