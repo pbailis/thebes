@@ -198,9 +198,9 @@ well to many servers.
 
 \vspace{.5em}\noindent\textit{Implementation.} Our prototype database
 is a partially replicated (hash-based, partitioned) key-value backed
-by LevelDB and implemented in Java using Apache Thrift. Our prototype
-currently supports eventual consistency (via simple anti-entropy) and
-HAT RU, RC, and TA guarantees (as described in
+by LevelDB and implemented in Java using Apache Thrift. It currently
+supports eventual consistency (last-writer-wins RU, via simple
+anti-entropy) and HAT RC and TA guarantees (as described in
 Section~\ref{sec:hats}). It also supports non-HAT operation whereby
 all operations for a given key are routed to a (randomly) designated
 \textit{master} replica for each key (i.e., PNUTS~\cite{pnuts}) as
@@ -210,11 +210,11 @@ while pending writes in TA are sent to a write-ahead log, which is
 synchronously flushed to disk.
 
 \vspace{.5em}\noindent\textit{Configuration.} We deploy the database
-in \textit{clusters}---sets of database servers that contain a single,
-fully replicated copy of the data---typically across datacenters,
-sticking all clients within a datacenter to their respective cluster
-(trivially providing read-your-writes and monotonic reads
-guarantees). By default, we use 5 Amazon EC2 \texttt{m1.xlarge}
+in \textit{clusters}---disjoint sets of database servers that each
+contain a single, fully replicated copy of the data---typically across
+datacenters, sticking all clients within a datacenter to their
+respective cluster (trivially providing read-your-writes and monotonic
+reads guarantees). By default, we use 5 Amazon EC2 \texttt{m1.xlarge}
 instances as servers in each cluster. For our workload, we link our
 client library to the YCSB benchmark~\cite{ycsb}, grouping every eight
 YCSB operations from the default workload (50\% reads, 50\% writes) to
