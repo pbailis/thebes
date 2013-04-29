@@ -1,5 +1,5 @@
 
-\section{Conclusion}
+\section{Conclusion and Future Work}
 The current state of database software offers uncomfortable and
 unnecessary choices between availability and transactional semantics.
 Through our analysis and experiments, we have demonstrated how goals
@@ -13,11 +13,26 @@ adopted in practice.  In taxonomizing this design space, we show that
 many transactional guarantees are achievable with high availability,
 while a few, like preventing Lost Update and Write Skew, are not. This
 offers a useful connection between storage semantics studied in the
-database and distributed systems communities. The next challenge is to
-return to issues of performance and systems architecture within the
-HAT design space.  Based on our understanding of what is desired in
-the field and newfound knowledge of what is possible to achieve, we
-believe HATs provide a large and useful design space to pursue.
+database and distributed systems communities.
+
+HATs raise several challenges for future study. In this paper, we have
+highlighted standardized models, but we would like a more concise
+description of which models are and are not achievable in HAT
+systems. Similarly, while we have studied the analytical and
+experiment behavior of several HAT models, there is substantial work
+in further understanding the performance and design of systems within
+the large set of HAT models. We also believe it is time to revisit
+techniques such as escrow transactions~\cite{escrow},
+Sagas~\cite{sagas}, and other long-running transaction support in
+order to aid HAT programming. Weakened failure assumptions as in
+escrow or in the form of bounded network asynchrony could enable
+richer HAT semantics at the cost of general-purpose
+availability. Alternatively, there is a range of possible hybrid
+systems providing strong semantics during partition-free periods and
+weakened semantics during partitions. Based on our understanding of
+what is desired in the field and newfound knowledge of what is
+possible to achieve, we believe HATs provide a large and useful design
+space to explore.
 
 %% In this paper we expose a broad design space of Highly Available Transactional 
 %% Systems (HATs), which can offer the key benefits of

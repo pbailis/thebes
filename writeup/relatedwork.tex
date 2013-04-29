@@ -56,9 +56,13 @@ useful but do not violate requirements for high availability or low
 latency. Recent systems proposals such as Swift~\cite{swift},
 Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
 provide transactional causal consistency guarantees with varying
-availability and represent a new class of sticky HAT systems.
-
-\pbnote{add TA stuff}
+availability and represent a new class of sticky HAT systems. There
+are infinitely many HAT models (i.e., always reading value 1 is
+comparable with always returning value 2), but a recent report from UT
+Austin shows that no model stronger than causal consistency can be
+achieved in a sticky highly available, \textit{one-way convergent}
+system~\cite{cac}. This result is promising and complementary to our
+results for general-purpose convergent data stores.
 
 
 % Ceri discuss distributed database update mechanisms with respect to
