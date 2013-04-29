@@ -186,108 +186,190 @@ will provide useful semantics for many applications.
 \subsection{Experimental Costs}
 \label{sec:prototype}
 
-To better understand the performance implications of HAT guarantees in
-a real-world environment and to validate the latency-based analysis in
-Section~\ref{sec:latency}, we deployed a distributed database
-prototype on public cloud infrastructure. We compared the behavior of
-eventual consistency, per-item mastering (wherein all operations to a
-given item required contacting a designated master server), Read
-Committed, and TA with read your writes guarantees. We deployed an
-experimental Java-based distributed datastore backed by LevelDB both
-within and across EC2 regions and ran the YCSB benchmark~\cite{ycsb}
-to determine the impact of latency. We partitioned the database into
-two fully replicated clusters of three \texttt{m1.xlarge} instances
-each. For HAT, we stuck YCSB clients to their local cluster and, to
-provide transactional functionality, grouped every six YCSB operations
-from the default workload to form a transaction. We report the median
-of five trials per experiment.
+To further understand the performance implications of HAT guarantees
+in a real-world environment, we implemented a HAT database
+prototype. Across a range of deployments on public cloud
+infrastructures, we found that, as Section~\ref{sec:latency}'s
+measurements suggested, ``strongly consistent'' algorithms incur
+substantial latency penalties: from 10 to 100 times their HAT
+counterparts. Moreover, HAT algorithms like TA---while more
+resource-intensive than basic eventual consistency---are able to scale
+well to many servers.
+
+\vspace{.5em}\noindent\textit{Implementation.} Our prototype database
+is a partially replicated (hash-based, partitioned) key-value backed
+by LevelDB and implemented in Java using Apache Thrift. Our prototype
+currently supports eventual consistency (via simple anti-entropy) and
+HAT RU, RC, and TA guarantees (as described in
+Section~\ref{sec:hats}). It also supports non-HAT operation whereby
+all operations for a given key are routed to a (randomly) designated
+\textit{master} replica for each key (i.e., PNUTS~\cite{pnuts}) as
+well as distributed two-phase locking. Servers are durable: they
+synchronously write to LevelDB before responding to client requests,
+while pending writes in TA are sent to a write-ahead log, which is
+synchronously flushed to disk.
+
+\vspace{.5em}\noindent\textit{Configuration.} We deploy the database
+in \textit{clusters}---sets of database servers that contain a single,
+fully replicated copy of the data---typically across datacenters,
+sticking all clients within a datacenter to their respective
+cluster. By default, we use 5 Amazon EC2 \texttt{m1.xlarge} instances
+as servers in each cluster. For our workload, we link our client
+library to the YCSB benchmark~\cite{ycsb}, grouping every eight YCSB
+operations from the default workload (50\% reads, 50\% writes) to form
+a transaction. We increase the number of keys in the workload from the
+default $1,000$ to $100,000$ with uniform random key access, keeping
+the default value size of $1KB$, and running YCSB for 180 seconds per
+configuration. Clients trivially achieve read-your-writes and
+monotonic reads guarantees via stickiness.
 
 \begin{figure}[t!]
 \begin{center}
-\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
+\hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
 \end{center}\vspace{-2em}
-\begin{center}\small\textbf{Within \texttt{us-east (VA)}}\end{center}\vspace{-1.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/2lan-threads-lats-log.pdf}\vspace{-.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/2lan-threads-thru.pdf}
-\begin{center}\small\textbf{Between \texttt{us-east (CA)} and \texttt{us-west-2 (OR)}}\end{center}\vspace{-1.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/2wan-threads-lats-log.pdf}\vspace{-.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/2wan-threads-thru.pdf}
-\begin{center}\small Between \textbf{\texttt{us-east} \texttt{(VA)}, \texttt{us-west-1} \texttt{(CA)},\\ \texttt{us-west-2} \texttt{(OR)}, \texttt{eu-west} \texttt{(IR)}, \texttt{ap-northeast} \texttt{(SI)}}\end{center}\vspace{-1.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/5wan-threads-lats-log.pdf}\vspace{--.5em}
-\includegraphics[width=0.90\columnwidth]{figs/finals/5wan-threads-thru.pdf}
+\begin{center}\small\textbf{A.) Within \texttt{us-east} \texttt{(VA)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/2lan-threads-lats.pdf}\vspace{-.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/2lan-threads-thru.pdf}\vspace{-.75em}
+\begin{center}\small\textbf{B.) Between \texttt{us-east} \texttt{(CA)} and \texttt{us-west-2} \texttt{(OR)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/2wan-threads-lats-log.pdf}\vspace{-.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/2wan-threads-thru.pdf}\vspace{-.75em}
+\begin{center}\small \textbf{C.) Between}{ \texttt{us-east} \texttt{(VA)}, \texttt{us-west-1} \texttt{(CA)},\\ \texttt{us-west-2} \texttt{(OR)}, \texttt{eu-west} \texttt{(IR)}, \texttt{ap-northeast} \texttt{(SI)}}\end{center}\vspace{-1.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/5wan-threads-lats-log.pdf}\vspace{--.5em}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/5wan-threads-thru.pdf}
 \caption{YCSB performance for two clusters of five servers each
   deployed within a single datacenter and cross-datacenters.}
 \label{fig:wan-exp}
 \end{figure}
 
+\vspace{.5em}\noindent\textit{Geo-replication.} We first deploy the
+database prototype across an increasing number of
+datacenters. Figure~\ref{fig:wan-exp}A shows that, when operating two
+clusters within a single datacenter, employing a single master for
+each data item results in approximately half the throughput and double
+the latency of an eventually consistent configuration: the HAT models
+are able to utilize double the number of servers. RC---essentially
+eventual consistency with buffering---is almost identical to eventual
+consistency, while TA---which incurs two writes for every client-side
+write (i.e., pending writes are sent to a WAL then subsequently moved
+into LevelDB once stable)---achieves approximately 75\% of the
+throughput. Latency increases linearly with the number of YCSB clients
+due to contention within LevelDB.
+
+ In contrast, when the two clusters are deployed across the
+ continental United States (Figure~\ref{fig:wan-exp}B), the average
+ latency of mastered operation increases to $300$ms (a $278$--$4257\%$
+ latency increase; average $37$ms latency per operation). For the same
+ number of YCSB client threads, mastered operation has substantially
+ lower throughput than the HAT configurations. Increasing the number of YCSB
+ clients \textit{does} increase the throughput of mastered operation,
+ but our Thrift-based connection processing did not gracefully handle
+ more than several thousand concurrent connections. In contrast,
+ across two datacenters, the performance of eventual, RC, and TA is
+ near-identical to a single-datacenter deployment.
+
+When we deployed five clusters (as opposed to two, as before) across
+the five AWS datacenters with lowest communication cost
+(Figure~\ref{fig:wan-exp}C), the trend continues: mastered latency
+increases to nearly $800$ms per transaction. As an attempt at reducing
+this overhead, we implemented and benchmarked a variant of
+quorum-based replication as in Dynamo~\cite{dynamo}, where clients
+sent requests to all replicas, which completed as soon as a majority
+of servers responded (guaranteeing regular
+semantics~\cite{herlihy-art}); this strategy (not pictured) did not
+substantially improve performance due to the network topology and
+because worst-case server load was unaffected. In this configuration,
+TA's relative throughput decreased: every YCSB \texttt{put} operation
+resulted in four \texttt{put} operations on remote replicas and,
+accordingly, the cost of anti-entropy increased (e.g., each server
+processed four incoming anti-entropy streams---as opposed to one
+before---reducing the opportunity for batching and decreasing
+available resources for for incoming client requests). This in turn
+increased garbage collection activity and, more importantly, IOPS when
+compared to Eventual and RC, causing throughput to peak at around half
+of Eventual. With an in-memory persistence (i.e., no LevelDB or WAN),
+TA throughput was within 20\% of eventual.
+
+We have intentionally omitted performance data for two-phase
+locking. Mastered configuration performed \textit{far} better than our
+textbook implementation, which, in addition to requiring a WAN
+round-trip per transaction, also incurred substantial overheads due to
+mutual exclusion via locking. We expect that, while techniques like
+those recently proposed in Calvin~\cite{calvin} can reduce the
+overhead of serializable transactions by avoiding locking, our
+master-based implementation and the data from
+Section~\ref{sec:latency} are reasonable lower bounds on latency.
+
 \begin{figure}[t!]
 \begin{center}
-\includegraphics[width=0.90\columnwidth]{figs/finals/scaleout-thru.pdf}
-%\includegraphics[width=0.90\columnwidth]{figs/finals/scaleout-thru-perserver.pdf}
-\end{center}\vspace{-2em}
+\hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}\vspace{-2em}
+\end{center}
+\begin{center}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/txnlen-thru.pdf}
+\end{center}\vspace{-2.25em}
+\caption{Transaction length versus throughput.}\vspace{-.5em}
+\label{fig:txlen}
+\end{figure}
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/wprop-thru.pdf}
+\end{center}\vspace{-2.25em}
+\caption{Proportion of reads and writes versus throughput.}\vspace{-.5em}
+\label{fig:rprop}
+\end{figure}
+\begin{figure}[t!]
+\begin{center}
+\includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru.pdf}
+%\includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru-perserver.pdf}
+\end{center}\vspace{-2.25em}
 \caption{Scale-out of TA, Eventual, and RC.}
 \label{fig:scaleout}
 \end{figure}
 
-\begin{figure}[t!]
-\begin{center}
-\includegraphics[width=0.90\columnwidth]{figs/finals/txnlen-thru.pdf}
-\end{center}\vspace{-2em}
-\caption{Transaction length versus throughput.}
-\label{fig:txlen}
-\end{figure}
-
-\begin{figure}[t!]
-\begin{center}
-\includegraphics[width=0.90\columnwidth]{figs/finals/wprop-thru.pdf}
-\end{center}\vspace{-2em}
-\caption{Proportion of reads and writes versus throughput.}
-\label{fig:rprop}
-\end{figure}
+\vspace{.5em}\noindent\textit{Transaction length.} As shown in
+Figure~\ref{fig:txlen} (clusters in Virginia and Oregon), throughput
+of eventual consistency, RC, and mastered operation are unaffected by
+transaction length. In contrast, TA's throughput decreases linearly
+with increased transaction length: with $1$ operation per transaction,
+TA throughput is within 18\% of eventual ($34$ bytes overhead), and
+with $128$ operations per transaction, TA throughput is within $60\%$
+($1898$ bytes overhead). This is primarily because our TA algorithm
+requires metadata proportional to the length of each transaction,
+consuming IOPS and network bandwidth.
 
 
-As Figure~\ref{fig:wan-exp} shows, within a single datacenter, a
-mastered implementation achieves approximately double the latency and
-slightly over half of the throughput of a HAT implementation. This is
-because, given two replicas for each key, the mastered implementation
-serves requests from only one. The mastered implementation still
-achieves $19,797$ transactions per second---over 6,000 per
-master---and is only $15.56$ms slower at peak compared to eventual
-consistency. However, eventual consistency and HAT models achieve
-substantially higher throughput--$37,575$ and $36,178$ transactions
-per second, respectively--and lower latency---$48.3\%$ and $47.2\%$
-respectively. This difference is unsurprising because, in these weaker
-models, all servers can serve both reads and writes, effectively
-doubling the capacity of the system. The weaker models still propagate
-new values between replicas, but this process is asynchronous and,
-aside from consuming disk I/O and network bandwidth, does not
-substantially impact clients. As expected, HAT models perform
-similarly to eventual consistency: our Read Committed implementation
-buffers client writes and adds no additional server-side overhead,
-while TA requires additional metadata with each write but has less
-than 5\% performance impact compared to eventual consistency.
+\vspace{.5em}\noindent\textit{Read proportion.} The default equal
+proportion of reads and writes is fairly pessimistic: for example,
+Facebook reports $99.8\%$ reads for their workload~\cite{eiger}. As
+shown in Figure~\ref{fig:rprop} (clusters in Virginia and Oregon),
+with all reads, TA is within $4.8\%$ of eventual; with all writes,
+eventual throughput decreases by $288.8\%$ compared to all reads and
+TA is within $33\%$ of eventual. At $99.8\%$ reads, TA incurs a $7\%$
+overhead ($5.8\%$ for in-memory storage).
 
-In comparison, over multiple datacenters, the cost of coordination
-increases. The HAT and eventual consistency implementations continue
-to enjoy local RTTs only, and, with the exception of a slight
-performance degradation in TA---which we believe is attributable to
-Java garbage collection overheads in TA's inbound anti-entropy
-buffers---performance remains unchanged. However, each YCSB update to
-a remote replica ($\frac{2}{3}$ in one datacenter, $\frac{1}{3}$ in
-the other) of requiring a remote RTT between Virginia and Oregon (or
-vice-versa) to reach the master. This leads to a latency increase of
-around $166$ms ($746\%$) per transaction compared to a
-single-datacenter deployment. In order to attain reasonable throughput
-for the mastered deployment, we had to greatly increase the number of
-concurrent clients accessing the database, and we found that threading
-and socket overheads quickly overwhelmed the database server. Over a
-wide-area network, the increased cost of RTTs dramatically affects
-system efficiency.
 
-This brief set of experiments is not meant as an exhaustive study, but
-it validates our earlier intuition about the cost of violating
-HAT-compliance. As Deutsch points out, ignoring factors such as
-latency can ``cause big trouble and painful learning
+
+\vspace{.5em}\noindent\textit{Scale-out.} One of the key benefits of
+our HAT algorithms is that they are shared-nothing, meaning they
+should not compromise scalability. Figure~\ref{fig:scaleout} shows
+that varying the number of servers across two clusters in Virginia and
+Oregon (with $15$ YCSB clients per server) results in linear scale-out
+for both eventual, RC, and TA. RC and eventual scale perfectly with an
+approximately $5$x throughput increase moving from $5$ to $25$ servers
+per cluster. For the same configuration, TA scales by $3.8$x,
+achieving over $260,000$ operations per second. We believe that TA's
+performance is due to resource contention---with a memory-backed
+database (instead of LevelDB), TA scales by $4.25$x (not shown)---and
+increased garbage collection activity.
+
+\vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
+confirms our earlier analytical intuitions. HAT systems can provide
+useful semantics without substantial performance penalties. In
+particular, our TA algorithm can achieve throughput competitive with
+eventual consistency at the expense of increased disk and network
+utilization. Perhaps more importantly, all HAT algorithms circumvent
+high WAN latencies inevitable with non-HAT implementations. Our results
+highlight Deutcsh's observation that ignoring factors such as latency
+can ``cause big trouble and painful learning
 experiences''~\cite{fallacies-deutsch}---in a single-site context,
 paying the cost of coordination may be tenable, but, especially as
-services are geo-replicated,  costs increase. 
+services are geo-replicated, costs increase.

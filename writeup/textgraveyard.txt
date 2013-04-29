@@ -1,3 +1,45 @@
+
+
+As Figure~\ref{fig:wan-exp} shows, within a single datacenter, a
+mastered implementation achieves approximately double the latency and
+slightly over half of the throughput of a HAT implementation. This is
+because, given two replicas for each key, the mastered implementation
+serves requests from only one. The mastered implementation still
+achieves $19,797$ transactions per second---over 6,000 per
+master---and is only $15.56$ms slower at peak compared to eventual
+consistency. However, eventual consistency and HAT models achieve
+substantially higher throughput--$37,575$ and $36,178$ transactions
+per second, respectively--and lower latency---$48.3\%$ and $47.2\%$
+respectively. This difference is unsurprising because, in these weaker
+models, all servers can serve both reads and writes, effectively
+doubling the capacity of the system. The weaker models still propagate
+new values between replicas, but this process is asynchronous and,
+aside from consuming disk I/O and network bandwidth, does not
+substantially impact clients. As expected, HAT models perform
+similarly to eventual consistency: our Read Committed implementation
+buffers client writes and adds no additional server-side overhead,
+while TA requires additional metadata with each write but has less
+than 5\% performance impact compared to eventual consistency.
+
+In comparison, over multiple datacenters, the cost of coordination
+increases. The HAT and eventual consistency implementations continue
+to enjoy local RTTs only, and, with the exception of a slight
+performance degradation in TA---which we believe is attributable to
+Java garbage collection overheads in TA's inbound anti-entropy
+buffers---performance remains unchanged. However, each YCSB update to
+a remote replica ($\frac{2}{3}$ in one datacenter, $\frac{1}{3}$ in
+the other) of requiring a remote RTT between Virginia and Oregon (or
+vice-versa) to reach the master. This leads to a latency increase of
+around $166$ms ($746\%$) per transaction compared to a
+single-datacenter deployment. In order to attain reasonable throughput
+for the mastered deployment, we had to greatly increase the number of
+concurrent clients accessing the database, and we found that threading
+and socket overheads quickly overwhelmed the database server. Over a
+wide-area network, the increased cost of RTTs dramatically affects
+system efficiency.
+
+
+
 \footnote{Oracle provides an isolation level called
   ``Statement Level Read Consistency''~\cite{adya}; this is analogous
   to Predicate Cut Isolation at the level of a single operation within
