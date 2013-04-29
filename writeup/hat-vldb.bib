@@ -48,7 +48,7 @@
 
 @inproceedings{pnuts,
   title={{PNUTS}: {Yahoo!'s} hosted data serving platform},
-  author={Cooper, B.F. and Ramakrishnan, R. and Srivastava, U. and Silberstein, A. and Bohannon, P. and Jacobsen, H.A. and Puz, N. and Weaver, D. and Yerneni, R.},
+  author={Cooper, B.F. and others},
   booktitle = {VLDB 2008}
 }
 
@@ -65,7 +65,7 @@ booktitle = {LADIS 2008},
 note = {Configuration: \url{http://ur1.ca/av6sa} (2012)}}
 
 @inproceedings{dynamo,
- author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
+ author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and others},
  title = {Dynamo: {Amazon's} highly available key-value store},
  booktitle = {SOSP 2007}
 } 
@@ -86,7 +86,7 @@ howpublished={\url{http://tinyurl.com/bpsug4b}}}
 
 @inproceedings{bigtable,
   title={Bigtable: A distributed storage system for structured data},
-  author={Chang, Fay and Dean, Jeffrey and Ghemawat, Sanjay and Hsieh, Wilson C and Wallach, Deborah A and Burrows, Mike and Chandra, Tushar and Fikes, Andrew and Gruber, Robert E},
+  author={Chang, Fay and Dean, Jeffrey and Ghemawat, Sanjay and others},
   booktitle={OSDI 2006}}
 
 @online{pnuts-update,
@@ -137,7 +137,7 @@ title={Research experiment disrupts Internet, for some},
 author={Robert McMillan},
 year={2010},
 month={August},
-howpublished={{IDG News Service}, \url{http://www.computerworld.com/s/article/9182558/Research_experiment_disrupts_Internet_for_some}}}
+howpublished={{Computerworld}, \url{http://tinyurl.com/23sqpek}}}
 
 @online{amazon-netpartition,
 title={{Summary of the Amazon EC2 and Amazon RDS Service Disruption in the US East Region}},
@@ -253,9 +253,9 @@ author = {P. Mahajan and L. Alvisi and M. Dahlin},
  category = "recent,WANrepl,byz,PRACTI,webos" 
  } 
 
-@article{hstore,
+@inproceedings{hstore,
   title={H-store: a high-performance, distributed main memory transaction processing system},
-  author={Kallman, Robert and Kimura, Hideaki and Natkins, Jonathan and Pavlo, Andrew and Rasin, Alexander and Zdonik, Stanley and Jones, Evan PC and Madden, Samuel and Stonebraker, Michael and Zhang, Yang and Hugg, John and Abadi, Daniel},
+  author={Kallman, Robert and Kimura, Hideaki and Natkins, Jonathan and Pavlo, Andrew and Rasin, Alexander and Zdonik, Stanley and Jones, Evan PC and Madden, Samuel and Stonebraker, Michael and Zhang, Yang and others},
   booktitle={VLDB 2008}
 }
 
@@ -305,8 +305,7 @@ booktitle = {CIDR 2011}}
 @book{herlihy-art,
   title={The art of multiprocessor programming},
   author={Herlihy, Maurice and Shavit, Nir},
-  year={2008},
-  publisher={Morgan Kaufmann}
+  year={2008}
 }
 
 @article{sequentialconsistency,
@@ -412,7 +411,6 @@ booktitle={SIGMOD 2013}}
   title={Middleware-based database replication: the gaps between theory and practice},
   author={Cecchet, Emmanuel and Candea, George and Ailamaki, Anastasia},
   booktitle={SIGMOD 2008},
-  pages={739--752},
 }
 
 @phdthesis{kemme-thesis,
@@ -425,12 +423,12 @@ booktitle={SIGMOD 2013}}
 @inproceedings{brewer-slides,
   title={Towards robust distributed systems},
   author={Brewer, Eric},
-  booktitle = {{Keynote at PODC 2000}}}
+  note = {{Keynote at PODC 2000}}}
 
 @article{vogels-defs,
  author = {Vogels, Werner},
  title = {Eventually consistent},
- journal = {Commun. ACM},
+ journal = {CACM},
  issue_date = {January 2009},
  volume = {52},
  number = {1},
@@ -499,10 +497,10 @@ note={\url{http://www.nuodb.com/nuodb-online-documentation/references/r_Lang/r_T
 title={{HAT, not CAP}: Introducing {Highly Available Transactions}},
 author = {Peter Bailis and Alan Fekete and Ali Ghodsi and Joseph M. Hellerstein and Ion Stoica},
 booktitle={To appear in {HotOS 2013}},
-note = {Note: version appearing on arXiv is a superset of conference submission and camera-ready}}
+note = {N.B.: version appearing on the arXiv is a superset of workshop paper}}
 
 @techreport{hat-tr,
-title={{Highly Available Transactions: Virtues and Limitations (Technical Report)}},
+title={{Highly Available Transactions: Virtues and Limitations (Extended)}},
 author = {Peter Bailis and Aaron Davidson and Alan Fekete and Ali Ghodsi and Joseph M. Hellerstein and Ion Stoica},
 note={\url{http://bailis.org/private/hat-extended.pdf}}}
 
@@ -600,10 +598,7 @@ note={\url{http://voltdb.com/dig-deeper/faq.php}, also verified with VoltDB stak
 @inproceedings{walter,
 author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
 title = {Transactional storage for geo-replicated systems},
-pages = {385--400},
-booktitle={SOSP},
-year = {2011}}
-
+booktitle={SOSP 2011}}
 
 @inproceedings{brewer-base,
   title={Cluster-based scalable network services},
@@ -701,6 +696,7 @@ control mechanisms},
   volume={11},
   number={4},
   pages={405--430},
+  year={1986}
 }
 
 @inproceedings{sagas,
@@ -844,7 +840,7 @@ pages = {37-42},
 }
 
 @INPROCEEDINGS{sessionguarantees,
-    author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
+    author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and others},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
     booktitle = {PDIS 1994},
 }

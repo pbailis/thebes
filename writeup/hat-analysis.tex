@@ -63,10 +63,10 @@ writes to the data items: for example, in the below example, $T_3$
 should \emph{eventually} only read $a=b=1$ or $a=b=2$ but not $a=2,
 b=1$ or $a=1, b=2$:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: w_x(2)~w_y(2)
-\\T_3 &: r_x(a)~r_y(b)\vspace{-.5em}
+\\T_3 &: r_x(a)~r_y(b)\vspace{-1em}
 \end{align*}
 Later properties will strengthen Read Uncommitted.
 
@@ -93,10 +93,10 @@ from Berenson et al.). For instance, in the example below, $T_3$
 should never see $a=1$, and, if $T_2$ aborts, $T_3$ should never read
 $a=3$:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_x(2)
 \\T_2 &: w_x(3)\\
-T_3 &: r_x(a)\vspace{-.5em}
+T_3 &: r_x(a)\vspace{-1em}
 \end{align*}
 It is fairly easy for a HAT system to prevent ``Dirty Reads'': if each
 client never writes uncommitted data to shared copies of the database, then
@@ -168,7 +168,7 @@ item cut isolation, TA prevents Read Skew anomalies (Berenson et al.'s
 A5A~\cite{ansicritique}). As an example of TA, because $T_2$ has read
 $T_1$'s write to $y$, $T_2$ must observe $b=c=1$ (or later versions
 for each key):
-\vspace{-.5em}
+\vspace{-1em}
 \begin{align*}
 \small
 T_1 &: w_x(1)~w_y(1)~w_z(1)
@@ -308,16 +308,15 @@ isolation~\cite{adya}).\vspace{.5em}
 
 
 Read your writes is not achievable in a highly available
-system. Consider a client that executes the following two transactions
-in succession:
+system. Consider a client that executes the following two transactions:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: w_x(1)
-\\T_2 &: r_x(a)\vspace{-.5em}
+\\T_2 &: r_x(a)\vspace{-1em}
 \end{align*}
 If the client executes $T_1$ against a server that is partitioned from
 the rest of the other servers, the server must allow $T_1$ to
-commit. If the client executes $T_2$ against the same (partitioned)
+commit. If the client subsequently executes $T_2$ against the same (partitioned)
 server, then it will be able to read its writes. However, if the
 network topology shifts and the client can only contact a different
 server that is partitioned from the server that executed $T_1$, then
@@ -350,7 +349,7 @@ Section~\ref{sec:evaluation}.
 
 \vspace{.5em}\noindent{\textbf{Durability}} A client requiring that its
 transactions' effects survive $F$ server faults requires at least
-$F+1$ non-failing nodes.
+$F+1$ non-failing replicas.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,
@@ -367,7 +366,7 @@ Uncommitted.
 \label{sec:unachievable-hat}
 
 While there are infinitely many HAT models
-(Section~\ref{sec:futurework}), at this point, we have largely
+(Section~\ref{sec:relatedwork}), at this point, we have largely
 exhausted the range of achievable, previously defined (and useful)
 semantics that are available to HAT systems. Before summarizing our
 possibility results, we will present impossibility results for HATs,
@@ -388,9 +387,9 @@ its original read of the data item, ``missing'' or ``losing'' $T2$'s
 newer update. Consider a database containing only the following
 transactions:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: r_x(a) w_x(a+2)
-\\T_2 &: w_x(2)\vspace{-.5em}
+\\T_2 &: w_x(2)\vspace{-1em}
 \end{align*}
 If $T_1$ reads $a=1$ but $T_2$'s write to $x$ precedes $T_1$'s write
 operation, then the database will end up with $a=3$, a state that
@@ -401,9 +400,9 @@ It is impossible to prevent Lost Update in a highly available
 environment. Consider two clients who submit the following $T_1$ and
 $T_2$ on opposite sides of a network partition:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: r_x(100)~w_x(100+20=120)
-\\T_2 &: r_x(100)~w_x(100+30=130)\vspace{-.5em}
+\\T_2 &: r_x(100)~w_x(100+30=130)\vspace{-1em}
 \end{align*}
 Regardless of whether $x=120$ or $x=130$ is chosen by a replica, the
 database state could not have arisen serial execution of $T_1$ and
@@ -520,7 +519,7 @@ Regular\linearizable, Linearizability\linearizable, Strong
   unavailable models considered in this paper. Unavailable models are
   labeled by cause of unavailability: preventing lost
   update\lostupdate, preventing write skew\rwskew, and requiring
-  recency guarantees\linearizable.}
+  recency guarantees\linearizable.}\vspace{-1.5em}
 \label{table:hatcompared}
 \end{table}
 
@@ -604,7 +603,7 @@ Regular\linearizable, Linearizability\linearizable, Strong
   ordering by model strength. Incomparable models can be
   simultaneously achieved, and the availability of a combination of
   models has the availability of the least available individual
-  model.}
+  model.}\vspace{-1em}
 \label{fig:hatcompared}
 \end{figure}
 
@@ -620,10 +619,10 @@ versus linearizability, and benefits of stickiness.
 combinations of compatible guarantees requires care. Consider the
 following transactions:
 \begin{align*}
-\small\vspace{-.5em}
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: w_x(2)~w_y(2)
-\\T_3 &: r_x(a)~r_y(b)\vspace{-.5em}
+\\T_3 &: r_x(a)~r_y(b)\vspace{-1em}
 \end{align*}
 If we want to guarantee both cut isolation and transactional atomicity
 and the system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs

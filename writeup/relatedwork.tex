@@ -1,5 +1,6 @@
 
 \section{Related Work}
+\label{sec:relatedwork}
 
 There is a growing body related work on highly available semantics,
 mechanisms for concurrency control, and techniques for scalable
@@ -24,11 +25,12 @@ rigorously classify \textit{non-HAT} semantics: Wisemann et al. have
 proposed a three parameter classification for one-copy serializable
 database systems, performing a more extensive classification than our
 overview in Section~\ref{sec:evaluation}, including eager database
-replication techniques~\cite{kemme-classification}. Additionally
-several earlier surveys consider distributed mechanisms for achieving
-one-copy serializability~\cite{wisemann-survey}, linearizability,
-consistent snapshots, and recency bounds~\cite{ceri-mechanism,
-  chen-mechanism}.
+replication techniques~\cite{kemme-classification} and distributed
+mechanisms for achieving one-copy
+serializability~\cite{wisemann-survey}.
+
+%, linearizability, consistent snapshots, and recency
+%bounds~\cite{ceri-mechanism, chen-mechanism}.
 
 There has been a recent resurgence of interest in distributed
 multi-object semantics, both in academia~\cite{kraska-s3, gstore,

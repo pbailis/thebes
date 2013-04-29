@@ -1,7 +1,61 @@
 
 \normalsize
 
-\section{Adya Definitions}
+\section{Formal Definitions}
+
+In this section, we formally define HAT transactional semantics. Our
+formalism is based off of that of Adya~\cite{adya}. For the reader
+familiar with his formalism, this is a mostly-straightforward exercise
+combining transactional models with distributed systems
+semantics. While the novel aspects of this work largely pertain
+to \textit{using} these definitions (e.g., in Section~\ref{sec:hats}),
+we believe it is instructive to accompany them by appropriate
+definitions to both eliminate any ambiguity in prose and for the
+enjoyment of more theoretically-inclined readers.
+
+\subsection{Model}
+
+Here, we briefly describe our database model. It is, with the
+exception of sessions, identical to that of Adya~\cite{adya}. We omit
+a full duplication of his formalism here but highlight several salient
+criteria. We refer the interested reader to Adya's Ph.D. thesis,
+Section 3.1 (pp. 33--43).
+
+Users submit transactions to a database system that contains multiple
+versions of sets of objects. Each transaction is composed of writes,
+which create new versions of an object, and reads, which return a
+written version or the initial version of the object. A transaction's
+last operation is either \texttt{commit} or \texttt{abort}, and there
+is exactly one invocation of either these two operations per
+transaction. Transactions can either read individual items or read
+based on predicates, or logical ranges of data items.
+
+\begin{definition}[Version set of a predicate-based operation]
+When a transaction executes a read or write based on a predicate P,
+the system selects a version for each tuple in P’s relations. The set
+of selected versions is called the \textit{Version set} of this predicate-based
+operation and is denoted by Vset(P).
+\end{definition}
+
+A history over transactions has two parts: a partial order of events
+reflects the ordering of operations with respect to each transaction
+and a (total) version order ($\ll$) on the committed versions of each
+object.
+
+As a departure from Adya's formalism, to capture the use of session
+guarantees, we allow transactions to be grouped into sessions. We
+represent sessions as a partial ordering on committed transactions
+such that each transaction in the history appears in at most one
+session.
+
+\subsection{Conflict and Serialization Graphs}
+
+To reason about isolation anomalies, we use Adya's concept of a
+conflict graph, which is composed of dependencies between
+transaction. The definitions in this section are directly from Adya,
+with two difference. First, we expand Adya's formalism to deal
+with \textit{per-item} dependencies. Second, we define session
+dependencies (Definitions~\ref{def:sd1} and~\ref{def:sd2}).
 
 \begin{definition}[Change the Matches of a Predicate-Based Read]
 A transaction $T_i$ changes the matches
@@ -83,31 +137,67 @@ A transaction $T_j$ directly write-depends on transaction $T_i$ if
 $T_i$ directly write-depends by $x$ on $T_j$ for some item $x$.
 \end{definition}
 
-\section{Session Definitions}
-
 \begin{definition}[Directly Session-Depends by $S$]
+\label{def:sd1}
 A transaction $T_j$ directly session-depends on transaction $T_i$ if
 $T_i$ immediately precedes $T_j$ in the session commit order for session $S$.
 \end{definition}
 
 \begin{definition}[Directly Session-Depends]
+\label{def:sd2}
 A transaction $T_j$ directly session-depends on transaction $T_i$ if
 $T_j$ directly session-depends on transaction $T_i$ for some session
 $S$.
 \end{definition}
 
-\section{HAT Guarantees}
+The dependencies for a history $H$ form a graph called its Directed
+Serialization Graph ($DSG(H)$).
+
+\subsection{Transactional Anomalies and Isolation Levels}
+
+Following Adya, we define isolation levels according to
+possible \textit{anomalies}--typically represented by cycles in the
+serialization graphs. Definitions~\ref{def:n-ici}--\ref{def:lostupdate}
+are not found in Adya but are found (albeit not in this formalism) in
+Berenson et al.~\cite{ansicritique} and the literature on session
+guarantees~\cite{sessionguarantees, vogels-defs}.
+
+\begin{definition}[Write Cycles (G0)]
+A history $H$ exhibits phenomenon G0 if $DSG(H)$ contains a directed
+cycle consisting entirely of write-dependency edges.
+\end{definition}
 
 \begin{definition}[Read Uncommitted]
+A system that provides Read Uncommitted isolation prohibits phenomenon G0.
+\end{definition}
+
+\begin{definition}[Aborted Reads (G1a)]
+A history $H$ exhibits phenomenon G1a if it contains an aborted
+transaction $T_1$ and a committed transaction $T_2$ such that $T_2$ has read
+some object (maybe via a predicate) modiﬁed by $T_1$.
+\end{definition}
+
+\begin{definition}[Intermediate Reads (G1b)]
+A history $H$ exhibits phenomenon G1b if it contains a committed
+transaction $T_2$ that has read a version of object $x$ (maybe via a
+predicate) written by transaction $T_1$ that was not $T_1$’s ﬁnal
+modiﬁcation of $x$.
+\end{definition}
+
+\begin{definition}[Circular Information Flow (G1c)]
+A history $H$ exhibits phenomenon G1c if $DSG(H)$ contains a directed
+cycle consisting entirely of dependency edges.
 \end{definition}
 
 \begin{definition}[Read Committed]
+A system that provides Read Committed isolation prohibits phenomenon G0, G1a, G1b, and G1c.
 \end{definition}
 
-\begin{definition}[Item Cut Non-Isolation (N-ICI)]
-A history $H$ exhibits phenomenon N-ICI if there exists a transaction
-$T_i$ such that $T_i$ directly item-depends by $x$ on more than one
-other transaction.
+\begin{definition}[Item Cut Non-Isolation (N-I-CI)]
+\label{def:n-ici}
+A history $H$ exhibits phenomenon N-ICI if $DSG(H)$ contains a
+transaction $T_i$ such that $T_i$ directly item-depends by $x$ on more
+than one other transaction.
 \end{definition}
 
 \begin{figure}[H]
@@ -136,23 +226,24 @@ T_3 &: r_x(1)~r_x(2)
 \label{fig:nici-dsg}
 \end{figure}
 
-\begin{definition}[Item Cut Isolation (ICI)]
-A system that provides Item Cut Isolation prohibits phenomenon N-ICI.
+\begin{definition}[Item Cut Isolation (I-CI)]
+A system that provides Item Cut Isolation prohibits phenomenon N-I-CI.
 \end{definition}
 
-\begin{definition}[Predicate Cut Non-Isolation (N-ICI)]
-A history $H$ exhibits phenomenon N-ICI if there exists a transaction
-$T_i$ such that $P= \{p \mid T_i$ directly predicate-read-depends by
-$p$ on another other transaction$\}$ and $\bigcap_{p\in P} P \neq
-\emptyset$. (TODO: this isn't necessarily it)
+\begin{definition}[Predicate Cut Non-Isolation (N-P-CI)]
+A history $H$ exhibits phenomenon N-I-CI if $DSG(H)$ contains a
+transaction $T_i$ such that, for two predicate-based reads $p_k$,
+$p_j$ in $P$ such that $p_k \subseteq p_j$ and $T_i$ directly
+predicate-read-depends by $p_k$ on another transaction $T_l$, but
+$T_i$ does not directly predicate-read-depend by $p_j$ on $T_l$.
 \end{definition}
 
-\begin{definition}[Predicate Cut Isolation (ICI)]
-A system that provides Predicate Cut Isolation prohibits phenomenon N-ICI.
+\begin{definition}[Predicate Cut Isolation (P-CI)]
+A system that provides Predicate Cut Isolation prohibits phenomenon N-P-CI.
 \end{definition}
 
 \begin{definition}[Non-transactional Atomicity (N-TA)]
-A history exhibits phenomenon N-TA if it contains a directed cycle
+A history $H$ exhibits phenomenon N-TA if $DSG(H)$ contains a directed cycle
 consisting of exactly one read-dependency edge by $x$ from $T_i$ to
 $T_j$ and one anti-dependency edge by $y$ from $T_j$ to $T_i$ and
 $T_i$'s corresponding read from $x$ does not precede its corresponding
@@ -194,7 +285,7 @@ N-TA.
 \end{definition}
 
 \begin{definition}[Non-monotonic Reads (N-MR)]
-A history exhibits phenomenon N-MR if it contains a directed cycle
+A history $H$ exhibits phenomenon N-MR if $DSG(H)$ contains a directed cycle
 consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$ with an anti-dependency edge by $i$ from $T_j$ and a
 read-dependency edge by $i$ into $T_i$.
@@ -240,7 +331,7 @@ T_4 &: r_x(1)
 \end{figure}
 
 \begin{definition}[Non-monotonic Writes (N-MW)]
-A history exhibits phenomenon N-MW if it contains a directed cycle
+A history $H$ exhibits phenomenon N-MW if $DSG(H)$ contains a directed cycle
 consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$ and at least one write-dependency edge.
 \end{definition}
@@ -279,9 +370,10 @@ A system provides Monotonic Writes if it prohibits phenomenon N-MW.
 \end{definition}
 
 \begin{definition}[Writes Do Not Follow Reads (N-WFR)]
-A history exhibits phenomenon N-WFR if, for all committed transactions
-$T_1$, $T_2$, $T_3$ such that $T_2$ write-depends on $T_1$ and $T_3$
-write-depends on $T_2$, $T_3$ does not directly anti-depend on $T_1$.
+A history $H$ exhibits phenomenon N-WFR if, in $DSG(H)$, for all
+committed transactions $T_1$, $T_2$, $T_3$ such that $T_2$
+write-depends on $T_1$ and $T_3$ write-depends on $T_2$, $T_3$ does
+not directly anti-depend on $T_1$.
 \end{definition}
 
 
@@ -317,7 +409,7 @@ A system provides Writes Follow Reads if it prohibits phenomenon N-WFR.
 \end{definition}
 
 \begin{definition}[Not-Read Your Writes (N-RYW)]
-A history exhibits phenomenon N-RYW if it contains a directed cycle
+A history $H$ exhibits phenomenon N-RYW if $DSG(H)$ contains a directed cycle
 consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$, at least one anti-dependency edge, and the remainder
 anti-dependency or write-dependency edges.
@@ -362,62 +454,37 @@ A system provides Causal Consistency if it provides PRAM Consistency
 and prohibits phenomenon N-WFR.
 \end{definition}
 
-
-\begin{observation}
-Read Your Writes is not highly available.
-\end{observation}
-
-\begin{corollary}
-PRAM and Causal Consistency are not highly available.
-\end{corollary}
-
-\begin{definition}[Recency Guarantees]
-\end{definition}
-
 \begin{definition}[Lost Update]
+A history $H$ exhibits phenomenon Lost if $DSG(H)$ contains a directed
+cycle having one or more item-antidependency edges and all edges are
+by the same data item $x$.
+\label{def:lostupdate}
 \end{definition}
 
-\begin{definition}[Write Skew]
+\begin{definition}[Write Skew (Adya G2-item)]
+A history $H$ exhibits phenomenon Write Skew if $DSG(H)$ contains a directed
+cycle having one or more item-antidependency edges.
 \end{definition}
+
+For Snapshot Isolation, we depart from Adya's recency-based definition
+(see Adya Section 4.3). Nonetheless, implementations of this
+definition will still be unavailable due to reliance of preventing
+Lost Update.
 
 \begin{definition}[Snapshot Isolation]
+A system that provides Snapshot Isolation prevents phenomena G0, G1a,
+G1b, G1c, N-P-CI, N-TA, and Lost Update.
 \end{definition}
+
+For Repeatable Read, we return to Adya.
 
 \begin{definition}[Repeatable Read]
+A system that provides Repeatable Read Isolation prohibits phenomena
+G0, G1a, G1b, G1c, and Write Skew.
 \end{definition}
 
-\begin{definition}[Safe Register]
-\end{definition}
-
-\begin{definition}[Regular Register]
-\end{definition}
-
-\begin{definition}[Linearizable Register]
-\end{definition}
-
-\begin{definition}[Strong One-copy Serializability]
-\end{definition}
-
-\begin{definition}[Model Strength]
-We say that a consistency model $M_1$ is stronger than model $M_2$ if
-$M_1$ admits a strict subset of the histories admitted by $M_2$.
-\end{definition}
-
-\begin{observation}
-Transactional Atomicity is weaker than Repeatable Read.
-\end{observation}
-
-\begin{observation}
-Transactional Atomicity is weaker than Snapshot Isolation.
-\end{observation}
-
-\begin{observation}
-Causality is weaker than linearizability.
-\end{observation}
-
-\begin{observation}
-Read Your Writes is weaker than safe register semantics.
-\end{observation}
+For definitions of safe, regular, and linearizable register semantics,
+we refer the reader to Herlihy's textbook~\cite{herlihy-art}.
 
 \section{Transactional Atomicity}
 
@@ -454,3 +521,4 @@ keys $x$ and $y$ are present on the replica for $x$'s \texttt{stable}
 and the replica for $y$'s \texttt{pending}, a client's reads from $x$
 then $y$ will return a transactionally atomic pair of values because
 the replica for $y$ will know to check \texttt{pending}.
+

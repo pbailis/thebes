@@ -39,24 +39,23 @@ provide serializability for general-purpose transactions, they are
 apparently strong enough to deliver acceptable behavior to many
 application programmers and are substantially stronger than the
 semantics provided by current highly available systems. This raises a
-natural question: which of these semantics can be provided while
-remaining highly available?
+natural question: which of these semantics can be provided with high
+availability?
 
-Unfortunately, the relationship between high availability and ACID
-semantics has not been well-explored. We have a strong understanding
-of weak isolation in the single-server context from which it
-originated~\cite{adya, ansicritique, gray-isolation} and many papers
-offer techniques for providing distributed
+Unfortunately, the relationship between ACID semantics and high
+availability has not been well-explored. We have a strong
+understanding of weak isolation in the single-server context from
+which it originated~\cite{adya, ansicritique, gray-isolation} and many
+papers offer techniques for providing distributed
 serializability~\cite{bernstein-book, spanner, daudjee-session,
   hstore, krikellas-bargain, calvin, kemme-classification} or snapshot
 isolation~\cite{daudjee-snapshot,generalizedsnapshot, kemme-snapshot,
-  walter}. Additionally, the distributed computing, programming
-languages, and parallel hardware literature contains many
-consistency models for single operations on replicated objects~\cite{
-  ceri-mechanism, chen-mechanism, pnuts, herlihy-art, eiger, cac,
-  sessionguarantees}. However, the literature has largely ignored
-semantic guarantees for multiple operations operating on multiple data
-items in a highly available distributed environment.
+  walter}. Additionally, the distributed computing and parallel
+hardware literature contains many consistency models for single
+operations on replicated objects~\cite{pnuts, herlihy-art, eiger, cac,
+  sessionguarantees}. However, the literature lends few clues for
+providing semantic guarantees for multiple operations operating on
+multiple data items in a highly available distributed environment.
 
 Our main contributions in this paper are as follows. We fill the gap
 between the plethora of previously proposed isolation and consistency
@@ -66,11 +65,11 @@ them as {\em Highly Available Transactions} (HATs). In doing so, we
 demonstrate that although many implementations of HAT semantics are
 not highly available, this is an artifact of the implementations
 rather than an inherent property of the semantics. Our investigation
-shows that, besides serializability, only Snapshot Isolation and
-Repeatable Reads are not HAT-compliant, while most other isolation
-levels are achievable with high availability. We also demonstrate that
-many weak data consistency models from distributed systems are also
-both HAT-compliant and simultaneously achievable with traditional ACID
+shows that, besides serializability, Snapshot Isolation and Repeatable
+Reads are not HAT-compliant, while most other isolation levels are
+achievable with high availability. We also demonstrate that many weak
+data consistency models from distributed systems are also both
+HAT-compliant and simultaneously achievable with traditional ACID
 properties.
 
 Our investigation is based on both impossibility results and several
@@ -103,8 +102,7 @@ running across multiple geo-replicated datacenters indicate that HATs
 offer a one to three order of magnitude latency decrease compared to
 traditional distributed serializability protocols, and they can
 provide acceptable semantics for a wide range of programs, especially
-those with monotonic logic and commutative updates~\cite{calm, blooml,
-  crdt}. HAT systems can also enforce arbitrary foreign key
+those with monotonic logic and commutative updates~\cite{calm, crdt}. HAT systems can also enforce arbitrary foreign key
 constraints on multi-item updates and sometimes provide limited
 uniqueness guarantees. However, particularly for programs with
 non-monotonic logic, HATs can fall short, requiring

@@ -15,7 +15,9 @@
 
 \usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, amsthm, float}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
-\usepackage{xspace}
+\newcommand{\subparagraph}{}
+
+\usepackage{xspace, titlesec}
 
 \newcommand{\etal}{{\em et al.}\xspace}
 \newcommand{\etc}{{\em etc}\xspace}
@@ -49,7 +51,16 @@
 
 \tikzset{>=latex}
 
+\titleformat*{\section}{\fontsize{12pt}{12}\selectfont\bfseries}
+\titleformat*{\subsection}{\fontsize{10pt}{11}\selectfont\bfseries}
+\titleformat*{\subsubsection}{\fontsize{10pt}{11}\itshape}
 
+\titlespacing{\section}{1ex}{2ex}{1ex}
+
+\titlespacing{\subsection}{1ex}{1ex}{0.25ex}
+\titlespacing{\subsubsection}{1ex}{1ex}{0.25ex}
+
+\let\footnotesize\small
 
 \newenvironment{myitemize}
 {
@@ -111,7 +122,7 @@ available systems. We analytically and experimentally quantify the
 availability and performance benefits of HATs---often several orders
 of magnitude over wide-area networks---as well as their necessary
 semantic compromises.
-\end{abstract}
+\end{abstract}\vspace{-.5em}
 
 \input{intro.tex}
 
@@ -137,7 +148,6 @@ semantic compromises.
 % vldb_sample.bib is the name of the Bibliography in this case
 %\footnotesize
 \scriptsize
-\balance
 
 \bibliography{hat-vldb}  
 

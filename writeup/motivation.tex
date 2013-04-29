@@ -96,7 +96,7 @@ distinct sites, this cost of communication increases.
 \definecolor{min-lat-color}{HTML}{B2FF99}
 \definecolor{max-lat-color}{HTML}{FF7F7F}
 
-\begin{table}
+\begin{table}[t!]
 \vspace{.5em}
 
 \subfloat[Across \texttt{us-east} AZs]{
@@ -137,7 +137,7 @@ SP & & & & & &  & \colorbox{max-lat-color}{362.8}  \\
 \label{table:rtt}
 \end{table}
 
-\begin{figure}
+\begin{figure}[t!]
 \includegraphics[width=\columnwidth]{figs/ping-plot.pdf}\vspace{-1em}
 \caption{CDF of round-trip times for slowest inter- and intra-
   availability zone links compared to cross-region links.}\vspace{-1em}
@@ -231,12 +231,12 @@ SAP HANA & RC & SI\\
 ScaleDB 1.02 & RC & RC\\
 VoltDB & S & S\\
 \hline
-\multicolumn{3}{|p{7cm}|}{{\footnotesize RC: read committed, RR: repeatable read, SI: snapshot isolation, S: serializability, CS: cursor stability, CR: consistent read}}\\\hline
+\multicolumn{3}{|p{7cm}|}{{\begin{small}{RC: read committed, RR: repeatable read, SI: snapshot isolation, S: serializability, CS: cursor stability, CR: consistent read}\end{small}}}\\\hline
 
 \end{tabular}
 \caption{Default and maximum isolation levels for ACID and NewSQL
   databases as of January 2013 (from
-  \protect\cite{hat-hotos}).}\vspace{-1.5em}
+  \protect\cite{hat-hotos}).}\vspace{-2.5em}
 \label{table:existing}
 \end{small}
 \end{center}

@@ -14,39 +14,38 @@ infrastructure. Specifically:
   application based on the TPC-C benchmark.
 \item We perform a brief experimental evaluation of HAT versus non-HAT
   properties on public cloud infrastructure.
-\end{myenumerate}\vspace{-.5em}
+\end{myenumerate}
 
 \subsection{Existing Algorithms}
 
-Many existing database transaction and concurrency control algorithms
-are not designed for high availability. These algorithms often presume
-a single-server deployment or a requirement for serializability. As
-a consequence, traditional transaction processing systems are not
-well-optimized for a HAT context. In this section, we briefly discuss
-design decisions and algorithmic details that preclude high
-availability.
+Most existing database transaction and concurrency control algorithms
+are not designed for high availability and often presume a
+single-server deployment or a requirement for serializability. In this
+section, we briefly discuss design decisions and algorithmic details
+that preclude high availability.
 
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
-setting~\cite{bernstein-book} require at least one round trip time
-(RTT) before committing. As an example, traditional two-phase locking
-for a transaction of length $T$ may require $T$ \texttt{lock}
-operations and will require at least one \texttt{lock} and one
-\texttt{unlock} operation.  In a distributed environment, each of
-these operations requires coordination, either with other database
-servers or with a lock service. If this coordination mechanism is
-unavailable, transactions cannot safely commit. Similarly, optimistic
-concurrency control requires coordinating via a validation step, while
-deterministic transaction scheduling~\cite{deterministic-scheduling}
-requires a scheduler. Serializability under multi-version concurrency
-control requires checking for update conflicts. All told, the reliance
-on a globally agreed total order necessitates a minimum of one
-round-trip to a designated master or coordination service for each of
-these classic algorithms.  The cost of round trips will be determined
-by the deployment environment, as we saw in
-Section~\ref{sec:motivation}; we will demonstrate this cost on public
-cloud infrastructure in Section~\ref{sec:prototype}.
+setting~\cite{bernstein-book, davidson-survey, wisemann-survey}
+require at least one round trip time (RTT) before committing. As an
+example, traditional two-phase locking for a transaction of length $T$
+may require $T$ \texttt{lock} operations and will require at least one
+\texttt{lock} and one \texttt{unlock} operation.  In a distributed
+environment, each of these operations requires coordination, either
+with other database servers or with a lock service. If this
+coordination mechanism is unavailable, transactions cannot safely
+commit. Similarly, optimistic concurrency control requires
+coordinating via a validation step, while deterministic transaction
+scheduling~\cite{deterministic-scheduling} requires a
+scheduler. Serializability under multi-version concurrency control
+requires checking for update conflicts. All told, the reliance on a
+globally agreed total order necessitates a minimum of one round-trip
+to a designated master or coordination service for each of these
+classic algorithms.  The cost of round trips will be determined by the
+deployment environment, as we saw in Section~\ref{sec:motivation}; we
+will demonstrate this cost on public cloud infrastructure in
+Section~\ref{sec:prototype}.
 
 \vspace{.5em}\noindent\textbf{Non-serializability} Most existing
 distributed implementations of weak isolation are not highly
@@ -173,15 +172,16 @@ subject to multi-key anomalies, we note that many TPC-E isolation
 tests (i.e., simultaneously modifying a product description and its
 thumbnail) are also achievable using HATs.
 
-\vspace{.5em}\noindent\textit{Summary.} Many---but not all---TPC-C transactions are well-served by
-HATs. The two problematic transactions---New-Order and Payment---rely
-on non-monotonic state update. The former can be modified to ensure ID
-uniqueness but not sequential ID ordering, while the latter is an
-inherently non-monotonic action requiring external compensation or
-stronger consistency protocols. Based on these experiences and
-discussions with practitioners, we expect that, especially for
-read-dominated workloads found in many online services, HAT guarantees
-will provide useful semantics for many applications.
+\vspace{.5em}\noindent\textit{Summary.} Many---but not all---TPC-C
+transactions are well-served by HATs. The two problematic
+transactions, New-Order and Payment, rely on non-monotonic state
+update. The former can be modified to ensure ID uniqueness but not
+sequential ID ordering, while the latter is inherently
+non-monotonic, requiring external compensation or stronger
+consistency protocols. Based on these experiences and discussions with
+practitioners, we expect that, especially for read-dominated workloads
+found in many online services, HAT guarantees will provide useful
+semantics for many applications.
 
 \subsection{Experimental Costs}
 \label{sec:prototype}
@@ -212,21 +212,21 @@ synchronously flushed to disk.
 \vspace{.5em}\noindent\textit{Configuration.} We deploy the database
 in \textit{clusters}---sets of database servers that contain a single,
 fully replicated copy of the data---typically across datacenters,
-sticking all clients within a datacenter to their respective
-cluster. By default, we use 5 Amazon EC2 \texttt{m1.xlarge} instances
-as servers in each cluster. For our workload, we link our client
-library to the YCSB benchmark~\cite{ycsb}, grouping every eight YCSB
-operations from the default workload (50\% reads, 50\% writes) to form
-a transaction. We increase the number of keys in the workload from the
-default $1,000$ to $100,000$ with uniform random key access, keeping
-the default value size of $1KB$, and running YCSB for 180 seconds per
-configuration. Clients trivially achieve read-your-writes and
-monotonic reads guarantees via stickiness.
+sticking all clients within a datacenter to their respective cluster
+(trivially providing read-your-writes and monotonic reads
+guarantees). By default, we use 5 Amazon EC2 \texttt{m1.xlarge}
+instances as servers in each cluster. For our workload, we link our
+client library to the YCSB benchmark~\cite{ycsb}, grouping every eight
+YCSB operations from the default workload (50\% reads, 50\% writes) to
+form a transaction. We increase the number of keys in the workload
+from the default $1,000$ to $100,000$ with uniform random key access,
+keeping the default value size of $1KB$, and running YCSB for 180
+seconds per configuration.
 
 \begin{figure}[t!]
 \begin{center}
 \hspace{2em}\includegraphics[width=.8\columnwidth]{figs/strategylegend.pdf}
-\end{center}\vspace{-2em}
+\end{center}\vspace{-2.5em}
 \begin{center}\small\textbf{A.) Within \texttt{us-east} \texttt{(VA)}}\end{center}\vspace{-1.5em}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/2lan-threads-lats.pdf}\vspace{-.5em}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/2lan-threads-thru.pdf}\vspace{-.75em}
@@ -237,7 +237,7 @@ monotonic reads guarantees via stickiness.
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/5wan-threads-lats-log.pdf}\vspace{--.5em}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/5wan-threads-thru.pdf}
 \caption{YCSB performance for two clusters of five servers each
-  deployed within a single datacenter and cross-datacenters.}
+  deployed within a single datacenter and cross-datacenters.}\vspace{-1.5em}
 \label{fig:wan-exp}
 \end{figure}
 
@@ -251,7 +251,7 @@ are able to utilize double the number of servers. RC---essentially
 eventual consistency with buffering---is almost identical to eventual
 consistency, while TA---which incurs two writes for every client-side
 write (i.e., pending writes are sent to a WAL then subsequently moved
-into LevelDB once stable)---achieves approximately 75\% of the
+into LevelDB once stable)---achieves ~75\% of the
 throughput. Latency increases linearly with the number of YCSB clients
 due to contention within LevelDB.
 
@@ -306,22 +306,18 @@ Section~\ref{sec:latency} are reasonable lower bounds on latency.
 \begin{center}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/txnlen-thru.pdf}
 \end{center}\vspace{-2.25em}
-\caption{Transaction length versus throughput.}\vspace{-.5em}
+\caption{Transaction length versus throughput.}\vspace{-1em}
 \label{fig:txlen}
-\end{figure}
-\begin{figure}[t!]
 \begin{center}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/wprop-thru.pdf}
 \end{center}\vspace{-2.25em}
-\caption{Proportion of reads and writes versus throughput.}\vspace{-.5em}
+\caption{Proportion of reads and writes versus throughput.}\vspace{-1em}
 \label{fig:rprop}
-\end{figure}
-\begin{figure}[t!]
 \begin{center}
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru.pdf}
 %\includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru-perserver.pdf}
 \end{center}\vspace{-2.25em}
-\caption{Scale-out of TA, Eventual, and RC.}
+\caption{Scale-out of TA, Eventual, and RC.}\vspace{-1.5em}
 \label{fig:scaleout}
 \end{figure}
 
@@ -332,9 +328,9 @@ transaction length. In contrast, TA's throughput decreases linearly
 with increased transaction length: with $1$ operation per transaction,
 TA throughput is within 18\% of eventual ($34$ bytes overhead), and
 with $128$ operations per transaction, TA throughput is within $60\%$
-($1898$ bytes overhead). This is primarily because our TA algorithm
-requires metadata proportional to the length of each transaction,
-consuming IOPS and network bandwidth.
+($1898$ bytes overhead). This reflects our TA algorithm's metadata
+requirements, which are proportional to transaction length and consume
+IOPS and network bandwidth.
 
 
 \vspace{.5em}\noindent\textit{Read proportion.} The default equal
