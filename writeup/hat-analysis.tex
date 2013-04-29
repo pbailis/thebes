@@ -108,16 +108,16 @@ committed. This implementation does not provide recency or
 monotonicity guarantees but satisfies the implementation-agnostic
 definition.
 
-\textbf{Repeatable Read} isolation is a confusing property. For example,
-some IBM products use the term for fully serializable
+\textbf{Repeatable Read} isolation is a confusing property. For
+example, some IBM products use the term for fully serializable
 isolation~\cite{hat-hotos}, while Gray~\cite{gray-isolation}, Berenson
 et al.~\cite{ansicritique}, and Adya's PL-2.99~\cite{adya} all
 interpret Repeatable Read as providing serializability for all
 operations except for predicate-based reads (and so Repeatable Read is
 identical to serializability in a key-value store without
-predicate-based access). In this latter model, the \textit{Phantom
-  Problem}, whereby two successive predicate-based reads return
-different data~\cite{gray-isolation}, is the only kind of
+predicate-based access). In models like Adya's PL-2.99, the
+\textit{Phantom Problem}, whereby two successive predicate-based reads
+return different data~\cite{gray-isolation}, is the only kind of
 non-serializable behavior allowed. In this paper, we reserve the use
 of ``Repeatable Read'' to refer to these definitions, which we will
 soon show are not HAT-compliant.
@@ -158,7 +158,7 @@ similar multi-versioning as above.
 
 \subsubsection{ACID Atomicity Guarantees}
 
-Transactional atomicity (TA) is core to ACID guarantees. Although, at
+\textbf{Transactional atomicity (TA)} is core to ACID guarantees. Although, at
 least by the ACID acronym, it is not an ``isolation'' property, TA
 restricts transactions' ability to view the effects of partially
 completed transactions. Under TA, once some of the effects of a
@@ -254,18 +254,18 @@ social networking site, all of a user's transactions submitted between
 
 Several session guarantees can be made with high availability:
 
-\vspace{.5em}\noindent\textit{{Monotonic reads}} requires that, within
+\vspace{.5em}\noindent\textbf{{Monotonic reads}} requires that, within
 a session, subsequent reads to a given object ``never return any
 previous values''; reads from each item progress according to a total
 order. The ordering of reads should respect any externally observable
 total ordering on transactions.
 
-\vspace{.5em}\noindent\textit{{Monotonic writes}} requires that each
+\vspace{.5em}\noindent\textbf{{Monotonic writes}} requires that each
 session's writes become visible in the order they were submitted by
 the client. Any order on transactions should also be consistent with
 any precedence that a global observer would see.
 
-\vspace{.5em}\noindent\textit{{Writes Follow Reads}} requires that, if
+\vspace{.5em}\noindent\textbf{{Writes Follow Reads}} requires that, if
 a session observes an effect of transaction $T_1$ and subsequently
 commits transaction $T_2$, then another session can only observe
 effects of $T_2$ if it can also observe $T_1$'s effects (or later
@@ -291,16 +291,16 @@ favor of sticky availability. Sticky availability permits three
 additional models, which we first define and then prove are
 unachievable in a generic highly available system:
 
-\vspace{.5em}\noindent\textit{{Read your writes}} requires
+\vspace{.5em}\noindent\textbf{{Read your writes}} requires
 that whenever a client reads a given data item after updating it, the
 read returns the updated value (or a value with a higher ID).
 
-\vspace{.5em}\noindent\textit{{PRAM}} (Pipelined Random Access
+\vspace{.5em}\noindent\textbf{{PRAM}} (Pipelined Random Access
 Memory) provides the illusion of serializing each session's operations
 and is the combination of monotonic reads, monotonic writes, and read
 your writes~\cite{herlihy-art}.
 
-\vspace{.5em}\noindent\textit{{Causal
+\vspace{.5em}\noindent\textbf{{Causal
     consistency}}~\cite{causalmemory} is the combination of all of the
 session guarantees~\cite{sessiontocausal} (alternatively, PRAM with
 writes-follow-reads) and is also referred to by Adya as PL-2L
