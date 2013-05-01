@@ -273,7 +273,7 @@ due to contention within LevelDB.
  deployment.
 
 When we deployed five clusters (as opposed to two, as before) across
-the five AWS datacenters with lowest communication cost
+the five EC2 datacenters with lowest communication cost
 (Figure~\ref{fig:wan-exp}C), the trend continues: mastered latency
 increases to nearly $800$ms per transaction. As an attempt at reducing
 this overhead, we implemented and benchmarked a variant of
@@ -286,13 +286,13 @@ because worst-case server load was unaffected. With five clusters,
 TA's relative throughput decreased: every YCSB \texttt{put} operation
 resulted in four \texttt{put} operations on remote replicas and,
 accordingly, the cost of anti-entropy increased (e.g., each server
-processed four incoming anti-entropy streams---as opposed to one
-before---reducing the opportunity for batching and decreasing
-available resources for for incoming client requests). This in turn
-increased garbage collection activity and, more importantly, IOPS when
-compared to Eventual and RC, causing TA throughput to peak at around half
-of Eventual. With an in-memory persistence (i.e., no LevelDB or WAL),
-TA throughput was within 20\% of eventual.
+processed four replica's anti-entropy as opposed to one before,
+reducing the opportunity for batching and decreasing available
+resources for for incoming client requests). This in turn increased
+garbage collection activity and, more importantly, IOPS when compared
+to Eventual and RC, causing TA throughput to peak at around half of
+Eventual. With an in-memory persistence (i.e., no LevelDB or WAL), TA
+throughput was within 20\% of eventual.
 
 We have intentionally omitted performance data for two-phase
 locking. Mastered configuration performed \textit{far} better than our
@@ -343,9 +343,9 @@ proportion of reads and writes is fairly pessimistic: for example,
 Facebook reports $99.8\%$ reads for their workload~\cite{eiger}. As
 shown in Figure~\ref{fig:rprop} (clusters in Virginia and Oregon),
 with all reads, TA is within $4.8\%$ of eventual; with all writes, TA
-is within $33\%$, and Eventual throughput decreases by $288.8\%$
-compared to all reads and TA is within $33\%$ of eventual. At $99.8\%$
-reads, TA incurs a $7\%$ overhead ($5.8\%$ for in-memory storage).
+is within $33\%$, and the throughput of eventual consistency decreases
+by $288.8\%$ compared to all reads. At $99.8\%$ reads, TA incurs a $7\%$ overhead ($5.8\%$ for
+in-memory storage).
 
 
 

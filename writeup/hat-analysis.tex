@@ -245,8 +245,8 @@ Several session guarantees can be made with high availability:
 \vspace{.5em}\noindent\textbf{{Monotonic reads}} requires that, within
 a session, subsequent reads to a given object ``never return any
 previous values''; reads from each item progress according to a total
-order. The ordering of reads should respect any externally observable
-total ordering on transactions.
+order. The ordering of versions read should respect any ordering on
+transactions.
 
 \vspace{.5em}\noindent\textbf{{Monotonic writes}} requires that each
 session's writes become visible in the order they were submitted by
@@ -510,7 +510,7 @@ Regular\linearizable, Linearizability\linearizable, Strong
   unavailable models considered in this paper. Unavailable models are
   labeled by cause of unavailability: preventing lost
   update\lostupdate, preventing write skew\rwskew, and requiring
-  recency guarantees\linearizable.}\vspace{-.5em}
+  recency guarantees\linearizable.}
 \label{table:hatcompared}
 \end{table}
 
