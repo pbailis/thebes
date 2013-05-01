@@ -7,7 +7,7 @@
 \documentclass{vldb}
 \let\proof\relax
 \let\endproof\relax
-\usepackage{draftwatermarkbottom, draftwatermarktop}
+\usepackage{draftwatermarkbottom, draftwatermarktop, scrextend}
 
 \newcommand{\pbnote}[1]{{\color{red}{#1 ---P.B.}}}
 
@@ -27,6 +27,10 @@
 \newcommand{\eg}{{\em e.g.,}\xspace}
 
 \newcommand{\figfactor}{1.0}
+
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage[noend]{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\newcommand{\commentt}[1]{{\small\texttt{#1}}}
 
 \theoremstyle{definition}
 \newtheorem{observation}{Observation}

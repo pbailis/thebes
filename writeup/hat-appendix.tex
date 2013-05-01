@@ -522,3 +522,101 @@ and the replica for $y$'s \texttt{pending}, a client's reads from $x$
 then $y$ will return a transactionally atomic pair of values because
 the replica for $y$ will know to check \texttt{pending}.
 
+
+\begin{algorithm}[t!]
+\newcommand{\myindent}{\hspace{-1em}}
+\begin{addmargin}[-1em]{0em}% 1em left, 2em right
+
+\begin{algorithmic}
+\caption*{\textbf{Algorithm} HAT Transactional Atomicity}\vspace{.5em}
+\State{\textit{\textbf{Shared Data Types}}\\\vspace{.5em}
+\texttt{timestamp}: unique, per transaction identifier\\
+$\texttt{write}:[\texttt{key:}k, \texttt{value}:v, \texttt{timestamp}:ts, \texttt{set<key>}:tx\_keys]$\\\hrulefill}\vspace{.5em}
+
+  \State{\textbf{\textit{Server-side Data Structures and Methods}\\\vspace{.5em}
+$\texttt{set<write>:pending}$\\
+$\texttt{set<write>:good}$\\
+$\texttt{map<timestamp, int>:acks}$}}\\
+
+\Procedure{put}{\texttt{write}:$w$}
+  \State \texttt{pending}.add($w$)
+  \For{key $k_t \in w.tx\_keys$}
+  \State \{all replicas for $sib$\}.notify($w.ts$)
+  \EndFor
+  
+  \State \textit{asynchronously send $w$ to other replicas via anti-entropy}
+  \State \Return
+
+  \EndProcedure\vspace{.5em}
+
+  \Procedure{notify}{\texttt{timestamp}:$ts$}
+  \State \texttt{acks}.get($ts$).increment()
+  \If{all \texttt{acks} received for all replicas for $ts$'s $tx\_keys$}
+  \State \texttt{good}.add($w$)
+  \State \texttt{pending}.remove($w$)  
+  \EndIf  
+  \EndProcedure\vspace{.5em}
+
+  \Procedure{get}{\texttt{key}:$k$, \texttt{timestamp}:$ts_{required}$}
+  \If{$ts_{required} = \bot$}
+  \State \Return $w \in \texttt{good}$ s.t. $w.key = key$ with highest timestamp
+  \ElsIf{$\exists~w \in \texttt{good}$ s.t. $w.key = key, w.ts \geq ts_{required}$}
+  \State \Return $w$
+  \Else
+  \State \Return $w \in \texttt{pending}$ s.t. $w.key = key,  w.ts = ts_{required}$
+  \EndIf
+  \EndProcedure\\\vspace{-.5em}\hrulefill\vspace{.25em}
+
+  \State{\textbf{\textit{Client-side Data Structures and Methods}\\\vspace{.5em}
+$\texttt{int:cur\_txn}$\\
+$\texttt{map<key, value>:write\_buffer}$\\
+$\texttt{map<key, timestamp>:required}$}}\\
+
+
+\Procedure{begin\_transaction}{}
+  \State \texttt{cur\_txn} = \textit{new txn ID} \commentt{// (e.g., clientID+logicalClock)}
+  \EndProcedure\vspace{.5em}
+
+\Procedure{put}{\texttt{key:$k$}, \texttt{value:$v$}}
+  \State \texttt{write\_buffer}.put($k$, $v$)
+\EndProcedure\vspace{.5em}
+
+\Procedure{get}{\texttt{key:$k$}}
+  \If {$k \in \texttt{write\_buffer}$}
+  \State \Return \texttt{write\_buffer}.get($k$) \commentt{// if we want per-TxN RYW}
+  \EndIf
+
+  \State $w\_{ret}$ = (available replica for $k$).get($k$, \texttt{required}.get($k$))
+  \For {$(tx_{key} \in w_{ret}.tx\_keys$}
+  \If {$w_{ret}.ts > \texttt{required}.get(tx_{key})$}
+  \State $\texttt{required}$.put$(tx_{key}, w_{ret}.ts)$
+  \EndIf
+  \EndFor
+
+  \State \Return $w\_{ret}.value$
+\EndProcedure\vspace{.5em}
+
+
+\Procedure{commit}{}
+ \For{$(tx_{key}, v) \in \texttt{write\_buffer}$}
+ \State $r$ = (available replica for $tx_{key}$)
+ \State $r$.put($[tx_{key}, v, \texttt{cur\_txn}, \texttt{write\_buffer}.keys()]$)
+ \EndFor
+  \State \textsc{cleanup()}
+\EndProcedure\vspace{.5em}
+
+
+\Procedure{abort}{}
+  \State \textsc{cleanup()}
+\EndProcedure\vspace{.5em}
+
+
+\Procedure{cleanup}{}
+  \State \texttt{write\_buffer}.clear()
+  \State \texttt{required\_map}.clear()
+\EndProcedure\vspace{.5em}
+
+
+\end{algorithmic}
+\end{addmargin}
+\end{algorithm}

@@ -191,23 +191,26 @@ in a real-world environment, we implemented a HAT database
 prototype. Across a range of deployments on public cloud
 infrastructures, we found that, as Section~\ref{sec:latency}'s
 measurements suggested, ``strongly consistent'' algorithms incur
-substantial latency penalties: from 10 to 100 times their HAT
-counterparts. Moreover, HAT algorithms like TA---while more
-resource-intensive than basic eventual consistency---are able to scale
-well to many servers.
+substantial latency penalties: over WAN, 10 to 100 times higher than
+their HAT counterparts. In light of recent algorithms for providing
+causally consistent get transactions~\cite{bolton, cops}, we focus our
+HAT analysis on TA, which we believe to be the most novel of our
+algorithms. We find that HAT properties---while more
+resource-intensive than basic eventual consistency---scale well to
+many servers.
 
 \vspace{.5em}\noindent\textit{Implementation.} Our prototype database
 is a partially replicated (hash-based, partitioned) key-value backed
 by LevelDB and implemented in Java using Apache Thrift. It currently
-supports eventual consistency (last-writer-wins RU, via simple
-anti-entropy) and HAT RC and TA guarantees (as described in
-Section~\ref{sec:hats}). It also supports non-HAT operation whereby
-all operations for a given key are routed to a (randomly) designated
-\textit{master} replica for each key (i.e., PNUTS~\cite{pnuts}) as
-well as distributed two-phase locking. Servers are durable: they
-synchronously write to LevelDB before responding to client requests,
-while pending writes in TA are sent to a write-ahead log, which is
-synchronously flushed to disk.
+supports eventual consistency (last-writer-wins RU with standard
+all-to-all anti-entropy between replicas) and HAT RC and TA guarantees
+(as described in Section~\ref{sec:hats}). It also supports non-HAT
+operation whereby all operations for a given key are routed to a
+(randomly) designated \texttt{master} replica for each key (i.e.,
+PNUTS~\cite{pnuts}) as well as distributed two-phase locking. Servers
+are durable: they synchronously write to LevelDB before responding to
+client requests, while pending writes in TA are sent to a write-ahead
+log, which is synchronously flushed to disk.
 
 \vspace{.5em}\noindent\textit{Configuration.} We deploy the database
 in \textit{clusters}---disjoint sets of database servers that each
@@ -216,12 +219,13 @@ datacenters, sticking all clients within a datacenter to their
 respective cluster (trivially providing read-your-writes and monotonic
 reads guarantees). By default, we use 5 Amazon EC2 \texttt{m1.xlarge}
 instances as servers in each cluster. For our workload, we link our
-client library to the YCSB benchmark~\cite{ycsb}, grouping every eight
-YCSB operations from the default workload (50\% reads, 50\% writes) to
-form a transaction. We increase the number of keys in the workload
-from the default $1,000$ to $100,000$ with uniform random key access,
-keeping the default value size of $1KB$, and running YCSB for 180
-seconds per configuration.
+client library to the YCSB benchmark~\cite{ycsb}, which is well-suited
+to LevelDB's key-value schema, grouping every eight YCSB operations
+from the default workload (50\% reads, 50\% writes) to form a
+transaction. We increase the number of keys in the workload from the
+default $1,000$ to $100,000$ with uniform random key access, keeping
+the default value size of $1KB$, and running YCSB for 180 seconds per
+configuration.
 
 \begin{figure}[t!]
 \begin{center}
@@ -260,12 +264,13 @@ due to contention within LevelDB.
  latency of mastered operation increases to $300$ms (a $278$--$4257\%$
  latency increase; average $37$ms latency per operation). For the same
  number of YCSB client threads, mastered operation has substantially
- lower throughput than the HAT configurations. Increasing the number of YCSB
- clients \textit{does} increase the throughput of mastered operation,
- but our Thrift-based connection processing did not gracefully handle
- more than several thousand concurrent connections. In contrast,
- across two datacenters, the performance of eventual, RC, and TA is
- near-identical to a single-datacenter deployment.
+ lower throughput than the HAT configurations. Increasing the number
+ of YCSB clients \textit{does} increase the throughput of mastered
+ operation, but our Thrift-based server-side connection processing did
+ not gracefully handle more than several thousand concurrent
+ connections. In contrast, across two datacenters, the performance of
+ eventual, RC, and TA is near-identical to a single-datacenter
+ deployment.
 
 When we deployed five clusters (as opposed to two, as before) across
 the five AWS datacenters with lowest communication cost
@@ -277,7 +282,7 @@ sent requests to all replicas, which completed as soon as a majority
 of servers responded (guaranteeing regular
 semantics~\cite{herlihy-art}); this strategy (not pictured) did not
 substantially improve performance due to the network topology and
-because worst-case server load was unaffected. In this configuration,
+because worst-case server load was unaffected. With five clusters,
 TA's relative throughput decreased: every YCSB \texttt{put} operation
 resulted in four \texttt{put} operations on remote replicas and,
 accordingly, the cost of anti-entropy increased (e.g., each server
@@ -285,8 +290,8 @@ processed four incoming anti-entropy streams---as opposed to one
 before---reducing the opportunity for batching and decreasing
 available resources for for incoming client requests). This in turn
 increased garbage collection activity and, more importantly, IOPS when
-compared to Eventual and RC, causing throughput to peak at around half
-of Eventual. With an in-memory persistence (i.e., no LevelDB or WAN),
+compared to Eventual and RC, causing TA throughput to peak at around half
+of Eventual. With an in-memory persistence (i.e., no LevelDB or WAL),
 TA throughput was within 20\% of eventual.
 
 We have intentionally omitted performance data for two-phase
@@ -333,14 +338,14 @@ requirements, which are proportional to transaction length and consume
 IOPS and network bandwidth.
 
 
-\vspace{.5em}\noindent\textit{Read proportion.} The default equal
+\vspace{.5em}\noindent\textit{Read proportion.} Our default (equal)
 proportion of reads and writes is fairly pessimistic: for example,
 Facebook reports $99.8\%$ reads for their workload~\cite{eiger}. As
 shown in Figure~\ref{fig:rprop} (clusters in Virginia and Oregon),
-with all reads, TA is within $4.8\%$ of eventual; with all writes,
-eventual throughput decreases by $288.8\%$ compared to all reads and
-TA is within $33\%$ of eventual. At $99.8\%$ reads, TA incurs a $7\%$
-overhead ($5.8\%$ for in-memory storage).
+with all reads, TA is within $4.8\%$ of eventual; with all writes, TA
+is within $33\%$, and Eventual throughput decreases by $288.8\%$
+compared to all reads and TA is within $33\%$ of eventual. At $99.8\%$
+reads, TA incurs a $7\%$ overhead ($5.8\%$ for in-memory storage).
 
 
 
@@ -355,7 +360,10 @@ per cluster. For the same configuration, TA scales by $3.8$x,
 achieving over $260,000$ operations per second. We believe that TA's
 performance is due to resource contention---with a memory-backed
 database (instead of LevelDB), TA scales by $4.25$x (not shown)---and
-increased garbage collection activity.
+TA-related performance heterogeneity across servers (Calvin's authors
+report similar heterogeneity on EC2~\cite{calvin}). Nevertheless, this
+linear scalability is not typical of traditional database system
+designs~\cite{gray-isolation}.
 
 \vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
 confirms our earlier analytical intuitions. HAT systems can provide
