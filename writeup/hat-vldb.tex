@@ -7,7 +7,7 @@
 \documentclass{vldb}
 \let\proof\relax
 \let\endproof\relax
-\usepackage{draftwatermarkbottom, draftwatermarktop, scrextend}
+\usepackage{draftwatermarkbottom, draftwatermarktop, scrextend, MnSymbol}
 
 \newcommand{\pbnote}[1]{{\color{red}{#1 ---P.B.}}}
 
@@ -55,6 +55,8 @@
 
 \tikzset{>=latex}
 
+
+
 \titleformat*{\section}{\fontsize{12pt}{12}\selectfont\bfseries}
 \titleformat*{\subsection}{\fontsize{10pt}{11}\selectfont\bfseries}
 \titleformat*{\subsubsection}{\fontsize{10pt}{11}\itshape}
@@ -65,6 +67,8 @@
 \titlespacing{\subsubsection}{1ex}{1ex}{0.25ex}
 
 \let\footnotesize\small
+
+\newcommand*{\DashedArrow}[1][]{\mathbin{\tikz [baseline=-.25ex,-latex, dashed,#1] \draw [#1] (0pt,0.5ex) -- (2em,0.5ex);}}%
 
 \newenvironment{myitemize}
 {

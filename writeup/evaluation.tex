@@ -59,20 +59,20 @@ isolation (e.g., non-``tentative update'' schemes) in this context.
 The MDCC~\cite{mdcc} protocol offers Read Committed isolation with
 Lost Update avoidance but is similarly unavailable due to its reliance
 on preventing write conflicts. Chan and Gray's read-only transactions
-provide read-only transactions with item-cut isolation, causal
-consistency, and transactional atomicity (session PL-2L~\cite{adya})
-but are unavailable in the presence of coordinator
-failure~\cite{readonly}, similar to read-only and write-only
-transactions more recently proposed by Eiger~\cite{eiger}. Causal
-Serializability offers a similar model (with unavailable
-implementation): causal consistency with a variant of Read Uncommitted
-between transactions that write to the same data
-item~\cite{raynal-causal}.  Brantner's S3 database~\cite{kraska-s3}
-and Bayou~\cite{sessionguarantees} can all provide variants of session
-PL-2L with high availability, but none provide this HAT functionality
-without substantial modification. Swift~\cite{swift} and bolt-on
-causal consistency~\cite{bolton} are closest to providing maximum
-sticky HAT semantics. As we have seen, it is possible to implement many
+have item-cut isolation with causal consistency and TA (session
+PL-2L~\cite{adya}) but are unavailable in the presence of coordinator
+failure and assume serializable update transactions~\cite{readonly};
+this is similar to read-only and write-only transactions more recently
+proposed by Eiger~\cite{eiger}. Causal Serializability offers a
+similar model (with unavailable implementation): causal consistency
+with a variant of Read Uncommitted between transactions that write to
+the same data item~\cite{raynal-causal}.  Brantner's S3
+database~\cite{kraska-s3} and Bayou~\cite{sessionguarantees} can all
+provide variants of session PL-2L with high availability, but none
+provide this HAT functionality without substantial
+modification. Swift~\cite{swift} and bolt-on causal
+consistency~\cite{bolton} are closest to providing maximum sticky HAT
+semantics. As we have seen, it is possible to implement many
 guarantees weaker than serializability---including guarantees that are
 achievable with high availability---and still not achieve high
 availability.

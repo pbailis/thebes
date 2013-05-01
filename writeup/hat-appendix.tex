@@ -137,21 +137,21 @@ A transaction $T_j$ directly write-depends on transaction $T_i$ if
 $T_i$ directly write-depends by $x$ on $T_j$ for some item $x$.
 \end{definition}
 
-\begin{definition}[Directly Session-Depends by $S$]
+\begin{definition}[Session-Depends]
 \label{def:sd1}
-A transaction $T_j$ directly session-depends on transaction $T_i$ if
-$T_i$ immediately precedes $T_j$ in the session commit order for session $S$.
-\end{definition}
-
-\begin{definition}[Directly Session-Depends]
-\label{def:sd2}
-A transaction $T_j$ directly session-depends on transaction $T_i$ if
-$T_j$ directly session-depends on transaction $T_i$ for some session
-$S$.
+A transaction $T_j$ session-depends on transaction $T_i$ if $T_i$ and
+$T_j$ occur in the same session and $T_i$ precedes $T_j$ in the
+session commit order.
 \end{definition}
 
 The dependencies for a history $H$ form a graph called its Directed
-Serialization Graph ($DSG(H)$).
+Serialization Graph ($DSG(H)$). If $T_j$ directly write-depends on
+$T_i$ by $x$, we draw $T_i\overset{ww_x}\longrightarrow T_j$. If $T_j$
+read-depends on $T_i$ by $x$, we draw
+$T_i \overset{rw_x}\longrightarrow T_j$. If $T_j$ directly
+anti-depends on transaction $T_j$ by $x$, we draw
+$T_i \overset{wr_x}\DashedArrow T_j$. If $T_j$ session-depends on
+$T_i$ in session $S$, we draw $T_i \overset{S}\longrightarrow T_j$.
 
 \subsection{Transactional Anomalies and Isolation Levels}
 
@@ -193,10 +193,10 @@ cycle consisting entirely of dependency edges.
 A system that provides Read Committed isolation prohibits phenomenon G0, G1a, G1b, and G1c.
 \end{definition}
 
-\begin{definition}[Item Cut Non-Isolation (N-I-CI)]
+\begin{definition}[Item-Many-Preceders (N-I-CI)]
 \label{def:n-ici}
 A history $H$ exhibits phenomenon N-ICI if $DSG(H)$ contains a
-transaction $T_i$ such that $T_i$ directly item-depends by $x$ on more
+transaction $T_i$ such that $T_i$ directly item-read-depends by $x$ on more
 than one other transaction.
 \end{definition}
 
@@ -230,24 +230,23 @@ T_3 &: r_x(1)~r_x(2)
 A system that provides Item Cut Isolation prohibits phenomenon N-I-CI.
 \end{definition}
 
-\begin{definition}[Predicate Cut Non-Isolation (N-P-CI)]
-A history $H$ exhibits phenomenon N-I-CI if $DSG(H)$ contains a
-transaction $T_i$ such that, for two predicate-based reads $p_k$,
-$p_j$ in $P$ such that $p_k \subseteq p_j$ and $T_i$ directly
-predicate-read-depends by $p_k$ on another transaction $T_l$, but
-$T_i$ does not directly predicate-read-depend by $p_j$ on $T_l$.
+\begin{definition}[Predicate-Many-Preceders (N-P-CI)]
+A history $H$ exhibits phenomenon N-I-CI if, for all predicate-based
+reads $r_i(P_i:Vset(P_i))$ and $r_j(P_j:Vset(P_j)$ in $T_k$ such that
+the logical ranges of $P_i$ and $P_j$ overlap (call it $P_o$), the set
+of transactions that change the matches of $P_o$ for $r_i$ and $r_j$
+differ.
 \end{definition}
 
 \begin{definition}[Predicate Cut Isolation (P-CI)]
 A system that provides Predicate Cut Isolation prohibits phenomenon N-P-CI.
 \end{definition}
 
-\begin{definition}[Non-transactional Atomicity (N-TA)]
+\begin{definition}[Observed Transaction Vanishes (N-TA)]
 A history $H$ exhibits phenomenon N-TA if $DSG(H)$ contains a directed cycle
 consisting of exactly one read-dependency edge by $x$ from $T_i$ to
 $T_j$ and one anti-dependency edge by $y$ from $T_j$ to $T_i$ and
-$T_i$'s corresponding read from $x$ does not precede its corresponding
-read from $y$.
+$T_i$'s read from $y$ precedes its read from $x$.
 \end{definition}
 
 
@@ -283,6 +282,9 @@ T_3 &: r_x(2)~r_y(1)
 A system that provides transactional atomicity prohibits phenomenon
 N-TA.
 \end{definition}
+
+The following session guarantees are directly adapted from Terry et
+al.'s original definitions~\cite{sessionguarantees}:
 
 \begin{definition}[Non-monotonic Reads (N-MR)]
 A history $H$ exhibits phenomenon N-MR if $DSG(H)$ contains a directed cycle
@@ -408,7 +410,7 @@ T_3 &: r_y(1)~r_x(0)
 A system provides Writes Follow Reads if it prohibits phenomenon N-WFR.
 \end{definition}
 
-\begin{definition}[Not-Read Your Writes (N-RYW)]
+\begin{definition}[Missing Your Writes (N-RYW)]
 A history $H$ exhibits phenomenon N-RYW if $DSG(H)$ contains a directed cycle
 consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$, at least one anti-dependency edge, and the remainder
