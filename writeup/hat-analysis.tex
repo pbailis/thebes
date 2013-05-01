@@ -31,8 +31,10 @@ subsequent critique~\cite{ansicritique}.
 
 For brevity, we provide an informal presentation of each guarantee
 here (accompanied by appropriate references) but give a full set of
-formal definitions in our extended Technical Report~\cite{hat-tr}. In
-our examples, we exclusively consider read and write operations,
+formal definitions in
+ Appendix A.
+% our extended Technical Report~\cite{hat-tr}.
+In our examples, we exclusively consider read and write operations,
 denoting a write of value $v$ to data item $d$ as $w_d(v)$ and a read
 from data item $d$ returning $v$ as $r_d(v)$. We assume that all data
 items have the null value, $\bot$, at database initialization, and,
@@ -195,8 +197,9 @@ additional client metadata) and is achievable in HAT systems.
 % need to be sticky.
 
 We sketch a highly available TA algorithm and provide greater detail
-in our technical report~\cite{hat-tr}. We begin with our Read
-Committed algorithm, but replicas wait to reveal new writes to readers
+in Appendix B.
+%our extended technical report~\cite{hat-tr}.
+We begin with our Read Committed algorithm, but replicas wait to reveal new writes to readers
 until all of the replicas for the final writes in the transaction have
 received their respective writes (are \textit{pending
   stable}). Accordingly, replicas reveal writes asynchronously;

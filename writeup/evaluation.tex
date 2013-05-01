@@ -192,13 +192,16 @@ prototype. Across a range of deployments on public cloud
 infrastructures, we found that, as Section~\ref{sec:latency}'s
 measurements suggested, ``strongly consistent'' algorithms incur
 substantial latency penalties: over WAN, 10 to 100 times higher than
-their HAT counterparts. In light of recent algorithms for providing
+their HAT counterparts. Given recent algorithms for providing
 causal consistency~\cite{bolton, cops, swift}, we focus our HAT
 analysis on TA (algorithm from Section~\ref{sec:ta}, described in
-greater in our Technical Report~\cite{hat-tr}), which we believe to be
-the most novel of our algorithms. We find that HAT properties---while
-more resource-intensive than basic eventual consistency---scale well
-to many servers.
+greater detail
+in Appendix B
+%in our Technical Report~\cite{hat-tr}
+), which we believe to be the
+most interesting of our algorithms. We find that HAT
+properties---while more resource-intensive than basic eventual
+consistency---scale well to many servers.
 
 \vspace{.5em}\noindent\textit{Implementation.} Our prototype database
 is a partially replicated (hash-based, partitioned) key-value backed
