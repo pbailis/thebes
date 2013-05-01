@@ -41,12 +41,11 @@ item is called a \textit{replica} for that item.\footnote{There is a
   acts as a replica for only a subset of all data items. For
   generality, and, for applicability to many modern ``sharded'' or
   ``partitioned'' data storage systems~\cite{dynamo, pnuts, bigtable,
-    spanner, hstore}, we consider partially replicated systems.} While
-this standard model is useful, there are several other cases we should
-consider.
+    spanner, hstore}, we consider partially replicated systems.} 
 
-Many distributed algorithms assume a model in which clients always
-contact the same (sets of) server(s) across subsequent operations. As
+In addition to high availability, which allows operations on any replica,
+distributed algorithms often assume a model in which clients always
+contact the same (sets of) replica(s) across subsequent operations. As
 we will discuss in Section~\ref{sec:hats}, clients can ensure
 continuity between operations (e.g., reading their prior updates to a
 data item) by maintaining affinity or ``stickiness'' with a server or
@@ -143,7 +142,7 @@ not indefinitely abort transactions on its own volition. We call a
 transaction abort due to a transaction's own choosing (e.g., as an
 operation of the transaction itself or due to a would-be declared
 integrity constraint violation) an \textit{internal abort} and an
-abort due to system implementation an \textit{external abort}.
+abort due to system implementation or operation an \textit{external abort}.
 
 We say that a system provides \textit{transactional availability} if,
 given replica availability for every data item in a transaction, the

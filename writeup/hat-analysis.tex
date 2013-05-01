@@ -17,8 +17,8 @@ Section~\ref{sec:hat-summary}.
 
 As Brewer states, ``systems and database communities are separate but
 overlapping (with distinct vocabulary)''~\cite{brewer-slides}. With
-this challenge in mind, when possible, we build on existing properties
-and definitions from the database and distributed systems literature,
+this challenge in mind, we build on existing properties and
+definitions from the database and distributed systems literature,
 providing a brief, informal explanation and example for each
 guarantee. The database isolation guarantees require particular care,
 since different DBMSs often use the same terminology for different
@@ -26,7 +26,7 @@ mechanisms and may provide additional guarantees in addition to our
 implementation-agnostic definitions.  We draw largely on Atul Adya's
 dissertation~\cite{adya} and somewhat on its predecessor work: the
 ANSI SQL specification~\cite{ansi-sql} and Berenson et al.'s
-subsequent 1995 critique~\cite{ansicritique}.
+subsequent critique~\cite{ansicritique}.
 
 For brevity, we provide an informal presentation of each guarantee
 here (accompanied by appropriate references) but give a full set of
@@ -69,12 +69,12 @@ T_1 &: w_x(1)~w_y(1)
 \end{align*}
 In this example, under Read Uncommitted, it is impossible for the
 database to order $T_1$'s $w_x(1)$ before $T_2$'s $w_x(2)$ but order
-$T_2$'s $w_y(2)$ before $T_1$'s $w_y(1)$.  Read Uncommitted is easily
+$T_2$'s $w_y(2)$ before $T_1$'s $w_y(1)$. Read Uncommitted is easily
 achieved via timestamping each update in a transaction with the same
-logical timestamp (which is unique across transactions; e.g., client
-ID and logical clock) and applying a ``last writer wins'' conflict
-reconciliation policy at each replica. Later properties will
-strengthen Read Uncommitted.
+logical timestamp (which is unique across transactions; e.g.,
+combining a client ID and logical clock) and applying a ``last writer
+wins'' conflict reconciliation policy at each replica. Later
+properties will strengthen Read Uncommitted.
 
 \textbf{Read Committed} isolation is particularly important in
 practice as it is the default of many DBMSs. Centralized
@@ -98,7 +98,7 @@ T_1 &: w_x(1)~w_x(2)
 T_3 &: r_x(a)\vspace{-1em}
 \end{align*}
 It is fairly easy for a HAT system to prevent ``Dirty Reads'': if each
-client never writes uncommitted data to shared copies of the database, then
+client never writes uncommitted data to shared copies of data, then
 transactions will never read each others' dirty data. As a simple
 solution, clients can buffer their writes until they commit, or,
 alternatively, can send them to servers, who will not deliver their
@@ -120,10 +120,11 @@ call this property ``cut isolation,'' since each transaction reads
 from a non-changing cut, or snapshot, over the data items. If this
 property holds over reads from discrete data items, we call it
 \textbf{Item Cut Isolation (I-CI)}, and if we also expect a cut over
-predicate-based reads (preventing Phantoms~\cite{gray-isolation}, or
-Berenson et al.'s $P3/A3$~\cite{ansicritique}), we have the stronger
-property of \textbf{Predicate Cut-Isolation}. In the example below,
-under both levels of cut isolation, $T_3$ must read $a=1$:
+predicate-based reads (e.g., \texttt{SELECT WHERE}; preventing
+Phantoms~\cite{gray-isolation}, or Berenson et al.'s
+$P3/A3$~\cite{ansicritique}), we have the stronger property of
+\textbf{Predicate Cut-Isolation}. In the example below, under both
+levels of cut isolation, $T_3$ must read $a=1$:
 \begin{align*}
 \small
 T_1 &: w_x(1)
@@ -136,8 +137,8 @@ never changes unless they overwrite it themselves. The cache can be
 cleared at the end of each transaction and can alternatively be
 accomplished on (sticky) replicas via multi-versioning. Predicate Cut
 Isolation is also achievable in HAT systems via similar caching or
-multi-versioning that tracks predicate ranges instead of item-based
-reads.
+multi-versioning that tracks entire logical ranges of predicates
+in addition to item-based reads.
 
 \subsubsection{ACID Atomicity Guarantees}
 
@@ -151,7 +152,6 @@ item cut isolation, TA prevents Read Skew anomalies (Berenson et al.'s
 A5A~\cite{ansicritique}). As an example of TA, because $T_2$ has read
 $T_1$'s write to $y$, $T_2$ must observe $b=c=1$ (or later versions
 for each key):
-\vspace{-1em}
 \begin{align*}
 \small
 T_1 &: w_x(1)~w_y(1)~w_z(1)
@@ -191,32 +191,37 @@ need to be sticky.
 
 We sketch a non-sticky TA algorithm and provide greater detail in our
 technical report~\cite{hat-tr}. Each replica waits to reveal write $w$
-from transaction $T$ until all of the writes in $T$ are present on all
-respective replicas (are \textit{pending stable}). Once they are,
-replicas asynchronously reveal their writes. To prevent clients from
-reading writes that have been revealed on some servers but not others,
-clients can attach a vector that uniquely identifies the transaction:
-this can be the transaction ID and a list of keys in the
-transaction. When clients attempt to read a data item from a replica,
-they can send the highest ID they have observed for that item;
-replicas respond with either a matching write (which may or may not be
-pending stable) or a write with higher ID that is pending
-stable. Clients can reset their record of IDs and keys upon
-transaction commit. Servers keep two sets of versions for each data
-item: the value with the highest ID that is pending stable and a set
-of values that are not yet pending stable.
+from transaction $T$ until all of the writes from $T$ are present on
+all respective replicas (are \textit{pending stable}). Once they are,
+replicas asynchronously reveal their respective writes to readers. To
+prevent clients from reading incomplete portions of a transaction's
+writes as they are being revealed (e.g., a client reads a data item
+that from a replica that has detected pending stability, then attempts
+to read another item from another replica which has not yet detected
+pending stability), clients include additional metadata with each
+write: a list of items in the transaction along with the transaction's
+timestamp (from Read Uncommitted). When a client reads a write, the
+write's list of items and timestamp form a lower bound on the versions
+that the client should read for other items. When a client performs
+subsequent reads, it includes a timestamp with its request that
+corresponds current lower bound on reads from the respective item
+Replicas respond with either a write matching the timestamp or a write
+with a higher timestamp that is pending stable. Clients discard any
+metadata upon transaction commit, and servers keep two sets of writes
+for each data item: the write with the highest timestamp that is
+pending stable and a set of writes that are not yet pending stable.
 
-This non-sticky implementation is entirely masterless and neither reads
-nor writes block for coordination. Moreover, there are several
+This non-sticky implementation is entirely masterless and neither
+reads nor writes block for coordination. Moreover, there are several
 possible optimizations that, for brevity, we do not describe
 here. However, one key property is that we do not, in general, dictate
-when writes become visible. Accordingly, it is highly
-available. However, we can optimize write visibility delay by ensuring
-that clients are sticky with disjoint groups of servers. Once all
-transaction values are \texttt{pending} within a group of servers,
-values can be made \texttt{stable} (as opposed to once they are
-present on all servers). For example, in a multi-datacenter setting,
-all clients and servers within a datacenter may form a sticky group.
+when writes become visible. Accordingly, the algorithm is highly
+available. We can optimize write visibility by sticking clients are
+with disjoint groups of servers: once all of a transaction's writes
+are pending stable within a group of servers, writes can be made
+visible (as opposed to once they are pending stable with respect to
+all servers). For example, in a multi-datacenter setting, all clients
+and servers within a datacenter may form a sticky group.
 
 
 \subsubsection{Session Guarantees}
@@ -331,9 +336,9 @@ Section~\ref{sec:relatedwork}) but we specifically evaluate TPC-C
 transaction semantics under HAT consistency guarantees in
 Section~\ref{sec:evaluation}.
 
-\vspace{.5em}\noindent{\textbf{Durability}} A client requiring that its
-transactions' effects survive $F$ server faults requires at least
-$F+1$ non-failing replicas; this affects availability.
+%\vspace{.5em}\noindent{\textbf{Durability}} A client requiring that its
+%transactions' effects survive $F$ server faults requires at least
+%$F+1$ non-failing replicas; this affects availability.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,

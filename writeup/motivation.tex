@@ -71,7 +71,7 @@ routing failures on the Internet~\cite{labovitz-failures}. Isolating,
 quantifying, and accounting for these network failures is an area of
 active research in networking community~\cite{uw-failure-networks}.
 
-These results---which do not even consider server failures---indicate
+These results---which do not consider server failures---indicate
 that network partitions \textit{do} occur within and across modern
 datacenters. We observe that, as a general trend, partitions exist and
 must accordingly be met with either unavailability at some servers or,
@@ -87,8 +87,8 @@ large---hundreds of milliseconds---in a geo-replicated,
 multi-datacenter context.  Fundamentally, the speed at which two
 servers can communicate is (according to modern physics) bounded by
 the speed of light. In the best case, two servers on opposite sides of
-the Earth---communicating via a hypothetical link traversing the
-planet's diameter---require a minimum 85.1ms RTT (133.7ms if sent at
+the Earth---communicating via a hypothetical link along the planet's
+diameter---require a minimum 85.1ms RTT (133.7ms if sent at
 surface level). As services are replicated to multiple, geographically
 distinct sites, this cost of communication increases.
 
@@ -160,12 +160,12 @@ average, intra-datacenter communication (Table 1a) is between 1.82 and
 geographically distributed datacenters (Table 1c). The cost of
 wide-area communication exceeds the speed of light: for example, while
 a speed-of-light RTT from S\~{a}o Paulo to Singapore RTT is 106.7ms,
-ICMP packets incur an average 362.8ms RTT (95th percentile: 649ms). As
+ping packets incur an average 362.8ms RTT (95th percentile: 649ms). As
 shown in Figure~\ref{fig:rtt}, the distribution of latencies varies
 between links, but the trend is clear: remote communication has a
 substantial cost.
 
-\section{When is ``ACID'' ACID?}
+\section{ACID in the Wild}
 \label{sec:modernacid}
 
 The previous section demonstrated that distributed systems must

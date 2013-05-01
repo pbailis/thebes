@@ -66,18 +66,18 @@ demonstrate that although many implementations of HAT semantics are
 not highly available, this is an artifact of the implementations
 rather than an inherent property of the semantics. Our investigation
 shows that, besides serializability, Snapshot Isolation and Repeatable
-Reads are not HAT-compliant, while most other isolation levels are
-achievable with high availability. We also demonstrate that many weak
-data consistency models from distributed systems are also both
-HAT-compliant and simultaneously achievable with traditional ACID
+Read isolation are not HAT-compliant, while most other isolation
+levels are achievable with high availability. We also demonstrate that
+many weak data consistency models from distributed systems are also
+both HAT-compliant and simultaneously achievable with traditional ACID
 properties.
 
 Our investigation is based on both impossibility results and several
-constructive proof-of-concept algorithms. For example, Snapshot
-Isolation (SI) and Repeatable Reads (RR) are not HAT-compliant because
-they require detecting conflicts between concurrent updates (as needed
-for preventing Lost Updates or Write Skew phenomena), which we prove
-is unavailable. However, Read Committed isolation, Transactional
+constructive, proof-of-concept algorithms. For example, Snapshot
+Isolation and Repeatable Read isolation are not HAT-compliant because they
+require detecting conflicts between concurrent updates (as needed for
+preventing Lost Updates or Write Skew phenomena), which we prove is
+unavailable. However, Read Committed isolation, Transactional
 Atomicity, and many of the weaker data consistency models from
 database and distributed systems are achievable via novel algorithms
 that rely on multi-versioning and limited client-side caching. For
