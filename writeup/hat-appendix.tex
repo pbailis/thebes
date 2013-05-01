@@ -490,39 +490,104 @@ we refer the reader to Herlihy's textbook~\cite{herlihy-art}.
 
 \section{Transactional Atomicity}
 
-In our non-sticky TA algorithm, clients buffer their writes until
-commit, sending the final write to each data item to each respective
-server. Along with each write, clients attach a the transaction ID and
-a list of all data items written to in the transaction, $L_v$. Upon
-receiving a new write to item $d$, a server places the write into a
-\texttt{pending} queue and notifies all other servers responsible for
-a data item in $L_v$ that it has received a write to $d$ with the
-respective transaction ID. Once a server receives acknowledgments with
-appropriate transaction ID for all items in $L_v$, it moves the write
-from \texttt{pending} to the \texttt{stable} database (which applies
-the writes according to highest-ID-wins). Accordingly, all writes that
-should be made atomic with a write in \texttt{stable} are guaranteed
-to be present on their respective servers, either in \texttt{pending}
-or \texttt{stable}. Given the possibility of internal aborts, writes
-to \texttt{pending} may require 2 RTTs: one to check constraints and
-one to execute the above (but these checks \textit{cannot} cause other
-transactions to block, as would be the case in a two-phase
-\textit{commit} protocol).
+In this section, we provide additional information on our two-phase
+Transactional Atomicity algorithm.
 
-For reads, each client tracks which values it should read. It
-maintains a mapping (vector) from data items to transaction IDs. Upon
-transaction start, the client clears its mapping, and, when it
-performs a read from a data item, it sends the server its current ID
-for the item. If the client does not supply an ID, the server returns
-the latest value from \texttt{stable}. If the ID is non-empty, the
-server either returns the matching value from \texttt{pending} or a
-value with higher ID from \texttt{pending}---along with $L_v$ for the
-write. When the client receives a response, it updates its local
-vector with $L_v$. Accordingly, even if transaction's writes to two
-keys $x$ and $y$ are present on the replica for $x$'s \texttt{stable}
-and the replica for $y$'s \texttt{pending}, a client's reads from $x$
-then $y$ will return a transactionally atomic pair of values because
-the replica for $y$ will know to check \texttt{pending}.
+The below pseudocode describes a straightforward implementation of the
+algorithm from Section~\ref{sec:ta}. Replicas maintain two sets of
+data items: \texttt{pending} (which contains writes that are not yet
+pending stable) and \texttt{good} (which contains writes that are
+pending stable). Incoming writes are added to \texttt{pending} and
+moved to \texttt{good} once they are stable. Stable pending
+calculation is performed by counting the number of acknowledgments
+(\texttt{acks}) of writes from other replicas, signifying their
+receipt of the transaction's writes in their
+own \texttt{pending}. Accordingly, the algorithm maintains the
+invariant that the transactional siblings (or suitable replacements)
+for every write in \texttt{good} are present on their respective
+replicas. Clients use the RC algorithm from
+Section~\ref{sec:isolation} and keep a map of data items to timestamps
+(\texttt{required})---effectively a vector clock whose entries are
+data items (not processes, as is standard).
+
+\vspace{1em}\noindent\textbf{Example.} To illustrate this algorithm consider an execution of the following transactions:
+\begin{align*}
+\small\vspace{-1em}
+T_1 &: w_x(1)~w_y(1)
+\\T_2 &: r_x(1)~r_y(a)
+\end{align*}
+For TA, the system must ensure that $a=1$. Consider a system with one
+replica for each of $x$ and $y$ (denoted $R_x$ and $R_y$). Say client
+$c_1$ executes $T_1$ and commits. The client chooses timestamp $10001$
+(whereby the last $4$ digits are reserved for client ID to ensure
+uniqueness) and sends values to $w_x(1)$ to $R_x$ and $R_y$ with
+$tx\_keys = \{x,y\}$ and $timestamp=10001$. $R_x$ and $R_y$ place
+their respective writes into their individual \texttt{pending} sets
+and send acknowledgment for transaction timestamped $10001$ to the
+other. Consider the case where $r_x$ has seen $r_y$'s acknowledgment
+but not vice versa: $w_x(1)$ will be in \texttt{good} on $R_x$
+but \texttt{pending} on $R_y$. Now, if another client $c_2$ executes
+$T_2$ and reads $x$ from $R_x$, it will read $x=1$. $c_2$ will update
+its \texttt{required} vector so that $\texttt{required}=\{x:10001,
+y:10001\}$. When $c_2$ reads $y$ from $R_y$, it will specify
+$ts=10001$ and $R_y$ will not find a suitable write
+in \texttt{good}. $R_y$ will instead return $y=1$
+from \texttt{pending}.
+
+\vspace{1em}\noindent\textbf{Overheads.} TA requires overhead both on client and server. First, clients must store a vector (\texttt{required}) for the duration of a transaction in order to determine what values to read. Second, each write contains metadata ($tx\_keys$) linear in the number of writes in the transaction. (Note that we could have stored a different timestamp with every write, but a single timestamp suffices and is more efficient) These overheads are modest for short transaction lengths but they increase value sizes on disk, in memory, and over the network. Third, on the server side, each client \textsc{put} incurs two back-ends \texttt{put}s: one into \texttt{pending} and \texttt{good}. If keeping a single value for \texttt{good}, the second \texttt{put} into \texttt{good} (as is the case with normal, single-valued eventually consistent operation) is really a \texttt{get} then a possible \texttt{put}: the server first checks if a higher-timestamped value has been written and, if not, it overwrites the current value. The \texttt{put} into \texttt{pending} is simpler: if message delivery is exactly-once, then \texttt{put}s can be made unconditionally.
+
+\vspace{1em}\noindent\textbf{Optimizations.} The use of \texttt{pending} and \texttt{required} is effectively to
+handle the above race condition, where some but not all replicas have
+realized that a write is pending stable. With this in mind, there are
+several optimizations we can perform:
+
+If a replica serves a read from \texttt{pending}, it must mean one of
+two things: either the write is stable pending or the writing client
+for the write is requesting the data item (this second case does not
+occur in the below pseudocode since own-writes are served out
+of \texttt{write\_buffer}). In the former case, the replica can safely
+install the write into \texttt{good}.
+
+As we mention in Section~\ref{sec:ta}, the size of \texttt{good} can
+be limited to a single item. Recall that any item can be served
+from \texttt{good} as long as its timestamp is greater than the
+required timestamp. Accordingly, if replicas store multiple writes
+in \texttt{good}, any time they can serve a write from \texttt{good},
+the highest-timestamped write is always a valid response candidate
+(and, indeed, returning the highest-timestamped write provides the
+best visibility). Note, however, that serving a higher-than-requested
+timestamp from \texttt{pending} is dangerous: doing so might mean
+returning a write that is not pending stable and, via appropriate
+unfortunate partition behavior, force a client to stall while an
+available replica waits for the write to arrive in \texttt{pending}.
+
+The below pseudocode implements a push-based acknowledgment scheme: replicas
+eagerly notify other replicas about \texttt{pending} writes. This need
+not be the case and, indeed, it is wasteful: if a write
+in \texttt{pending} has lower timestamp than the highest timestamped
+write in \texttt{good}, it can safely be discarded. Especially for
+data items with high temporal locality or data stores that are
+replicated over WAN, this \texttt{pending} invalidation may be a
+frequent event. Instead, replicas can periodically poll other replicas
+for acknowledgments (i.e., asking for either a match
+in \texttt{pending} or a higher timestamp in \texttt{good}); this
+reduces both network utilization and, in the case of
+durable \texttt{pending} and \texttt{good} sets, disk utilization.
+
+There are ample opportunities for batching of pending and good
+acknowledgments. Batching is easier in a push-based acknowledgment
+scheme, as pull-based acknowledgments may require invalidation to
+actually reduce network transfers. Moreover, if a replica is
+responsible for several writes within a transaction, \textrm{notify}
+messages can be coalesced. We have also observed that batching
+multiple background operations together (particularly for
+anti-entropy) allows for more efficient compression---especially
+important in network-constrained environments.
+
+\vspace{1em}\noindent\textbf{Implementation note.} Our implementation from Section~\ref{sec:evaluation} implements the below pseudocode, with batching between \textrm{notify} operations and a single-item \texttt{good}. We have not yet investigated the efficiency of a pull-based approach (mostly due to our choice of RPC library, which unfortunately does not currently handle multiple outstanding requests per socket). We have also not experimentally determined the visibility effect of the side-channel pending stable notifications as in the first optimization.
+
+\vspace{1em}\noindent\textbf{Algorithmic improvements.} We are actively investigating more efficient alternatives to the algorithm presented here. In particular, a lower-overhead (but still highly available) implementation that used less metadata would be appealing. A system using server-side vector clocks is feasible but does not necessarily reduce overhead because the number of items written per transaction is likely smaller than the number of servers in a system. Similarly, we have observed an algorithm trade-off between the size of $ts_{required}$ and write metadata. While it is certainly possible to reduce overheads by reducing availability~\cite{eiger}, we believe high availability is a worthwhile goal for future exploration.
+
 
 
 \begin{algorithm}[t!]

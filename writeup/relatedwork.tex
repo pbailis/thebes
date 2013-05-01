@@ -2,9 +2,12 @@
 \section{Related Work}
 \label{sec:relatedwork}
 
-There is a growing body related work on highly available semantics,
-mechanisms for concurrency control, and techniques for scalable
-distributed operations.
+While we have discussed traditional mechanisms for distributed
+coordination and several related systems in
+Section~\ref{sec:eval-existing}, in this section, we further discuss
+related work. In particular, we discuss related work on highly
+available semantics, mechanisms for concurrency control, and
+techniques for scalable distributed operations.
 
 Weak consistency and high availability have been well
 studied. Serializability has long been known to be
@@ -16,18 +19,19 @@ studies examine weak isolation guarantees~\cite{adya,
   ansicritique}. However, as we have discussed, the connection between
 weak, multi-object consistency models in a distributed setting and
 high availability is relatively unexplored. With the exception of our
-preliminary workshop paper discussing transactional availability and
-HAT RC and I-CI~\cite{hat-hotos}--- which this work expands, providing
-additional algorithms and impossibility results, a full
-taxonomization, and experimental and application analysis---we believe
-this paper is the first to explore this area. However, several studies
-rigorously classify \textit{non-HAT} semantics: Wisemann et al. have
-proposed a three parameter classification for one-copy serializable
-database systems, performing a more extensive classification than our
-overview in Section~\ref{sec:evaluation}, including eager database
-replication techniques~\cite{kemme-classification} and distributed
-mechanisms for achieving one-copy
-serializability~\cite{wisemann-survey}.
+preliminary workshop paper discussing transactional availability,
+real-world ACID, and HAT RC and I-CI~\cite{hat-hotos}---which this
+work expands, providing additional algorithms and impossibility
+results, a full taxonomization, experimental and application analysis,
+and much greater discussion of implications and related work---we
+believe this paper is the first to explore this area. However, several
+studies rigorously classify \textit{non-HAT} semantics: Wisemann et
+al. have proposed a three parameter classification for one-copy
+serializable database systems, performing a more extensive
+classification than our overview in Section~\ref{sec:evaluation},
+including eager database replication
+techniques~\cite{kemme-classification} and distributed mechanisms for
+achieving one-copy serializability~\cite{wisemann-survey}.
 
 %, linearizability, consistent snapshots, and recency
 %bounds~\cite{ceri-mechanism, chen-mechanism}.

@@ -2,20 +2,20 @@
 \section{Why High Availability?}
 \label{sec:motivation}
 
-Why does availability matter? Peter Deutsch starts his classic list of
-``Fallacies of Distributed Computing'' with two concerns fundamental
-to distributed database systems: ``\textit{1.)}  The network is
-reliable. \textit{2.)} Latency is zero''~\cite{fallacies-deutsch}; in
-a distributed setting, network failures may prevent database servers
-from communicating, and, in the absence of failures, communication is
-slowed by factors like physical distance and, more often, congestion
-and routing. As we will see (Section~\ref{sec:availability}), highly
-available system operation minimizes the effect of network
-\textit{partitions} and \textit{latency}. In this Section, we draw on
-a range of evidence that indicates that partitions occur relatively
-frequently in real-world deployments and best-case latencies between
-datacenters are substantial, often on the order of hundreds of
-milliseconds.
+Why does high availability matter? Peter Deutsch starts his classic
+list of ``Fallacies of Distributed Computing'' with two concerns
+fundamental to distributed database systems: ``\textit{1.)}  The
+network is reliable. \textit{2.)} Latency is
+zero''~\cite{fallacies-deutsch}; in a distributed setting, network
+failures may prevent database servers from communicating, and, in the
+absence of failures, communication is slowed by factors like physical
+distance and, more often, congestion and routing. As we will see
+(Section~\ref{sec:availability}), highly available system design
+mitigates the effects of network \textit{partitions} and
+\textit{latency}. In this section, we draw on a range of evidence that
+indicates that partitions occur relatively frequently in real-world
+deployments and best-case latencies between datacenters are
+substantial, often on the order of several hundreds of milliseconds.
 
 \subsection{Network Partitions at Scale}
 
@@ -28,7 +28,7 @@ a twelve-hour series of outages across the Amazon EC2 and RDS
 services~\cite{amazon-netpartition}. Subsequent misconfigurations and
 partial failures such as another EC2 outage in October 2012 have led
 to full site disruptions for popular web services like Reddit,
-Foursquare, and Heroku~\cite{ec2-downsites}. At a global scale,
+Foursquare, and Heroku~\cite{ec2-downsites}. At global scale,
 hardware failures---like the 2011 outages in Internet backbones in
 North America and Europe due a router
 bug~\cite{juniper-partition}---and misconfigurations like the BGP
@@ -81,9 +81,9 @@ as we will discuss, relaxed semantic guarantees.
 \label{sec:latency}
 
 Even with fault-free networks, distributed systems face the challenge
-of communication latency, Deutsch's second ``Fallacy.'' In this
+of network communication latency, Deutsch's second ``Fallacy.'' In this
 section, we quantify round-trip latencies, which are often
-large---hundreds of milliseconds---in a geo-replicated,
+large---hundreds of milliseconds in a geo-replicated,
 multi-datacenter context.  Fundamentally, the speed at which two
 servers can communicate is (according to modern physics) bounded by
 the speed of light. In the best case, two servers on opposite sides of
@@ -118,7 +118,7 @@ H2 &  & \colorbox{min-lat-color}{0.50}  \\
   \end{tabular}
  }}
 
-\subfloat[Cross-region (CA:~California, OR:~Oregon, VA:~Virginia, TO:~Tokyo, IR:~Ireland, SY:~Sydney, SP:~S\~{a}o Paulo, SI:~Singapore)] {
+\subfloat[Cross-region (CA:~California, OR:~Oregon, VA:~Virginia, TO:~Tokyo, IR:~Ireland, SY:~Sydney, SP:~S\~{a}o Paulo, SI:~Singapore)\vspace{-.5em}] {
   \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
 \hline
 & \multicolumn{1}{c}{OR} & \multicolumn{1}{c}{VA} & \multicolumn{1}{c}{TO} & \multicolumn{1}{c}{IR} & \multicolumn{1}{c}{SY} & \multicolumn{1}{c}{SP} & \multicolumn{1}{c|}{SI} \\\hline
@@ -133,7 +133,7 @@ SP & & & & & &  & \colorbox{max-lat-color}{362.8}  \\
   \end{tabular}
 }
 
-\caption{Mean RTT times on EC2 (min and max highlighted)}\vspace{-1em}
+\caption{Mean RTT times on EC2 (min and max highlighted)}\vspace{-.5em}
 \label{table:rtt}
 \end{table}
 
@@ -148,18 +148,19 @@ In real deployments, messages travel slower than the speed of light
 due to routing, congestion, and server-side overheads. To illustrate
 the difference between intra-datacenter, inter-datacenter, and
 inter-planetary networks, we performed a measurement study of network
-behavior on Amazon's EC2, a widely-used public compute cloud. We
-measured one week of ping times between all seven EC2 geographic
-``regions'', across three ``availability zones'' (closely co-located
-datacenters), and within a single ``availabilty zone'' (datacenter),
-at a granularity of 1s (dataset to be released). We summarize the
-results of our network measurement study in Table~\ref{table:rtt}. On
-average, intra-datacenter communication (Table 1a) is between 1.82 and
-6.38 times faster than across geographically co-located datacenters
-(Table 1b) and between 40 and 647 times faster than across
-geographically distributed datacenters (Table 1c). The cost of
-wide-area communication exceeds the speed of light: for example, while
-a speed-of-light RTT from S\~{a}o Paulo to Singapore RTT is 106.7ms,
+behavior on Amazon's EC2, a widely used public compute cloud. We
+measured one week of ping times (i.e., round-trip times, or
+RTTs) between all seven EC2 geographic ``regions,'' across three
+``availability zones'' (closely co-located datacenters), and within a
+single ``availability zone'' (datacenter), at a granularity of 1s
+(dataset to be released). We summarize the results of our network
+measurement study in Table~\ref{table:rtt}. On average,
+intra-datacenter communication (Table 1a) is between 1.82 and 6.38
+times faster than across geographically co-located datacenters (Table
+1b) and between 40 and 647 times faster than across geographically
+distributed datacenters (Table 1c). The cost of wide-area
+communication exceeds the speed of light: for example, while a
+speed-of-light RTT from S\~{a}o Paulo to Singapore RTT is 106.7ms,
 ping packets incur an average 362.8ms RTT (95th percentile: 649ms). As
 shown in Figure~\ref{fig:rtt}, the distribution of latencies varies
 between links, but the trend is clear: remote communication has a
@@ -181,16 +182,15 @@ decreased concurrency (and, subsequently, performance degradation,
 scalability limitations, and, often, external aborts like
 deadlocks)~\cite{gray-isolation}. Accordingly, to increase
 concurrency, database systems offer a range of ACID properties weaker
-than serializability.  Instead, databases offer a host of so-called
-\textit{weak isolation} models that allow varying restrictions on the
-space of schedules that are allowable by the system~\cite{adya,
-  ansicritique, ansi-sql}. None of these weak isolation models
-guarantees serializability, but, as we see below, their benefits are
-often considered to outweigh costs of possible consistency anomalies
-that might arise from their use.
+than serializability: the host of so-called \textit{weak isolation}
+models describe varying restrictions on the space of schedules that
+are allowable by the system~\cite{adya, ansi-sql, ansicritique}. None
+of these weak isolation models guarantees serializability, but, as we see below,
+their benefits are often considered to outweigh costs of possible
+consistency anomalies that might arise from their use.
 
-To understand the prevalence of these weak isolation models, we
-recently surveyed the default and maximum isolation models provided by
+To understand the prevalence of weak isolation, we
+recently surveyed the default and maximum isolation guarantees provided by
 18 databases, often claiming to provide ``ACID'' or ``NewSQL''
 functionality~\cite{hat-hotos}. As shown in
 Table~\ref{table:existing}, only three out of 18 databases provided
@@ -243,17 +243,17 @@ VoltDB & S & S\\
 \end{table}
 
 It is unknown \textit{which} of these guarantees can be provided with
-high availability. The existing algorithms for providing weak
-isolation are typically designed for a single-node context and are, to
-the best of our knowledge, unavailable due to a reliance on
-concurrency control mechanisms like locking that are not resilient to
-partial failure (Section~\ref{sec:evaluation}). Moreover, we are not
-aware of any prior literature that provides guidance as to the
+high availability, or are HAT-compliant. Existing algorithms for
+providing weak isolation are often designed for a single-node context
+and are, to the best of our knowledge, unavailable due to reliance
+on concurrency control mechanisms like locking that are not resilient
+to partial failure (Section~\ref{sec:eval-existing}). Moreover, we are
+not aware of any prior literature that provides guidance as to the
 relationship between weak isolation and high availability: prior work
 has examined the relationship between serializability and high
-availability~\cite{davidson-survey} and weak isolation on a single
-server~\cite{adya, ansicritique, gray-isolation} but never weak
-isolation and high availability taken together.  A primary goal in the
+availability~\cite{davidson-survey} and weak isolation in
+general~\cite{adya, ansicritique, gray-isolation} but not weak
+isolation and high availability together.  A primary goal in the
 remainder of this paper is to understand which models are
 HAT-compliant.
 

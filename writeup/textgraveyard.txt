@@ -1,5 +1,39 @@
 
 
+In our non-sticky TA algorithm, clients buffer their writes until
+commit, sending the final write to each data item to each respective
+server. Along with each write, clients attach a the transaction ID and
+a list of all data items written to in the transaction, $L_v$. Upon
+receiving a new write to item $d$, a server places the write into a
+\texttt{pending} queue and notifies all other servers responsible for
+a data item in $L_v$ that it has received a write to $d$ with the
+respective transaction ID. Once a server receives acknowledgments with
+appropriate transaction ID for all items in $L_v$, it moves the write
+from \texttt{pending} to the \texttt{stable} database (which applies
+the writes according to highest-ID-wins). Accordingly, all writes that
+should be made atomic with a write in \texttt{stable} are guaranteed
+to be present on their respective servers, either in \texttt{pending}
+or \texttt{stable}. Given the possibility of internal aborts, writes
+to \texttt{pending} may require 2 RTTs: one to check constraints and
+one to execute the above (but these checks \textit{cannot} cause other
+transactions to block, as would be the case in a two-phase
+\textit{commit} protocol).
+
+For reads, each client tracks which values it should read. It
+maintains a mapping (vector) from data items to transaction IDs. Upon
+transaction start, the client clears its mapping, and, when it
+performs a read from a data item, it sends the server its current ID
+for the item. If the client does not supply an ID, the server returns
+the latest value from \texttt{stable}. If the ID is non-empty, the
+server either returns the matching value from \texttt{pending} or a
+value with higher ID from \texttt{pending}---along with $L_v$ for the
+write. When the client receives a response, it updates its local
+vector with $L_v$. Accordingly, even if transaction's writes to two
+keys $x$ and $y$ are present on the replica for $x$'s \texttt{stable}
+and the replica for $y$'s \texttt{pending}, a client's reads from $x$
+then $y$ will return a transactionally atomic pair of values because
+the replica for $y$ will know to check \texttt{pending}.
+
 As Figure~\ref{fig:wan-exp} shows, within a single datacenter, a
 mastered implementation achieves approximately double the latency and
 slightly over half of the throughput of a HAT implementation. This is
