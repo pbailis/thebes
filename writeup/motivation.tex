@@ -99,24 +99,24 @@ distinct sites, this cost of communication increases.
 \begin{table}[t!]
 \vspace{.5em}
 
-\subfloat[Across \texttt{us-east} AZs]{
+\subfloat[Within \texttt{us-east-b} AZ] {
   \makebox[.2\textwidth]{
+ \begin{tabular}{|c|c|c|}\hline
+ & \multicolumn{1}{c}{H2} & \multicolumn{1}{c|}{H3}\\\hline
+H1  & 0.55   & \colorbox{max-lat-color}{0.56} \\
+H2 &  & \colorbox{min-lat-color}{0.50}  \\
+\hline
+  \end{tabular}}
+ }
+\subfloat[Across \texttt{us-east} AZs]{
+  \makebox[.25\textwidth]{
     \begin{tabular}{|c|c|c|}\hline
  & \multicolumn{1}{c}{C} & \multicolumn{1}{c|}{D}\\\hline
 B & \colorbox{min-lat-color}{1.08} & 3.12 \\
 C & & \colorbox{max-lat-color}{3.57}  \\
 \hline
   \end{tabular}}
- }
-\subfloat[Within \texttt{us-east-b} AZ] {
-  \makebox[.25\textwidth]{
-  \begin{tabular}{|c|c|c|}\hline
- & \multicolumn{1}{c}{H2} & \multicolumn{1}{c|}{H3}\\\hline
-H1  & 0.55   & \colorbox{max-lat-color}{0.56} \\
-H2 &  & \colorbox{min-lat-color}{0.50}  \\
-\hline
-  \end{tabular}
- }}
+}
 
 \subfloat[Cross-region (CA:~California, OR:~Oregon, VA:~Virginia, TO:~Tokyo, IR:~Ireland, SY:~Sydney, SP:~S\~{a}o Paulo, SI:~Singapore)\vspace{-.5em}] {
   \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
