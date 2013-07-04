@@ -4,6 +4,14 @@
  booktitle = {SOSP 2011},
 } 
 
+
+@inproceedings{bobtail,
+  title={Bobtail: avoiding long tails in the cloud},
+  author={Xu, Yunjing and Musgrave, Zachary and Noble, Brian and Bailey, Michael},
+  booktitle={NSDI},
+  year={2013}
+}
+
 @inproceedings{krikellas-bargain,
   author    = {Konstantinos Krikellas and
                Sameh Elnikety and
@@ -37,6 +45,13 @@
   year      = {2009},
 
 }
+
+@article{aphyr-post,
+author = {Kyle Kingsbury and Peter Bailis},
+title={The Network is Reliable},
+year={2013},
+month={June},
+note={\url{http://aphyr.com/posts/288-the-network-is-reliable}}}
 
 @inproceedings{daudjee-snapshot,
   author    = {Khuzaima Daudjee and
@@ -401,6 +416,32 @@ booktitle={SIGMOD 2013}}
   booktitle={SRDS 2000},
 }
 
+@inproceedings{walter,
+author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
+title = {Transactional storage for geo-replicated systems},
+pages = {385--400},
+booktitle={SOSP},
+year = {2011}}
+
+@article{1sr,
+ author = {Attar, Rony and Bernstein, Philip A. and Goodman, Nathan},
+ title = {Site Initialization, Recovery, and Backup in a Distributed Database System},
+ journal = {IEEE Trans. Softw. Eng.},
+ volume = {10},
+ number = {6},
+ month = nov,
+ year = {1984},
+ issn = {0098-5589},
+ pages = {645--650},
+ numpages = {6},
+ url = {http://dx.doi.org/10.1109/TSE.1984.5010293},
+ doi = {10.1109/TSE.1984.5010293},
+ acmid = {2283200},
+ publisher = {IEEE Press},
+ address = {Piscataway, NJ, USA},
+ keywords = {Distributed database systems, fault recovery, site initialization},
+} 
+
 @inproceedings{raynal-causal,
   title={From serializable to causal transactions for collaborative applications},
   author={Raynal, Michel and Thia-Kime, G{\'e}rard and Ahamad, Mustaque},
@@ -571,6 +612,24 @@ note={\url{http://voltdb.com/dig-deeper/faq.php}, also verified with VoltDB stak
   year={1985}
 }
 
+@inproceedings{bernstein-survey,
+title={Rethinking Eventual Consistency},
+author={Phil Bernstein and Sudiptdo Das},
+booktitle= {SIGMOD},
+year={2013}}
+
+@article{bailis-ec,
+ author   = {Peter Bailis and Ali Ghodsi},
+ title    = {{Eventual Consistency} Today: Limitations, Extensions, and Beyond},
+ journal = {ACM Queue},
+ month = {March},
+ volume = {11},
+ number = {3},
+ year = {2013},
+}
+
+
+
 @inproceedings{daudjee-session,
   title={Lazy database replication with ordering guarantees},
   author={Daudjee, K. and Salem, K.},
@@ -599,11 +658,6 @@ note={\url{http://tinyurl.com/bqty9yz}}}
   booktitle={SIGMOD 2006},
   pages={599--610},
 }
-
-@inproceedings{walter,
-author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
-title = {Transactional storage for geo-replicated systems},
-booktitle={SOSP 2011}}
 
 @inproceedings{brewer-base,
   title={Cluster-based scalable network services},
@@ -635,6 +689,26 @@ title = {{ISO/IEC 9075-2:2011} \textit{Information technology -- Database langua
   year={1999},
   school={MIT}
 }
+
+@article{lamportclocks,
+ author = {Lamport, Leslie},
+ title = {Time, clocks, and the ordering of events in a distributed system},
+ journal = {Commun. ACM},
+ issue_date = {July 1978},
+ volume = {21},
+ number = {7},
+ month = jul,
+ year = {1978},
+ issn = {0001-0782},
+ pages = {558--565},
+ numpages = {8},
+ url = {http://doi.acm.org/10.1145/359545.359563},
+ doi = {10.1145/359545.359563},
+ acmid = {359563},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {clock synchronization, computer networks, distributed systems, multiprocess systems},
+} 
 
 @article{optimistic,
  author = {Saito, Yasushi and Shapiro, Marc},
@@ -720,6 +794,25 @@ note = {Personal communication and draft under submission. \url{http://tinyurl.c
   year={2011},
   howpublished={{INRIA TR 7506}}
 }
+
+
+@misc{jepsen,
+title={Jepsen: Testing the Partition Tolerance of PostgreSQL, Redis, MongoDB and Riak},
+author={Kyle Kingsbury},
+howpublished={InfoQ (\url{http://www.infoq.com/articles/jepsen})},
+year={2013},
+month={June}}
+
+@misc{chaosmonkey,
+title={Netflix Blog: Chaos Monkey Released Into The Wild},
+author={Cory Bennett and Ariel Tseitlin},
+year={2012},
+howpublished={\url{http://techblog.netflix.com/2012/07/chaos-monkey-released-into-wild.html}}}
+
+@misc{crdt-riak,
+title={Data Structures in {Riak}},
+author={Russell Brown and Sean Cribbs},
+howpublished={RICON 2012 (\url{https://speakerdeck.com/basho/data-structures-in-riak})}}
 
 @inproceedings{ansicritique,
   title={A critique of {ANSI SQL} isolation levels},

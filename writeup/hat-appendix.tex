@@ -598,7 +598,7 @@ important in network-constrained environments.
 \caption*{\textbf{Algorithm} HAT Transactional Atomicity}\vspace{.5em}
 \State{\textit{\textbf{Shared Data Types}}\\\vspace{.5em}
 \texttt{timestamp}: unique, per transaction identifier\\
-$\texttt{write}:[\texttt{key:}k, \texttt{value}:v, \texttt{timestamp}:ts, \texttt{set<key>}:tx\_keys]$\\\hrulefill}\vspace{.5em}
+$\texttt{write}:[\texttt{key:}k, \texttt{value}:v, \texttt{timestamp}:ts, \texttt{set<key>}:sibs]$\\\hrulefill}\vspace{.5em}
 
   \State{\textbf{\textit{Server-side Data Structures and Methods}\\\vspace{.5em}
 $\texttt{set<write>:pending}$\\
@@ -607,7 +607,7 @@ $\texttt{map<timestamp, int>:acks}$}}\\
 
 \Procedure{put}{\texttt{write}:$w$}
   \State \texttt{pending}.add($w$)
-  \For{key $k_t \in w.tx\_keys$}
+  \For{key $k_t \in w.sibs$}
   \State \{all replicas for $sib$\}.notify($w.ts$)
   \EndFor
   
@@ -618,7 +618,7 @@ $\texttt{map<timestamp, int>:acks}$}}\\
 
   \Procedure{notify}{\texttt{timestamp}:$ts$}
   \State \texttt{acks}.get($ts$).increment()
-  \If{all \texttt{acks} received for all replicas for $ts$'s $tx\_keys$}
+  \If{all \texttt{acks} received for all replicas for $ts$'s $sibs$}
   \State \texttt{good}.add($w$)
   \State \texttt{pending}.remove($w$)  
   \EndIf  
@@ -654,7 +654,7 @@ $\texttt{map<key, timestamp>:required}$}}\\
   \EndIf
 
   \State $w\_{ret}$ = (available replica for $k$).get($k$, \texttt{required}.get($k$))
-  \For {$(tx_{key} \in w_{ret}.tx\_keys$}
+  \For {$(tx_{key} \in w_{ret}.sibs$}
   \If {$w_{ret}.ts > \texttt{required}.get(tx_{key})$}
   \State $\texttt{required}$.put$(tx_{key}, w_{ret}.ts)$
   \EndIf

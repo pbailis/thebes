@@ -9,19 +9,19 @@ including high availability, availability with stickiness, and
 transactional availability.
 
 Informally, highly available algorithms ensure ``always on'' operation
-and guaranteed low latency. If users of a highly available system are
-able to contact a (set of) server(s) in a system, they are guaranteed
-a response; this means servers will not need to communicate with any
-others. If servers are partitioned from one another, they do not need
-to stall in order to provide clients a ``safe'' response to
-operations. This lack of fast-path coordination also means that a
-highly available system also provides low latency~\cite{abadi-pacelc};
-in a wide-area setting, clients of a highly available system need not
-wait for cross-datacenter communication. To properly describe whether
-a \textit{transactional} system is highly available, we need to
-describe what servers a client must contact as well as what kinds of
-responses a server can provide, especially given the possibility of
-aborts.
+and, as a side effect, guarantee low latency. If users of a highly
+available system are able to contact a (set of) server(s) in a system,
+they are guaranteed a response; this means servers will not need to
+communicate with any others. If servers are partitioned from one
+another, they do not need to stall in order to provide clients a
+``safe'' response to operations. This lack of fast-path coordination
+also means that a highly available system also provides low
+latency~\cite{abadi-pacelc}; in a wide-area setting, clients of a
+highly available system need not wait for cross-datacenter
+communication. To properly describe whether a \textit{transactional}
+system is highly available, we need to describe what servers a client
+must contact as well as what kinds of responses a server can provide,
+especially given the possibility of aborts.
 
 \subsection{Replica Availability}
 
@@ -32,38 +32,44 @@ indefinitely long network partitions between
 servers~\cite{gilbert-cap}.\footnote{Under this definition, systems
   that require a majority of servers to be online is not
   available. Similarly, a system which ensures that clients receive a
-  response with high (but not perfect) probability is not available.}
-As in a standard distributed database, designated servers might
-perform operations for different data items; a server that can handle
-an operation for a given data item is called a \textit{replica} for
-that item.\footnote{There is a further distinction between a
-  \textit{fully replicated} system, in which all servers are replicas
-  for all data items, and a \textit{partially replicated} system, in
-  which at least one server acts as a replica for only a subset of all
-  data items. For generality, and, for applicability to many modern
-  ``sharded'' or ``partitioned'' data storage systems~\cite{
-   bigtable, pnuts,  spanner, dynamo, hstore}, we consider partially
-  replicated systems.}
+  response with high (but not perfect) probability is not
+  available. This is a stringent definition but matches the
+  assumptions made by the CAP Theorem~\cite{gilbert-cap} and
+  guarantees low latency~\cite{abadi-pacelc}.} As in a standard
+distributed database, designated servers might perform operations for
+different data items; a server that can handle an operation for a
+given data item is called a \textit{replica} for that
+item.\footnote{There is a further distinction between a \textit{fully
+    replicated} system, in which all servers are replicas for all data
+  items, and a \textit{partially replicated} system, in which at least
+  one server acts as a replica for only a subset of all data
+  items. For generality, and, for applicability to many modern
+  ``sharded'' or ``partitioned'' data storage systems~\cite{ bigtable,
+    pnuts, spanner, dynamo, hstore}, we consider partially replicated
+  systems.}
 
-In addition to high availability, which allows operations on any replica,
-distributed algorithms often assume a model in which clients always
-contact the same (sets of) replica(s) across subsequent operations. As
-we will discuss in Section~\ref{sec:hats}, clients can ensure
-continuity between operations (e.g., reading their prior updates to a
-data item) by maintaining affinity or ``stickiness'' with a server or
-set of servers~\cite{vogels-defs}. Simultaneously maintaining
-availability and stickiness requires fate sharing between the client
-and its server: if a client's sticky servers fail or if the client is
-partitioned from its sticky servers, then it may face
+\subsection{Sticky Availability}
+
+In addition to high availability, which allows operations on any
+replica, distributed algorithms often assume a model in which clients
+always contact the same logical (sets of) replica(s) across subsequent
+operations. As we will discuss in Section~\ref{sec:hats}, clients can
+ensure continuity between operations (e.g., reading their prior
+updates to a data item) by maintaining affinity or ``stickiness'' with
+a server or set of servers~\cite{vogels-defs}. Simultaneously
+maintaining availability and stickiness requires fate sharing between
+the client and its server: if a client's sticky servers fail or if the
+client is partitioned from its sticky servers, then it may face
 unavailability. We say that a system provides \textit{sticky
-  availability} if, whenever a client's operation is executed against
-a correct server that has observed all of its prior operations, it
-eventually receives a response, even in the presence of indefinitely
-long partitions. A client may choose to become sticky available by
-acting as a server itself; for example, a client might cache its reads
-and writes~\cite{bolton, sessionguarantees, swift}. Any guarantee
-achievable in a highly available system is achievable in a sticky high
-availability system but not vice-versa.
+  availability} if, whenever a client's operation on an item is
+executed against a correct replica that has observed all of its prior
+operations for that item, it eventually receives a response, even in
+the presence of indefinitely long partitions. A client may choose to
+become sticky available by acting as a server itself; for example, a
+client might cache its reads and writes~\cite{bolton,
+  sessionguarantees, swift}. Any guarantee achievable in a highly
+available system is achievable in a sticky high availability system
+but not vice-versa.
 
 %% \begin{figure}
 %% \centering
@@ -121,21 +127,23 @@ availability. This is standard in the distributed systems literature
 (e.g., distributed register models such as linearizability all concern
 single objects~\cite{herlihy-art}), yet the database literature
 largely focuses on transactions: groups of multiple operations over
-multiple objects. Accordingly, by itself, replica availability is
-insufficient to describe availability guarantees for
-transactions. Additionally, given the choice of \textit{commit} and
-\textit{abort} responses---which signal transaction success or failure
-to a client---we must take care in defining transactional
+multiple objects. Accordingly, by itself, traditional definitions of
+high availability are insufficient to describe availability guarantees
+for transactions. Additionally, given the choice of \textit{commit}
+and \textit{abort} responses---which signal transaction success or
+failure to a client---we must take care in defining transactional
 availability.
 
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and
-receive a response from at least one replica for each data item. This
-may result in ``lower availability'' than a non-transactional
-requirement. Additionally, given the possibility of system-initiated
-aborts, we need to ensure useful forward progress: a system can
-trivially guarantee clients a response by always aborting all
-transactions. However, this is an unsatisfactory system because
+receive a response from at least one replica for each data item. We
+say that a transaction has \emph{replica availability} if it can
+contact at least one replica for every item it attempts to
+access. This may result in ``lower availability'' than a
+non-transactional requirement. Additionally, given the possibility of
+system-initiated aborts, we need to ensure useful forward progress: a
+system can trivially guarantee clients a response by always aborting
+all transactions. However, this is an unsatisfactory system because
 nothing good (transaction commit) ever happens; we should require a
 \textit{liveness} property~\cite{transaction-liveness}. We cannot
 guarantee that every transaction will commit---transactions may choose
@@ -144,13 +152,9 @@ not indefinitely abort transactions on its own volition. We call a
 transaction abort due to a transaction's own choosing (e.g., as an
 operation of the transaction itself or due to a would-be declared
 integrity constraint violation) an \textit{internal abort} and an
-abort due to system implementation or operation an \textit{external abort}.
-
-We say that a system provides \textit{transactional availability} if,
-given replica availability for every data item in a transaction, the
-transaction eventually commits (possibly after multiple client
-retries) or internally aborts~\cite{hat-hotos}. For example, a system
-will violate transactional availability if a client that can contact
-two servers for each of the data items in its transaction does not
-eventually commit in the absence of internal aborts.
+abort due to system implementation or operation an \textit{external
+  abort}. We say that a system provides \textit{transactional
+  availability} if, given replica availability for every data item in
+a transaction, the transaction eventually commits (possibly after
+multiple client retries) or internally aborts~\cite{hat-hotos}.
 

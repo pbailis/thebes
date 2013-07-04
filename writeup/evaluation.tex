@@ -176,12 +176,13 @@ thumbnail) are also achievable using HATs.
 transactions are well-served by HATs. The two problematic
 transactions, New-Order and Payment, rely on non-monotonic state
 update. The former can be modified to ensure ID uniqueness but not
-sequential ID ordering, while the latter is inherently
-non-monotonic, requiring external compensation or stronger
-consistency protocols. Based on these experiences and discussions with
-practitioners, we expect that, especially for read-dominated workloads
-found in many online services, HAT guarantees will provide useful
-semantics for many applications.
+sequential ID ordering, while the latter is inherently non-monotonic,
+requiring external compensation or stronger consistency
+protocols. Based on these experiences and discussions with
+practitioners, we believe that HAT guarantees can provide useful
+semantics for a large class of application functionality, while a
+(possibly small) subset of operations will require stronger,
+unavailable properties.
 
 \subsection{Experimental Costs}
 \label{sec:prototype}
@@ -208,10 +209,13 @@ is a partially replicated (hash-based, partitioned) key-value backed
 by LevelDB and implemented in Java using Apache Thrift. It currently
 supports eventual consistency (hereafter, \texttt{eventual};
 last-writer-wins RU with standard all-to-all anti-entropy between
-replicas) and HAT RC and TA with RC guarantees (hereafter, \texttt{TA}). It also supports
-non-HAT operation whereby all operations for a given key are routed to
-a (randomly) designated \texttt{master} replica for each key
-(hereafter, \texttt{master}; i.e., PNUTS~\cite{pnuts}) as well as
+replicas) and HAT RC and TA with RC guarantees (hereafter,
+\texttt{TA}). It also supports non-HAT operation whereby all
+operations for a given key are routed to a (randomly) designated
+\texttt{master} replica for each key (guaranteeing single-key
+linearizability, as in Gilbert and Lynch's CAP Theorem
+proof~\cite{gilbert-cap} and in PNUTS~\cite{pnuts}'s
+\texttt{read-latest} operation; hereafter, \texttt{master}) as well as
 distributed two-phase locking. Servers are durable: they synchronously
 write to LevelDB before responding to client requests, while new
 writes in TA are sent to a write-ahead log, which is synchronously

@@ -174,15 +174,16 @@ Perplexingly, discussions of TA are absent from existing treatments of
 weak isolation. This is perhaps again due to the single-node context
 in which prior work was developed: on a single server (or a fully
 replicated database), TA is achievable via lightweight locking and/or
-local concurrency control over data items~\cite{gstore}. In contrast,
-in a distributed environment, TA over arbitrary groups of
-non-colocated items is considerably more difficult to achieve with
-high availability: servers need to ensure that, regardless of replica
-selection, all of a client's accesses will read a sufficiently
-up-to-date/``consistent'' set of data items. However, replicas do not
-need to agree on when to choose to reveal sets of values to clients, which would require consensus. Instead, as we see below, TA
-only requires the equivalent of reliable broadcast (with some
-additional client metadata) and is achievable in HAT systems.
+local concurrency control over data items~\cite{gstore,
+  kemme-thesis}. In contrast, in a distributed environment, TA over
+arbitrary groups of non-colocated items is considerably more difficult
+to achieve with high availability: servers need to ensure that,
+regardless of replica selection, all of a client's accesses will read
+a sufficiently up-to-date/``consistent'' set of data items. However,
+replicas do not need to agree on when to choose to reveal sets of
+values to clients, which would require consensus. Instead, as we see
+below, TA only requires the equivalent of reliable broadcast (with
+some additional client metadata) and is achievable in HAT systems.
 
 % TA can be achieved via multi-versioning. If clients attach vector
 % clocks to every write (incrementing their own position for each
@@ -267,21 +268,24 @@ any precedence that a global observer would see.
 a session observes an effect of transaction $T_1$ and subsequently
 commits transaction $T_2$, then another session can only observe
 effects of $T_2$ if it can also observe $T_1$'s effects (or later
-values that supersede $T_1$'s).  Any order on transactions should
-respect the reads-from order.\vspace{.5em}
+values that supersede $T_1$'s); this corresponds to Lamport's
+``happens-before'' relation~\cite{lamportclocks}.  Any order on
+transactions should respect the transitive reads-from
+order.\vspace{.5em}
 
 The above guarantees can be achieved by forcing servers to wait to
-reveal new writes until each write's respective dependencies are
-visible on all replicas. This mechanism effectively ensures that all
-clients read from a globally agreed upon lower bound on the versions
-written. This is highly available as a client will never block due to
-inability to find a server with a sufficiently up-to-date version of a
-data item. However, it does not imply that transactions will read
-their own writes or, in the presence of partitions, make forward
-progress through the version history. The problem is that under
-non-sticky high availability, a system must handle the possibility
-that, under a partition, an unfortunate client will be forced to issue
-its next requests against a partitioned, out-of-date server.
+reveal new writes (say, by buffering them in separate local storage)
+until each write's respective dependencies are visible on all
+replicas. This mechanism effectively ensures that all clients read
+from a globally agreed upon lower bound on the versions written. This
+is highly available as a client will never block due to inability to
+find a server with a sufficiently up-to-date version of a data
+item. However, it does not imply that transactions will read their own
+writes or, in the presence of partitions, make forward progress
+through the version history. The problem is that under non-sticky high
+availability, a system must handle the possibility that, under a
+partition, an unfortunate client will be forced to issue its next
+requests against a partitioned, out-of-date server.
 
 The solution to this conundrum is to give up high availability and
 settle for sticky availability. Sticky availability permits three
@@ -347,10 +351,6 @@ consistency properties that are achievable (see
 Section~\ref{sec:relatedwork}) but we specifically evaluate TPC-C
 transaction semantics with HAT guarantees in
 Section~\ref{sec:evaluation}.
-
-%\vspace{.5em}\noindent{\textbf{Durability}} A client requiring that its
-%transactions' effects survive $F$ server faults requires at least
-%$F+1$ non-failing replicas; this affects availability.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,
@@ -440,10 +440,11 @@ TPC-C~\cite{snapshot-serializable}---but, as a generalization of Lost
 Update, it is also unavailable to HAT systems.
 
 Their need to prevent Lost Update means that Consistent Read, Snapshot
-Isolation, and Cursor Stability guarantees are all unavailable.
-Repeatable Read (defined by Gray~\cite{gray-isolation}, Berenson et
+Isolation (including Parallel Snapshot Isolation~\cite{walter}), and
+Cursor Stability guarantees are all unavailable.  Repeatable Read
+(defined by Gray~\cite{gray-isolation}, Berenson et
 al.~\cite{ansicritique}, and Adya~\cite{adya}) and One-Copy
-Serializability need to prevent both Lost Update and Write Skew. These
+Serializability~\cite{1sr} need to prevent both Lost Update and Write Skew. These
 prevention requirements mean that these guarantees are inherently
 unavailable.
 
@@ -464,6 +465,15 @@ Spanner~\cite{spanner}). It is also common, particularly in systems
 that allow reading from masters and slaves, to provide a guarantee
 such as ``read a version that is no more than five seconds out of
 date'' or similar. None of these guarantees is HAT-compliant.
+
+\subsubsection{Durability}
+
+A client requiring that its transactions' effects survive $F$ server
+faults requires at least $F+1$ non-failing replicas; this affects
+availability and, according to the Gilbert and Lynch definition we
+have adopted, $F>1$ fault tolerance is not achievable with high
+availability.
+
 
 \subsection{Summary}
 \label{sec:hat-summary}

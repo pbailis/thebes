@@ -50,26 +50,30 @@ failures...in many circumstances, applications need a relaxed
 approach''~\cite{pnuts-update}.
 
 Several recent studies rigorously quantify partition behavior. A 2011
-study of several Microsoft datacenters found a mean of 40.8 network
-link failures per day (95th percentile: 136), with a median time to
-repair of around five minutes (and up to one week). Perhaps
-surprisingly, provisioning redundant networks only reduces impact of
-failures by up to 40\%, meaning network providers cannot easily
-curtail partition behavior~\cite{sigcomm-dc}. A 2010 study of over 200
-wide-area routers found an average of 16.2--302.0 failures per link
-per year with an average annual downtime of 24--497 minutes per link
-per year (95th percentile at least 34 hours)~\cite{sigcomm-wan}. In
-HP's managed enterprise networks, WAN, LAN, and connectivity problems
-account for 28.1\% of all customer support tickets while 39\% of
-tickets relate to network hardware.  The median incident duration for
-highest priority tickets ranges from 114--188 minutes and up to a full
-day for all tickets~\cite{turner2012failure}. Other studies confirm
-these results, showing median time between failures over a WAN network
+study of several Microsoft datacenters observed over 13,300 network
+failures with end-user impact, with an estimated median 59,000 packets
+lost per failure. The study found a mean of 40.8 network link failures
+per day (95th percentile: 136), with a median time to repair of around
+five minutes (and up to one week). Perhaps surprisingly, provisioning
+redundant networks only reduces impact of failures by up to 40\%,
+meaning network providers cannot easily curtail partition
+behavior~\cite{sigcomm-dc}. A 2010 study of over 200 wide-area routers
+found an average of 16.2--302.0 failures per link per year with an
+average annual downtime of 24--497 minutes per link per year (95th
+percentile at least 34 hours)~\cite{sigcomm-wan}. In HP's managed
+enterprise networks, WAN, LAN, and connectivity problems account for
+28.1\% of all customer support tickets while 39\% of tickets relate to
+network hardware.  The median incident duration for highest priority
+tickets ranges from 114--188 minutes and up to a full day for all
+tickets~\cite{turner2012failure}. Other studies confirm these results,
+showing median time between connectivity failures over a WAN network
 of approximately 3000 seconds with a median time to repair between 2
 and 1000 seconds~\cite{ip-backbone-failures} as well as frequent path
-routing failures on the Internet~\cite{labovitz-failures}. Isolating,
-quantifying, and accounting for these network failures is an area of
-active research in networking community~\cite{uw-failure-networks}.
+routing failures on the Internet~\cite{labovitz-failures}. Finally,
+Kingsbury and Bailis have recently collected an informal survey of
+network failures~\cite{aphyr-post}. Isolating, quantifying, and
+accounting for these network failures is an area of active research in
+networking community~\cite{uw-failure-networks}.
 
 These results---which do not consider server failures---indicate
 that network partitions \textit{do} occur within and across modern
@@ -149,8 +153,8 @@ due to routing, congestion, and server-side overheads. To illustrate
 the difference between intra-datacenter, inter-datacenter, and
 inter-planetary networks, we performed a measurement study of network
 behavior on Amazon's EC2, a widely used public compute cloud. We
-measured one week of ping times (i.e., round-trip times, or
-RTTs) between all seven EC2 geographic ``regions,'' across three
+measured one week of ping times (i.e., round-trip times, or RTTs)
+between all seven EC2 geographic ``regions,'' across three
 ``availability zones'' (closely co-located datacenters), and within a
 single ``availability zone'' (datacenter), at a granularity of 1s
 (dataset to be released). We summarize the results of our network
@@ -164,7 +168,9 @@ speed-of-light RTT from S\~{a}o Paulo to Singapore RTT is 106.7ms,
 ping packets incur an average 362.8ms RTT (95th percentile: 649ms). As
 shown in Figure~\ref{fig:rtt}, the distribution of latencies varies
 between links, but the trend is clear: remote communication has a
-substantial cost.
+substantial cost. Like failures, quantifying and delays communication
+delays is an active area of research in the networking
+community~\cite{bobtail}.
 
 \section{ACID in the Wild}
 \label{sec:modernacid}
