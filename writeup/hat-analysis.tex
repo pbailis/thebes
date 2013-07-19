@@ -156,9 +156,11 @@ effects of partially completed transactions. Under TA, once some of
 the effects of a transaction $T_i$ are observed by another transaction
 $T_j$, thereafter, all effects of $T_i$ are observed by
 $T_j$. Together with item cut isolation, TA prevents Read Skew
-anomalies (Berenson et al.'s A5A). In the example below, under TA,
-because $T_2$ has read $T_1$'s write to $y$, $T_2$ must observe
-$b=c=1$ (or later versions for each key):
+anomalies (Berenson et al.'s A5A) and is useful in several contexts
+such as maintaining foreign key constraints, consistent global
+secondary indexing, and maintenance of derived data. In the example
+below, under TA, because $T_2$ has read $T_1$'s write to $y$, $T_2$
+must observe $b=c=1$ (or later versions for each key):
 \begin{align*}
 \small
 T_1 &: w_x(1)~w_y(1)~w_z(1)
@@ -333,7 +335,8 @@ causal consistency and PRAM require stickiness. Read your writes is
 provided by default in a sticky system. Causality and PRAM guarantees
 can be accomplished with well-known variants~\cite{causalmemory,
   bolton, cops, sessionguarantees, swift} of the prior session
-guarantee algorithms we presented earlier.
+guarantee algorithms we presented earlier: only reveal new writes to
+clients when their dependencies have been revealed.
 
 \subsubsection{Additional HAT Guarantees}
 

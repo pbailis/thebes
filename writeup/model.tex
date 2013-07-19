@@ -25,7 +25,7 @@ especially given the possibility of aborts.
 
 \subsection{Replica Availability}
 
-Traditionally, a system provides {\em high availability} if every user
+Traditionally, a system provides {\textbf{high availability}} if every user
 that can contact a correct (non-failing) server eventually receives a
 response from that server, even in the presence of arbitrary,
 indefinitely long network partitions between
@@ -64,7 +64,7 @@ system, where servers are replicas for subsets of the set of data
 items (which we consider in this paper), we say a client must remain
 sticky with a single \textit{logical} server that may consist of
 multiple physical servers.. We say that a system provides
-\textit{sticky availability} if, whenever a client's operation on an
+\textbf{sticky availability} if, whenever a client's operation on an
 item is executed against a logical server that has observed all of its
 prior operations, it eventually receives a response, even in the
 presence of indefinitely long partitions. A client may choose to
@@ -140,7 +140,7 @@ availability.
 If a client wishes to execute a transaction that performs operations
 on multiple data items, then the client must be able to contact and
 receive a response from at least one replica for each data item. We
-say that a transaction has \emph{replica availability} if it can
+say that a transaction has \textbf{replica availability} if it can
 contact at least one replica for every item it attempts to
 access. This may result in ``lower availability'' than a
 non-transactional requirement. Additionally, given the possibility of
@@ -156,7 +156,7 @@ transaction abort due to a transaction's own choosing (e.g., as an
 operation of the transaction itself or due to a would-be declared
 integrity constraint violation) an \textit{internal abort} and an
 abort due to system implementation or operation an \textit{external
-  abort}. We say that a system provides \textit{transactional
+  abort}. We say that a system provides \textbf{transactional
   availability} if, given replica availability for every data item in
 a transaction, the transaction eventually commits (possibly after
 multiple client retries) or internally aborts~\cite{hat-hotos}.

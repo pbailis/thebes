@@ -90,7 +90,7 @@ The Singapore numbers are located in the far right-hand side.
 
  > * Midway through the paper, the style changes from emphasis to bold face. Make it consistent.
 
-TODO
+The style in the first part of the paper is now bold.
 
  > Address D2--D11. If possible, W1.
 
@@ -125,11 +125,11 @@ TODO
 
  > - Section 6 provides a nice discussion about the implications of HATs. The TPC-C analysis helps provide practical evidence for HAT guarantees in the "real-world" application space. 
 
-TODO
+Thank you.
 
  > - A better "proof" for causality and PRAM guarantees would be helpful. As it stands, the paper refers to several references - a short sketch could go a long way to help the paper stay self-contained.
 
-TODO
+We have added a short sketch to the relevant section.
 
  > 
  > REVIEWER 3
@@ -189,7 +189,7 @@ problematic example.
 
  > D7. Section 5.1.2 says that item cut isolation plus TA prevents read skew. I don't understand how this can be. TA allows a transaction that is reading multiple data items to observe only part of the effect of another transaction that updates those items - isn't that read skew? (And item cut isolation doesn't help.) More generally, I'm not really convinced of the utility of TA to applications - perhaps that explains its perplexing absence from existing treatments of weak isolation? 
 
-TODO
+We have provided three scenarios in which we believe TA is useful.
 
  > D8. It seems that the TA algorithm you propose (Section 5.1.2) will not play well with enforcing item cut isolation using caching, as you propose. If a transaction reads an item a second time, the latter may be trying to feed it an old value while former is compelled to feed a newer value (to preserve TA). You presumably want these two algs to play nicely together if TA plus item cut isolation somehow prevent read skew (in some way that I do not understand) as you claim. 
 
