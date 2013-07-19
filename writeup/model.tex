@@ -56,15 +56,18 @@ always contact the same logical (sets of) replica(s) across subsequent
 operations. As we will discuss in Section~\ref{sec:hats}, clients can
 ensure continuity between operations (e.g., reading their prior
 updates to a data item) by maintaining affinity or ``stickiness'' with
-a server or set of servers~\cite{vogels-defs}. Simultaneously
-maintaining availability and stickiness requires fate sharing between
-the client and its server: if a client's sticky servers fail or if the
-client is partitioned from its sticky servers, then it may face
-unavailability. We say that a system provides \textit{sticky
-  availability} if, whenever a client's operation on an item is
-executed against a correct replica that has observed all of its prior
-operations for that item, it eventually receives a response, even in
-the presence of indefinitely long partitions. A client may choose to
+a server or set of servers~\cite{vogels-defs}. In a fully-replicated
+system, where all servers are replicas for all data items, stickiness
+is simple: a client can maintain stickiness by contacting the same
+server for each of its requests. However, in a partially-replicated
+system, where servers are replicas for subsets of the set of data
+items (which we consider in this paper), we say a client must remain
+sticky with a single \textit{logical} server that may consist of
+multiple physical servers.. We say that a system provides
+\textit{sticky availability} if, whenever a client's operation on an
+item is executed against a logical server that has observed all of its
+prior operations, it eventually receives a response, even in the
+presence of indefinitely long partitions. A client may choose to
 become sticky available by acting as a server itself; for example, a
 client might cache its reads and writes~\cite{bolton,
   sessionguarantees, swift}. Any guarantee achievable in a highly

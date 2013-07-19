@@ -173,7 +173,14 @@ a side effect of choosing high availability.
  > D5. I'm puzzled by the definition of "sticky" availability. You indicate that a client be "sticky" by maintaining affinity with a set of servers, rather than a single server. However, the sticky availability definition seems to a require that a single server observe all of a client's requests. So, which is it? On the one hand, if not all servers can handle requests for all objects, then it would seem that you need to allow a client to be sticky with a set of servers. On the other hand, this means that no server observes all requests. Also, if a client can be sticky by sending its requests to a set of servers, then aren't all clients sticky (considering the 
  > set consisting of all servers). Since you are later going to actually classify algorithms based on this definition, I think it needs to be clarified. 
 
-TODO
+This is an excellent point. In the case of fully-replicated systems,
+the a client can remain sticky with a single server. But, as you point
+out, in the case of partially-replicated systems, the definition is
+more complex. We have amended the text to first handle the simple
+fully-replicated case, then adapted the concept of stickiness for the
+partially-replicated case: the distinction is that, in the latter,
+clients interact with a single "logical" server that is split over
+multiple physical servers. This is now fixed.
 
  > D6. Transactional availability (Section 4.2) requires "replica availability", which is not defined. Does it correspond to what you previously called "traditional availability"? Also, why does the last sentence in Section 4.2 talk about the client's ability to contact *two* servers per data item? 
 
