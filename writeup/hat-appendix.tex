@@ -242,11 +242,12 @@ differ.
 A system that provides Predicate Cut Isolation prohibits phenomenon N-P-CI.
 \end{definition}
 
-\begin{definition}[Observed Transaction Vanishes (N-TA)]
-A history $H$ exhibits phenomenon N-TA if $DSG(H)$ contains a directed cycle
-consisting of exactly one read-dependency edge by $x$ from $T_i$ to
-$T_j$ and one anti-dependency edge by $y$ from $T_j$ to $T_i$ and
-$T_i$'s read from $y$ precedes its read from $x$.
+\begin{definition}[Observed Transaction Vanishes (N-RA)]
+A history $H$ exhibits phenomenon N-RA if $USG(H)$ contains a directed
+cycle consisting of exactly one read-dependency edge by $x$ from $T_j$
+to $T_i$ and a set of edges by $y$ containing at least one
+anti-dependency edge from $T_i$ to $T_j$ and $T_j$'s read from $y$
+precedes its read from $x$.
 \end{definition}
 
 
@@ -278,9 +279,9 @@ T_3 &: r_x(2)~r_y(1)
 \label{fig:nta-dsg}
 \end{figure}
 
-\begin{definition}[Transactional Atomicity (TA)]
-A system that provides transactional atomicity prohibits phenomenon
-N-TA.
+\begin{definition}[Read Atomic (RA)]
+A system that provides Read Atomic isolation prohibits phenomenon
+N-RA in addition to providing Read Committed isolation.
 \end{definition}
 
 The following session guarantees are directly adapted from Terry et
@@ -475,7 +476,7 @@ Lost Update.
 
 \begin{definition}[Snapshot Isolation]
 A system that provides Snapshot Isolation prevents phenomena G0, G1a,
-G1b, G1c, N-P-CI, N-TA, and Lost Update.
+G1b, G1c, N-P-CI, N-RA, and Lost Update.
 \end{definition}
 
 For Repeatable Read, we return to Adya.
@@ -516,7 +517,7 @@ data items (not processes, as is standard).
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: r_x(1)~r_y(a)
 \end{align*}
-For TA, the system must ensure that $a=1$. Consider a system with one
+For RA, the system must ensure that $a=1$. Consider a system with one
 replica for each of $x$ and $y$ (denoted $R_x$ and $R_y$). Say client
 $c_1$ executes $T_1$ and commits. The client chooses timestamp $10001$
 (whereby the last $4$ digits are reserved for client ID to ensure
@@ -534,7 +535,7 @@ $ts=10001$ and $R_y$ will not find a suitable write
 in \texttt{good}. $R_y$ will instead return $y=1$
 from \texttt{pending}.
 
-\vspace{1em}\noindent\textbf{Overheads.} TA requires overhead both on client and server. First, clients must store a vector (\texttt{required}) for the duration of a transaction in order to determine what values to read. Second, each write contains metadata ($tx\_keys$) linear in the number of writes in the transaction. (Note that we could have stored a different timestamp with every write, but a single timestamp suffices and is more efficient) These overheads are modest for short transaction lengths but they increase value sizes on disk, in memory, and over the network. Third, on the server side, each client \textsc{put} incurs two back-ends \texttt{put}s: one into \texttt{pending} and \texttt{good}. If keeping a single value for \texttt{good}, the second \texttt{put} into \texttt{good} (as is the case with normal, single-valued eventually consistent operation) is really a \texttt{get} then a possible \texttt{put}: the server first checks if a higher-timestamped value has been written and, if not, it overwrites the current value. The \texttt{put} into \texttt{pending} is simpler: if message delivery is exactly-once, then \texttt{put}s can be made unconditionally.
+\vspace{1em}\noindent\textbf{Overheads.} RA requires overhead both on client and server. First, clients must store a vector (\texttt{required}) for the duration of a transaction in order to determine what values to read. Second, each write contains metadata ($tx\_keys$) linear in the number of writes in the transaction. (Note that we could have stored a different timestamp with every write, but a single timestamp suffices and is more efficient) These overheads are modest for short transaction lengths but they increase value sizes on disk, in memory, and over the network. Third, on the server side, each client \textsc{put} incurs two back-ends \texttt{put}s: one into \texttt{pending} and \texttt{good}. If keeping a single value for \texttt{good}, the second \texttt{put} into \texttt{good} (as is the case with normal, single-valued eventually consistent operation) is really a \texttt{get} then a possible \texttt{put}: the server first checks if a higher-timestamped value has been written and, if not, it overwrites the current value. The \texttt{put} into \texttt{pending} is simpler: if message delivery is exactly-once, then \texttt{put}s can be made unconditionally.
 
 \vspace{1em}\noindent\textbf{Optimizations.} The use of \texttt{pending} and \texttt{required} is effectively to
 handle the above race condition, where some but not all replicas have
