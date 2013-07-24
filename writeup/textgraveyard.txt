@@ -1,3 +1,20 @@
+: servers need to ensure that,
+regardless of replica selection, all of a client's accesses will read
+a sufficiently up-to-date/``consistent'' set of data items. However,
+replicas do not need to agree on when to choose to reveal sets of
+values to clients, which would require consensus. Instead, as we see
+below, RA only requires the equivalent of reliable broadcast (with
+some additional client metadata) and is achievable in HAT systems.
+
+However, one key property with RA is that it do not dictate when
+writes become visible; accordingly, the algorithm is highly
+available. We can optimize write visibility via sticky availability by
+sticking clients are with disjoint groups of servers: once all of a
+transaction's writes are pending stable within a group of servers,
+writes can be made visible (as opposed to once they are pending stable
+with respect to all servers). For example, in a multi-datacenter
+setting, all clients and servers within a datacenter may form a sticky
+group.
 
 
 In our non-sticky TA algorithm, clients buffer their writes until

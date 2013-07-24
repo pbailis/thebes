@@ -9,7 +9,7 @@ network is reliable. \textit{2.)} Latency is
 zero''~\cite{fallacies-deutsch}; in a distributed setting, network
 failures may prevent database servers from communicating, and, in the
 absence of failures, communication is slowed by factors like physical
-distance and, more often, congestion and routing. As we will see
+distance, network congestion, and routing. As we will see
 (Section~\ref{sec:availability}), highly available system design
 mitigates the effects of network \textit{partitions} and
 \textit{latency}. In this section, we draw on a range of evidence that
@@ -156,21 +156,21 @@ behavior on Amazon's EC2, a widely used public compute cloud. We
 measured one week of ping times (i.e., round-trip times, or RTTs)
 between all seven EC2 geographic ``regions,'' across three
 ``availability zones'' (closely co-located datacenters), and within a
-single ``availability zone'' (datacenter), at a granularity of 1s
-(dataset to be released). We summarize the results of our network
-measurement study in Table~\ref{table:rtt}. On average,
-intra-datacenter communication (Table 1a) is between 1.82 and 6.38
-times faster than across geographically co-located datacenters (Table
-1b) and between 40 and 647 times faster than across geographically
-distributed datacenters (Table 1c). The cost of wide-area
-communication exceeds the speed of light: for example, while a
-speed-of-light RTT from S\~{a}o Paulo to Singapore RTT is 106.7ms,
-ping packets incur an average 362.8ms RTT (95th percentile: 649ms). As
-shown in Figure~\ref{fig:rtt}, the distribution of latencies varies
-between links, but the trend is clear: remote communication has a
-substantial cost. Like failures, quantifying and delays communication
-delays is an active area of research in the networking
-community~\cite{bobtail}.
+single ``availability zone'' (datacenter), at a granularity of
+1s\footnote{\url{http://www.bailis.org/blog/communication-costs-in-real-world-networks/}}. We
+summarize the results of our network measurement study in
+Table~\ref{table:rtt}. On average, intra-datacenter communication
+(Table 1a) is between 1.82 and 6.38 times faster than across
+geographically co-located datacenters (Table 1b) and between 40 and
+647 times faster than across geographically distributed datacenters
+(Table 1c). The cost of wide-area communication exceeds the speed of
+light: for example, while a speed-of-light RTT from S\~{a}o Paulo to
+Singapore RTT is 106.7ms, ping packets incur an average 362.8ms RTT
+(95th percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the
+distribution of latencies varies between links, but the trend is
+clear: remote communication has a substantial cost. As with network
+failures, quantifying and delays communication delays is an active
+area of research in the networking community~\cite{bobtail}.
 
 \section{ACID in the Wild}
 \label{sec:modernacid}
@@ -204,7 +204,7 @@ serializability by default, and eight did not provide serializability
 as an option at all. This is particularly surprising when we consider
 the widespread deployment of many of these non-serializable databases,
 like Oracle 11g, which are known to power major businesses and product
-functionality. Given that these transactional models are frequently
+functionality. Given that these weak transactional models are frequently
 used, our inability to provide serializability in arbitrary HATs
 appears non-fatal for practical applications. If application writers
 and database vendors have already decided that the benefits of weak

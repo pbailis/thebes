@@ -1,24 +1,24 @@
 
 \section{Introduction}
 
-The last decade has seen a significant shift in the design of
-large-scale database systems, from the use of transactional
+The last decade has seen a shift in the design of popular large-scale
+database systems, from the use of transactional
 RDBMSs~\cite{bernstein-book, gray-isolation, gray-virtues} to the
 widespread adoption of loosely consistent distributed key-value
-stores~\cite{bigtable, pnuts, dynamo}. The 2000 introduction of
-Brewer's CAP Theorem, which stated that a highly available system
-cannot provide strong consistency guarantees in the presence of
-network partitions, helped spur this shift~\cite{brewer-slides}. As
+stores~\cite{bigtable, pnuts, dynamo}. Core to this shift was the 2000
+introduction of Brewer's CAP Theorem, which stated that a highly
+available system cannot provide ``strong'' consistency guarantees in
+the presence of network partitions~\cite{brewer-slides}. Yet, as
 formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
 linearizability: the ability to read the most recent write to a data
 item that is replicated across servers~\cite{herlihy-art}. Yet the
 implications of CAP---which concern a fairly narrow form of
-distributed consistency---have often been conflated with the ability
-to provide ACID database properties~\cite{hn,brewer-slides,
+distributed data consistency---have often been conflated with the
+ability to provide ACID database properties~\cite{hn,brewer-slides,
   foundation-article}; this misunderstanding has led to substantial
 confusion regarding replica consistency, transactional isolation, and
 high availability. The recent resurgence of transactional systems like
-Spanner~\cite{spanner} suggests that programmers value these
+Spanner~\cite{spanner} suggests that programmers value transactional
 semantics, but, unfortunately, existing transactional data stores do
 not provide availability in the presence of
 partitions~\cite{middleware-db, foundation-article,
@@ -39,7 +39,7 @@ provide serializability for general-purpose transactions, they are
 apparently strong enough to deliver acceptable behavior to many
 application programmers and are substantially stronger than the
 semantics provided by current highly available systems. This raises a
-natural question: which of these semantics can be provided with high
+natural question: which semantics can be provided with high
 availability?
 
 To date, the relationship between ACID semantics and high
@@ -76,11 +76,11 @@ Our investigation is based on both impossibility results and several
 constructive, proof-of-concept algorithms. For example, Snapshot
 Isolation and Repeatable Read isolation are not HAT-compliant because
 they require detecting conflicts between concurrent updates (as needed
-for preventing Lost Updates or Write Skew phenomena), which we show
-is unavailable. However, Read Committed isolation, Transactional
-Atomicity, and many of the weaker data consistency models from
-database and distributed systems are achievable via algorithms that
-rely on multi-versioning and limited client-side caching. For several
+for preventing Lost Updates or Write Skew phenomena), which we show is
+unavailable. However, Read Committed isolation, transactionally atomic
+ioslation, and many of the weak consistency models from database and
+distributed systems are achievable via algorithms that rely on
+multi-versioning and limited client-side caching. For several
 guarantees, such as causal consistency with phantom prevention and
 ANSI Repeatable Read, we consider a modified form of high availability
 in which clients ``stick to'' (i.e., have affinity with) at least one
@@ -91,15 +91,18 @@ sticky availability is widely employed~\cite{eiger, vogels-defs} but
 is less restrictive (and therefore more easily achievable) than
 traditional high availability.
 
-Our results demonstrate that a wide range of semantic guarantees can
-be delivered with availability in face of partitions, but which
-guarantees are worthwhile in practice? We study the virtues and
-limitations of both classic and HAT systems by surveying practitioner
-accounts and research literature, performing experimental analysis on
-modern cloud infrastructure, and analyzing representative applications
-for their semantic requirements. Our experiences with a HAT prototype
-running across multiple geo-replicated datacenters indicate that HATs
-offer a one to three order of magnitude latency decrease compared to
+At a high level, the virtues of HATs are guaranteed responses from any
+replica, low latency, and a range of semantic guarantees including
+``snapshot reads'' to transactional atomicity. However, highly
+available systems are fundamentally unable to prevent concurrent
+updates to shared data items and cannot provide recency guarantees for
+reads. To understand when these virtues and limitations are relevant
+in practice, we survey both practitioner accounts and academic
+literature, perform experimental analysis on modern cloud
+infrastructure, and analyze representative applications for their
+semantic requirements. Our experiences with a HAT prototype running
+across multiple geo-replicated datacenters indicate that HATs offer a
+one to three order of magnitude latency decrease compared to
 traditional distributed serializability protocols, and they can
 provide acceptable semantics for a wide range of programs, especially
 those with monotonic logic and commutative updates~\cite{calm,
@@ -107,10 +110,10 @@ those with monotonic logic and commutative updates~\cite{calm,
 constraints for multi-item updates and, in some cases, provide limited
 uniqueness guarantees. However, particularly for programs with
 non-monotonic logic, HATs can fall short, requiring
-sometimes-unavailable mechanisms that are more coordination
-intensive. Overall, this paper quantifies the benefits that Highly
-Available Transactions offer as well as the necessary restrictions
-that they place on applications.
+sometimes-unavailable mechanisms that are more
+coordination-intensive. Overall, this paper quantifies the benefits
+that Highly Available Transactions offer as well as the necessary
+restrictions that they place on applications.
 
 %% In this paper, we make the following contributions:
 %% \begin{myitemize}

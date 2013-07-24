@@ -2,7 +2,7 @@
 \section{HAT Implications}
 \label{sec:evaluation}
 
-With an understanding of which guarantees are HAT-compliant, in this
+With an understanding of which semantics are HAT-compliant, in this
 section, we analyze the implications of these results for existing
 systems and briefly study HAT systems on public cloud
 infrastructure. Specifically:
@@ -38,7 +38,7 @@ either with other database servers or with a lock service. If this
 coordination mechanism is unavailable, transactions cannot safely
 commit. Similarly, optimistic concurrency control requires
 coordinating via a validation step, while deterministic transaction
-scheduling~\cite{deterministic-scheduling} requires a
+scheduling~\cite{deterministic-scheduling} requires contacting a
 scheduler. Serializability under multi-version concurrency control
 requires checking for update conflicts. All told, the reliance on a
 globally agreed total order necessitates a minimum of one round-trip
@@ -50,8 +50,7 @@ Section~\ref{sec:prototype}.
 
 \vspace{.5em}\noindent\textbf{Non-serializability} Most existing
 distributed implementations of weak isolation are not highly
-available. Lock-based proposals such as those used to provide weak
-isolation in Gray's original proposal~\cite{gray-isolation} do not
+available. Lock-based mechanisms such as those in Gray's original proposal~\cite{gray-isolation} do not
 degrade gracefully in the presence of partial failures. (Note,
 however, that lock-based protocols \textit{do} offer the benefit of
 recency guarantees.) While multi-versioned storage systems allow for a
@@ -72,8 +71,8 @@ database~\cite{kraska-s3} and Bayou~\cite{sessionguarantees} can all
 provide variants of session \textit{PL-2L} with high availability, but none
 provide this HAT functionality without substantial
 modification. Swift~\cite{swift} and bolt-on causal
-consistency~\cite{bolton} are closest to providing maximum sticky HAT
-semantics. As we have seen, it is possible to implement many
+consistency~\cite{bolton} are closest to providing maximal sticky HAT
+semantics. Accordingly, it is possible to implement many
 guarantees weaker than serializability---including guarantees that are
 achievable with high availability---and still not achieve high
 availability.
@@ -95,11 +94,10 @@ they can often be safely performed in different orders at different
 replicas. Accordingly, as long as all writes are delivered to all
 replicas, then a system executing monotonic logic may not suffer from
 application-level consistency anomalies as a result of Lost Update or
-Write Skew anomalies. However, applications with non-monotonic state
+Write Skew anomalies. However, applications with non-monotone state
 mutation will not, in general, be able to maintain application-level
 consistency constraints with HATs alone---in particular, applications
-requiring bounded update visibility latency should opt for
-unavailability.
+requiring visibility bounds should opt for unavailability.
 
 \vspace{.5em}\noindent\textbf{TPC-C} To better understand the impact
 of HAT-compliance in an application context, we consider a concrete
@@ -138,9 +136,9 @@ concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
 assigned within a district, which requires preventing Lost
 Update. Accordingly, HATs cannot provide compliant TPC-C execution but
-can still maintain uniqueness constraints. Second, the New-Order
+can maintain uniqueness constraints. Second, the New-Order
 transaction decrements inventory counts: what if the count becomes
-negative?  Fortunately, TPC-C New-Order restocks each item's inventory
+negative?  Fortunately, New-Order restocks each item's inventory
 count (increments by 91) if it would become negative as the result of
 placing an order. This means that, even in the presence of concurrent
 New-Orders, an item's stock will never fall below zero. This is TPC-C
@@ -193,14 +191,7 @@ prototype. Across a range of deployments on public cloud
 infrastructures, we found that, as Section~\ref{sec:latency}'s
 measurements suggested, ``strongly consistent'' algorithms incur
 substantial latency penalties: over WAN, 10 to 100 times higher than
-their HAT counterparts. Given recent algorithms for providing
-causal consistency~\cite{bolton, cops, swift}, we focus our HAT
-analysis on RA (algorithm from Section~\ref{sec:ta}, described in
-greater detail
-in Appendix B
-%in our Technical Report~\cite{hat-tr}
-), which we believe to be the
-most interesting of our algorithms. We find that HAT
+their HAT counterparts. We find that HAT
 properties---while more resource-intensive than basic eventual
 consistency---scale well to many servers.
 
@@ -265,7 +256,7 @@ master. \texttt{RC}---essentially \texttt{eventual} with
 buffering---is almost identical to \texttt{eventual}, while
 \texttt{RA}---which incurs two writes for every client-side write
 (i.e., new writes are sent to the WAL then subsequently moved into
-LevelDB once pending stable)---achieves ~75\% of the throughput. Latency
+LevelDB once stable)---achieves ~75\% of the throughput. Latency
 increases linearly with the number of YCSB clients due to contention
 within LevelDB.
 
@@ -292,16 +283,17 @@ of servers responded (guaranteeing regular
 semantics~\cite{herlihy-art}); this strategy (not pictured) did not
 substantially improve performance due to the network topology and
 because worst-case server load was unaffected. With five clusters,
-RA's relative throughput decreased: every YCSB \texttt{put} operation
-resulted in four \texttt{put} operations on remote replicas and,
-accordingly, the cost of anti-entropy increased (e.g., each server
-processed four replica's anti-entropy as opposed to one before,
+\texttt{RA}'s relative throughput decreased: every YCSB \texttt{put}
+operation resulted in four \texttt{put} operations on remote replicas
+and, accordingly, the cost of anti-entropy increased (e.g., each
+server processed four replicas' anti-entropy as opposed to one before,
 reducing the opportunity for batching and decreasing available
 resources for incoming client requests). This in turn increased
 garbage collection activity and, more importantly, IOPS when compared
-to Eventual and RC, causing RA throughput to peak at around half of
-Eventual. With in-memory persistence (i.e., no LevelDB or WAL),
-\texttt{RA} throughput was within 20\% of \texttt{eventual}.
+to \texttt{eventual} and \texttt{RC}, causing \texttt{RA} throughput
+to peak at around half of \texttt{eventual}. With in-memory
+persistence (i.e., no LevelDB or WAL), \texttt{RA} throughput was
+within 20\% of \texttt{eventual}.
 
 We have intentionally omitted performance data for two-phase
 locking. \texttt{master} performed \textit{far} better than our
@@ -343,7 +335,7 @@ decreases linearly with increased transaction length: with $1$
 operation per transaction, \texttt{RA} throughput is within 18\% of
 \texttt{eventual} ($34$ bytes overhead), and with $128$ operations per
 transaction, \texttt{RA} throughput is within $60\%$ ($1898$ bytes
-overhead). This reflects our RA algorithm's metadata requirements,
+overhead). This reflects our \texttt{RA} algorithm's metadata requirements,
 which are proportional to transaction length and consume IOPS and
 network bandwidth.
 

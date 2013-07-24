@@ -2,9 +2,9 @@
 \section{Related Work}
 \label{sec:relatedwork}
 
-While we have discussed traditional mechanisms for distributed
+We have discussed traditional mechanisms for distributed
 coordination and several related systems in
-Section~\ref{sec:eval-existing}, in this section, we further discuss
+Section~\ref{sec:eval-existing}, but, in this section, we further discuss
 related work. In particular, we discuss related work on highly
 available semantics, mechanisms for concurrency control, and
 techniques for scalable distributed operations.
@@ -66,14 +66,14 @@ Eiger~\cite{eiger}, and Bolt-on Causal Consistency~\cite{bolton}
 provide transactional causal consistency guarantees with varying
 availability and represent a new class of sticky HAT systems. There
 are infinitely many HAT models (i.e., always reading value 1 is
-comparable with always returning value 2), but a recent report from UT
-Austin shows that no model stronger than causal consistency can be
+incomparable with always returning value 2), but a recent report from
+UT Austin shows that no model stronger than causal consistency can be
 achieved in a sticky highly available, \textit{one-way convergent}
 system~\cite{cac}. This result is promising and complementary to our
 results for general-purpose convergent data stores. Finally, Burkhardt
 et al. have concurrently developed an axiomatic specification for
 eventually consistent stores; their work-in-progress report contains
-alternate formalism for several HAT guarantees and (snapshot)
+alternate formalism for several HAT guarantees and (snapshot-based)
 transactions~\cite{burkhardt-txns}.
 
 

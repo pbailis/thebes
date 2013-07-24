@@ -24,7 +24,7 @@ providing a brief, informal explanation and example for each
 guarantee. The database isolation guarantees require particular care,
 since different DBMSs often use the same terminology for different
 mechanisms and may provide additional guarantees in addition to our
-implementation-agnostic definitions.  We draw largely on Atul Adya's
+implementation-agnostic definitions.  We draw largely on Adya's
 dissertation~\cite{adya} and somewhat on its predecessor work: the
 ANSI SQL specification~\cite{ansi-sql} and Berenson et al.'s
 subsequent critique~\cite{ansicritique}.
@@ -63,7 +63,7 @@ total order for each item. \textit{PL-1} requires that writes to
 different objects be ordered consistently across transactions,
 prohibiting Adya's phenomenon $G0$ (also called ``Dirty
 Writes''~\cite{ansicritique}). If we build a graph of transactions
-with edges from one transaction to another if the former overwrites
+with edges from one transaction to another and, if the former overwrites
 the latter's write to the same object, then, under Read Uncommitted,
 the graph should not contain cycles~\cite{adya}. Consider the
 following example:
@@ -119,7 +119,7 @@ Section~\ref{sec:unachievable-acid}, some of these are not achievable
 in a HAT system. However, the ANSI standardized
 implementation-agnostic definition~\cite{ansi-sql} \textit{is}
 achievable and directly captures the spirit of the term: if a
-transaction reads the same data twice, it sees the same value each
+transaction reads the same data more than once, it sees the same value each
 time (preventing ``Fuzzy Read,'' or $P2$). In this paper, to
 disambiguate between other definitions of ``Repeatable Read,'' we will
 call this property ``cut isolation,'' since each transaction reads
@@ -151,7 +151,7 @@ logical ranges of predicates in addition to item-based reads.
 
 Atomicity, informally guaranteeing that either all or none of
 transactions' effects should succeed, is core to ACID
-guarantees. Although, at least by the ACID acronym, it is not an
+guarantees. Although, at least by the ACID acronym, atomicity is not an
 ``isolation'' property, atomicity properties also restrict the updates
 visible to other transactions. Accordingly, here, we consider the
 \textit{isolation} effects of atomicity, which we call \textbf{Read
@@ -174,7 +174,7 @@ T_1 &: w_x(1)~w_y(1)~w_z(1)
 \end{align*}
 $T_2$ can also observe $a=\bot$, $a=1$, or a later version of $x$. In
 the hierarchy of existing isolation properties, we place RA below
-Adya's $PL-2L$ (as it does not necessarily enforce transitive
+Adya's \textit{PL-2L} (as it does not necessarily enforce transitive
 read-write dependencies) but above Read Committed ($PL-2$). Notably,
 RA requires disallows reading intermediate writes (Adya's $G1b$):
 observing all effects of a transaction implicitly requires observing
@@ -187,13 +187,7 @@ replicated database), RA is achievable via lightweight locking and/or
 local concurrency control over data items~\cite{gstore,
   kemme-thesis}. In contrast, in a distributed environment, RA over
 arbitrary groups of non-colocated items is considerably more difficult
-to achieve with high availability: servers need to ensure that,
-regardless of replica selection, all of a client's accesses will read
-a sufficiently up-to-date/``consistent'' set of data items. However,
-replicas do not need to agree on when to choose to reveal sets of
-values to clients, which would require consensus. Instead, as we see
-below, RA only requires the equivalent of reliable broadcast (with
-some additional client metadata) and is achievable in HAT systems.
+to achieve with high availability.
 
 % RA can be achieved via multi-versioning. If clients attach vector
 % clocks to every write (incrementing their own position for each
@@ -207,17 +201,18 @@ some additional client metadata) and is achievable in HAT systems.
 % reveal writes until they are present on all replicas, clients do not
 % need to be sticky.
 
-As a straw-man, replicas can store all versions ever written for all
-items. Servers can gossip information about versions they have seen
-and construct a lower bound on the versions that can be found on every
-replica. At the start of each transaction, clients choose a bound that
-is guaranteed to be lower than or equal to the this global lower
-bound, and, during transaction execution, replicas return the latest
-version of each item that is not greater than the client's chosen
-bound. If the lower bound is advanced along transactional boundaries,
-clients will observe RA. This algorithm has several variants in the
-literature~\cite{readonly, swift}: bounds can be represented by vector
-clocks, and older versions can be asynchronously garbage collected.
+As a straw-man, replicas can store all versions ever written to each
+data item. Replicas can gossip information about versions they have
+observed and construct a lower bound on the versions that can be found
+on each replica. At the start of each transaction, clients choose a
+bound that is guaranteed to be lower than or equal to the this global
+lower bound, and, during transaction execution, replicas return the
+latest version of each item that is not greater than the client's
+chosen bound. If the lower bound is advanced along transactional
+boundaries, clients will observe RA. This algorithm has several
+variants in the literature~\cite{readonly, swift}: bounds can be
+represented by vector clocks, and older versions can be asynchronously
+garbage collected.
 
 We have developed a more efficient RA algorithm, which we sketch here
 and provide greater detail in Appendix B. We begin with our Read
@@ -239,15 +234,6 @@ stable. This is entirely master-less and operations never block due to
 replica coordination. Moreover, there are several possible
 optimizations that, for brevity, we do not describe here.
 
-However, one key property with RA is that it do not dictate when
-writes become visible; accordingly, the algorithm is highly
-available. We can optimize write visibility via sticky availability by
-sticking clients are with disjoint groups of servers: once all of a
-transaction's writes are pending stable within a group of servers,
-writes can be made visible (as opposed to once they are pending stable
-with respect to all servers). For example, in a multi-datacenter
-setting, all clients and servers within a datacenter may form a sticky
-group.
 
 
 \subsubsection{Session Guarantees}
@@ -336,12 +322,12 @@ the rest of the other servers, then, for transactional availability,
 the server must allow $T_1$ to commit. If the same client subsequently
 executes $T_2$ against the same (partitioned) server in the same
 session, then it will be able to read its writes. However, if the
-network topology changes and the client can only contact a different
-server that is partitioned from the server that executed $T_1$, then
-the system will have to either stall indefinitely to allow the client
-to read her writes (violating transactional availability) or will have
-to sacrifice read your writes guarantees. However, if the client
-remains sticky with the server that executed $T_1$, then we can
+network topology changes and the client can only execute $T_2$ on a
+different replica that is partitioned from the replica that executed
+$T_1$, then the system will have to either stall indefinitely to allow
+the client to read her writes (violating transactional availability)
+or will have to sacrifice read your writes guarantees. However, if the
+client remains sticky with the server that executed $T_1$, then we can
 disallow this scenario. Accordingly, read your writes, and, by proxy,
 causal consistency and PRAM require stickiness. Read your writes is
 provided by default in a sticky system. Causality and PRAM guarantees
@@ -361,11 +347,10 @@ application-level consistency guarantees. It can often execute
 commutative and logically monotonic~\cite{calm} operations without the
 risk of invalidating application-level integrity constraints and can
 maintain limited criteria like foreign key constraints (via TA). We do
-not attempt to describe the entire space of application-level
-consistency properties that are achievable (see
-Section~\ref{sec:relatedwork}) but we specifically evaluate TPC-C
-transaction semantics with HAT guarantees in
-Section~\ref{sec:evaluation}.
+not describe the entire space of application-level consistency
+properties that are achievable (see Section~\ref{sec:relatedwork}) but
+we specifically evaluate TPC-C transaction semantics with HAT
+guarantees in Section~\ref{sec:evaluation}.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,
@@ -654,17 +639,17 @@ T_1 &: w_x(1)~w_y(1)
 \\T_2 &: w_x(2)~w_y(2)
 \\T_3 &: r_x(a)~r_y(b)\vspace{-1em}
 \end{align*}
-If we want to guarantee both cut isolation and transactional atomicity
-and the system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs
-to read $a=b=\bot$, $a=b=1$, or $a=b=2$. This means that either the
+If we want to guarantee both cut isolation and RA isolation and the
+system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs to read
+$a=b=\bot$, $a=b=1$, or $a=b=2$. This means that either the
 implementation should frequently return $\bot$ (definitely undesirable
 and possibly non-convergent), keep multiple versions of each data item
 (necessitating potentially complicated distributed garbage
 collection), or use pre-declared read sets to fetch a consistent cut
 of keys before each transaction begins to execute (e.g.,
 COPS~\cite{cops}). Using client-side caching can alleviate some of
-these challenges~\cite{bolton, swift}, but then the system becomes
-sticky high available.
+these challenges~\cite{bolton, swift} at the expense of requiring
+sticky availability.
 
 Composition cost may also vary by combination. For instance, Charron-Bost
  proved that, to capture causality between $N$ communicating
@@ -677,7 +662,7 @@ this overhead can be reduced~\cite{eiger}, but it is much
 cheaper to provide, say, read your writes guarantees, than causal
 consistency.
 
-\vspace{.5em}\noindent\textbf{Linearizability and Transactional
+\vspace{.5em}\noindent\textbf{Linearizability and Read
   Atomicity} The relationship between linearizability and
 transactional atomicity is non-obvious. RA dictates that writes to
 multiple keys across multiple servers are made visible to readers all
