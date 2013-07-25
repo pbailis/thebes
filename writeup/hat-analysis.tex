@@ -159,7 +159,7 @@ visible to other transactions. Accordingly, here, we consider the
 transaction $T_i$ are observed by another transaction $T_j$,
 thereafter, all effects of $T_i$ are observed by $T_j$. That is, if a
 transaction $T_j$ reads a version of an object that transaction $T_i$
-wrote, then a later read by $T_j$ cannot return value whose next
+wrote, then a later read by $T_j$ cannot return value whose later
 version is installed by $T_i$. Together with item cut isolation, RA
 prevents Read Skew anomalies (Berenson et al.'s A5A) and is useful in
 several contexts such as maintaining foreign key constraints,
