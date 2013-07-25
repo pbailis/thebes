@@ -14,16 +14,15 @@ linearizability: the ability to read the most recent write to a data
 item that is replicated across servers~\cite{herlihy-art}. Yet the
 implications of CAP---which concern a fairly narrow form of
 distributed data consistency---have often been conflated with the
-ability to provide ACID database properties~\cite{hn,brewer-slides,
-  foundation-article}; this misunderstanding has led to substantial
-confusion regarding replica consistency, transactional isolation, and
-high availability. The recent resurgence of transactional systems like
-Spanner~\cite{spanner} suggests that programmers value transactional
-semantics, but, unfortunately, existing transactional data stores do
-not provide availability in the presence of
-partitions~\cite{middleware-db, foundation-article,
-  hstore,spanner,generalizedsnapshot, mdcc, krikellas-bargain, eiger,
-  walter, calvin}.
+ability to provide ACID database
+properties~\cite{hat-hotos,brewer-slides, foundation-article}; this
+misunderstanding has led to substantial confusion regarding replica
+consistency, transactional isolation, and high availability. The
+recent resurgence of transactional systems like Spanner~\cite{spanner}
+suggests that programmers value transactional semantics, but,
+unfortunately, existing transactional data stores do not provide
+availability in the presence of partitions~\cite{foundation-article,
+  hstore,spanner,eiger,  walter, calvin}.
 
 Indeed, serializable transactions---the gold standard of traditional
 ACID databases---are not achievable with high availability in the
@@ -48,9 +47,8 @@ understanding of weak isolation in the single-server context from
 which it originated~\cite{adya, ansicritique, gray-isolation} and many
 papers offer techniques for providing distributed
 serializability~\cite{bernstein-book, spanner, daudjee-session,
-  hstore, krikellas-bargain, calvin, kemme-classification} or snapshot
-isolation~\cite{daudjee-snapshot,generalizedsnapshot, kemme-snapshot,
-  walter}. Additionally, the distributed computing and parallel
+  hstore, calvin, kemme-classification} or snapshot
+isolation~\cite{daudjee-snapshot, walter}. Additionally, the distributed computing and parallel
 hardware literature contains many consistency models for single
 operations on replicated objects~\cite{pnuts, herlihy-art, eiger, cac,
   sessionguarantees}. However, the literature lends few clues for

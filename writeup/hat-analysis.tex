@@ -332,7 +332,7 @@ disallow this scenario. Accordingly, read your writes, and, by proxy,
 causal consistency and PRAM require stickiness. Read your writes is
 provided by default in a sticky system. Causality and PRAM guarantees
 can be accomplished with well-known variants~\cite{causalmemory,
-  bolton, cops, sessionguarantees, swift} of the prior session
+  bolton, eiger, sessionguarantees, swift} of the prior session
 guarantee algorithms we presented earlier: only reveal new writes to
 clients when their dependencies have been revealed.
 
@@ -646,10 +646,9 @@ implementation should frequently return $\bot$ (definitely undesirable
 and possibly non-convergent), keep multiple versions of each data item
 (necessitating potentially complicated distributed garbage
 collection), or use pre-declared read sets to fetch a consistent cut
-of keys before each transaction begins to execute (e.g.,
-COPS~\cite{cops}). Using client-side caching can alleviate some of
-these challenges~\cite{bolton, swift} at the expense of requiring
-sticky availability.
+of keys before each transaction begins to execute. Using client-side
+caching can alleviate some of these challenges~\cite{bolton, swift} at
+the expense of requiring sticky availability.
 
 Composition cost may also vary by combination. For instance, Charron-Bost
  proved that, to capture causality between $N$ communicating

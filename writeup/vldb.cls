@@ -689,8 +689,8 @@
 \def\@maketitle{\newpage
  \null
  \setbox\@acmtitlebox\vbox{%
-\baselineskip 20pt
-\vskip 2em                   % Vertical space above title.
+\baselineskip 14pt
+\vskip 1em                   % Vertical space above title.
    \begin{center}
     {\ttlfnt \@title\par}       % Title set in 18pt Helvetica (Arial) bold size.
     \vskip .5em                % Vertical space after title.

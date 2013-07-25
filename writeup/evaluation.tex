@@ -50,32 +50,27 @@ Section~\ref{sec:prototype}.
 
 \vspace{.5em}\noindent\textbf{Non-serializability} Most existing
 distributed implementations of weak isolation are not highly
-available. Lock-based mechanisms such as those in Gray's original proposal~\cite{gray-isolation} do not
-degrade gracefully in the presence of partial failures. (Note,
-however, that lock-based protocols \textit{do} offer the benefit of
-recency guarantees.) While multi-versioned storage systems allow for a
-variety of transactional guarantees, few offer traditional weak
-isolation (e.g., non-``tentative update'' schemes) in this context.
-The MDCC~\cite{mdcc} protocol offers Read Committed isolation with
-Lost Update avoidance but is similarly unavailable due to its reliance
-on preventing write conflicts. Chan and Gray's read-only transactions
-have item-cut isolation with causal consistency and RA (session
-\textit{PL-2L}~\cite{adya}) but are unavailable in the presence of coordinator
-failure and assume serializable update transactions~\cite{readonly};
-this is similar to read-only and write-only transactions more recently
-proposed by Eiger~\cite{eiger}. Causal Serializability offers a
-similar model (with unavailable implementation): causal consistency
-with a variant of Read Uncommitted between transactions that write to
-the same data item~\cite{raynal-causal}.  Brantner's S3
-database~\cite{kraska-s3} and Bayou~\cite{sessionguarantees} can all
-provide variants of session \textit{PL-2L} with high availability, but none
-provide this HAT functionality without substantial
-modification. Swift~\cite{swift} and bolt-on causal
-consistency~\cite{bolton} are closest to providing maximal sticky HAT
-semantics. Accordingly, it is possible to implement many
-guarantees weaker than serializability---including guarantees that are
-achievable with high availability---and still not achieve high
-availability.
+available. Lock-based mechanisms such as those in Gray's original
+proposal~\cite{gray-isolation} do not degrade gracefully in the
+presence of partial failures. (Note, however, that lock-based
+protocols \textit{do} offer the benefit of recency guarantees.) While
+multi-versioned storage systems allow for a variety of transactional
+guarantees, few offer traditional weak isolation (e.g.,
+non-``tentative update'' schemes) in this context.  Chan and Gray's
+read-only transactions have item-cut isolation with causal consistency
+and RA (session \textit{PL-2L}~\cite{adya}) but are unavailable in the
+presence of coordinator failure and assume serializable update
+transactions~\cite{readonly}; this is similar to read-only and
+write-only transactions more recently proposed by
+Eiger~\cite{eiger}.  Brantner's S3 database~\cite{kraska-s3}
+and Bayou~\cite{sessionguarantees} can all provide variants of session
+\textit{PL-2L} with high availability, but none provide this HAT
+functionality without substantial modification. Swift~\cite{swift} and
+bolt-on causal consistency~\cite{bolton} are closest to providing
+maximal sticky HAT semantics. Accordingly, it is possible to implement
+many guarantees weaker than serializability---including guarantees
+that are achievable with high availability---and still not achieve
+high availability.
 
 \subsection{Application Requirements}
 

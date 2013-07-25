@@ -1,3 +1,8 @@
+Causal Serializability offers a similar model
+(with unavailable implementation): causal consistency with a variant
+of Read Uncommitted between transactions that write to the same data
+item~\cite{raynal-causal}. 
+
 : servers need to ensure that,
 regardless of replica selection, all of a client's accesses will read
 a sufficiently up-to-date/``consistent'' set of data items. However,
