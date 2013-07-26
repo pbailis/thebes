@@ -3,8 +3,10 @@
  > 
  > W1. While the understanding and insights are useful, this paper still leaves it at an abstraction level. For instance, how can a practitioner use this knowledge to design systems? If availability is a requirement, do we chose the strongest form of consistency that is highly available or is there another tradeoff with performance (aka request latency). That is, reduction and application of these ideas to practice is unclear. A few compelling application scenarios (beyond TPC-C, which is not a great application for the target environment for HAT) would be beneficial. 
 
-We have added several use cases to the RA (nee TA) section.
-TODO
+We have added several use cases to the RA section (see below) and have
+clarified takeaways both in the introduction. Additionally, we believe
+that addressing several of the below comments has improved practical
+importance.
 
  > W2. Certain parts of the paper are unclear and/or hard to follow (details below). Clarifications will considerably improve the presentation.
 
