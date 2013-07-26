@@ -28,7 +28,7 @@ that preclude high availability.
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
-setting~\cite{bernstein-book, davidson-survey, wisemann-survey}
+setting~\cite{bernstein-book, davidson-survey}
 require at least one RTT before committing. As an
 example, traditional two-phase locking for a transaction of length $T$
 may require $T$ \texttt{lock} operations and will require at least one

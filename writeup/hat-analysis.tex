@@ -648,18 +648,9 @@ and possibly non-convergent), keep multiple versions of each data item
 collection), or use pre-declared read sets to fetch a consistent cut
 of keys before each transaction begins to execute. Using client-side
 caching can alleviate some of these challenges~\cite{bolton, swift} at
-the expense of requiring sticky availability.
-
-Composition cost may also vary by combination. For instance, Charron-Bost
- proved that, to capture causality between $N$ communicating
-processes, standard vector-based approaches face an upper bound of
-$O(N)$ storage per write~\cite{charron-bost}. This means that, with
-$100K$ clients, each write might be accompanied by $100K$ timestamps
-per vector. This is difficult to scale. By compromising on
-availability (e.g., treating a datacenter as a linearizable cluster),
-this overhead can be reduced~\cite{eiger}, but it is much
-cheaper to provide, say, read your writes guarantees, than causal
-consistency.
+the expense of requiring sticky availability. Study of the
+architectural interaction and overheads of various combinations is a
+promising area for future work.
 
 \vspace{.5em}\noindent\textbf{Linearizability and Read
   Atomicity} The relationship between linearizability and

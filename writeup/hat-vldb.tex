@@ -9,14 +9,20 @@
 \let\endproof\relax
 %\usepackage{draftwatermarkbottom, draftwatermarktop}
 \usepackage{scrextend, MnSymbol}
+\usepackage[hyphens]{url}
 
 \usepackage[hidelinks]{hyperref}
 
+
+\usepackage{breakurl}
+
 \newcommand{\pbnote}[1]{{\color{red}{#1 ---P.B.}}}
+
+
 
 \interfootnotelinepenalty=10000
 
-\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, amsthm, float}
+\usepackage{times, graphicx, xcolor, multicol, minipage, subfig, tikz, amsthm, float}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \newcommand{\subparagraph}{}
 
@@ -57,6 +63,26 @@
 \usetikzlibrary{positioning, snakes, shapes}
 
 \tikzset{>=latex}
+
+%DIF PREAMBLE EXTENSION ADDED BY LATEXDIFF
+%DIF UNDERLINE PREAMBLE
+\RequirePackage[normalem]{ulem}
+\RequirePackage{color}\definecolor{RED}{rgb}{1,0,0}\definecolor{BLUE}{rgb}{0,0,1}
+\providecommand{\DIFadd}[1]{{\protect\color{blue}\uwave{#1}}}
+\providecommand{\DIFdel}[1]{{\protect\color{red}\sout{#1}}}
+%DIF SAFE PREAMBLE
+\providecommand{\DIFaddbegin}{}
+\providecommand{\DIFaddend}{}
+\providecommand{\DIFdelbegin}{}
+\providecommand{\DIFdelend}{}
+%DIF FLOATSAFE PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}}
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}}
+\providecommand{\DIFaddbeginFL}{}
+\providecommand{\DIFaddendFL}{}
+\providecommand{\DIFdelbeginFL}{}
+\providecommand{\DIFdelendFL}{}
+%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF
 
 
 
