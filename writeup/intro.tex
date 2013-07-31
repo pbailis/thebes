@@ -8,21 +8,21 @@ widespread adoption of loosely consistent distributed key-value
 stores~\cite{bigtable, pnuts, dynamo}. Core to this shift was the 2000
 introduction of Brewer's CAP Theorem, which stated that a highly
 available system cannot provide ``strong'' consistency guarantees in
-the presence of network partitions~\cite{brewer-slides}. Yet, as
-formally proven~\cite{gilbert-cap}, the CAP Theorem concerns
-linearizability: the ability to read the most recent write to a data
-item that is replicated across servers~\cite{herlihy-art}. Yet the
-implications of CAP---which concern a fairly narrow form of
-distributed data consistency---have often been conflated with the
-ability to provide ACID database
-properties~\cite{hat-hotos,brewer-slides, foundation-article}; this
+the presence of network partitions~\cite{brewer-slides}. As formally
+proven~\cite{gilbert-cap}, the CAP Theorem pertains to a data
+consistency model called linearizability, or the ability to read the
+most recent write to a data item that is replicated across
+servers~\cite{herlihy-art}. However, despite its narrow scope, the CAP
+Theorem is often misconstrued as a broad result regarding the ability
+to provide ACID database properties with high
+availability~\cite{hat-hotos,brewer-slides, foundation-article}; this
 misunderstanding has led to substantial confusion regarding replica
 consistency, transactional isolation, and high availability. The
 recent resurgence of transactional systems like Spanner~\cite{spanner}
 suggests that programmers value transactional semantics, but,
 unfortunately, existing transactional data stores do not provide
-availability in the presence of partitions~\cite{foundation-article,
-  hstore,spanner,eiger,  walter, calvin}.
+availability in the presence of partitions~\cite{orleans,foundation-article,
+  hstore,spanner,eiger, walter,calvin}.
 
 Indeed, serializable transactions---the gold standard of traditional
 ACID databases---are not achievable with high availability in the
@@ -55,52 +55,54 @@ operations on replicated objects~\cite{pnuts, herlihy-art, eiger, cac,
 providing semantic guarantees for multiple operations operating on
 multiple data items in a highly available distributed environment.
 
-Our main contributions in this paper are as follows. We fill the gap
-between the many previously proposed isolation and consistency models
-and the goal of high availability.  We classify which among the wide
-array of models are achievable with high availability, denoting them
-as {\em Highly Available Transactions} (HATs). In doing so, we
-demonstrate that although many implementations of HAT semantics are
-not highly available, this is an artifact of the implementations
-rather than an inherent property of the semantics. Our investigation
-shows that, besides serializability, Snapshot Isolation and Repeatable
-Read isolation are not HAT-compliant, while most other isolation
-levels are achievable with high availability. We also demonstrate that
-many weak replica consistency models from distributed systems are both
-HAT-compliant and simultaneously achievable with several ACID
-properties.
+Our main contributions in this paper are as follows. We relate the
+many previously proposed isolation and consistency models to the goal
+high availability, which guarantees a response from every data replica
+in the presence of arbitrary partitions between them.  We classify
+which among the wide array of models are achievable with high
+availability, denoting them as {\em Highly Available Transactions}
+(HATs). In doing so, we demonstrate that although many implementations
+of HAT semantics are not highly available, this is an artifact of the
+implementations rather than an inherent property of the semantics. Our
+investigation shows that, besides serializability, Snapshot Isolation
+and Repeatable Read isolation are not HAT-compliant, while most other
+isolation levels are achievable with high availability. We also
+demonstrate that many weak replica consistency models from distributed
+systems are both HAT-compliant and simultaneously achievable with
+several ACID properties.
 
 Our investigation is based on both impossibility results and several
 constructive, proof-of-concept algorithms. For example, Snapshot
 Isolation and Repeatable Read isolation are not HAT-compliant because
 they require detecting conflicts between concurrent updates (as needed
 for preventing Lost Updates or Write Skew phenomena), which we show is
-unavailable. However, Read Committed isolation, transactionally atomic
-ioslation, and many of the weak consistency models from database and
-distributed systems are achievable via algorithms that rely on
-multi-versioning and limited client-side caching. For several
-guarantees, such as causal consistency with phantom prevention and
-ANSI Repeatable Read, we consider a modified form of high availability
-in which clients ``stick to'' (i.e., have affinity with) at least one
-server---a property which is often implicit in the distributed systems
-literature~\cite{herlihy-art, eiger, cac} but which requires explicit
-consideration in a client-server replicated database context. This
-sticky availability is widely employed~\cite{eiger, vogels-defs} but
-is less restrictive (and therefore more easily achievable) than
-traditional high availability.
+unavailable. However, Read Committed isolation, transactional
+atomicity (Read Atomic isolation), and many of the weak consistency
+models from database and distributed systems are achievable via
+algorithms that rely on multi-versioning and limited client-side
+caching. For several guarantees, such as causal consistency with
+phantom prevention and ANSI Repeatable Read, we consider a modified
+form of high availability in which clients ``stick to'' (i.e., have
+affinity with) at least one server---a property which is often
+implicit in the distributed systems literature~\cite{herlihy-art,
+  eiger, cac} but which requires explicit consideration in a
+client-server replicated database context. This sticky availability is
+widely employed~\cite{eiger, vogels-defs} but is a less restrictive
+model (and therefore more easily achievable) than traditional high
+availability.
 
 At a high level, the virtues of HATs are guaranteed responses from any
 replica, low latency, and a range of semantic guarantees including
-``snapshot reads'' to transactional atomicity. However, highly
-available systems are fundamentally unable to prevent concurrent
-updates to shared data items and cannot provide recency guarantees for
-reads. To understand when these virtues and limitations are relevant
-in practice, we survey both practitioner accounts and academic
-literature, perform experimental analysis on modern cloud
-infrastructure, and analyze representative applications for their
-semantic requirements. Our experiences with a HAT prototype running
-across multiple geo-replicated datacenters indicate that HATs offer a
-one to three order of magnitude latency decrease compared to
+several whose usefulness is widely acepted such as Read
+Committed. However, highly available systems are fundamentally unable
+to prevent concurrent updates to shared data items and cannot provide
+recency guarantees for reads. To understand when these virtues and
+limitations are relevant in practice, we survey both practitioner
+accounts and academic literature, perform experimental analysis on
+modern cloud infrastructure, and analyze representative applications
+for their semantic requirements. Our experiences with a HAT prototype
+running across multiple geo-replicated datacenters indicate that HATs
+offer a one to three order of magnitude latency decrease compared to
 traditional distributed serializability protocols, and they can
 provide acceptable semantics for a wide range of programs, especially
 those with monotonic logic and commutative updates~\cite{calm,

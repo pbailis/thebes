@@ -1,0 +1,270 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1.5in]{geometry}
+
+\usepackage{times}
+
+\renewcommand{\ttdefault}{fi4}
+
+\newcommand{\reviewer}[1] {\noindent\texttt{#1}\\}
+
+\newcommand{\response}[1] {\noindent\textit{Response: } #1\\}
+
+\newenvironment{myitemize}
+{
+   \vspace{0mm}
+    \begin{list}{$\bullet$ }{}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{1mm} 
+}
+{
+    \end{list} 
+}
+
+\thispagestyle{empty}
+\begin{document}
+
+\noindent\textbf{To the VLDB 2014 reviewers and editor:} Thank you for your
+feedback. We have integrated your suggestions and believe that they
+have strengthened the article, particularly with respect to clarity of
+definitions and applicability of results. We address individual
+comments in order below.\\
+
+\noindent For your convenience, we have also included a diff of the text with our revision.\\
+
+\noindent Thank you again for your consideration of our manuscript.\\
+
+\noindent Peter Bailis\\
+Aaron Davidson\\
+Alan Fekete\\
+Ali Ghodsi\\
+Joseph M. Hellerstein\\
+Ion Stoica
+
+\newpage
+\noindent\textbf{Reviewer 1 Comments}\\
+
+
+\reviewer{W1. While the understanding and insights are useful, this paper still leaves it at an abstraction level. For instance, how can a practitioner use this knowledge to design systems? If availability is a requirement, do we chose the strongest form of consistency that is highly available or is there another tradeoff with performance (aka request latency). That is, reduction and application of these ideas to practice is unclear. A few compelling application scenarios (beyond TPC-C, which is not a great application for the target environment for HAT) would be beneficial.}
+
+\response{We have added several use cases to the RA section (see below) and have
+clarified takeaways both in the introduction. Additionally, we believe
+that addressing several of the below comments has improved practical
+importance.}
+
+\reviewer{W2. Certain parts of the paper are unclear and/or hard to follow (details below). Clarifications will considerably improve the presentation.}
+
+\response{We have addressed the specific suggestions below.}
+
+\reviewer{D1. The stickiness of sessions is an important concept. While it appears repeatedly in the latter parts of the paper, the first definition is very easy to skip. It would be beneficial to somehow highlight this definition.}
+
+\response{We have made "Sticky Availability" a separate subsection.}
+
+\reviewer{[Elaborating W2]\\
+D2. Section 5 mentions that stickiness can also be implemented with client-side caching. However, the implications of actual server stickiness and client-side caching are not the same. Ensuring causal consistency is a good differentiator. For instance, if the client session stays connected to the same server even after a network partition, causality can still be guaranteed. However, if stickiness is emulated by client-side caching, a client might never have seen a write on which it causally depends due to transitivity. Caching such writes at the client becomes impractical. This needs to be clarified.}
+
+\response{Both the Swift system [Zawirski et al.] and Bolt-on Causal Consistency
+[Bailis et al. 2013] achieve causality with client-side caching; we
+have references to these systems.}
+
+\reviewer{D3.I did not entirely follow the discussion on transaction atomicity. In my understanding, atomicity just says all or nothing. It does have a subtle relationship with isolation in the non-failure case. For a non-distributed transaction, if the isolation level allows dirty reads, it implies that if T2 read from what T1 (an uncommitted transaction) wrote, then T2's cannot commit until T1 commits as it would violate atomicity and if T1 aborts, T2 must also abort (causing cascading aborts), which is why dirty reads are often avoided. However, atomicity also has an implication with failures such that when a server fails, all in-flight transaction's work must be undone. Similarly, in the distributed case, atomicity means that either the transaction commits at all participating sites or at none of the sites. 2PC just gives you atomicity while an additional concurrency control mechanism, such as 2PL or OCC, is still needed for isolation. A clarification along these lines will be useful.}
+
+\response{We have added a discussion clarifying the difference between the
+Atomicity concept and the "subtle relationship with isolation."
+Namely, we have refactored "Transactional Atomicity (TA)" into a
+separate isolation property, "Read Atomic (RA)," which we think will
+help avoid confusion by avoiding (further) overloading of the term
+"Atomicity." This change has been made throughout the paper.}
+
+\reviewer{D4. In section 5.1.2, the protocol to achieve replication with atomic broadcast is similar to [Kemme and Alonso, 2000]. Add a citation to it. Bettina Kemme, Gustavo Alonso: Don't Be Lazy, Be Consistent: Postgres-R, A New Way to Implement Database Replication. VLDB 2000: 134-143}
+
+\response{We have added a citation to Kemme's thesis in this section.}
+
+\reviewer{D5. For the discussion following Writes Follows Reads, is there an assumption that the underlying storage layer is multi-version? If not, then isn't holding back a client's write equivalent to blocking it, which will result in unavailability as the blocking can be indefinite. If multi-version, then wouldn't holding back writes potentially prevent the system from surfacing any recent writes? That is, is there a possibility that even though the system continues accepting writes, none of the subsequent reads from other sessions see those writes? In that case, the system might be available but not "alive." Elaborate on this.}
+
+\response{We have updated the text.
+
+Writes Follow Reads (and, more broadly, causal consistency) does not
+presume a multi-version storage system. Rather, in both traditional
+and recent implementations, incoming writes are *buffered* when they
+are delivered to replicas but reads are never served from these
+buffers [Ahamad et al. 1995, Lloyd et al. 2011, Lloyd et
+al. 2013]. Perhaps this is a philosophical distinction, but we do not
+believe the authors of these systems would characterize their systems
+as multi-version in the tradition of classic database systems. There
+*is*, however, a possible visibility penalty--writes may indeed not
+become visible to other readers--which we explicity address in Section
+5.2.2.}
+
+\reviewer{D6. For causal consistency, why not use to standard and well-understood definition by Lamport, 1978? Leslie Lamport: Time, Clocks, and the Ordering of Events in a Distributed System. Commun. ACM 21(7): 558-565 (1978)\\
+D7. Also, the discussion about causal consistency does not capture one essential property of causality: transitive dependencies due to the reads-from constraint.}
+
+\response{We have clarified the discussion of "writes follow reads" to include a
+connection to Lamport's "happens-before" relation. We have opted to
+present causal consistency as it is treated in the literature on
+session guarantees and believe that, with the suggested modifications,
+this strikes a reasonable compromise.}
+
+\reviewer{D8. In 5.2.1, it would be useful to add a discussion about PSI which is also not achievable. [Sovran et al, 2011]}
+
+\response{We have added a reference to PSI in 5.2.1.}
+
+\reviewer{D9. An almost concurrently-published survey seems very relevant to this paper. It might be worthwhile to contrast with that, especially since the current paper lacks much details on eventual consistency. Phil Bernstein and Sudipto Das: Rethinking Eventual Consistency, (to appear) SIGMOD 2013}
+
+\response{We have added a reference and discussion in Related Work.}
+
+\reviewer{D10. While this paper tries to sort out the clutter, there also seems to be a number of related papers published by the authors. Clearly articulating how this paper's contributions differ from that of the other papers will be beneficial. Papers I am referring to are: \\
+* P. Bailis, A. Fekete, A. Ghodsi, J. M. Hellerstein, and I. Stoica. HAT, not CAP: \\
+ Introducing Highly Available Transactions. In To appear in HotOS 2013.\\
+* P. Bailis, A. Ghodsi, J. M. Hellerstein, and I. Stoica. Bolt-on causal consistency. In SIGMOD 2013. \\
+* P. Bailis, A. Ghodsi: Eventual consistency today: limitations, extensions, and beyond, In CACM, May 2013.}
+
+\response{We have placed references to the above in the related work section.}
+
+\reviewer{D11. The paper is missing another citation, the paper that introduces 1SR. 
+Rony Attar, Philip A. Bernstein, Nathan Goodman: Site Initialization, Recovery, and Backup in a Distributed Database System. IEEE Trans. Software Eng. 10(6): 645-650 (1984)}
+
+\response{We have added a citation in Section 5.2.1.}
+
+\reviewer{Minor: 
+* Table 1 seems to be missing the latency numbers for the Singapore region which appears in the legend.}
+
+\response{The Singapore numbers are located in the far right-hand side.}
+
+\reviewer{* Midway through the paper, the style changes from emphasis to bold face. Make it consistent.}
+
+\response{The style in the first part of the paper is now bold.}
+
+\reviewer{Address D2--D11. If possible, W1.}
+
+\response{We believe that the inline comments address this concern.}
+
+\newpage
+\noindent\textbf{Reviewer 2 Comments}\\
+
+\reviewer{ - Feasibility solutions/arguments could be improved. }
+
+\response{We believe that, in addressing the reviewers' comments, the presentation of feasibility has been improved.}
+
+\reviewer{ - Detail/description of the TA algorithm would improve the paper. }
+
+\response{We have added a simpler but less efficient TA algorithm to demonstrate
+feasibility. We subsequently expand on this algorithm to explain our
+more efficient algorithm (as originally presented). The relevant text
+has been re-written.}
+
+\reviewer{ - Better "proofs" would help keep paper self-contained.}
+
+\response{We have revised several sections of Section 5 for better readability
+and self-containment.}
+
+\reviewer{ - Section 2 discusses why high availability is important, providing both anecdotal and experimental evidence for mitigating the effects of network partitions and inter-data center latencies. The latency data study provided in Section 2.2 is very nice and summarizes/motivates the paper nicely. While this paper is replete with references, but it might be appropriate to reference the Bobtail paper here (Xu et al., NSDI 2013). }
+
+\response{We have added a reference to the Bobtail paper in Section 2.2.}
+
+\reviewer{ - Section 3 discusses the need for various isolation levels in practice and provides a survey of the highest (and default) isolation levels provided by 18 "traditional" and NewSQL database systems. This work appeared in a previous workshop paper and the paper clearly mention this. While this survey helps motivate this work, it could be shortened in favor of more novel content (e.g., details of the TA implementation). }
+
+\response{With this suggestion in mind, we have revised large parts of Section 5
+(see below and other review comments). However, we believe Section 3
+is a useful motivation for non-serializable isolation and have left
+the table intact.}
+
+\reviewer{ - Section 5 contains the main contribution of the paper by providing a discussion of what isolation guarantees are possible (and not possible) in a highly available distributed system. The paper uses classifications and terminology from from Adya (as well as Berenson et al.) in this discussion. This section lends clarity to the design space for highly-available transactions; a contribution that has potential to influence the future design of distributed storage systems. The classification of "sticky" and "non-sticky" availability is quite nice. The explanations and examples are incredibly clear and digestible. While some of the guarantee discussions sacrifice formality for brevity, it might be a good idea to bring in some formality to help the paper be better self-contained (that, or provide more implementation details to get the idea across). As is, the paper provides a single-paragraph algorithmic sketch for each HAT guarantee. Adding more detail about the TA algorithm would help greatly, since TA seems to be a contribution itself (reducing some of the "motivation" sections 2 and 3 could help). This would also help interpretation of the experimental results. This paper does have an associated technical report - and I expect a future journal article will combine this content (and more). }
+
+\response{As we have noted above, "We have added a simpler but less efficient TA
+algorithm to demonstrate feasibility. We subsequently expand on this
+algorithm to explain our more efficient algorithm (as originally
+presented). The relevant text has been re-written.}
+
+\reviewer{ - Section 6 provides a nice discussion about the implications of HATs. The TPC-C analysis helps provide practical evidence for HAT guarantees in the "real-world" application space. }
+
+\response{Thank you.}
+
+\reviewer{ - A better "proof" for causality and PRAM guarantees would be helpful. As it stands, the paper refers to several references - a short sketch could go a long way to help the paper stay self-contained.}
+
+\response{We have added a short sketch to the relevant section (within 5.1.3).}
+
+\newpage
+\noindent\textbf{Reviewer 3 Comments}\\
+
+\reviewer{W1. Some definitions need to be clarified - see detailed comments. \\
+W2. The experimental results are not very surprising (and not particularly compelling). For the 
+record, I would have been in favor of accepting this paper even if it had had no evaluation. }
+
+\reviewer{D1. The biggest weakness of this paper is that the its definition of high-availability is very strict - so strict that it excludes all so-called highly-available database systems that I am aware of: Spanner, Megastore, NoSQL systems like Cassandra, log shipping to hot standbys in RDBMS, and more. It is interesting to consider what kinds of consistency are achievable under such a strict HA requirement (as this paper does), but I wonder whether this will have any impact on practice.}
+
+\response{We have expanded our explanation in Section 4.1. In brief, we have
+focused on this stringent definition of high availability as it is the
+definition of availability that appears in the distributed systems
+literature and the proof of the CAP Theorem by Gilbert and Lynch. It
+is indeed a restrictive model but guarantees low latency (see Abadi's
+PACELC) and a guaranteed response under a large variety of failure
+scenarios.}
+
+\reviewer{D2. This paper focuses on the tradeoffs between availability and consistency. It does not mention durability of updates. You can't have a HAT system and also ensure that committed updates are geo-replicated (or replicated at all). It seems that HAT is a very demanding god... }
+
+\response{This is an excellent point. We have added an additional Section
+(5.2.3) to address this.}
+
+\reviewer{D3. Section 2.1 is supposed to be about partitions, but many the
+statistics being reported (e.g., in paragraph 3) are for link
+failures, router failures, and other things (WAN and LAN) that may or
+may not result in partitioning. Can you relate any of this stuff to
+partitioning? Right now, it feels like you are hand-waving about
+network-related failures in general.}
+
+\response{We have added additional
+statistics from the Microsoft paper, clarified wording on several
+other references, and added an additional reference to a recent
+survey.}
+
+\reviewer{D4. Section (2nd paragraph) says that HA algs "ensure...guaranteed low latency". I see nothing about latency in any of the subsequent definitions. I understand that reduced latency can be a beneficial side-effect of designing for HA, but here you seem to be suggesting that the *definition* of HA has to do with low latency.}
+
+\response{We have modified this sentence to reflect the fact that low latency is
+a side effect of choosing high availability.}
+
+\reviewer{D5. I'm puzzled by the definition of "sticky" availability. You indicate that a client be "sticky" by maintaining affinity with a set of servers, rather than a single server. However, the sticky availability definition seems to a require that a single server observe all of a client's requests. So, which is it? On the one hand, if not all servers can handle requests for all objects, then it would seem that you need to allow a client to be sticky with a set of servers. On the other hand, this means that no server observes all requests. Also, if a client can be sticky by sending its requests to a set of servers, then aren't all clients sticky (considering the set consisting of all servers). Since you are later going to actually classify algorithms based on this definition, I think it needs to be clarified.}
+
+\response{This is an excellent point. In the case of fully-replicated systems,
+the a client can remain sticky with a single server. But, as you point
+out, in the case of partially-replicated systems, the definition is
+more complex. We have amended the text to first handle the simple
+fully-replicated case, then adapted the concept of stickiness for the
+partially-replicated case: the distinction is that, in the latter,
+clients interact with a single "logical" server that is split over
+multiple physical servers. This is now fixed.}
+
+\reviewer{D6. Transactional availability (Section 4.2) requires "replica availability", which is not defined. Does it correspond to what you previously called "traditional availability"? Also, why does the last sentence in Section 4.2 talk about the client's ability to contact *two* servers per data item?}
+
+\response{We have added a definition of "replica availability" and removed the
+problematic example.}
+
+\reviewer{D7. Section 5.1.2 says that item cut isolation plus TA prevents read skew. I don't understand how this can be. TA allows a transaction that is reading multiple data items to observe only part of the effect of another transaction that updates those items - isn't that read skew? (And item cut isolation doesn't help.) More generally, I'm not really convinced of the utility of TA to applications - perhaps that explains its perplexing absence from existing treatments of weak isolation? }
+
+\response{We have provided three scenarios in which we believe TA is useful.}
+
+\reviewer{D8. It seems that the TA algorithm you propose (Section 5.1.2) will not play well with enforcing item cut isolation using caching, as you propose. If a transaction reads an item a second time, the latter may be trying to feed it an old value while former is compelled to feed a newer value (to preserve TA). You presumably want these two algs to play nicely together if TA plus item cut isolation somehow prevent read skew (in some way that I do not understand) as you claim. }
+
+\response{This is an excellent point. We believe that presenting the simplified
+TA algorithm presentation in Section 5.1.2 (see responses to reviewers
+above) is easily integrated with Item Cut Isolation and should address
+any concerns regarding feasibility. However, we have also noted your
+concerns in Section 5.4: more efficient algorithms for I-CI plus RA
+(nee TA) are an area for future work.}
+
+\reviewer{D9. I don't see how the observations you make about application requirements 
+(Section 6.2) support your conclusion about the utility of HAT at the end 
+ of Section 6.2. }
+
+\response{We have tempered the conclusion at the end of Section 6.2.}
+
+\reviewer{D10. I don't understand the Master system you are using as a baseline in Section 6. There's a separate master per item? Which consistency guarantees is this baseline enforcing? I can't find that in the paper.}
+
+\response{Our original wording was confusing; the "master" system is equivalent
+to PNUTS's read-latest architecture. This represents single-key
+linearizability, the guarantee addressed by the CAP Theorem.}
+
+
+\end{document}

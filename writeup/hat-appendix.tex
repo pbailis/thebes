@@ -53,9 +53,9 @@ session.
 To reason about isolation anomalies, we use Adya's concept of a
 conflict graph, which is composed of dependencies between
 transaction. The definitions in this section are directly from Adya,
-with two difference. First, we expand Adya's formalism to deal
+with two differences. First, we expand Adya's formalism to deal
 with \textit{per-item} dependencies. Second, we define session
-dependencies (Definitions~\ref{def:sd1} and~\ref{def:sd2}).
+dependencies (Definition~\ref{def:sd1}).
 
 \begin{definition}[Change the Matches of a Predicate-Based Read]
 A transaction $T_i$ changes the matches
@@ -67,7 +67,7 @@ The above deﬁnition identiﬁes $T_i$ to be a transaction where
 a change occurs for the matched set of $r_j$ (P: Vset(P)).
 \end{definition}
 
-\begin{definition}[Directly Read-Depends]
+\begin{definition}[Directly Read-Depends{~\cite[Definition 2]{adya}}]
 $T_j$ directly read-depends on transaction $T_i$ if it directly
 item-read-depends or directly predicate-read-depends on $T_i$.
 \end{definition}
@@ -94,7 +94,7 @@ $T_j$ directly predicate-read-depends on $T_i$ if $T_j$ directly
   predicate-read-depends by $P$ on $T_i$ for some predicate $P$.
 \end{definition}
 
-\begin{definition}[Directly Anti-Depends]
+\begin{definition}[Directly Anti-Depends{~\cite[Definition 4]{adya}}]
 Transaction $T_j$ directly anti-depends on transaction $T_i$ if it
 directly item-anti-depends or directly predicate-anti-depends on
 $T_i$.
@@ -132,7 +132,7 @@ if $T_i$ installs a version $x_i$ and $T_j$ installs $x$'s next
 version (after $x_i$) in the version order.
 \end{definition}
 
-\begin{definition}[Directly Write-Depends]
+\begin{definition}[Directly Write-Depends{~\cite[Definition 5]{adya}}]
 A transaction $T_j$ directly write-depends on transaction $T_i$ if
 $T_i$ directly write-depends by $x$ on $T_j$ for some item $x$.
 \end{definition}
@@ -151,7 +151,29 @@ read-depends on $T_i$ by $x$, we draw
 $T_i \overset{rw_x}\longrightarrow T_j$. If $T_j$ directly
 anti-depends on transaction $T_j$ by $x$, we draw
 $T_i \overset{wr_x}\DashedArrow T_j$. If $T_j$ session-depends on
-$T_i$ in session $S$, we draw $T_i \overset{S}\longrightarrow T_j$.
+$T_i$ in session $S$, we draw $T_i \overset{S}\longrightarrow
+T_j$~\cite[Definition 8]{adya}.
+
+We also consider the Unfolded Serialization Graph ($USG(H)$) that is a
+variation of the $DSG$. The USG is speciﬁed for the transaction of
+interest, $T_i$, and a history, $H$, and is denoted by $USG(H,
+T_i)$. For the USG, we retain all nodes and edges of the $DSG$ except
+for $T_i$ and the edges incident on it. Instead, we split the node for
+$T_i$ into multiple nodes---one node for every read/write event in
+$T_i$. The edges are now incident on the relevant event of $T_i$.
+
+$USG(H, T_i)$ is obtained by transforming $DSG(H)$ as follows:.  For
+each node $p$ ($p \neq T_i$) in $DSG(H)$, we add a node to
+$USG(H,T_i)$. For each edge from node $p$ to node $q$ in $DSG(H)$,
+where p and q are different from $T_i$, we draw a corresponding edge
+in $USG(H,T_i)$. Now we add a node corresponding to every read and
+write performed by $T_i$. Any edge that was incident on $T_i$ in the
+$DSG$ is now incident on the relevant event of $T_i$ in the
+$USG$. Finally, consecutive events in $T_i$ are connected
+by \textit{order edges}, e.g., if an action (e.g., SQL statement)
+reads object $y_j$ and immediately follows a write on object $x$ in
+transaction $T_i$, we add an order-edge from $w_i(x_i)$ to
+$r_i(y_j)$~\cite[Section 4.2.1]{adya}.
 
 \subsection{Transactional Anomalies and Isolation Levels}
 
@@ -193,9 +215,9 @@ cycle consisting entirely of dependency edges.
 A system that provides Read Committed isolation prohibits phenomenon G0, G1a, G1b, and G1c.
 \end{definition}
 
-\begin{definition}[Item-Many-Preceders (N-I-CI)]
-\label{def:n-ici}
-A history $H$ exhibits phenomenon N-ICI if $DSG(H)$ contains a
+\begin{definition}[Item-Many-Preceders (IMP)]
+\label{def:imp}
+A history $H$ exhibits phenomenon IMP if $DSG(H)$ contains a
 transaction $T_i$ such that $T_i$ directly item-read-depends by $x$ on more
 than one other transaction.
 \end{definition}
@@ -207,7 +229,7 @@ T_1 &: w_x(1)\\
 T_2 &: w_x(2)\\
 T_3 &: r_x(1)~r_x(2)
 \end{align*}
-\caption{Example of \textit{N-ICI} anomaly.}
+\caption{Example of \textit{IMP} anomaly.}
 \label{fig:nici-history}
 \end{figure}
 
@@ -227,11 +249,11 @@ T_3 &: r_x(1)~r_x(2)
 \end{figure}
 
 \begin{definition}[Item Cut Isolation (I-CI)]
-A system that provides Item Cut Isolation prohibits phenomenon N-I-CI.
+A system that provides Item Cut Isolation prohibits phenomenon IMP.
 \end{definition}
 
-\begin{definition}[Predicate-Many-Preceders (N-P-CI)]
-A history $H$ exhibits phenomenon N-I-CI if, for all predicate-based
+\begin{definition}[Predicate-Many-Preceders (PMP)]
+A history $H$ exhibits phenomenon PMP if, for all predicate-based
 reads $r_i(P_i:Vset(P_i))$ and $r_j(P_j:Vset(P_j)$ in $T_k$ such that
 the logical ranges of $P_i$ and $P_j$ overlap (call it $P_o$), the set
 of transactions that change the matches of $P_o$ for $r_i$ and $r_j$
@@ -239,11 +261,11 @@ differ.
 \end{definition}
 
 \begin{definition}[Predicate Cut Isolation (P-CI)]
-A system that provides Predicate Cut Isolation prohibits phenomenon N-P-CI.
+A system that provides Predicate Cut Isolation prohibits phenomenon PMP.
 \end{definition}
 
-\begin{definition}[Observed Transaction Vanishes (N-RA)]
-A history $H$ exhibits phenomenon N-RA if $USG(H)$ contains a directed
+\begin{definition}[Observed Transaction Vanishes (OTV)]
+A history $H$ exhibits phenomenon OTV if $USG(H)$ contains a directed
 cycle consisting of exactly one read-dependency edge by $x$ from $T_j$
 to $T_i$ and a set of edges by $y$ containing at least one
 anti-dependency edge from $T_i$ to $T_j$ and $T_j$'s read from $y$
@@ -258,7 +280,7 @@ T_1 &: w_x(1)~w_y(1)\\
 T_2 &: w_x(2)~w_y(2)\\
 T_3 &: r_x(2)~r_y(1)
 \end{align*}
-\caption{Example of \textit{N-TA} anomaly.}
+\caption{Example of \textit{OTV} anomaly.}
 \label{fig:nta-history}
 \end{figure}
 
@@ -281,7 +303,7 @@ T_3 &: r_x(2)~r_y(1)
 
 \begin{definition}[Read Atomic (RA)]
 A system that provides Read Atomic isolation prohibits phenomenon
-N-RA in addition to providing Read Committed isolation.
+OTV in addition to providing Read Committed isolation.
 \end{definition}
 
 The following session guarantees are directly adapted from Terry et
@@ -372,8 +394,8 @@ T_3 &: r_y(1)~r_x(0)
 A system provides Monotonic Writes if it prohibits phenomenon N-MW.
 \end{definition}
 
-\begin{definition}[Writes Do Not Follow Reads (N-WFR)]
-A history $H$ exhibits phenomenon N-WFR if, in $DSG(H)$, for all
+\begin{definition}[Missing Read-Write Dependency (MRWD)]
+A history $H$ exhibits phenomenon MRWD if, in $DSG(H)$, for all
 committed transactions $T_1$, $T_2$, $T_3$ such that $T_2$
 write-depends on $T_1$ and $T_3$ write-depends on $T_2$, $T_3$ does
 not directly anti-depend on $T_1$.
@@ -387,7 +409,7 @@ T_1 &: w_x(1)\\
 T_2 &: r_x(1) w_y(1)\\
 T_3 &: r_y(1)~r_x(0)
 \end{align*}
-\caption{Example of \textit{N-WFR} anomaly.}
+\caption{Example of \textit{MRWD} anomaly.}
 \label{fig:nwfr-history}
 \end{figure}
 
@@ -408,11 +430,11 @@ T_3 &: r_y(1)~r_x(0)
 \end{figure}
 
 \begin{definition}[Writes Follow Reads (WFR)]
-A system provides Writes Follow Reads if it prohibits phenomenon N-WFR.
+A system provides Writes Follow Reads if it prohibits phenomenon MWRD.
 \end{definition}
 
-\begin{definition}[Missing Your Writes (N-RYW)]
-A history $H$ exhibits phenomenon N-RYW if $DSG(H)$ contains a directed cycle
+\begin{definition}[Missing Your Writes (MYR)]
+A history $H$ exhibits phenomenon MYR if $DSG(H)$ contains a directed cycle
 consisting of a transitive session-dependency between transactions
 $T_j$ and $T_i$, at least one anti-dependency edge, and the remainder
 anti-dependency or write-dependency edges.
@@ -425,7 +447,7 @@ anti-dependency or write-dependency edges.
 T_1 &: w_x(1)\\
 T_2 &: r_x(0)\\
 \end{align*}
-\caption{Example of \textit{N-RYW} anomaly if $T_2$ directly session-depends on $T_1$.}
+\caption{Example of \textit{MYR} anomaly if $T_2$ directly session-depends on $T_1$.}
 \label{fig:nryw-history}
 \end{figure}
 
@@ -444,17 +466,17 @@ T_2 &: r_x(0)\\
 \end{figure}
 
 \begin{definition}[Read Your Writes (RYW)]
-A system provides Read Your Writes if it prohibits phenomenon N-RYW.
+A system provides Read Your Writes if it prohibits phenomenon MYR.
 \end{definition}
 
 \begin{definition}[PRAM Consistency]
 A system provides PRAM Consistency if it prohibits phenomenon N-MR,
-N-MW, and N-RYW.
+N-MW, and MYR.
 \end{definition}
 
 \begin{definition}[Causal Consistency]
 A system provides Causal Consistency if it provides PRAM Consistency
-and prohibits phenomenon N-WFR.
+and prohibits phenomenon MWRD.
 \end{definition}
 
 \begin{definition}[Lost Update]
@@ -476,7 +498,7 @@ Lost Update.
 
 \begin{definition}[Snapshot Isolation]
 A system that provides Snapshot Isolation prevents phenomena G0, G1a,
-G1b, G1c, N-P-CI, N-RA, and Lost Update.
+G1b, G1c, PMP, OTV, and Lost Update.
 \end{definition}
 
 For Repeatable Read, we return to Adya.
@@ -489,10 +511,10 @@ G0, G1a, G1b, G1c, and Write Skew.
 For definitions of safe, regular, and linearizable register semantics,
 we refer the reader to Herlihy's textbook~\cite{herlihy-art}.
 
-\section{Transactional Atomicity}
+\section{Read Atomic Isolation}
 
 In this section, we provide additional information on our two-phase
-Transactional Atomicity algorithm.
+algorithm for providing Read Atomic isolation.
 
 The below pseudocode describes a straightforward implementation of the
 algorithm from Section~\ref{sec:ta}. Replicas maintain two sets of
@@ -596,7 +618,7 @@ important in network-constrained environments.
 \begin{addmargin}[-1em]{0em}% 1em left, 2em right
 
 \begin{algorithmic}
-\caption*{\textbf{Algorithm} HAT Transactional Atomicity}\vspace{.5em}
+\caption*{\textbf{Algorithm} HAT Read Atomic Isolation}\vspace{.5em}
 \State{\textit{\textbf{Shared Data Types}}\\\vspace{.5em}
 \texttt{timestamp}: unique, per transaction identifier\\
 $\texttt{write}:[\texttt{key:}k, \texttt{value}:v, \texttt{timestamp}:ts, \texttt{set<key>}:sibs]$\\\hrulefill}\vspace{.5em}

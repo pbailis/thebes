@@ -30,12 +30,12 @@ user that can contact a correct (non-failing) server eventually
 receives a response from that server, even in the presence of
 arbitrary, indefinitely long network partitions between
 servers~\cite{gilbert-cap}.\footnote{Under this definition from the
-  distributed systems literuter, systems that require a majority of
-  servers to be online is not available. Similarly, a system which
+  distributed systems literature, systems that require a majority of
+  servers to be online are not available. Similarly, a system which
   ensures that clients receive a response with high (but not perfect)
-  probability is not available. This is a stringent but matches the
-  assumptions made in the CAP Theorem~\cite{gilbert-cap} and
-  guarantees low latency~\cite{abadi-pacelc}.} As in a standard
+  probability is not available. This is a stringent requirement but it
+  matches the assumptions made in the CAP Theorem~\cite{gilbert-cap}
+  and guarantees low latency~\cite{abadi-pacelc}.} As in a standard
 distributed database, designated servers might perform operations for
 different data items; a server that can handle an operation for a
 given data item is called a \textit{replica} for that
@@ -64,7 +64,7 @@ server for each of its requests. However, to stay ``sticky'' in a
 partially-replicated system, where servers are replicas for subsets of
 the set of data items (which we consider in this paper), a client must
 maintain stickiness with a single \textit{logical} server that may
-consist of multiple physical servers.. We say that a system provides
+consist of multiple physical servers. We say that a system provides
 \textbf{sticky availability} if, whenever a client's operation on an
 item is executed against a logical server that has observed all of its
 prior operations, it eventually receives a response, even in the

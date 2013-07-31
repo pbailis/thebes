@@ -195,12 +195,12 @@ is a partially replicated (hash-based, partitioned) key-value backed
 by LevelDB and implemented in Java using Apache Thrift. It currently
 supports eventual consistency (hereafter, \texttt{eventual};
 last-writer-wins RU with standard all-to-all anti-entropy between
-replicas) and HAT RC and RA with RC guarantees (hereafter,
-\texttt{RA}). It also supports non-HAT operation whereby all
-operations for a given key are routed to a (randomly) designated
-\texttt{master} replica for each key (guaranteeing single-key
-linearizability, as in Gilbert and Lynch's CAP Theorem
-proof~\cite{gilbert-cap} and in PNUTS~\cite{pnuts}'s
+replicas) and the efficient HAT RA algorithm as sketched in
+Section~\ref{sec:ta}. (hereafter, \texttt{RA}). It also supports
+non-HAT operation whereby all operations for a given key are routed to
+a (randomly) designated \texttt{master} replica for each key
+(guaranteeing single-key linearizability, as in Gilbert and Lynch's
+CAP Theorem proof~\cite{gilbert-cap} and in PNUTS~\cite{pnuts}'s
 \texttt{read-latest} operation; hereafter, \texttt{master}) as well as
 distributed two-phase locking. Servers are durable: they synchronously
 write to LevelDB before responding to client requests, while new

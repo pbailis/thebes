@@ -85,16 +85,16 @@ as we will discuss, relaxed semantic guarantees.
 \label{sec:latency}
 
 Even with fault-free networks, distributed systems face the challenge
-of network communication latency, Deutsch's second ``Fallacy.'' In this
-section, we quantify round-trip latencies, which are often
-large---hundreds of milliseconds in a geo-replicated,
-multi-datacenter context.  Fundamentally, the speed at which two
-servers can communicate is (according to modern physics) bounded by
-the speed of light. In the best case, two servers on opposite sides of
-the Earth---communicating via a hypothetical link along the planet's
-diameter---require a minimum 85.1ms RTT (133.7ms if sent at
-surface level). As services are replicated to multiple, geographically
-distinct sites, this cost of communication increases.
+of network communication latency, Deutsch's second ``Fallacy.'' In
+this section, we quantify round-trip latencies, which are often
+large---hundreds of milliseconds in a geo-replicated, multi-datacenter
+context.  Fundamentally, the speed at which two servers can
+communicate is (according to modern physics) bounded by the speed of
+light. In the best case, two servers on opposite sides of the
+Earth---communicating via a hypothetical link along the planet's
+diameter---require a minimum 85.1ms round-trip time (RTT; 133.7ms if
+sent at surface level). As services are replicated to multiple,
+geographically distinct sites, this cost of communication increases.
 
 
 \definecolor{min-lat-color}{HTML}{B2FF99}
@@ -157,7 +157,8 @@ measured one week of ping times (i.e., round-trip times, or RTTs)
 between all seven EC2 geographic ``regions,'' across three
 ``availability zones'' (closely co-located datacenters), and within a
 single ``availability zone'' (datacenter), at a granularity of
-1s\footnote{Data available at \url{http://bailis.org/blog/communication-costs-in-real-world-networks/}}. We
+1s\footnote{Data available at
+  \url{http://bailis.org/blog/communication-costs-in-real-world-networks/}}. We
 summarize the results of our network measurement study in
 Table~\ref{table:rtt}. On average, intra-datacenter communication
 (Table 1a) is between 1.82 and 6.38 times faster than across
@@ -169,7 +170,7 @@ Singapore RTT is 106.7ms, ping packets incur an average 362.8ms RTT
 (95th percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the
 distribution of latencies varies between links, but the trend is
 clear: remote communication has a substantial cost. As with network
-failures, quantifying and delays communication delays is an active
+failures, quantifying and minimizing communication delays is an active
 area of research in the networking community~\cite{bobtail}.
 
 \section{ACID in the Wild}
@@ -248,12 +249,12 @@ VoltDB & S & S\\
 \end{center}
 \end{table}
 
-It is unknown \textit{which} of these guarantees can be provided with
-high availability, or are HAT-compliant. Existing algorithms for
+It has been unknown \textit{which} of these guarantees can be provided
+with high availability, or are HAT-compliant. Existing algorithms for
 providing weak isolation are often designed for a single-node context
-and are, to the best of our knowledge, unavailable due to reliance
-on concurrency control mechanisms like locking that are not resilient
-to partial failure (Section~\ref{sec:eval-existing}). Moreover, we are
+and are, to the best of our knowledge, unavailable due to reliance on
+concurrency control mechanisms like locking that are not resilient to
+partial failure (Section~\ref{sec:eval-existing}). Moreover, we are
 not aware of any prior literature that provides guidance as to the
 relationship between weak isolation and high availability: prior work
 has examined the relationship between serializability and high

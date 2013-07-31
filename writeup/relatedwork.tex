@@ -17,29 +17,29 @@ PACELC expands CAP by considering connections between ``weak
 consistency'' and low latency~\cite{abadi-pacelc}, while several
 studies examine weak isolation guarantees~\cite{adya,
   ansicritique}. There are a wide range of coordination-avoiding
-``optimistic replication'' strategies~\cite{optimistic}, and there
-have been several recent efforts at further taxonomizing these
-strategies in light of current practice and the proliferation of
-``eventually consistent'' stores~\cite{bailis-ec, bernstein-survey}
-(notably, Bernstein and Das~\cite{bernstein-survey} specifically
-highlight the importance of stickiness~\cite{sessionguarantees,
-  vogels-defs}---which we formalize in Section~\ref{sec:sticky}).
-However, as we have discussed, the connection between weak,
-multi-object consistency models in a distributed setting and high
-availability is relatively unexplored. With the exception of our
-preliminary workshop paper discussing transactional availability,
-real-world ACID, and HAT RC and I-CI~\cite{hat-hotos}---which this
-work expands, providing additional algorithms and impossibility
-results, a full taxonomization, experimental and application analysis,
-and much greater discussion of implications and related work---we
-believe this paper is the first to explore this area.
+``optimistic replication'' strategies~\cite{optimistic} and several
+recent efforts at further taxonomizing these strategies in light of
+current practice and the proliferation of ``eventually consistent''
+stores~\cite{bailis-ec, bernstein-survey} (notably, Bernstein and
+Das~\cite{bernstein-survey} specifically highlight the importance of
+stickiness~\cite{sessionguarantees, vogels-defs}---which we formalize
+in Section~\ref{sec:sticky}).  However, as we have discussed, the
+connection between weak, multi-object consistency models in a
+distributed setting and high availability is relatively
+unexplored. With the exception of our preliminary workshop paper
+discussing transactional availability, real-world ACID, and HAT RC and
+I-CI~\cite{hat-hotos}---which this work expands, providing additional
+algorithms and impossibility results, a full taxonomization,
+experimental and application analysis, and a greater discussion of
+implications and related work---we believe this paper is the first to
+explore this area.
 
 %, linearizability, consistent snapshots, and recency
 %bounds~\cite{ceri-mechanism, chen-mechanism}.
 
 There has been a recent resurgence of interest in distributed
 multi-object semantics, both in academia~\cite{kraska-s3, gstore,
-  eiger, walter,calvin, swift} and industry~\cite{spanner}. As
+  eiger, walter,calvin, swift} and industry~\cite{orleans,spanner}. As
 discussed in Section~\ref{sec:modernacid}, classic ACID databases
 provide strong semantics but their lock-based and traditional
 multi-versioned implementations are unavailable in the presence of
@@ -52,7 +52,7 @@ penalties associated with this design choice are fundamental to
 serializability. For users willing to tolerate these costs, Spanner,
 or similar strongly consistent, unavailable systems---including
 Calvin~\cite{calvin}, G-Store~\cite{gstore}, HBase,
-HStore~\cite{hstore}, Postgres-R~\cite{kemme-thesis},
+HStore~\cite{hstore}, Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis},
 Walter~\cite{walter}, and a range of snapshot isolation
 techniques~\cite{daudjee-session, daudjee-snapshot}---are a reasonable
 choice.
@@ -70,9 +70,8 @@ achieved in a sticky highly available, \textit{one-way convergent}
 system~\cite{cac}. This result is promising and complementary to our
 results for general-purpose convergent data stores. Finally, Burkhardt
 et al. have concurrently developed an axiomatic specification for
-eventually consistent stores; their work-in-progress report contains
-alternate formalism for several HAT guarantees and (snapshot-based)
-transactions~\cite{burkhardt-txns}.
+eventual consistency; their work-in-progress report contains alternate
+formalism for several HAT guarantees~\cite{burkhardt-txns}.
 
 
 % Ceri discuss distributed database update mechanisms with respect to
