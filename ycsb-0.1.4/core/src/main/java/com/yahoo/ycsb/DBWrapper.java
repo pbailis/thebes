@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
+import org.apache.log4j.Logger;
 
 import com.yahoo.ycsb.measurements.Measurements;
 
@@ -37,6 +38,10 @@ public class DBWrapper extends DB
 	TPCCDB _tpccDB = null;
 	Measurements _measurements;
 	public List<Req> requests;
+    int txnLength = -1;
+
+    private final Logger logger = Logger.getLogger(DBWrapper.class);
+
 
 	public DBWrapper(DB db)
 	{
@@ -53,11 +58,18 @@ public class DBWrapper extends DB
 	}
 
     private void checkTransaction() {
+        if(_transactionalDB == null)
+            return;
 
-        if(_transactionalDB != null && _transactionalDB.getNextTransactionLength() == requests.size()) {
+        if(txnLength == -1)
+            txnLength = _transactionalDB.getNextTransactionLength();
+
+        if(txnLength == requests.size()) {
         	long txStart = System.nanoTime();
-        	boolean isFucked = false;
-        	
+        	boolean error = false;
+
+            logger.trace("Ending transaction of length "+txnLength);
+
         	// TODO: Decide if we want to order the thingies
         	Collections.sort(requests);
         	
@@ -69,15 +81,15 @@ public class DBWrapper extends DB
         		_measurements.measure(req.getOperationName(),(int)((en-st)/1000));
         		_measurements.reportReturnCode(req.getOperationName(), res);
         		if (res != 0) {
-        			System.err.println(req.getOperationName() + " failed on key=" + req.getKey());
-                    System.err.println("[INSTANT REPLAY: " + req.getKey() + "]");
+//        			System.err.println(req.getOperationName() + " failed on key=" + req.getKey());
+//                    System.err.println("[INSTANT REPLAY: " + req.getKey() + "]");
                     for (Req r : requests) {
-                        System.err.println("[IR on " + req.getKey() + "] " + r.getOperationName() + " " + r.getKey());
+//                        System.err.println("[IR on " + req.getKey() + "] " + r.getOperationName() + " " + r.getKey());
                         if (r == req) {
-                            System.err.println("[IR on " + req.getKey() + "] FAILED HERE");
+//                            System.err.println("[IR on " + req.getKey() + "] FAILED HERE");
                         }
                     }
-                    isFucked = true;
+                    error = true;
         			break;
         		}
         	}
@@ -85,7 +97,7 @@ public class DBWrapper extends DB
         	
         	requests.clear();
         	
-        	if (!isFucked) {
+        	if (!error) {
                 _measurements.measure("TRANSACTION", (int)((System.nanoTime()-txStart)/1000));
                 _measurements.reportReturnCode("TRANSACTION", 1);
         	}

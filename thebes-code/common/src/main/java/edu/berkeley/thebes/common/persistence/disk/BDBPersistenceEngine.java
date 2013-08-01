@@ -8,6 +8,8 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
+import com.yammer.metrics.core.TimerContext;
+
 import edu.berkeley.thebes.common.config.Config;
 import edu.berkeley.thebes.common.data.DataItem;
 import edu.berkeley.thebes.common.persistence.IPersistenceEngine;
@@ -69,10 +71,16 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
 
     }
 
-    public boolean put(String key, DataItem value) throws TException {
+    @Override
+    public void force_put(String key, DataItem value) throws TException {
+        throw new UnsupportedOperationException("Figure it out if you want it.");
+    }
+
+    @Override
+    public void put_if_newer(String key, DataItem value) throws TException {
         if(value == null) {
             logger.warn("NULL write to key "+key);
-            return true;
+            return;
         }
 
 
@@ -91,7 +99,7 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 DataItem existingDataItem = new DataItem(existingThriftItem);
 
                 if (existingDataItem.getVersion().compareTo(value.getVersion()) > 0) {
-                    return false;
+                    return;
                 }
             }
 
@@ -105,12 +113,12 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
                 putTxn = null;
             }
 
-            return false;
+            return;
         } finally {
             if(putTxn != null)
                 putTxn.commit();
         }
-        return true;
+        return;
     }
 
     public DataItem get(String key) throws TException {
@@ -125,6 +133,14 @@ public class BDBPersistenceEngine implements IPersistenceEngine {
         ThriftDataItem tdrRet = new ThriftDataItem();
         deserializer.get().deserialize(tdrRet, dataEntry.getData());
         return new DataItem(tdrRet);
+    }
+
+    public void delete(String key) throws TException {
+        DatabaseEntry keyEntry = new DatabaseEntry(key.getBytes());
+        DatabaseEntry dataEntry = new DatabaseEntry();
+
+        OperationStatus status = db.delete(null, keyEntry);
+        return;
     }
 
     public void close() throws IOException {

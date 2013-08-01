@@ -13,10 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.ConfigurationException;
 
+import com.yammer.metrics.core.Histogram;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
 import edu.berkeley.thebes.common.thrift.ThriftDataItem;
 import edu.berkeley.thebes.hat.common.thrift.ReplicaService;
 import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -71,8 +73,11 @@ public class ThebesHATClient implements IThebesClient {
     private final Meter errorMetric = Metrics.newMeter(ThebesHATClient.class, "hat-errors", "errors", TimeUnit.SECONDS);
     private final Timer latencyBufferedXactMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-buf-xact",
                                                                      TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-    private final Timer latencyPerOperationMetric = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-op", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-    
+    private final Timer latencyPerPutTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-put", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Histogram putSizeHistogram = Metrics.newHistogram(ThebesHATClient.class, "hat-put-size");
+    private final Timer latencyPerGetTimer = Metrics.newTimer(ThebesHATClient.class, "hat-latencies-per-get", TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+    private final Histogram getSizeHistogram = Metrics.newHistogram(ThebesHATClient.class, "hat-get-size");
+
     private static final AtomicInteger LOGICAL_CLOCK = new AtomicInteger(0);
 
     private ReplicaRouter router;
@@ -93,46 +98,10 @@ public class ThebesHATClient implements IThebesClient {
     private AtomicityLevel atomicityLevel = Config.getThebesAtomicityLevel();
     private VersionVector atomicityVersionVector;
 
-    private class TransactionMultiPutCallback implements AsyncMethodCallback<ReplicaService.AsyncClient.put_call> {
-        private Semaphore blockFor;
-        private final int numWrites;
-        private List<Exception> exceptionList = Lists.newArrayList();
+    public ThebesHATClient() throws FileNotFoundException, ConfigurationException {
+        Log4JConfig.configureLog4J();
+        Config.initializeClient();
 
-        public TransactionMultiPutCallback(int numWrites) {
-            blockFor = new Semaphore(numWrites);
-            this.numWrites = numWrites;
-        }
-
-        @Override
-        public void onComplete(ReplicaService.AsyncClient.put_call put_call) {
-            blockFor.release();
-        }
-
-        @Override
-        public void onError(Exception e) {
-            exceptionList.add(e);
-            blockFor.release();
-        }
-
-        public void blockForWrites() throws TException {
-            try {
-                blockFor.acquire(numWrites);
-            } catch (InterruptedException e) {
-                exceptionList.add(e);
-            } finally {
-                if(!exceptionList.isEmpty()) {
-                    String exceptionString = "Exceptions occured in processing write: ";
-                    for(Exception e : exceptionList) {
-                        exceptionString += e.getMessage() + e.getStackTrace();
-                    }
-
-                    throw new TException(exceptionString);
-                }
-            }
-        }
-    }
-
-    public ThebesHATClient() {
         if(atomicityLevel != AtomicityLevel.NO_ATOMICITY &&
            !isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
             /*
@@ -162,11 +131,10 @@ public class ThebesHATClient implements IThebesClient {
                 System.currentTimeMillis());
         List<String> transactionKeys = new ArrayList<String>(transactionWriteBuffer.keySet());
 
-        //TransactionMultiPutCallback callback = new TransactionMultiPutCallback(transactionKeys.size());
+        logger.trace("Batch put of "+transactionKeys.size()+" keys.");
+
         for(String key : transactionKeys) {
             DataItem queuedWrite = transactionWriteBuffer.get(key);
-
-            List<String> transactionalDependencies = null;
 
             if(isolationLevel.atOrHigher(IsolationLevel.READ_COMMITTED)) {
                 queuedWrite.setVersion(transactionVersion);
@@ -177,17 +145,7 @@ public class ThebesHATClient implements IThebesClient {
 
             doPutSync(key,
                       queuedWrite);
-
-            /*
-            doPutAsync(key,
-                       queuedWrite,
-                       transactionKeys,
-                       callback);
-                       */
-
         }
-
-        //callback.blockForWrites();
 
         if(atomicityLevel == AtomicityLevel.CLIENT)
             atomicityVersionVector.updateVector(new ArrayList<String>(transactionWriteBuffer.keySet()),
@@ -301,11 +259,16 @@ public class ThebesHATClient implements IThebesClient {
 
         return ret == null ? null : ret.getData();
     }
+    
 
+    TSerializer serializer = new TSerializer();
     private boolean doPutSync(String key,
                               DataItem value) throws TException {
-        TimerContext timer = latencyPerOperationMetric.time();
+        TimerContext timer = latencyPerPutTimer.time();
         boolean ret;
+        
+        byte[] putBytes = serializer.serialize(value.toThrift());
+        putSizeHistogram.update(putBytes.length);
 
         try {
             ret = router.put(key, value);
@@ -321,36 +284,19 @@ public class ThebesHATClient implements IThebesClient {
         return ret;
     }
 
-//    private boolean doPutAsync(String key,
-//                               DataItem value,
-//                               TransactionMultiPutCallback callback) throws TException {
-//        TimerContext timer = latencyPerOperationMetric.time();
-//
-//        try {
-//            router.put(key,
-//                                                 value.toThrift(),
-//                                                 callback);
-//        } catch (RuntimeException e) {
-//            errorMetric.mark();
-//            throw e;
-//        } catch (TException e) {
-//            errorMetric.mark();
-//            throw new TException("exception on replica "+router.getReplicaIPByKey(key)+" "+e.getMessage());
-//        } finally {
-//            timer.stop();
-//        }
-//        return true;
-//    }
-    
     private DataItem doGet(String key) throws TException {
-        TimerContext timer = latencyPerOperationMetric.time();
+        TimerContext timer = latencyPerGetTimer.time();
         DataItem ret;
+        
         try {
             ThriftDataItem tdrRet = router.get(key, atomicityVersionVector.getVersion(key));
             if(tdrRet.getData() == null)
                 return null;
 
             ret = new DataItem(tdrRet);
+            
+            byte[] getBytes = serializer.serialize(ret.toThrift());
+            getSizeHistogram.update(getBytes.length);
         } catch (RuntimeException e) {
             errorMetric.mark();
             throw e;

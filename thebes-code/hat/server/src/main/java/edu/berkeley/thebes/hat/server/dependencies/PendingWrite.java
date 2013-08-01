@@ -15,20 +15,22 @@ import java.util.Set;
 
 public class PendingWrite implements Comparable<PendingWrite> {
     private final String key;
-    private final DataItem value;
     private final Version transactionVersion;
     
     private int numKeysForThisReplica;
     private Set<Integer> replicaIndicesInvolved;
+    private List<String> transactionKeys;
+    private boolean obsoleted;
     
-    public PendingWrite(String key, DataItem value) {
+    public PendingWrite(String key, DataItem value, boolean obsoleted) {
         if (value.getTransactionKeys().isEmpty()) {
             throw new IllegalStateException("Pending writes must be waiting on at least one other key.");
         }
         
         this.key = key;
-        this.value = value;
         this.transactionVersion = value.getVersion();
+        this.transactionKeys = value.getTransactionKeys();
+        this.obsoleted = obsoleted;
 
         examineReplicasInvolved(key, value.getTransactionKeys());
     }
@@ -64,19 +66,24 @@ public class PendingWrite implements Comparable<PendingWrite> {
         return key;
     }
 
-    public DataItem getValue() {
-        return value;
-    }
-
     public Version getVersion() {
         return transactionVersion;
+    }
+    
+    public boolean isObsoleted() {
+        return obsoleted;
     }
 
     @Override
     public int compareTo(PendingWrite o) {
         return ComparisonChain.start()
                 .compare(getKey(), o.getKey())
-                .compare(getValue(),  o.getValue())
+                .compare(getVersion(),  o.getVersion())
                 .result();
+    }
+    
+    public String toString() {
+        return String.format("[Key: %s, Version: %s, Deps: %s / LocalKeys: %d, Replicas: %d", 
+                key, transactionVersion, transactionKeys, numKeysForThisReplica, replicaIndicesInvolved.size());
     }
 }

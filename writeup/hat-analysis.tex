@@ -2,372 +2,431 @@
 \section{Highly Available Transactions}
 \label{sec:hats}
 
-HAT systems, or systems providing transactions with transactional
-availability with high availability ($1$-available) or sticky high
-availability ($1$-sticky-available), offer substantial latency and
-availability benefits, yet they come with a cost to achievable
-semantics. In this section, we delineate which of several ACID,
-distributed consistency, and session consistency levels can be
-achieved with high availability (transactional atomicity, variants of
-Repeatable Read isolation, and many session guarantees) and sticky
-high availability (read your writes, PRAM and causal consistency) and
-which cannot (preventing Lost Update and Write Skew, recency).  We
-present a full summary of these results in
-Section~\ref{sec:hat-summary}.
+HAT systems provide transactions with transactional availability and
+either high availability or sticky availability. They offer latency
+and availability benefits over traditional distributed databases, yet
+they cannot achieve all possible semantics. In this section, we
+delineate ACID, distributed replica consistency, and session
+consistency levels which can be achieved with high availability (Read
+Committed isolation, variants of Repeatable Read, atomic reads, and
+many session guarantees), those with sticky availability (read your
+writes, PRAM and causal consistency), and properties that cannot be
+provided in a HAT system (those preventing Lost Update and Write Skew
+or guaranteeing recency).  We present a full summary of these results
+in Section~\ref{sec:hat-summary}.
 
 As Brewer states, ``systems and database communities are separate but
 overlapping (with distinct vocabulary)''~\cite{brewer-slides}. With
-this challenge in mind, we draw on existing properties and definitions
-from the database and distributed systems literature, providing a
-brief, informal explanation and example for each guarantee. In
-particular, for our ACID guarantees, we draw largely on Atul Adya's
-dissertation~\cite{adya}, Berenson et al.'s 1995 critique of the ANSI
-SQL Specification~\cite{ansicritique}, and the ANSI SQL
-specification~\cite{ansi-sql}. We provide a set of formal definitions
-and semantics in our extended Technical Report~\cite{hat-tr}.
+this challenge in mind, we build on existing properties and
+definitions from the database and distributed systems literature,
+providing a brief, informal explanation and example for each
+guarantee. The database isolation guarantees require particular care,
+since different DBMSs often use the same terminology for different
+mechanisms and may provide additional guarantees in addition to our
+implementation-agnostic definitions.  We draw largely on Adya's
+dissertation~\cite{adya} and somewhat on its predecessor work: the
+ANSI SQL specification~\cite{ansi-sql} and Berenson et al.'s
+subsequent critique~\cite{ansicritique}.
 
+For brevity, we provide an informal presentation of each guarantee
+here (accompanied by appropriate references) but give a full set of
+formal definitions in
+\iftechreport
+ Appendix A.
+\else
+ our extended Technical Report~\cite{hat-tr}.
+\fi
+In our examples, we exclusively consider read and write operations,
+denoting a write of value $v$ to data item $d$ as $w_d(v)$ and a read
+from data item $d$ returning $v$ as $r_d(v)$. We assume that all data
+items have the null value, $\bot$, at database initialization, and,
+unless otherwise specified, all transactions in the examples commit.
 
 \subsection{Achievable HAT Semantics}
 
-To begin, we present achievable semantics, offering proof-of-concept
-algorithms to demonstrate feasibility. These guarantees are fairly
-straightforward and have been introduced---albeit with greater brevity
-and discussion omitted---in a preliminary workshop
-paper~\cite{hat-hotos}. In our examples, we exclusively consider read
-and write operations. We denote a write of value $v$ to data item $d$
-as $w_d(v)$ and a read from data item $d$ returning $v$ as $r_d(v)$
-and assume that all data items have the null value, $\bot$, at
-database initialization. Unless otherwise specified, all example
-transactions commit.
+To begin, we present well-known semantics that can be achieved in HAT
+systems. In this section, our primary goal is feasibility, not
+performance. As a result, we offer proof-of-concept highly available
+algorithms that are not necessarily optimal or even efficient: the
+challenge is to prove the existence of algorithms that provide high
+availability. However, we briefly study a subset of their performance
+implications in Section~\ref{sec:evaluation}.
 
 \subsubsection{ACID Isolation Guarantees}
+\label{sec:isolation}
 
-To begin, Adya's \textit{Read Uncommitted} isolation requires a total
-order among transactions and requires that each transaction's writes
-are ordered consistently with this order (prohibiting ``Dirty
-Writes,'' or $G0$)~\cite{adya}. If two transactions write to the same
-set of data items, then the final database state cannot contain the
-``earlier'' transaction's writes to the data items. For example, in
-the below example, $T_3$ should eventually only read $a=b=1$ or
-$a=b=2$ but not $a=2, b=1$ or $a=1, b=2$:
+To begin, \textbf{Read Uncommitted} isolation is captured by Adya as
+\textit{PL-1}. In this model, writes to each object are totally
+ordered, corresponding to the order in which they are installed in the
+database. In a distributed database, different replicas may receive
+writes to their local copies of data at different times but should
+handle concurrent updates (i.e., overwrites) in accordance with the
+total order for each item. \textit{PL-1} requires that writes to
+different objects be ordered consistently across transactions,
+prohibiting Adya's phenomenon $G0$ (also called ``Dirty
+Writes''~\cite{ansicritique}). If we build a graph of transactions
+with edges from one transaction to another and, when the former
+overwrites the latter's write to the same object, then, under Read
+Uncommitted, the graph should not contain cycles~\cite{adya}. Consider
+the following example:
 \begin{align*}
-\small
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: w_x(2)~w_y(2)
-\\T_3 &: r_x(a)~r_y(b)\\[-2em]
 \end{align*}
-We will strengthen this property in later models, which will prevent,
-for instance, reading $a=2, b=1$ at any time (not just
-``eventually''). The difference between this total order on
-transactions and the total order required by serializability is that
-the Read Uncommitted total order is completely arbitrary (i.e., an
-order must exist), whereas a serializable total order must be
-equivalent to a serial execution. Read Uncommitted is easily achieved
-via applying the same logical timestamp to each update in a
-transaction and applying a ``last writer wins'' conflict
-reconciliation policy at each replica.
+In this example, under Read Uncommitted, it is impossible for the
+database to order $T_1$'s $w_x(1)$ before $T_2$'s $w_x(2)$ but order
+$T_2$'s $w_y(2)$ before $T_1$'s $w_y(1)$. Read Uncommitted is easily
+achieved by marking each of a transactions' writes with the same
+timestamp (unique across transactions; e.g., combining a client's ID
+with a sequence number) and applying a ``last writer wins'' conflict
+reconciliation policy at each replica. Later properties will
+strengthen Read Uncommitted.
 
-\textit{Read Committed} isolation requires that transactions do not
-read uncommitted versions of data items (prohibiting both ``Dirty
-Writes''---as above---and ``Dirty Reads'' phenomena; captured by
-Adya's $G1a-c$, ANSI's $P1$, and ``broad'' $P1$ (2.2) from Berenson et
-al.). For instance, in the example below, $T_3$ should never see
-$a=1$, and, if $T_2$ aborts, $T_3$ should never read $a=3$:
-\vspace{-.5em}
+\textbf{Read Committed} isolation is particularly important in
+practice as it is the default of many DBMSs (as in
+Section~\ref{sec:modernacid}). Centralized implementations differ,
+with some based on long-duration exclusive locks and short-duration
+read locks~\cite{gray-isolation} and others based on multiple
+versions. These implementations often provide recency and monotonicity
+properties beyond what is implied by the name ``Read Committed'' and
+what is captured by the implementation-agnostic definition: under
+Read Committed, transactions should not access uncommitted or
+intermediate versions of data items. This prohibits both ``Dirty
+Writes'', as above, and also ``Dirty Reads'' phenomena.  This
+isolation is Adya's \textit{PL-2} and is formalized by prohibiting
+Adya's \textit{G1\{a-c\}} (or ANSI's $P1$, or ``broad'' $P1$ [2.2]
+from Berenson et al.). For instance, in the example below, $T_3$
+should never see $a=1$, and, if $T_2$ aborts, $T_3$ should not read
+$a=3$:
 \begin{align*}
-\small
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_x(2)
 \\T_2 &: w_x(3)\\
-T_3 &: r_x(a)\\[-2em]
+T_3 &: r_x(a)\vspace{-1em}
 \end{align*}
-It is fairly easy to prvent ``Dirty Reads'': if each transaction never
-writes uncommitted data to the database, then transactions will never
-read each others' dirty data. As a simple solution, clients can buffer
-their writes until they commit, or, alternatively, can send them to
-servers, who will not serve new writes until clients notify them that
-the writes have been committed.
+It is fairly easy for a HAT system to prevent ``Dirty Reads'': if each
+client never writes uncommitted data to shared copies of data, then
+transactions will never read each others' dirty data. As a simple
+solution, clients can buffer their writes until they commit, or,
+alternatively, can send them to servers, who will not deliver their
+value to other readers until notified that the writes have been
+committed. Unlike a lock-based implementation, this implementation
+does not provide recency or monotonicity guarantees but it satisfies
+the implementation-agnostic definition.
 
-\textit{Repeatable Read} isolation is a contentious property. As
-Berenson et al. discuss~\cite{ansicritique}, Gray's original
-Repeatable Read lock-based implementation provides substantially
-richer guarantees than those that are required by the ANSI SQL
-specification~\cite{gray-isolation}. Gray~\cite{gray-isolation},
-Berenson et al.~\cite{ansicritique}, and Adya~\cite{adya} all
-interpret Repeatable Read as providing serializability for all
-operations except predicate-based reads. However, in its description
-of Repeatable Read, the ANSI SQL specification provides a useful
-property which, although is not true to Gray's spirit of Repeatable
-Read, is also commonly found in distributed consistency models: the
-ANSI Repeatable Read guarantee requires that, along with observing
-Read Committed isolation, each transaction will only read one version
-of each data item that it did not itself produce (preventing ``Fuzzy
-Read,'' or P2). In the example below, $T_3$ must read $a=1$:
+Several different properties have been labeled \textbf{Repeatable
+  Read} isolation. As we will show in
+Section~\ref{sec:unachievable-acid}, some of these are not achievable
+in a HAT system. However, the ANSI standardized
+implementation-agnostic definition~\cite{ansi-sql} \textit{is}
+achievable and directly captures the spirit of the term: if a
+transaction reads the same data more than once, it sees the same value each
+time (preventing ``Fuzzy Read,'' or $P2$). In this paper, to
+disambiguate between other definitions of ``Repeatable Read,'' we will
+call this property ``cut isolation,'' since each transaction reads
+from a non-changing cut, or snapshot, over the data items. If this
+property holds over reads from discrete data items, we call it
+\textbf{Item Cut Isolation}, and, if we also expect a cut over
+predicate-based reads (e.g., \texttt{SELECT WHERE}; preventing
+Phantoms~\cite{gray-isolation}, or Berenson et al.'s $P3/A3$), we have
+the stronger property of \textbf{Predicate Cut-Isolation}. In the
+example below, under both levels of cut isolation, $T_3$ must read
+$a=1$:
 \begin{align*}
 \small
 T_1 &: w_x(1)
 \\T_2 &: w_x(2)
 \\T_3 &: r_x(1)~r_x(a)
 \end{align*}
-This isolation property is a literal interpretation of the phrase
-``Repeatable Read'': unless a transaction modifies a given data item,
-the observable value of the data item should not change during the
-transaction. By itself, this property is rather weak---we can always
-read $\bot$ for each data item. However, when coupled with additional
-properties, like transactional atomicity, it is stronger: the repeated
-reads must obey additional ordering constraints
-(Section~\ref{sec:discussion}). In fact, distributed systems often
-describe a ``consistent snapshot'' across a set of related events as a
-\textit{cut} across a set of participants or, in our case, data
-items. Accordingly, to capture the notion that the transaction should
-read from a (non-changing) consistent cut over data items (and to
-disambiguate from the aforementioned stronger Repeatable Read
-properties), we call ANSI SQL ``Repeatable Read'' (i.e., preventing
-P2) \textbf{Cut Isolation}. It is possible to satisfy cut isolation
-with high availability by caching appropriate versions for each of a
-transaction's reads or, alternatively, using multi-versioning on each
-replica and ensuring that each of a transaction's successive reads
-return the same version of each data item.
-
-We can further consider two variants of Cut Isolation. The first is
-relatively straightforward and provides a cut across individual data
-items. We will call this \textit{Item Cut Isolation}. The second
-provides a cut over individual data items and over logical ranges of
-data items, or predicate-based reads (e.g., \texttt{SELECT
-  WHERE}). This prevents the \textit{Phantom Problem}, whereby two
-successive predicate-based reads return different
-data~\cite{gray-isolation}. We call predicate-based cut isolation,
-which prevents Phantoms, \textit{Predicate Cut
-  Isolation}.\footnote{Oracle provides an isolation level called
-  ``Statement Level Read Consistency''; this is analogous to Predicate
-  Cut Isolation at the level of a single operation within a
-  multi-operation transaction. We do not consider this isolation model
-  here as it is subsumed by standard Snapshot Isolation and we believe
-  our discussion is easily extended to incorporate it.}
+It is possible to satisfy Item Cut Isolation with high availability by
+having transactions cache their reads at the client such that the
+values that they read for each item never changes unless they
+overwrite it themselves. The cache can be cleared at the end of each
+transaction and can alternatively be accomplished on (sticky) replicas
+via multi-versioning. Predicate Cut Isolation is also achievable in
+HAT systems via similar caching or multi-versioning that track entire
+logical ranges of predicates in addition to item-based reads.
 
 \subsubsection{ACID Atomicity Guarantees}
+\label{sec:ta}
 
-Transactional atomicity (TA) is core to ACID guarantees. Although, at
-least by the ACID acronym, it is not an ``isolation'' property,
-transactional atomicity restricts transactions' ability to view the
-effects of partially completed transactions. Under transactional
-atomicity, within each transaction, either all effects of another
-transaction are observed, or none are (equivalently, once some of the
-effects of a transaction are observed, all effects are observed). This
-is a strictly stronger guarantee than Read Committed isolation: in
-Read Committed, we can read a subset of another transaction's
-committed writes whereas, with TA, we must read all or none of
-them. Together with item cut isolation, TA prevents Read Skew
-anomalies (Berenson et al.'s A5A~\cite{ansicritique}). As an example
-of TA, $T_2$ must observe $b=c=1$ (or later versions for each key):
-\vspace{-.5em}
+Atomicity, informally guaranteeing that either all or none of
+transactions' effects should succeed, is core to ACID
+guarantees. Although, at least by the ACID acronym, atomicity is not
+an ``isolation'' property, atomicity properties also restrict the
+updates visible to other transactions. Accordingly, here, we consider
+the \textit{isolation} effects of atomicity, which we call
+\textbf{Read Atomic (RA)} isolation.  Under RA, once some of the
+effects of a transaction $T_i$ are observed by another transaction
+$T_j$, thereafter, all effects of $T_i$ are observed by $T_j$. That
+is, if a transaction $T_j$ reads a version of an object that
+transaction $T_i$ wrote, then a later read by $T_j$ cannot return a
+value whose later version is installed by $T_i$. Together with item
+cut isolation, RA prevents Read Skew anomalies (Berenson et al.'s A5A)
+and is useful in several contexts such as maintaining foreign key
+constraints, consistent global secondary indexing, and maintenance of
+derived data. In the example below, under RA, because $T_2$ has read
+$T_1$'s write to $y$, $T_2$ must observe $b=c=1$ (or later versions
+for each key):
 \begin{align*}
 \small
 T_1 &: w_x(1)~w_y(1)~w_z(1)
 \\T_2 &: r_x(a)~r_y(1)~r_x(b)~r_z(c)~\\[-1.5em]
 \end{align*}
-$T_2$ can also observe $a=\bot$, $a=1$, or a later version of
-$a$. Notably, TA requires Read Committed isolation: observing all
-effects of a transaction implicitly requires observing the final
-(committed) effects of a transaction as well.
+$T_2$ can also observe $a=\bot$, $a=1$, or a later version of $x$. In
+the hierarchy of existing isolation properties, we place RA below
+Adya's \textit{PL-2L} (as it does not necessarily enforce transitive
+read-write dependencies) but above Read Committed ($PL-2$). Notably,
+RA requires disallows reading intermediate writes (Adya's $G1b$):
+observing all effects of a transaction implicitly requires observing
+the final (committed) effects of the transaction as well.
 
-Perhaps perplexingly, discussions of TA are absent from existing
-discussions of weak isolation. This is perhaps again due to the
-single-node context in which prior work was developed: on a single
-server (or a fully replicated database), TA is achievable via
-lightweight locking and/or local concurrency control over data
-items. In contrast, in a distributed environment, TA over arbitrary
-groups of non-colocated items is considerably more difficult to
-achieve with high availability: servers need to know when all of a
-transaction's updates are present on their respective
-replicas. However, replicas do not need to agree on when to reveal a
-new value to clients, which would require consensus; accordingly, TA
-only requires reliable broadcast (with some additional metadata for
-clients) and is achievable in a HAT system. We omit a full discussion
-of the algorithm and instead refer the reader to the extended version
-of this paper~\cite{hat-tr}.
+Perplexingly, discussions of RA are absent from existing treatments of
+weak isolation. This is perhaps again due to the single-node context
+in which prior work was developed: on a single server (or a fully
+replicated database), RA is achievable via lightweight locking and/or
+local concurrency control over data items~\cite{gstore,
+  kemme-thesis}. In contrast, in a distributed environment, RA over
+arbitrary groups of non-colocated items is considerably more difficult
+to achieve with high availability.
+
+% RA can be achieved via multi-versioning. If clients attach vector
+% clocks to every write (incrementing their own position for each
+% transaction) and replicas store all writes via multi-versioning, then
+% clients can safely determine which sets of data items to read; this
+% approach is adopted by Swift~\cite{swift} and, to a lesser-extent,
+% bolt-on causal consistency~\cite{bolton}. These systems also provide
+% causal consistency and are subsequently sticky available (each is
+% implemented via client-side caching). However, RA is achievable
+% without stickiness via an alternate algorithm: if servers wait to
+% reveal writes until they are present on all replicas, clients do not
+% need to be sticky.
+
+As a straw-man, replicas can store all versions ever written to each
+data item. Replicas can gossip information about versions they have
+observed and construct a lower bound on the versions that can be found
+on each replica. At the start of each transaction, clients choose a
+bound that is guaranteed to be lower than or equal to the this global
+lower bound, and, during transaction execution, replicas return the
+latest version of each item that is not greater than the client's
+chosen bound. If the lower bound is advanced along transactional
+boundaries, clients will observe RA. This algorithm has several
+variants in the literature~\cite{readonly, swift}: bounds can be
+represented by vector clocks, and older versions can be asynchronously
+garbage collected.
+
+We have developed a more efficient RA algorithm, which we sketch here
+and provide greater detail in
+\iftechreport
+ Appendix B.
+\else
+ our extended Technical Report~\cite{hat-tr}.
+\fi
+We begin with our Read
+Committed algorithm, but replicas wait to reveal new writes to readers
+until all of the replicas for the final writes in the transaction have
+received their respective writes (are \textit{pending
+  stable}). Clients include additional metadata with each write: a
+single timestamp for all writes in the transaction (e.g., as in Read
+Uncommitted) and a list of items written to in the transaction. When a
+client reads, the return value's timestamp and list of items form a
+lower bound on the versions that the client should read for the other
+items. When a client reads, it attaches a timestamp to its request
+representing the current lower bound for that item. Replicas use this
+timestamp to respond with either a write matching the timestamp or a
+pending stable write with a higher timestamp. Servers keep two sets of
+writes for each data item: the write with the highest timestamp that
+is pending stable and a set of writes that are not yet pending
+stable. This is entirely master-less and operations never block due to
+replica coordination. Moreover, there are several possible
+optimizations that, for brevity, we do not describe here.
+
+
 
 \subsubsection{Session Guarantees}
 
-Our models have not yet considered interactions \textit{across}
-transactions: we have not guaranteed any ordering or continuity
-between transactions (other than that there exists some arbitrary
-ordering). This is a natural concern in a distributed context, and, in
-the distributed systems literature, many useful \textit{safety}
-guarantees span multiple application actions. In particular,
-\textit{session guarantees} are used to describe guarantees across
-transactions within a given \textit{session}, ``an abstraction for the
-sequence of...operations performed during the execution of an
-application''~\cite{sessionguarantees}. Informally a session describes
-a context that should persist between transactions: for example, on a
-social networking site, all of a user's transactions submitted between
-``log in'' and ``log out'' operations might form a session.
+A useful class of safety guarantees refer to real-time or
+client-centric ordering within a \textit{session}, ``an abstraction
+for the sequence of...operations performed during the execution of an
+application''~\cite{sessionguarantees}. These ``session guarantees''
+have been explored in the distributed systems
+literature~\cite{sessionguarantees,vogels-defs} and sometimes in the
+database literature~\cite{daudjee-session}. For us, a session
+describes a context that should persist between transactions: for
+example, on a social networking site, all of a user's transactions
+submitted between ``log in'' and ``log out'' operations might form a
+session.
 
-There are several session guarantees that we can make with high availability:
+Several session guarantees can be made with high availability:
 
-\vspace{.5em}\noindent\textit{{Monotonic reads}} requires that,
-within a session, subsequent reads to a given object ``never return any
-previous values''; reads from each item progress forward in a total
-order. The ordering of reads should respect any total ordering on
-transactions.
+\vspace{.5em}\noindent\textbf{{Monotonic reads}} requires that, within
+a session, subsequent reads to a given object ``never return any
+previous values''; reads from each item progress according to a total
+order (e.g., the order from Read Uncommitted).
 
-\vspace{.5em}\noindent\textit{{Monotonic writes}} requires that
-each session's writes be serialized. Any order on transactions should
-also respect the order in which each session submitted transactions.
+\vspace{.5em}\noindent\textbf{{Monotonic writes}} requires that each
+session's writes become visible in the order they were submitted by
+the client. Any order on transactions should also be consistent with
+any precedence that a global observer would see.
 
-\vspace{.5em}\noindent\textit{{Writes Follow Reads}} requires that, if
-a session observes an effect of transaction $T_2$ and subsequently
+\vspace{.5em}\noindent\textbf{{Writes Follow Reads}} requires that, if
+a session observes an effect of transaction $T_1$ and subsequently
 commits transaction $T_2$, then another session can only observe
-effects of $T_2$ if it can also observe $T_1$'s (or later values for
-$T_1$'s effects). Any order on transactions should respect the
-reads-from order.\vspace{.5em}
+effects of $T_2$ if it can also observe $T_1$'s effects (or later
+values that supersede $T_1$'s); this corresponds to Lamport's
+``happens-before'' relation~\cite{lamportclocks}.  Any order on
+transactions should respect the transitive reads-from
+order.\vspace{.5em}
 
-We can achieve the above guarantees by forcing servers to wait to
-reveal new writes until each write's respective dependencies are
-fulfilled on all replicas. This mechanism effectively ensures that all
-clients read from a globally agreed upon lower bound on the versions
-written to the system. This \textit{is} highly available as a client
-will never block due to inability to find a server with a sufficiently
-up-to-date version of a data item. However, it does not imply that
-transactions will read their own writes or, in the presence of
-partitions, make forward progress through the version history. The
-problem is that, if a server becomes partitioned, under the highly
-available model, we must handle the possibility that an unfortunate
-client will be forced to issue her next requests against the
-partitioned server!
+The above guarantees can be achieved by forcing servers to wait to
+reveal new writes (say, by buffering them in separate local storage)
+until each write's respective dependencies are visible on all
+replicas. This mechanism effectively ensures that all clients read
+from a globally agreed upon lower bound on the versions written. This
+is highly available as a client will never block due to inability to
+find a server with a sufficiently up-to-date version of a data
+item. However, it does not imply that transactions will read their own
+writes or, in the presence of partitions, make forward progress
+through the version history. The problem is that under non-sticky
+availability, a system must handle the possibility that, under a
+partition, an unfortunate client will be forced to issue its next
+requests against a partitioned, out-of-date server.
 
-The solution to this conundrum is to give up high availability in
-favor of sticky availability. Sticky availability permits three
-additional models, which we first define and then prove are
+The solution to this conundrum is to give up high availability and
+settle for sticky availability. Sticky availability permits three
+additional guarantees, which we first define and then prove are
 unachievable in a generic highly available system:
 
-\vspace{.5em}\noindent\textit{{Read your writes}} requires
-that whenever a client reads a given data item after updating it, the
-read returns the updated value (or a value with a higher ID).
+\vspace{.5em}\noindent\textbf{{Read your writes}} requires that
+whenever a client reads a given data item after updating it, the read
+returns the updated value (or a value that overwrote the previously
+written value).
 
-\vspace{.5em}\noindent\textit{{PRAM}} (Pipelined Random Access
-Memory) provides the illusion of serializing each session's operations
-and is the combination of monotonic reads, monotonic writes, and read
-your writes~\cite{herlihy-art}.
+\vspace{.5em}\noindent\textbf{{PRAM}} (Pipelined Random Access Memory)
+provides the illusion of serializing each of the operations (both
+reads and writes) within each session and is the combination of
+monotonic reads, monotonic writes, and read your
+writes~\cite{herlihy-art}.
 
-\vspace{.5em}\noindent\textit{{Causal
+\vspace{.5em}\noindent\textbf{{Causal
     consistency}}~\cite{causalmemory} is the combination of all of the
 session guarantees~\cite{sessiontocausal} (alternatively, PRAM with
-writes-follow-reads) and is also referred to as PL-2L
+writes-follow-reads) and is also referred to by Adya as \textit{PL-2L}
 isolation~\cite{adya}).\vspace{.5em}
 
+
 Read your writes is not achievable in a highly available
-($1$-available) system. Consider a client that executes the following
-two transactions in succession:
-\vspace{-.5em}
+system. Consider a client that executes the following two transactions:
 \begin{align*}
-\small
+\small\vspace{-1em}
 T_1 &: w_x(1)
-\\T_2 &: r_x(a)
+\\T_2 &: r_x(a)\vspace{-1em}
 \end{align*}
 If the client executes $T_1$ against a server that is partitioned from
-the rest of the other servers, the server must allow $T_1$ to
-commit. If the client executes $T_2$ against the same (partitioned)
-server, then it will be able to read its writes. However, if the
-network topology shifts and the client can only contact a different
-server which is partitioned from the server that executed $T_1$, then
-the client will be unable to read its own writes and the system will
-have to either stall indefinitely to allow the client to read her
-writes (violating transactional availability) or will have to
-sacrifice read your writes guarantees. However, if the client remains
-sticky with the server that executed $T_1$, then we can disallow this
-scenario. Accordingly, read your writes, and, by proxy, causal
-consistency and PRAM require stickiness. Read your writes is ``free''
-in a sticky system, while the remaining causality and PRAM guarantees
-can be accomplished with the algorithms for achieving the remaining
-session guarantees.
+the rest of the other servers, then, for transactional availability,
+the server must allow $T_1$ to commit. If the same client subsequently
+executes $T_2$ against the same (partitioned) server in the same
+session, then it will be able to read its writes. However, if the
+network topology changes and the client can only execute $T_2$ on a
+different replica that is partitioned from the replica that executed
+$T_1$, then the system will have to either stall indefinitely to allow
+the client to read her writes (violating transactional availability)
+or will have to sacrifice read your writes guarantees. However, if the
+client remains sticky with the server that executed $T_1$, then we can
+disallow this scenario. Accordingly, read your writes, and, by proxy,
+causal consistency and PRAM require stickiness. Read your writes is
+provided by default in a sticky system. Causality and PRAM guarantees
+can be accomplished with well-known variants~\cite{causalmemory,
+  bolton, eiger, sessionguarantees, swift} of the prior session
+guarantee algorithms we presented earlier: only reveal new writes to
+clients when their dependencies have been revealed.
 
 \subsubsection{Additional HAT Guarantees}
 
-In this section, we briefly discuss additional noteworthy guarantees
-achievable by HAT systems.
+In this section, we briefly discuss two additional kinds of guarantees
+that are achievable in HAT systems.
 
+\vspace{0.5em}
 \noindent{\textbf{Consistency}} A HAT system can make limited
-consistency guarantees. It can often execute commutative and logically
-monotonic~\cite{calm} operations without the risk of invalidating
-(also monotonic) application-level integrity constraints. Our goal in
-this paper is not to sketch the entire space of consistency models
-that are achievable (see Section~\ref{sec:futurework}. We specifically
-evaluate TPC-C transaction semantics under HAT consistency guarantees
-in Section~\ref{sec:evaluation}.
-
-\vspace{.5em}\noindent{\textbf{Durability}} As we briefly discussed in
-Section~\ref{sec:availability}, a client requiring that its
-transactions' effects survive $F$ server faults requires at least
-($F+1$)-availability.
+application-level consistency guarantees. It can often execute
+commutative and logically monotonic~\cite{calm} operations without the
+risk of invalidating application-level integrity constraints and can
+maintain limited criteria like foreign key constraints (via RA). We do
+not describe the entire space of application-level consistency
+properties that are achievable (see Section~\ref{sec:relatedwork}) but
+we specifically evaluate TPC-C transaction semantics with HAT
+guarantees in Section~\ref{sec:evaluation}.
 
 \vspace{.5em}\noindent{\textbf{Convergence}} To require that the
 system propagates writes between replicas, we can require convergence,
-or eventual consistency for each data item: in the absence of new
-mutations to a data item, in the absence of partitions, all servers
-should eventually agree on the value for each item. This is typically
-accomplished by any number of anti-entropy protocols, which
+or \textit{eventual consistency}: in the absence of new mutations to a
+data item, in the absence of partitions, all servers should eventually
+agree on the value for each item~\cite{cac, vogels-defs}. This is
+typically accomplished by any number of anti-entropy protocols, which
 periodically update neighboring servers with the latest value for each
-data item~\cite{antientropy}. Establishing a final value is related to
-determining a total order on transaction updates, as in Read
-Uncommitted.
+data item~\cite{antientropy}. Establishing a final convergent value is
+related to determining a total order on transaction updates to each
+item, as in Read Uncommitted.
 
 \subsection{Unachievable HAT Semantics}
 \label{sec:unachievable-hat}
 
 While there are infinitely many HAT models
-(Section~\ref{sec:futurework}), at this point, we have largely
+(Section~\ref{sec:relatedwork}), at this point, we have largely
 exhausted the range of achievable, previously defined (and useful)
 semantics that are available to HAT systems. Before summarizing our
 possibility results, we will present impossibility results for HATs,
 also defined in terms of previously identified isolation and
-consistency anomalies. Perhaps most notably, it is impossible to
+consistency anomalies. Most notably, it is impossible to
 prevent Lost Update or Write Skew in a HAT system.
 
 \subsubsection{Unachievable ACID Isolation}
+\label{sec:unachievable-acid}
 
 In this section, we demonstrate that preventing Lost Update and Write
 Skew---and therefore providing Snapshot Isolation, Repeatable Read,
-and one-copy serializability---requires unavailability.
+and one-copy serializability---inherently requires foregoing high
+availability guarantees.
 
-In the words of Berenson et al., \textit{Lost Update} occurs when one
+Berenson et al. define \textit{Lost Update} as when one
 transaction $T1$ reads a given data item, a second transaction $T2$
 updates the same data item, then $T1$ modifies the data item based on
 its original read of the data item, ``missing'' or ``losing'' $T2$'s
 newer update. Consider a database containing only the following
 transactions:
 \begin{align*}
-\small
-T_1 &: r_x(a) w_x(a+2)
-\\T_2 &: w_x(2)
+\small\vspace{-1em}
+T_1 &: r_x(a)~w_x(a+2)
+\\T_2 &: w_x(2)\vspace{-1em}
 \end{align*}
 If $T_1$ reads $a=1$ but $T_2$'s write to $x$ precedes $T_1$'s write
 operation, then the database will end up with $a=3$, a state that
-could not have resulted in a serial execution due to from $T_2$'s
+could not have resulted in a serial execution due to $T_2$'s
 ``Lost Update.''
 
 It is impossible to prevent Lost Update in a highly available
 environment. Consider two clients who submit the following $T_1$ and
 $T_2$ on opposite sides of a network partition:
 \begin{align*}
-\small
+\small\vspace{-1em}
 T_1 &: r_x(100)~w_x(100+20=120)
-\\T_2 &: r_x(100)~w_x(100+30=130)
+\\T_2 &: r_x(100)~w_x(100+30=130)\vspace{-1em}
 \end{align*}
 Regardless of whether $x=120$ or $x=130$ is chosen by a replica, the
-database state could not have arisen serial execution of $T_1$ and
+database state could not have arisen from a serial execution of $T_1$ and
 $T_2$.\footnote{In this example, we assume that, as is standard in
   modern databases, replicas accept values as they are written (i.e.,
   register semantics). This particular example could be made
   serializable via the use of commutative updates
-  (Section~\ref{sec:eval}) but, as we show in the extended version of
-  the paper~\cite{hat-tr}, the problem persists in the general case.}
-To prevent this from happening, either $T_1$ or $T_2$ should not have
-committed. Each client's respective server might try to detect that
-another write occurred, but this requires knowing the version of the
-latest write to $x$. In our example, this reduces to a requirement for
-linearizability, which is, via Gilbert and Lynch's proof of the CAP
-Theorem, provably unachievable with high
-availabilty~\cite{gilbert-cap}.
+  (Section~\ref{sec:evaluation}) but the problem persists in the
+  general case.}  To prevent this, either $T_1$ or
+$T_2$ should not have committed. Each client's respective server might
+try to detect that another write occurred, but this requires knowing
+the version of the latest write to $x$. In our example, this reduces
+to a requirement for linearizability, which is, via Gilbert and
+Lynch's proof of the CAP Theorem, provably at odds with high
+availability~\cite{gilbert-cap}.
 
 \textbf{Write Skew} is a generalization of Lost Update to multiple
 keys. It occurs when one transaction $T1$ reads a given data item $x$,
@@ -381,71 +440,84 @@ T_1 &: r_y(0)~w_x(1)
 \end{align*}
 As Berenson et al. describe, if there was an integrity constraint
 between $x$ and $y$ such that only one of $x$ or $y$ should have value
-$1$ at any given time, then this write skew would lead to a
-non-serializable execution. Write skew in particular is a somewhat
+$1$ at any given time, then this write skew would violate the constraint (which is preserved in serializable executions). Write skew is a somewhat
 esoteric anomaly---for example, it does not appear in
 TPC-C~\cite{snapshot-serializable}---but, as a generalization of Lost
-Update, it is also unavailable to HATs.
+Update, it is also unavailable to HAT systems.
 
-The inability to prevent Lost Update means that Consistent Read,
-Snapshot Isolation, and Cursor Stability guarantees are all
-unavailable. The inability to prevent Lost Update or Write Skew means
-that Repeatable Read and One-Copy Serializability guarantees are
-unavailable~\cite{adya,ansicritique}.
+Consistent Read, Snapshot Isolation (including Parallel Snapshot
+Isolation~\cite{walter}), and Cursor Stability guarantees are all
+unavailable because they require preventing Lost Update phenomena.
+Repeatable Read (defined by Gray~\cite{gray-isolation}, Berenson et
+al.~\cite{ansicritique}, and Adya~\cite{adya}) and One-Copy
+Serializability~\cite{1sr} need to prevent both Lost Update and Write
+Skew. Their prevention requirements mean that these guarantees are
+inherently unachievable in a HAT system.
 
-\subsubsection{Unavailable Recency Guarantees}
+\subsubsection{Unachievable Recency Guarantees}
 
-Data storage systems make various recency guarantees on reads of data
-items. As we have discussed, one of the most famous is
+Distributed data storage systems often make various recency guarantees
+on reads of data items.  Unfortunately, an indefinitely long partition
+can force an available system to violate any recency bound, so recency
+bounds are not enforceable by HAT systems~\cite{gilbert-cap}. One of
+the most famous of these guarantees is
 linearizability~\cite{herlihy-art}, which states that reads will
 return the last completed write to a data item, and there are several
 other (weaker) variants such as safe and regular register
 semantics. When applied to transactional semantics, the combination of
 one-copy serializability and linearizability is called \textit{strong
-  (or strict) one-copy serializability}~\cite{adya} (e.g., Google's
+  (or strict) one-copy serializability}~\cite{adya} (e.g.,
 Spanner~\cite{spanner}). It is also common, particularly in systems
 that allow reading from masters and slaves, to provide a guarantee
 such as ``read a version that is no more than five seconds out of
-date'' or similar. Unfortunately, an indefinitely long partition can
-force a system to violate any recency bound, so recency bounds are not
-enforceable in HAT systems.
+date'' or similar. None of these guarantees are HAT-compliant.
+
+\subsubsection{Durability}
+
+A client requiring that its transactions' effects survive $F$ server
+faults requires that the client be able to contact at least $F+1$
+non-failing replicas before committing. This affects
+availability and, according to the Gilbert and Lynch definition we
+have adopted, $F>1$ fault tolerance is not achievable with high
+availability.
+
 
 \subsection{Summary}
 \label{sec:hat-summary}
 
-We summarize our results in Table~\ref{table:hatcompared}. A wide
-range of isolation levels are achievable in a HAT systems, including
-transactional atomicity, cut isolation, and several session
-guarantees. With sticky availability, a system can achieve read your
-writes guarantees and PRAM and causal consistency. However, many other
-prominent models, such as Snapshot Isolation, One-Copy
-Serializability, and Strict Serializability cannot be achieved due to
-the inability to prevent Lost Update and Write Skew phenomena.
+As we summarize in Table~\ref{table:hatcompared}, a wide range of
+isolation levels are achievable in HAT systems. With sticky
+availability, a system can achieve read your writes guarantees and
+PRAM and causal consistency. However, many other prominent semantics,
+such as Snapshot Isolation, One-Copy Serializability, and Strong
+Serializability cannot be achieved due to the inability to prevent
+Lost Update and Write Skew phenomena.
 
 We illustrate the hierarchy of available, sticky available, and
 unavailable consistency models we have discussed in
 Figure~\ref{fig:hatcompared}. Many models are simultaneously
 achievable, but we find several particularly compelling. If we combine
-all sticky-HAT guarantees, we have transactional, causal snapshot
-reads. If we combine TA and P-CI, we have transactional snapshot
-reads. We can achieve RC, MR, and RYW by simply sticking clients to
-servers. And we can also combine unavailable models---for example, an
-unavailable system might provide PRAM and One-Copy
+all HAT and sticky guarantees, we have transactional, causal snapshot
+reads (i.e., Causal Transactional Predicate Cut Isolation). If we
+combine RA and P-CI, we have transactional snapshot reads. We can
+achieve RC, MR, and RYW by simply sticking clients to servers. We can
+also combine unavailable models---for example, an unavailable system
+might provide PRAM and One-Copy
 Serializability~\cite{daudjee-session}.
 
 To the best of our knowledge, this is the first unification of
-database ACID, distributed consistency, and session guarantee
-models. Interestingly, strong one-copy serializability subsumes all
-other models, while considering the (large) power set of all
-compatible models (e.g., the diagram depicts 96 possible highly
-available combinations) hints at the vast expanse of consistency
-models found in the literature. This taxonimization is \textit{not}
-exhaustive, but we believe it lends substantial clarity into the
-relationships between a large subset of the prominent ACID and
-distributed consistency models. Additional read/write transaction
-semantics that we have omitted should be easily classifiable based on
-the available primitives and HAT-incompatible anomaly prevention we
-have already discussed.
+database ACID transactions, distributed consistency, and session
+guarantee models. Interestingly, strong one-copy serializability
+entails all other models, while considering the (large) power set of
+all compatible models (e.g., the diagram depicts 144 possible HAT
+combinations) hints at the vast expanse of consistency models found in
+the literature. This taxonomy is not exhaustive
+(Section~\ref{sec:conclusion}), but we believe it lends substantial
+clarity to the relationships between a large subset of the prominent
+ACID and distributed consistency models. Additional read/write
+transaction semantics that we have omitted should be classifiable
+based on the available primitives and HAT-incompatible anomaly
+prevention we have already discussed.
 
  \newcommand{\lostupdate}{$^\dagger$}
  \newcommand{\rwskew}{$^\ddagger$}
@@ -453,10 +525,10 @@ have already discussed.
 
 \begin{table}[t!]
 \begin{tabular}{| c | p{6cm} | }\hline
-HA & Transactional Atomicity (TA), Read Uncommitted (RU), Read
-Committed (RC), Item Cut Isolation (P-CI), Predicate Cut Isolation
-(P-CI), Monotonic Reads (MR), Monotonic Writes (MW), Writes Follow
-Reads (WFR)\\\hline Sticky-HA & Read Your Writes (RYW), PRAM,
+HA & Read Uncommitted (RU), Read Committed (RC), Read
+Atomic (RA), Item Cut Isolation (I-CI), Predicate Cut Isolation
+(P-CI), Writes Follow Reads (WFR), Monotonic Reads (MR), Monotonic
+Writes (MW)\\\hline Sticky & Read Your Writes (RYW), PRAM,
 Causal\\\hline Unavailable & Cursor Stability (CS)\lostupdate,
 Snapshot Isolation (SI)\lostupdate, Repeatable Read
 (RR)\lostupdate\rwskew, One-Copy Serializability
@@ -464,11 +536,11 @@ Snapshot Isolation (SI)\lostupdate, Repeatable Read
 Regular\linearizable, Linearizability\linearizable, Strong
 1SR\lostupdate\rwskew\linearizable \\\hline
 \end{tabular}
-\caption{Summary of highly available, sticky highly available, and
+\caption{Summary of highly available, sticky available, and
   unavailable models considered in this paper. Unavailable models are
   labeled by cause of unavailability: preventing lost
   update\lostupdate, preventing write skew\rwskew, and requiring
-  recency guarantees\linearizable.}
+  recency guarantees\linearizable.}\vspace{-2em}
 \label{table:hatcompared}
 \end{table}
 
@@ -481,11 +553,11 @@ Regular\linearizable, Linearizability\linearizable, Strong
   \tikzstyle{every node}=[font=\small]
 
  \node[draw=none,fill=none] (ici) at (1.2, 0) {I-CI};
- \node[draw=none,fill=none] (pci) at (1.65, 1.2) {P-CI};
- \node[draw=none,fill=none] (rc) at (-1.2, .8) {RC};
+ \node[draw=none,fill=none] (pci) at (1.75, .95) {P-CI};
+ \node[draw=none,fill=none] (rc) at (-1.2, .95) {RC};
  \node[draw=none,fill=none] (ru) at (-1.2, 0) {RU};
 
- \node[draw=none,fill=none] (ta) at (-.2, 1.3) {TA};
+ \node[draw=none,fill=none] (ra) at (0, 1.475) {RA};
 
  \node[draw=none,fill=none] (mr) at (3.6, 0) {MR};
  \node[draw=none,fill=none] (mw) at (4.8, 0) {MW};
@@ -498,10 +570,10 @@ Regular\linearizable, Linearizability\linearizable, Strong
  \node[noha](linearizable) at (7.7, 3) {linearizable};
  \node at (4.8, 2) [sticky] (causal) {causal};
  \node at (4.8, 1) [sticky] (pram) {PRAM};
- \node[noha] (cs) at (-1.2, 1.8) {CS};
- \node[noha] (rr) at (-.2, 2.7) {RR};
- \node[noha] (si) at (2.2, 2.4) {SI};
- \node[noha] (1sr) at (1.2, 3.2) {1SR};
+ \node[noha] (cs) at (-1.2, 2) {CS};
+ \node[noha] (rr) at (0.2, 2.7) {RR};
+ \node[noha] (si) at (1.75, 2) {SI};
+ \node[noha] (1sr) at (1.75, 3.2) {1SR};
  \node[noha] (ssr) at (3.85, 3.6) {Strong-1SR};
 
  \draw [->, red] (recency) -- (safe);
@@ -511,7 +583,7 @@ Regular\linearizable, Linearizability\linearizable, Strong
  \draw [->, red] (1sr) -- (ssr);
  
  \draw [->] (ru) -- (rc);
- \draw [->] (rc) -- (ta);
+ \draw [->] (rc) -- (ra);
  \draw [->] (ici) -- (pci);
 
  \draw [->, blue] (mr) -- (pram);
@@ -539,87 +611,78 @@ Regular\linearizable, Linearizability\linearizable, Strong
  \draw [->, red] (ici) -- (rr);
  \draw [->, red] (rr) -- (1sr);
  \draw [->, red] (si) -- (1sr);
- \draw [->, red] (ta) -- (si);
- \draw [->, red] (ta) -- (rr);
+ \draw [->, red] (ra) -- (si);
+ \draw [->, red] (ra) -- (rr);
  \draw [->, red] (causal) -- (linearizable);
  \draw [->, red] (ryw) -- (safe);
 
 \end{tikzpicture}
 \label{fig:hat-order}
-\caption{HAT, sticky HAT (in boxes), and unavailable models (circled)
-  from Table~\protect\ref{table:hatcompared} compared
-  graphically. Directed edges represent ordering by model
-  strength. Models that do not share a common ancestor can be
-  simultaneously achieved, and the resulting availability is that of
-  the weakest available model in the combination.}
+\caption{Partial ordering of HAT, sticky available (in boxes, blue), and
+  unavailable models (circled, red) from
+  Table~\protect\ref{table:hatcompared}. Directed edges represent
+  ordering by model strength. Incomparable models can be
+  simultaneously achieved, and the availability of a combination of
+  models has the availability of the least available individual
+  model.}\vspace{-1em}
 \label{fig:hatcompared}
 \end{figure}
 
 
-\subsection{Discussion}
+\subsection{Additional Discussion}
 \label{sec:discussion}
 
-In this section, we discuss several subleties in our results,
-specifically addressing model composition, transactional atomicity
-versus linearizability, and stickiness requirements.
+In this section, we discuss several subtleties in our results,
+specifically addressing model composition, read atomicity
+versus linearizability, and benefits of stickiness.
 
 \vspace{.5em}\noindent\textbf{Model Composition} Choosing between
 combinations of compatible guarantees requires care. Consider the
 following transactions:
 \begin{align*}
-\small
+\small\vspace{-1em}
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: w_x(2)~w_y(2)
-\\T_3 &: r_x(a)~r_y(b)
+\\T_3 &: r_x(a)~r_y(b)\vspace{-1em}
 \end{align*}
-If we want to guarantee both cut isolation and transactional atomicity
-and the system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs
-to read $a=b=\bot$, $a=b=1$, or $a=b=2$. This means that either the
+If we want to guarantee both cut isolation and RA isolation and the
+system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs to read
+$a=b=\bot$, $a=b=1$, or $a=b=2$. This means that either the
 implementation should frequently return $\bot$ (definitely undesirable
 and possibly non-convergent), keep multiple versions of each data item
 (necessitating potentially complicated distributed garbage
 collection), or use pre-declared read sets to fetch a consistent cut
 of keys before each transaction begins to execute. Using client-side
-caching can alleviate some of these challenges~\cite{bolton, swift},
-but then the system becomes sticky high available.
+caching can alleviate some of these challenges~\cite{bolton, swift} at
+the expense of requiring sticky availability. Study of the
+architectural interaction and overheads of various combinations is a
+promising area for future work.
 
-Composition cost also varies by combination. For instance, Charron-Bost
-has proven that, to capture causality between $N$ communicating
-processes, standard vector-based approaches face an upper bound of
-$O(N)$ storage per write~\cite{charron-bost}. This means that, with
-$100K$ clients, each write might be accompanied by $100K$ timestamps
-per vector. This is difficult to scale. By compromising on
-availability (e.g., treating a datacenter as a linearizable cluster),
-this overhead can be reduced~\cite{cops, eiger}, but it is much
-cheaper to provide, say, read your writes, than full causal
-consistency.
-
-\vspace{.5em}\noindent\textbf{Linearizability and Transactional
+\vspace{.5em}\noindent\textbf{Linearizability and Read
   Atomicity} The relationship between linearizability and
-transactional atomicity is non-obvious. Transactional atomicity
-dictates that writes to multiple keys across multiple servers are made
-visible to readers all at once, while linearizability dictates that
-writes to a single key on multiple servers are made visible to all
-readers at once---what is different? First, in linearizable (and safe
-and regular) systems, writes are made visible to all clients
-\textit{immediately} after they finish. With transactional atomicity,
-there is no recency guarantee. Second, in linearizabile systems, all
-clients see all writes at the same time. With transactional atomicity,
-clients may see writes at different times depending on which replicas
-they contact. We are not aware of an analogous model in the
-distributed systems literature. Accordingly, despite apparent
-similarities, transactional atomicity incomparable with and much
-cheaper (by availability standards) than linearizability.
+RA is non-obvious. RA dictates that writes to
+multiple keys across multiple servers are made visible to readers all
+at once, while linearizability dictates that writes to a single key on
+multiple servers are made visible to all readers at once---what is
+different? First, in linearizable (and safe and regular) systems,
+writes are made visible to clients \textit{immediately} after they
+finish. With RA, there is no recency
+guarantee. Second, in linearizable systems, all clients see all writes
+at the same time. With RA as defined here, clients may see writes at
+different times depending on which replicas they contact. We are not
+aware of an analogous model in the distributed systems
+literature. Accordingly, despite apparent similarities, RA is
+incomparable with and less coordination intensive (by availability
+measures) than linearizability.
 
 \vspace{.5em}\noindent\textbf{Visibility and Stickiness} Sticky
-availability can result in much better write \textit{visibility}:
-clients will be able to safely read writes more quickly in a sticky
-available system. In the model we discussed, it is possible to achieve
-several properties like monotonic reads in a highly available system
-by waiting to reveal a write until all servers have seen it and its
+availability can improve write \textit{visibility}: clients will be
+able to safely read writes more quickly in a sticky available
+system. In the model we discussed, it is possible to achieve several
+properties like monotonic reads in a highly available system by
+waiting to reveal a write until all servers have seen it and its
 relevant dependencies. However, this incurs severe visibility
 penalties---new writes will not become visible to clients in the
 presence of partitions. A client that does not want to guarantee
 read-your-writes (due to the sticky availability requirement) may
 still wish to read other clients' writes with timeliness.
-
