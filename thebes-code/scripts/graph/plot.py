@@ -1,9 +1,13 @@
 import matplotlib
 matplotlib.use('Agg')
 
+matplotlib.rcParams['figure.figsize'] = 5, 1.6
+matplotlib.rcParams['lines.linewidth'] = 2
+
 from pylab import *
 from os import listdir
 from sys import argv
+import re
 
 if len(argv) == 1:
     rootdir = "../output-wan"
@@ -17,6 +21,8 @@ class RunResult:
         self.lats = lats
         self.avg = avg
         self.merges = 0
+        self.thrus = []
+        self.lat_all = []
 
     def get_thru(self):
         return self.ops/(self.time/1000.)*self.merges
@@ -37,6 +43,8 @@ class RunResult:
         self.merges += 1
         self.time += other.time
         self.ops += other.ops
+        self.thrus.append(other.ops/other.time*1000.)
+        self.lat_all.append(other.get_pctile_latency(.99))#avg/1000.)
 
         totalops = float(self.ops+other.ops)
         self.avg = self.avg*(self.ops/totalops)+other.avg*(other.ops/totalops)
@@ -87,6 +95,7 @@ def processYCSB(d):
                     print d, line
 
     if ops is None or time is None or len(lats) == 0 or avglat is None:
+        print d
         print ops, time, len(lats), avglat
         return None
 
@@ -104,6 +113,9 @@ def processConfig(d):
                 print "MERGING FAILED ON", d
                 return None
 
+    #combinedResult.thrus.sort()
+    #print d, combinedResult.thrus
+    print d, combinedResult.lat_all
     return combinedResult
 
 results = {}
@@ -111,62 +123,173 @@ results = {}
 txnlens = []
 
 for config in listdir(rootdir):
-    configsplit=config.split("-THREADS")
-    nthreads = int(configsplit[1])
-    txnlength = configsplit[0].split('-')[1]
+    '''
+    p = processConfig(rootdir+"/"+config)
+    print config, p.get_thru(), p.get_average_latency(), p.get_pctile_latency(.999)
+    continue
+    '''
+
+    match = re.match("[A-Z_]+-([0-9]+)-([A-Z_]+-[A-Z_]+-)?THREADS([0-9]+)-RPROP([\.0-9]+)-NS([0-9]+)-IT([0-9]+)$", config)
+    if match:
+        txnlength = int(match.group(1))
+        nthreads = int(match.group(3))
+        rprop = float(match.group(4))
+        ns = int(match.group(5))
+        it  = int(match.group(6))
+    else:
+        # Legacy -- remove eventually
+        match = re.match("[A-Z_]+-([0-9]+)-([A-Z_]+-[A-Z_]+-)?THREADS([0-9]+)-IT([0-9]+)$", config)
+        if match:
+            txnlength = int(match.group(1))
+            nthreads = int(match.group(3))
+            rprop = 0.5
+            ns = '?'
+            it  = int(match.group(4))
+        else:
+            print 'Error: Could not pattern match configuration: %s' % config
+            continue
 
     if int(txnlength) not in txnlens:
         txnlens.append(int(txnlength))
 
-    configstr = configsplit[0].replace("-"+txnlength+"-", "")
-    configstr = configstr.replace("-"+txnlength, "")
+    configsplit=config.split("-THREADS")
+    configstr = configsplit[0].replace("-%d-" % txnlength, "")
+    configstr = configstr.replace("-%d" % txnlength, "")
 
     r = processConfig(rootdir+"/"+config)
     if r is None:
         print "SKIPPING", config
+        '''
+        if nthreads in results[configstr]:
+            del results[configstr][nthreads]
+        '''
         continue
     r.threads = nthreads
     r.txnlength = int(txnlength)
+    r.rprop = rprop
+    r.ns = ns
 
     if configstr not in results:
-        results[configstr] = []
+        results[configstr] = {}
+    if nthreads not in results[configstr]:
+        results[configstr][nthreads] = {}
+    if rprop not in results[configstr][nthreads]:
+        results[configstr][nthreads][rprop] = {}
+    if ns not in results[configstr][nthreads][rprop]:
+        results[configstr][nthreads][rprop][ns] = []
 
-    results[configstr].append(r)
+    results[configstr][nthreads][rprop][ns].append(r)
 
 txnlens.sort()
 
 PCT = 0
 AVG = 1
 
-for latplot in [PCT, AVG]:
+fmtdict = {
+"CONSTANT_TRANSACTIONREAD_COMMITTED-NO_ATOMICITY" : ["blue", '^-'],
+"QUORUM_EVENTUAL" : ["black", 'v-'],
+"MASTERED_EVENTUAL" : ["teal", 's-'],
+"CONSTANT_TRANSACTIONREAD_COMMITTED-CLIENT" : ["green", 'o-'],
+"EVENTUAL" : ["red", 'x-']}
+
+threadresultthru = {}
+threadresultlat = {}
+
+for latplot in [AVG]:
     for txnlen in txnlens:
         for cs in results.keys():
             pairs = []
 
-            for r in results[cs]:
-                if str(r.txnlength) != str(txnlen):
-                    continue
+            if cs not in threadresultthru:
+                threadresultthru[cs] = []
+                threadresultlat[cs] = []
+            
+            for nthreads in results[cs].keys():
+                for rprop in results[cs][nthreads]:
+                    for ns in results[cs][nthreads][rprop]:
 
-                print cs, txnlen, "THREADS", r.threads, "THRU", r.get_thru(), "LATS", r.get_average_latency(), r.get_pctile_latency(.999)
+                        tresults = results[cs][nthreads][rprop][ns]
+                        avgthru = median([r.get_thru() for r in tresults])
+                        avglat = median([r.get_average_latency() for r in tresults])
+                        #todo, fix
 
-                if latplot == PCT:
-                    lat = r.get_pctile_latency(.999)
-                else:
-                    lat = r.get_average_latency()
+                        threadresultthru[cs].append([nthreads*6, avgthru/1000.0])
+                        threadresultlat[cs].append([nthreads*6, avglat])
 
-                pairs.append((r.get_thru(), lat))
+                        r = results[cs][nthreads][rprop][ns][0]
+
+                        if str(r.txnlength) != str(txnlen):
+                            continue
+
+                        print cs, txnlen, "THREADS", r.threads, "RPROP", r.rprop,
+                        if ns != '?':
+                            print "NS", r.ns,
+                        print "THRU", avgthru, "LATS", avglat, len(results[cs][nthreads]), [r.get_thru() for r in tresults]# r.get_average_latency(), r.get_pctile_latency(.999)
+
+                        lat = avglat
+
+                        pairs.append([avgthru, lat])
 
             pairs.sort(key=lambda x: x[1])
-            l = cs.replace("CONSTANT_TRANSACTION", "")
-            plot([p[0] for p in pairs], [p[1] for p in pairs], label=l)
 
-        legend(loc="upper right")
-        title("Transactions of length "+str(txnlen))
+            curthru = -1
+            filterpairs = []
+            for pair in pairs:
+                if pair[0] > .95*curthru:
+                    curthru = pair[0]
+                    pair[0] = pair[0]/1000.0
+                    filterpairs.append(pair)
+
+            pairs = filterpairs
+
+            #l = cs.replace("CONSTANT_TRANSACTION", "")
+            
+            #l = l.replace("_EVENTUAL", "")
+            
+            plot([p[0] for p in pairs], [p[1] for p in pairs], fmtdict[cs][1], color=fmtdict[cs][0], markeredgecolor=fmtdict[cs][0], markerfacecolor='None')
+
+        #legend(loc="upper right")
+        #title("Transactions of length "+str(txnlen))
         gca().set_yscale('log')
-        xlabel("Throughput (Txns/s)")
-        ylabel(("99.9th Percentile" if latplot == PCT else "Average")+" Latency (ms)")
+        #xlabel("Throughput (Txns/s)")
+        #ylabel(("99.9th Percentile" if latplot == PCT else "Average")+" Latency (ms)")
+
+        ax = gca()
+        ax.yaxis.grid(True, which='major')
+        ax.yaxis.grid(False, which='minor')
 
         legstr = "PCTILE" if latplot == PCT else "AVG"
 
-        savefig(str(txnlen)+legstr+"-plot.pdf")
+        savefig(str(txnlen)+legstr+"-plot.pdf", transparent=True, bbox_inches='tight', pad_inches=.1)
         clf()
+
+print 'Prepare for trouble!'
+for cs in threadresultthru:
+    print 'And make it double!'
+    results = threadresultthru[cs]
+    results.sort(key=lambda x: x[0])
+    print cs,results
+    
+    plot([p[0] for p in results], [p[1] for p in results],  fmtdict[cs][1], color=fmtdict[cs][0], markeredgecolor=fmtdict[cs][0], markerfacecolor='None')
+
+ylabel("Throughput (1000 Txns/s)")
+xlabel("Number of Clients")
+xlim(xmax=600)
+savefig("threads-thru.pdf", transparent=True, bbox_inches='tight', pad_inches=.1)
+print 'ok...'
+clf()
+
+for cs in threadresultlat:
+    results = threadresultlat[cs]
+    results.sort(key=lambda x: x[0])
+    
+    plot([p[0] for p in results], [p[1] for p in results],  fmtdict[cs][1], color=fmtdict[cs][0], markeredgecolor=fmtdict[cs][0], markerfacecolor='None')
+
+xlim(xmax=600)
+ax = gca()
+gca().set_yscale('log')
+ax.yaxis.grid(True, which='major')
+ax.yaxis.grid(False, which='minor')
+ylabel("Average Latency (ms)")
+savefig("threads-lats.pdf", transparent=True, bbox_inches='tight', pad_inches=.1)
+clf()

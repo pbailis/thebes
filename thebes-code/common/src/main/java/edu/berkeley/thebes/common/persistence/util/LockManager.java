@@ -34,6 +34,10 @@ public class LockManager {
         }
     }
 
+    public int getSize() {
+        return lockTable.size();
+    }
+
     private Map<String, LockWaiting> lockTable;
     private Lock tableLock = new ReentrantLock();
 
@@ -50,7 +54,7 @@ public class LockManager {
         tableLock.unlock();
     }
 
-    public synchronized void unlock(String key) {
+    public void unlock(String key) {
         tableLock.lock();
         if(lockTable.get(key).isEmpty())
             lockTable.remove(key);

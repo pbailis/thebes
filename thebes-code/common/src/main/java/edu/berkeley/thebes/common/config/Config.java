@@ -7,7 +7,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.naming.ConfigurationException;
 
@@ -27,16 +29,26 @@ import edu.berkeley.thebes.common.persistence.disk.BDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.disk.LevelDBPersistenceEngine;
 import edu.berkeley.thebes.common.persistence.memory.MemoryPersistenceEngine;
 import edu.berkeley.thebes.common.thrift.ServerAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Config {
     private static TransactionMode txnMode;
     private static List<ServerAddress> clusterServers;
     private static List<ServerAddress> siblingServers = null;
     private static List<ServerAddress> masterServers;
+
+    private static Logger logger = LoggerFactory.getLogger(Config.class);
     
     private static String HOST_NAME;
+    
+    private static AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+    private synchronized static void initialize(List<ConfigParameters> requiredParams) throws FileNotFoundException, ConfigurationException {
+        if (initialized.getAndSet(true)) {
+            return;
+        }
+        
         YamlConfig.initialize((String) getOptionNoYaml(ConfigParameters.CONFIG_FILE));
 
         List<ConfigParameters> missingFields = Lists.newArrayList();
@@ -61,6 +73,17 @@ public class Config {
         masterServers = getMasterServers();
         
         configureGraphite();
+
+        if(getMetricsToConsole()) {
+            ConsoleReporter reporter = new ConsoleReporter(System.err);
+            reporter.start(5, TimeUnit.SECONDS);
+        }
+        
+        new IOReporter().start();
+    }
+
+    private static Boolean getMetricsToConsole() {
+        return getOption(ConfigParameters.METRICS_TO_CONSOLE);
     }
     
     private static void configureGraphite() {
@@ -68,8 +91,9 @@ public class Config {
         if (graphiteIP.equals("")) {
         	return;
         }
-    	
-        GraphiteReporter.enable(1, TimeUnit.MINUTES, graphiteIP, 2003, HOST_NAME);
+
+        logger.debug("Connecting to graphite on host "+graphiteIP);
+        GraphiteReporter.enable(20, TimeUnit.SECONDS, graphiteIP, 2003, HOST_NAME);
     }
 
     public static void initializeClient() throws FileNotFoundException, ConfigurationException {
@@ -277,6 +301,10 @@ public class Config {
     public static Integer getNumAntiEntropyThreads() {
         return getOption(ConfigParameters.ANTI_ENTROPY_THREADS);
     }
+
+    public static Integer getNumTAAntiEntropyThreads() {
+        return getOption(ConfigParameters.TA_ANTI_ENTROPY_THREADS);
+    }
     
     public static Integer getNumQuorumThreads() {
         return getOption(ConfigParameters.QUORUM_THREADS);
@@ -320,7 +348,7 @@ public class Config {
             case MEMORY:
                 return new MemoryPersistenceEngine();
             case LEVELDB:
-                return new LevelDBPersistenceEngine();
+                return new LevelDBPersistenceEngine(Config.getDiskDatabaseFile());
             case BDB:
                 return new BDBPersistenceEngine();
             default:
@@ -354,5 +382,17 @@ public class Config {
 
     public static Integer getDatabaseCacheSize() {
         return getOption(ConfigParameters.DATABASE_CACHE_SIZE);
+    }
+
+    public static Boolean shouldStorePendingInMemory() {
+        return getOption(ConfigParameters.STORE_PENDING_IN_MEMORY);
+    }
+
+    public static Integer getTABatchTime() {
+        return getOption(ConfigParameters.TA_BATCH_TIME);
+    }
+
+    public static String getPendingWritesDB() {
+        return getOption(ConfigParameters.PENDING_WRITES_DB);
     }
 }

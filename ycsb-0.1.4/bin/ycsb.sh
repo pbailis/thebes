@@ -75,7 +75,7 @@ else
   exit 1
 fi
 
-JAVA_HEAP_MAX=-Xmx500m
+JAVA_HEAP_MAX=-Xmx10G
 # check envvars which might override default args
 if [ "$YCSB_HEAP_SIZE" != "" ]; then
   JAVA_HEAP_MAX="-Xmx""$YCSB_HEAP_SIZE""m"
@@ -122,4 +122,4 @@ if $cygwin; then
 fi
 
 echo "Executing command $CLASS with options $JAVA_HEAP_MAX $YCSB_OPTS $CLASS $@"
-exec "$JAVA" $JAVA_HEAP_MAX $YCSB_OPTS -classpath "$CLASSPATH" $CLASS "$@"
+exec "$JAVA" -XX:+PrintGCDetails $JAVA_HEAP_MAX $YCSB_OPTS -classpath "$CLASSPATH" $CLASS "$@"

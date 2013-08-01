@@ -28,10 +28,13 @@ public enum ConfigParameters {
     CLUSTER_CONFIG(Map.class, RequirementLevel.HAT_COMMON),
     GRAPHITE_IP(String.class, ""),
     PERSISTENCE_ENGINE(PersistenceEngine.class, PersistenceEngine.MEMORY),
+    PENDING_WRITES_DB(String.class, "pending.db"),
     SOCKET_TIMEOUT(Integer.class, 4000),
     SERVER_PORT(Integer.class, 8080),
     ANTI_ENTROPY_PORT(Integer.class, 8081),
     ANTI_ENTROPY_THREADS(Integer.class, 10),
+    TA_ANTI_ENTROPY_THREADS(Integer.class, 2),
+    TA_BATCH_TIME(Integer.class, 10000),
     STANDALONE(Boolean.class, false),
     ROUTING_MODE(RoutingMode.class, RoutingMode.NEAREST),
     QUORUM_THREADS(Integer.class, 10),
@@ -49,7 +52,9 @@ public enum ConfigParameters {
     LOGGER_LEVEL(String.class, "WARN"),
     DISK_DATABASE_FILE(String.class, "/tmp/thebes.db"),
     DO_CLEAN_DATABASE_FILE(Boolean.class, true),
-    DATABASE_CACHE_SIZE(Integer.class, -1);
+    DATABASE_CACHE_SIZE(Integer.class, -1),
+    METRICS_TO_CONSOLE(Boolean.class, false),
+    STORE_PENDING_IN_MEMORY(Boolean.class, false);
     
     /** Note that defaultValue and reqLevels are mutually exclusive. */
     private Class<?> type;

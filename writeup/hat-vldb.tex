@@ -7,10 +7,29 @@
 \documentclass{vldb}
 \let\proof\relax
 \let\endproof\relax
+%\usepackage{draftwatermarkbottom, draftwatermarktop}
+\usepackage{scrextend, MnSymbol}
+\usepackage[hyphens]{url}
 
-\usepackage{times, graphicx, url, xcolor, multicol, minipage, subfig, tikz, draftwatermarkbottom, draftwatermarktop, amsthm}
+\usepackage[hidelinks]{hyperref}
+
+
+\usepackage{breakurl}
+
+\newcommand{\pbnote}[1]{{\color{red}{#1 ---P.B.}}}
+
+\newif\iftechreport
+%\techreporttrue
+\techreportfalse
+
+
+\interfootnotelinepenalty=10000
+
+\usepackage{times, graphicx, xcolor, multicol, minipage, subfig, tikz, amsthm, float}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
-\usepackage{xspace}
+\newcommand{\subparagraph}{}
+
+\usepackage{xspace, titlesec}
 
 \newcommand{\etal}{{\em et al.}\xspace}
 \newcommand{\etc}{{\em etc}\xspace}
@@ -19,16 +38,49 @@
 \newcommand{\ie}{{\em i.e.,}\xspace}
 \newcommand{\eg}{{\em e.g.,}\xspace}
 
+\newcommand{\figfactor}{1.0}
+
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage[noend]{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\newcommand{\commentt}[1]{{\small\texttt{#1}}}
+
 \theoremstyle{definition}
 \newtheorem{observation}{Observation}
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 \newtheorem{corollary}{Corollary}
 
+\makeatletter
+\def\th@plain{%
+  \thm@notefont{}% same as heading font
+  \itshape % body font
+}
+\def\th@definition{%
+  \thm@notefont{}% same as heading font
+  \normalfont % body font
+}
+\makeatother
 
 \renewcommand{\ttdefault}{fi4}
 
 \usetikzlibrary{positioning, snakes, shapes}
+
+\tikzset{>=latex}
+
+
+
+\titleformat*{\section}{\fontsize{12pt}{12}\selectfont\bfseries}
+\titleformat*{\subsection}{\fontsize{10pt}{11}\selectfont\bfseries}
+\titleformat*{\subsubsection}{\fontsize{10pt}{11}\itshape}
+
+\titlespacing{\section}{1ex}{1ex}{0.25ex}
+
+\titlespacing{\subsection}{1ex}{0.5ex}{0.25ex}
+\titlespacing{\subsubsection}{1ex}{0.25ex}{0.25ex}
+
+\let\footnotesize\small
+
+\newcommand*{\DashedArrow}[1][]{\mathbin{\tikz [baseline=-.25ex,-latex, dashed,#1] \draw [#1] (0pt,0.5ex) -- (2em,0.5ex);}}%
 
 \newenvironment{myitemize}
 {
@@ -70,24 +122,26 @@
 
 % ****************** TITLE ****************************************
 
-\title{Highly Available Transactions: Virtues and Limitations}
-{\author{Peter Bailis{\fontsize{12}{14}$^\dagger$}, Aaron Davidson{\fontsize{12}{14}$^\dagger$}, Alan Fekete{\fontsize{12}{14}$^\diamond$}, Ali Ghodsi{\fontsize{12}{14}$^{\dagger,\ddagger}$}, Joseph M. Hellerstein{\fontsize{12}{14}$^\dagger$}, Ion Stoica{\fontsize{12}{14}$^\dagger$}\\{{\fontsize{12}{14}$^\dagger$}\hspace{.5mm}UC Berkeley\hspace{4mm}{\fontsize{12}{14}$^\diamond$}\hspace{.5mm}University of Sydney\hspace{4mm}{\fontsize{12}{14}$^\ddagger$}\hspace{.5mm}KTH/Royal Institute of Technology}}}
+\title{Highly Available Transactions: Virtues and Limitations\iftechreport\\(Extended Version)\fi}
+{\author{Peter Bailis{\fontsize{12}{14}$^\dagger$}, Aaron Davidson{\fontsize{12}{14}$^\dagger$}, Alan Fekete{\fontsize{12}{14}$^\diamond$}, Ali Ghodsi{\fontsize{12}{14}$^{\dagger,\ddagger}$}, Joseph M. Hellerstein{\fontsize{12}{14}$^\dagger$}, Ion Stoica{\fontsize{12}{14}$^\dagger$}\\{\affaddr{\fontsize{12}{14}$^\dagger$}\hspace{.5mm}UC Berkeley\hspace{4mm}{\fontsize{12}{14}$^\diamond$}\hspace{.5mm}University of Sydney\hspace{4mm}{\fontsize{12}{14}$^\ddagger$}\hspace{.5mm}KTH/Royal Institute of Technology}}}
 \maketitle
 
 \begin{abstract}
-To minimize network latency and remain online during partial failure
-and network partitions, many modern distributed data storage systems
-eschew transactional functionality, which provides strong semantic
-guarantees for groups of multiple operations over multiple data
-items. In this work, we consider the problem of providing Highly
-Available Transactions (HATs), or transactional guarantees that do not
-suffer from unavailability during system partitions or incur high
-network latency.  We introduce a new taxonomy of highly available
-systems and analyze existing ACID and distributed consistency
-guarantees to identify which can and cannot be achieved in HAT
-systems. We analytically and experimentally quantify the performance
-and availability benefits of HAT systems as well as the associated
-semantic compromises.
+\noindent To minimize network latency and remain online during server
+failures and network partitions, many modern distributed data storage
+systems eschew transactional functionality, which provides strong
+semantic guarantees for groups of multiple operations over multiple
+data items. In this work, we consider the problem of providing Highly
+Available Transactions (HATs): transactional guarantees that do not
+suffer unavailability during system partitions or incur high network
+latency.  We introduce a new taxonomy of highly available systems and
+analyze existing ACID and distributed consistency guarantees to
+identify which can and cannot be achieved in HAT systems. This unifies
+the literature on weak transactional isolation, replica consistency,
+and highly available systems. We analytically and experimentally
+quantify the availability and performance benefits of HATs---often two
+to three orders of magnitude over wide-area networks---as well as
+their necessary semantic compromises.
 \end{abstract}
 
 \input{intro.tex}
@@ -102,7 +156,7 @@ semantic compromises.
 
 \input{relatedwork.tex}
 
-\input{futurework.tex}
+%\input{futurework.tex}
 
 \input{conclusion.tex}
 
@@ -112,8 +166,12 @@ semantic compromises.
 % produce the bibliography for the citations in your paper.
 \bibliographystyle{abbrv}
 % vldb_sample.bib is the name of the Bibliography in this case
-\footnotesize
+%\footnotesize
+\scriptsize
+
 \bibliography{hat-vldb}  
+
+
 % You must have a proper ".bib" file
 %  and remember to run:
 % latex bibtex latex latex
@@ -122,11 +180,23 @@ semantic compromises.
 %APPENDIX is optional.
 % ****************** APPENDIX **************************************
 % Example of an appendix; typically would start on a new page
-\pagebreak
 
+\iftechreport
+\pagebreak
 \begin{appendix}
-\input{availability-appendix.tex}
 
 \input{hat-appendix.tex}
 \end{appendix}
+\fi
 \end{document}
+
+% megastore
+% redblue
+% gemini
+% redblue
+% granola
+% bernstein-concurrency
+% surviving-failures-bodik
+% blooml
+% google-availability
+% cops
