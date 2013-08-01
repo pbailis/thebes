@@ -18,6 +18,9 @@
 
 \newcommand{\pbnote}[1]{{\color{red}{#1 ---P.B.}}}
 
+\newif\iftechreport
+%\techreporttrue
+\techreportfalse
 
 
 \interfootnotelinepenalty=10000
@@ -119,7 +122,7 @@
 
 % ****************** TITLE ****************************************
 
-\title{Highly Available Transactions: Virtues and Limitations\\(Extended Version)}
+\title{Highly Available Transactions: Virtues and Limitations\iftechreport\\(Extended Version)\fi}
 {\author{Peter Bailis{\fontsize{12}{14}$^\dagger$}, Aaron Davidson{\fontsize{12}{14}$^\dagger$}, Alan Fekete{\fontsize{12}{14}$^\diamond$}, Ali Ghodsi{\fontsize{12}{14}$^{\dagger,\ddagger}$}, Joseph M. Hellerstein{\fontsize{12}{14}$^\dagger$}, Ion Stoica{\fontsize{12}{14}$^\dagger$}\\{\affaddr{\fontsize{12}{14}$^\dagger$}\hspace{.5mm}UC Berkeley\hspace{4mm}{\fontsize{12}{14}$^\diamond$}\hspace{.5mm}University of Sydney\hspace{4mm}{\fontsize{12}{14}$^\ddagger$}\hspace{.5mm}KTH/Royal Institute of Technology}}}
 \maketitle
 
@@ -177,13 +180,14 @@ their necessary semantic compromises.
 %APPENDIX is optional.
 % ****************** APPENDIX **************************************
 % Example of an appendix; typically would start on a new page
-\pagebreak
 
+\iftechreport
 \pagebreak
 \begin{appendix}
 
 \input{hat-appendix.tex}
 \end{appendix}
+\fi
 \end{document}
 
 % megastore

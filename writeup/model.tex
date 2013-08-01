@@ -32,10 +32,10 @@ arbitrary, indefinitely long network partitions between
 servers~\cite{gilbert-cap}.\footnote{Under this definition from the
   distributed systems literature, systems that require a majority of
   servers to be online are not available. Similarly, a system which
-  ensures that clients receive a response with high (but not perfect)
-  probability is not available. This is a stringent requirement but it
-  matches the assumptions made in the CAP Theorem~\cite{gilbert-cap}
-  and guarantees low latency~\cite{abadi-pacelc}.} As in a standard
+  guarantees that servers provide a response with high probability is
+  not available. This admittedly stringent requirement matches the
+  assumptions made in the CAP Theorem~\cite{gilbert-cap} and
+  guarantees low latency~\cite{abadi-pacelc}.} As in a standard
 distributed database, designated servers might perform operations for
 different data items; a server that can handle an operation for a
 given data item is called a \textit{replica} for that

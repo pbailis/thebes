@@ -50,9 +50,10 @@ relies on two-phase commit and two-phase locking for read/write
 transactions~\cite{spanner}. As we have discussed, the latency
 penalties associated with this design choice are fundamental to
 serializability. For users willing to tolerate these costs, Spanner,
-or similar strongly consistent, unavailable systems---including
-Calvin~\cite{calvin}, G-Store~\cite{gstore}, HBase,
-HStore~\cite{hstore}, Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis},
+or similar strongly consistent, unavailable
+systems~\cite{kemme-classification}---including Calvin~\cite{calvin},
+G-Store~\cite{gstore}, HBase, HStore~\cite{hstore},
+Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis},
 Walter~\cite{walter}, and a range of snapshot isolation
 techniques~\cite{daudjee-session, daudjee-snapshot}---are a reasonable
 choice.
@@ -65,8 +66,8 @@ provide transactional causal consistency guarantees with varying
 availability and represent a new class of sticky HAT systems. There
 are infinitely many HAT models (i.e., always reading value 1 is
 incomparable with always returning value 2), but a recent report from
-UT Austin shows that no model stronger than causal consistency can be
-achieved in a sticky highly available, \textit{one-way convergent}
+UT Austin shows that no model stronger than causal consistency is
+achievable in a sticky highly available, \textit{one-way convergent}
 system~\cite{cac}. This result is promising and complementary to our
 results for general-purpose convergent data stores. Finally, Burkhardt
 et al. have concurrently developed an axiomatic specification for
