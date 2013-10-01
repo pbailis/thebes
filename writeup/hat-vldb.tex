@@ -7,7 +7,7 @@
 \documentclass{vldb}
 \let\proof\relax
 \let\endproof\relax
-%\usepackage{draftwatermarkbottom, draftwatermarktop}
+\usepackage{draftwatermarkbottom, draftwatermarktop}
 \usepackage{scrextend, MnSymbol}
 \usepackage[hyphens]{url}
 
@@ -117,13 +117,32 @@
     \vspace{-.5em}
 }
 
+\newenvironment{introenumerate}
+{
+
+   \vspace{-.5em}
+   \newcounter{qdcounter}
+    \begin{list}{\arabic{qdcounter}.~}{\usecounter{qdcounter}\leftmargin=1em}
+        \setlength{\topsep}{0em}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.25em} 
+        \setlength{\itemindent}{0em}
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
+
+
 \begin{document}
 
 
 % ****************** TITLE ****************************************
 
 \title{Highly Available Transactions: Virtues and Limitations\iftechreport\\(Extended Version)\fi}
-{\author{Peter Bailis{\fontsize{12}{14}$^\dagger$}, Aaron Davidson{\fontsize{12}{14}$^\dagger$}, Alan Fekete{\fontsize{12}{14}$^\diamond$}, Ali Ghodsi{\fontsize{12}{14}$^{\dagger,\ddagger}$}, Joseph M. Hellerstein{\fontsize{12}{14}$^\dagger$}, Ion Stoica{\fontsize{12}{14}$^\dagger$}\\{\affaddr{\fontsize{12}{14}$^\dagger$}\hspace{.5mm}UC Berkeley\hspace{4mm}{\fontsize{12}{14}$^\diamond$}\hspace{.5mm}University of Sydney\hspace{4mm}{\fontsize{12}{14}$^\ddagger$}\hspace{.5mm}KTH/Royal Institute of Technology}}}
+{\author{Peter Bailis, Aaron Davidson, Alan Fekete{\fontsize{12}{14}$^\dagger$}, Ali Ghodsi, Joseph M. Hellerstein, Ion Stoica \\{\affaddr{UC Berkeley and {\fontsize{12}{14}$^\dagger$}University of Sydney}}}}
 \maketitle
 
 \begin{abstract}

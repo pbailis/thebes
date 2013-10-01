@@ -109,11 +109,31 @@ those with monotonic logic and commutative updates~\cite{calm,
   crdt}. HAT systems can also enforce arbitrary foreign key
 constraints for multi-item updates and, in some cases, provide limited
 uniqueness guarantees. However, particularly for programs with
-non-monotonic logic, HATs can fall short, requiring
-sometimes-unavailable mechanisms that are more
-coordination-intensive. Overall, this paper quantifies the benefits
-that Highly Available Transactions offer as well as the necessary
-restrictions that they place on applications.
+non-monotonic logic or that are otherwise concurrency-sensitive, HATs
+can fall short, requiring non-HA coordination.
+
+We recognize that the large variety of ACID isolation levels and
+distributed consistency models (and therefore in our taxonomization)
+can be confusing and that the subtle distinctions between them may
+appear to be primarily of academic concern. Accordingly, we offer the
+following pragmatic takeaways:
+\begin{introenumerate}
+\item The default (and sometimes strongest) configurations of most
+  widely-deployed database systems expose a range of anomalies that
+  can compromise application-level consistency.
+
+\item Most of these ``weak isolation'' models are achievable without
+  sacrificing high availability if implemented correctly. However,
+  none of these models prevents concurrent modifications.
+
+\item In addition to providing a guaranteed response and horizontal
+  scale-out, these HAT models allow for one to three order of
+  magnitude lower latencies on current infrastructure.
+
+\item For correct behavior, most applications will require a
+  combination of HAT and (ideally sparing use of) non-HAT isolation levels;
+  future database designers should act accordingly.
+\end{introenumerate}
 
 %% In this paper, we make the following contributions:
 %% \begin{myitemize}
