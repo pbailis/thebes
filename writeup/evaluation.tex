@@ -58,7 +58,7 @@ multi-versioned storage systems allow for a variety of transactional
 guarantees, few offer traditional weak isolation (e.g.,
 non-``tentative update'' schemes) in this context.  Chan and Gray's
 read-only transactions have item-cut isolation with causal consistency
-and RA (session \textit{PL-2L}~\cite{adya}) but are unavailable in the
+and MAV (session \textit{PL-2L}~\cite{adya}) but are unavailable in the
 presence of coordinator failure and assume serializable update
 transactions~\cite{readonly}; this is similar to read-only and
 write-only transactions more recently proposed by
@@ -79,20 +79,8 @@ are useful (or otherwise are too weak). As we showed in
 Section~\ref{sec:hats}, the main cost of high availability and low
 latency comes in the inability to prevent Lost Update, Write Skew, and
 provide recency bounds. In this section, we attempt to understand when
-these guarantees matter both abstractly and in a representative
-transactional application based on the TPC-C benchmark~\cite{tpcc}.
-
-\vspace{.5em}\noindent\textbf{Commutativity and Monotonicity} As
-evidenced by the CALM Theorem~\cite{calm} and by Commutative and
-Replicated Data Types~\cite{crdt}, if updates logically commute, then
-they can often be safely performed in different orders at different
-replicas. Accordingly, as long as all writes are delivered to all
-replicas, then a system executing monotonic logic may not suffer from
-application-level consistency anomalies as a result of Lost Update or
-Write Skew anomalies. However, applications with non-monotone state
-mutation will not, in general, be able to maintain application-level
-consistency constraints with HATs alone---in particular, applications
-requiring visibility bounds should opt for unavailability.
+these guarantees matter in a representative transactional application
+based on the TPC-C benchmark~\cite{tpcc}.
 
 \vspace{.5em}\noindent\textbf{TPC-C} To better understand the impact
 of HAT-compliance in an application context, we consider a concrete
@@ -109,7 +97,7 @@ read their writes if they are sticky-available. Another transaction
 type, \textit{Payment}, updates running balances for warehouses,
 districts, and customer records and provides an audit trail. The
 transaction is monotonic---increment- and append-only---so all balance
-increase operations commute, and RA allows the maintenance of
+increase operations commute, and MAV allows the maintenance of
 foreign-key integrity constraints (e.g., via \texttt{UPDATE/DELETE
   CASCADE}).
 
@@ -157,7 +145,7 @@ integrity constraints. For example, Consistency Condition 1 (3.3.2.1)
 requires that each warehouse's sales count must reflect the sum of its
 subordinate sales districts. This integrity constraint spans two
 tables but, given the ability to update rows in both tables atomically
-via RA, can be easily maintained. Consistency Conditions 4 through 12
+via MAV, can be easily maintained. Consistency Conditions 4 through 12
 (3.3.2.4-12) can similarly be satisfied by applying updates atomically
 across tables. Consistency Conditions 2 and 3 (3.3.2.2-3) concern
 order ID assignment and are problematic. Finally, while TPC-C is not
@@ -195,8 +183,8 @@ is a partially replicated (hash-based, partitioned) key-value backed
 by LevelDB and implemented in Java using Apache Thrift. It currently
 supports eventual consistency (hereafter, \texttt{eventual};
 last-writer-wins RU with standard all-to-all anti-entropy between
-replicas) and the efficient HAT RA algorithm as sketched in
-Section~\ref{sec:ta}. (hereafter, \texttt{RA}). It also supports
+replicas) and the efficient HAT MAV algorithm as sketched in
+Section~\ref{sec:ta}. (hereafter, \texttt{MAV}). It also supports
 non-HAT operation whereby all operations for a given key are routed to
 a (randomly) designated \texttt{master} replica for each key
 (guaranteeing single-key linearizability, as in Gilbert and Lynch's
@@ -204,7 +192,7 @@ CAP Theorem proof~\cite{gilbert-cap} and in PNUTS~\cite{pnuts}'s
 \texttt{read-latest} operation; hereafter, \texttt{master}) as well as
 distributed two-phase locking. Servers are durable: they synchronously
 write to LevelDB before responding to client requests, while new
-writes in RA are sent to a write-ahead log, which is synchronously
+writes in MAV are sent to a write-ahead log, which is synchronously
 flushed to disk.
 
 \vspace{.5em}\noindent\textit{Configuration.} We deploy the database
@@ -249,7 +237,7 @@ in approximately half the throughput and double the latency of
 replicas in both clusters instead of always contacting the (single)
 master. \texttt{RC}---essentially \texttt{eventual} with
 buffering---is almost identical to \texttt{eventual}, while
-\texttt{RA}---which incurs two writes for every client-side write
+\texttt{MAV}---which incurs two writes for every client-side write
 (i.e., new writes are sent to the WAL then subsequently moved into
 LevelDB once stable)---achieves ~75\% of the throughput. Latency
 increases linearly with the number of YCSB clients due to contention
@@ -264,7 +252,7 @@ throughput than the HAT configurations. Increasing the number of YCSB
 clients \textit{does} increase the throughput of \texttt{master}, but
 our Thrift-based server-side connection processing did not gracefully
 handle more than several thousand concurrent connections. In contrast,
-across two datacenters, the performance of eventual, RC, and RA are
+across two datacenters, the performance of eventual, RC, and MAV are
 near-identical to a single-datacenter deployment.
 
 When five clusters (as opposed to two, as before) are deployed across
@@ -278,16 +266,16 @@ of servers responded (guaranteeing regular
 semantics~\cite{herlihy-art}); this strategy (not pictured) did not
 substantially improve performance due to the network topology and
 because worst-case server load was unaffected. With five clusters,
-\texttt{RA}'s relative throughput decreased: every YCSB \texttt{put}
+\texttt{MAV}'s relative throughput decreased: every YCSB \texttt{put}
 operation resulted in four \texttt{put} operations on remote replicas
 and, accordingly, the cost of anti-entropy increased (e.g., each
 server processed four replicas' anti-entropy as opposed to one before,
 reducing the opportunity for batching and decreasing available
 resources for incoming client requests). This in turn increased
 garbage collection activity and, more importantly, IOPS when compared
-to \texttt{eventual} and \texttt{RC}, causing \texttt{RA} throughput
+to \texttt{eventual} and \texttt{RC}, causing \texttt{MAV} throughput
 to peak at around half of \texttt{eventual}. With in-memory
-persistence (i.e., no LevelDB or WAL), \texttt{RA} throughput was
+persistence (i.e., no LevelDB or WAL), \texttt{MAV} throughput was
 within 20\% of \texttt{eventual}.
 
 We have intentionally omitted performance data for two-phase
@@ -318,19 +306,19 @@ are reasonable lower bounds on latency.
 \includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru.pdf}
 %\includegraphics[width=\figfactor\columnwidth]{figs/finals/scaleout-thru-perserver.pdf}
 \end{center}\vspace{-2.25em}
-\caption{Scale-out of RA, Eventual, and RC.}\vspace{-1.5em}
+\caption{Scale-out of MAV, Eventual, and RC.}\vspace{-1.5em}
 \label{fig:scaleout}
 \end{figure}
 
 \vspace{.5em}\noindent\textit{Transaction length.} As shown in
 Figure~\ref{fig:txlen} (clusters in Virginia and Oregon), throughput
 of \texttt{eventual}, \texttt{RC}, and \texttt{master} operation are
-unaffected by transaction length. In contrast, \texttt{RA} throughput
+unaffected by transaction length. In contrast, \texttt{MAV} throughput
 decreases linearly with increased transaction length: with $1$
-operation per transaction, \texttt{RA} throughput is within 18\% of
+operation per transaction, \texttt{MAV} throughput is within 18\% of
 \texttt{eventual} ($34$ bytes overhead), and with $128$ operations per
-transaction, \texttt{RA} throughput is within $60\%$ ($1898$ bytes
-overhead). This reflects our \texttt{RA} algorithm's metadata requirements,
+transaction, \texttt{MAV} throughput is within $60\%$ ($1898$ bytes
+overhead). This reflects our \texttt{MAV} algorithm's metadata requirements,
 which are proportional to transaction length and consume IOPS and
 network bandwidth.
 
@@ -339,10 +327,10 @@ network bandwidth.
 proportion of reads and writes is fairly pessimistic: for example,
 Facebook reports $99.8\%$ reads for their workload~\cite{eiger}. As
 shown in Figure~\ref{fig:rprop} (clusters in Virginia and Oregon),
-with all reads, \texttt{RA} is within $4.8\%$ of \texttt{eventual};
-with all writes, \texttt{RA} is within $33\%$, and the throughput of
+with all reads, \texttt{MAV} is within $4.8\%$ of \texttt{eventual};
+with all writes, \texttt{MAV} is within $33\%$, and the throughput of
 \texttt{eventual} decreases by $288.8\%$ compared to all reads. At
-$99.8\%$ reads, \texttt{RA} incurs a $7\%$ overhead ($5.8\%$ for in-memory
+$99.8\%$ reads, \texttt{MAV} incurs a $7\%$ overhead ($5.8\%$ for in-memory
 storage).
 
 
@@ -352,13 +340,13 @@ our HAT algorithms is that they are shared-nothing, meaning they
 should not compromise scalability. Figure~\ref{fig:scaleout} shows
 that varying the number of servers across two clusters in Virginia and
 Oregon (with $15$ YCSB clients per server) results in linear scale-out
-for \texttt{eventual}, \texttt{RC}, and \texttt{RA}. \texttt{RC} and
+for \texttt{eventual}, \texttt{RC}, and \texttt{MAV}. \texttt{RC} and
 \texttt{eventual} scale perfectly with an approximately $5$x
 throughput increase moving from $5$ to $25$ servers per cluster. For
-the same configuration, \texttt{RA} scales by $3.8$x, achieving over
-$260,000$ operations per second. \texttt{RA} performance is due to
+the same configuration, \texttt{MAV} scales by $3.8$x, achieving over
+$260,000$ operations per second. \texttt{MAV} performance is due to
 resource contention---with a memory-backed database (instead of
-LevelDB), \texttt{RA} scales by $4.25$x (not shown)---and RA-related
+LevelDB), \texttt{MAV} scales by $4.25$x (not shown)---and MAV-related
 performance heterogeneity across servers (Calvin's authors report
 similar heterogeneity on EC2~\cite{calvin}). Nevertheless, this linear
 scalability is not typical of traditional database system
@@ -367,7 +355,7 @@ designs~\cite{gray-isolation}.
 \vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
 confirms our earlier analytical intuitions. HAT systems can provide
 useful semantics without substantial performance penalties. In
-particular, our RA algorithm can achieve throughput competitive with
+particular, our MAV algorithm can achieve throughput competitive with
 eventual consistency at the expense of increased disk and network
 utilization. Perhaps more importantly, all HAT algorithms circumvent
 high WAN latencies inevitable with non-HAT implementations. Our results
