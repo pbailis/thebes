@@ -13,9 +13,9 @@ distance, network congestion, and routing. As we will see
 (Section~\ref{sec:availability}), highly available system design
 mitigates the effects of network \textit{partitions} and
 \textit{latency}. In this section, we draw on a range of evidence that
-indicates that partitions occur relatively frequently in real-world
-deployments and best-case latencies between datacenters are
-substantial, often on the order of several hundreds of milliseconds.
+indicates that partitions occur with frequency in real-world
+deployments and latencies between datacenters are substantial, often
+on the order of several hundreds of milliseconds.
 
 \subsection{Network Partitions at Scale}
 
@@ -91,9 +91,9 @@ large---hundreds of milliseconds in a geo-replicated, multi-datacenter
 context.  Fundamentally, the speed at which two servers can
 communicate is (according to modern physics) bounded by the speed of
 light. In the best case, two servers on opposite sides of the
-Earth---communicating via a hypothetical link along the planet's
-diameter---require a minimum 85.1ms round-trip time (RTT; 133.7ms if
-sent at surface level). As services are replicated to multiple,
+Earth---communicating via a hypothetical link through the planet's
+core---require a minimum 85.1ms round-trip time (RTT; 133.7ms if sent
+at surface level). As services are replicated to multiple,
 geographically distinct sites, this cost of communication increases.
 
 

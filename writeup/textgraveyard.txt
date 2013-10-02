@@ -1,3 +1,79 @@
+
+
+\vspace{.5em}\noindent\textbf{Commutativity and Monotonicity} As
+evidenced by the CALM Theorem~\cite{calm} and by Commutative and
+Replicated Data Types~\cite{crdt}, if updates commute, then they can
+often be safely performed in different orders at different
+replicas. Accordingly, as long as all writes are delivered to all
+replicas, then a system executing monotonic logic may not suffer from
+application-level consistency anomalies as a result of Lost Update or
+Write Skew anomalies. However, applications with non-monotone state
+mutation will not, in general, be able to maintain application-level
+consistency constraints with HATs. A in eds hin Moreover, applications
+requiring visibility bounds should opt for unavailability.
+
+
+\subsection{Additional Discussion}
+\label{sec:discussion}
+
+In this section, we discuss several subtleties in our results,
+specifically addressing model composition, read atomicity
+versus linearizability, and benefits of stickiness.
+
+\vspace{.5em}\noindent\textbf{Model Composition} Choosing between
+combinations of compatible guarantees requires care. Consider the
+following transactions:
+\begin{align*}
+\small\vspace{-1em}
+T_1 &: w_x(1)~w_y(1)
+\\T_2 &: w_x(2)~w_y(2)
+\\T_3 &: r_x(a)~r_y(b)\vspace{-1em}
+\end{align*}
+If we want to guarantee both cut isolation and MAV isolation and the
+system only executes $T_1$, $T_2$, and $T_3$, then $T_3$ needs to read
+$a=b=\bot$, $a=b=1$, or $a=b=2$. This means that either the
+implementation should frequently return $\bot$ (definitely undesirable
+and possibly non-convergent), keep multiple versions of each data item
+(necessitating potentially complicated distributed garbage
+collection), or use pre-declared read sets to fetch a consistent cut
+of keys before each transaction begins to execute. Using client-side
+caching can alleviate some of these challenges~\cite{bolton, swift} at
+the expense of requiring sticky availability. Study of the
+architectural interaction and overheads of various combinations is a
+promising area for future work.
+
+\vspace{.5em}\noindent\textbf{Linearizability and Read
+  Atomicity} The relationship between linearizability and
+MAV is non-obvious. MAV dictates that writes to
+multiple keys across multiple servers are made visible to readers all
+at once, while linearizability dictates that writes to a single key on
+multiple servers are made visible to all readers at once---what is
+different? First, in linearizable (and safe and regular) systems,
+writes are made visible to clients \textit{immediately} after they
+finish. With MAV, there is no recency
+guarantee. Second, in linearizable systems, all clients see all writes
+at the same time. With MAV as defined here, clients may see writes at
+different times depending on which replicas they contact. We are not
+aware of an analogous model in the distributed systems
+literature. Accordingly, despite apparent similarities, MAV is
+incomparable with and less coordination intensive (by availability
+measures) than linearizability.
+
+\vspace{.5em}\noindent\textbf{Visibility and Stickiness} Sticky
+availability can improve write \textit{visibility}: clients will be
+able to safely read writes more quickly in a sticky available
+system. In the model we discussed, it is possible to achieve several
+properties like monotonic reads in a highly available system by
+waiting to reveal a write until all servers have seen it and its
+relevant dependencies. However, this incurs severe visibility
+penalties---new writes will not become visible to clients in the
+presence of partitions. A client that does not want to guarantee
+read-your-writes (due to the sticky availability requirement) may
+still wish to read other clients' writes with timeliness.
+
+
+
+
  However, several
 studies rigorously classify \textit{non-HAT} semantics: Wisemann et
 al. have proposed a three parameter classification for one-copy
@@ -29,6 +105,7 @@ writes can be made visible (as opposed to once they are pending stable
 with respect to all servers). For example, in a multi-datacenter
 setting, all clients and servers within a datacenter may form a sticky
 group.
+
 
 
 In our non-sticky TA algorithm, clients buffer their writes until

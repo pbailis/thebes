@@ -102,7 +102,7 @@
 \newenvironment{myenumerate}
 {
 
-   \vspace{0mm}
+   \vspace{-.5em}
    \newcounter{qcounter}
     \begin{list}{\arabic{qcounter}.~}{\usecounter{qcounter}\leftmargin=1em}
         \setlength{\topsep}{0em}
@@ -154,13 +154,13 @@ data items. In this work, we consider the problem of providing Highly
 Available Transactions (HATs): transactional guarantees that do not
 suffer unavailability during system partitions or incur high network
 latency.  We introduce a taxonomy of highly available systems and
-analyze existing ACID and distributed consistency guarantees to
-identify which can and cannot be achieved in HAT systems. This unifies
-the literature on weak transactional isolation, replica consistency,
-and highly available systems. We analytically and experimentally
-quantify the availability and performance benefits of HATs---often two
-to three orders of magnitude over wide-area networks---and discuss
-their necessary semantic compromises.
+analyze existing ACID isolation and distributed data consistency
+guarantees to identify which can and cannot be achieved in HAT
+systems. This unifies the literature on weak transactional isolation,
+replica consistency, and highly available systems. We analytically and
+experimentally quantify the availability and performance benefits of
+HATs---often two to three orders of magnitude over wide-area
+networks---and discuss their necessary semantic compromises.
 \end{abstract}
 
 \input{intro.tex}
@@ -191,7 +191,7 @@ CCF-1139158, the National Science Foundation Graduate Research
 Fellowship (grant DGE-1106400), and gifts from Amazon Web Services,
 Google, SAP, Cisco, Clearstory Data, Cloudera, Ericsson, Facebook,
 FitWave, General Electric, Hortonworks, Huawei, Intel, Microsoft,
-NetApp, Oracle, Samsung, Splunk, VMware, WANdisco and Yahoo!.
+NetApp, Oracle, Samsung, Splunk, VMware, WANdisco, and Yahoo!.
 
 % The following two commands are all you need in the
 % initial runs of your .tex file to

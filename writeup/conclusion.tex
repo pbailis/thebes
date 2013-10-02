@@ -6,42 +6,44 @@ The current state of database software offers uncomfortable and
 unnecessary choices between availability and transactional semantics.
 Through our analysis and experiments, we have demonstrated how goals
 of high availability will remain a critical aspect of many future data
-storage systems. Accordingly, we expose a broad design space of Highly
-Available Transactions (HATs), which can offer the key benefits of
-highly available distributed systems---``always on'' operation during
-partitions and low-latency operations---while also providing a family
-of transactional isolation levels and replica semantics that have been
-adopted in practice.  In taxonomizing this design space, we show that
-many transactional guarantees are achievable with high availability,
-while a few, like preventing Lost Update and Write Skew, are
-not. Surprisingly, many of the default (and sometimes strongest)
-semantics provided by today's traditional database systems are
-achievable as HATs, hinting that distributed databases need not
-compromise availability in order to serve many existing applications.
+storage systems. We expose a broad design space of Highly Available
+Transactions (HATs), which can offer the key benefits of highly
+available distributed systems---``always on'' operation during
+partitions and low-latency operations (often orders of magnitude lower
+than non-compliant)---while also providing a family of transactional
+isolation levels and replica semantics that have been adopted in
+practice.  We also identify many semantic guarantees that are
+unachievable with high availability, including Lost Update and Write
+Skew anomaly prevention, concurrent update prevention, and bounds on
+data recency. Despite these limitations, and somewhat surprisingly,
+many of the default (and sometimes strongest) semantics provided by
+today's traditional database systems are achievable as HATs, hinting
+that distributed databases need not compromise availability, low
+latency, or scalability in order to serve many existing applications.
 
-HATs raise several challenges for future study. In this paper, we have
-largely focused on previously defined isolation and data consistency
-models from the consistency from the database and distributed systems
-communities. Their previous definitions and, in many cases, widespread
-adoption hints at their utility to end-users. However, we believe
-there is considerable work to be done to improve the programmability
-of highly available systems. Isolation and data consistency are means
-by which \textit{application-level} consistency is achieved but are
-typically not end goals for end-user applications. Our results hint
-that a mix of HAT and non-HAT semantics (the latter used sparingly) is
-required for practical applications, but the decision to employ each
-and the system architectures for a hybrid approach remain open
-problems. While we have studied the analytical and experiment behavior
-of several HAT models, there is substantial work in further
-understanding the performance and design of systems within the large
-set of HAT models. Weakened failure assumptions as in escrow or in the
-form of bounded network asynchrony could enable richer HAT semantics
-at the cost of general-purpose availability. Alternatively, there is a
-range of possible solutions providing strong semantics during
-partition-free periods and weakened semantics during partitions. Based
-on our understanding of what is desired in the field and newfound
-knowledge of what is possible to achieve, we believe HATs provide a
-large and useful design space for exploration.
+In this paper, we have largely focused on previously defined isolation
+and data consistency models from the consistency from the database and
+distributed systems communities. Their previous definitions and, in
+many cases, widespread adoption hints at their utility to
+end-users. However, we believe there is considerable work to be done
+to improve the programmability of highly available systems. Isolation
+and data consistency are means by which \textit{application-level}
+consistency is achieved but are typically not end goals for end-user
+applications. Our results hint that a mix of HAT and non-HAT semantics
+(the latter used sparingly) is required for practical applications,
+but the decision to employ each and the system architectures for a
+hybrid approach remain open problems. While we have studied the
+analytical and experiment behavior of several HAT models, there is
+substantial work in further understanding the performance and design
+of systems within the large set of HAT models. Weakened failure
+assumptions as in escrow or in the form of bounded network asynchrony
+could enable richer HAT semantics at the cost of general-purpose
+availability. Alternatively, there is a range of possible solutions
+providing strong semantics during partition-free periods and weakened
+semantics during partitions. Based on our understanding of what is
+desired in the field and newfound knowledge of what is possible to
+achieve, we believe HATs represent a large and useful design space for
+exploration.
 
 %% In this paper we expose a broad design space of Highly Available Transactional 
 %% Systems (HATs), which can offer the key benefits of

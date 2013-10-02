@@ -6,8 +6,7 @@ With an understanding of which semantics are HAT-compliant, in this
 section, we analyze the implications of these results for existing
 systems and briefly study HAT systems on public cloud
 infrastructure. Specifically:
-
-\begin{myenumerate}\vspace{-.5em}
+\begin{myenumerate}
 \item We revisit traditional database concurrency control with a focus
   on coordination costs and on high availability.
 \item We examine the properties required by an OLTP application based
@@ -16,14 +15,17 @@ infrastructure. Specifically:
   properties on public cloud infrastructure.
 \end{myenumerate}
 
-\subsection{Existing Algorithms}
+\subsection{HA and Existing Algorithms}
 \label{sec:eval-existing}
 
-Most existing database transaction and concurrency control algorithms
-are not designed for high availability and often presume a
-single-server deployment or a requirement for serializability. In this
-section, we briefly discuss design decisions and algorithmic details
-that preclude high availability.
+While we have shown that many database isolation levels are achievable
+as HATs, many traditional concurrency control mechanisms do not
+provide high availability---even for HAT-compliant isolation
+levels. Existing mechanisms often presume (or are adapted from)
+single-server non-partitioned deployments or otherwise focus on
+serializability as a primary use case. In this section, we briefly
+discuss design decisions and algorithmic details that preclude high
+availability.
 
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
@@ -58,19 +60,21 @@ multi-versioned storage systems allow for a variety of transactional
 guarantees, few offer traditional weak isolation (e.g.,
 non-``tentative update'' schemes) in this context.  Chan and Gray's
 read-only transactions have item-cut isolation with causal consistency
-and MAV (session \textit{PL-2L}~\cite{adya}) but are unavailable in the
-presence of coordinator failure and assume serializable update
+and MAV (session \textit{PL-2L}~\cite{adya}) but are unavailable in
+the presence of coordinator failure and assume serializable update
 transactions~\cite{readonly}; this is similar to read-only and
-write-only transactions more recently proposed by
-Eiger~\cite{eiger}.  Brantner's S3 database~\cite{kraska-s3}
-and Bayou~\cite{sessionguarantees} can all provide variants of session
+write-only transactions more recently proposed by Eiger~\cite{eiger}.
+Brantner's S3 database~\cite{kraska-s3} and
+Bayou~\cite{sessionguarantees} can all provide variants of session
 \textit{PL-2L} with high availability, but none provide this HAT
 functionality without substantial modification. Swift~\cite{swift} and
-bolt-on causal consistency~\cite{bolton} are closest to providing
-maximal sticky HAT semantics. Accordingly, it is possible to implement
-many guarantees weaker than serializability---including guarantees
-that are achievable with high availability---and still not achieve
-high availability.
+bolt-on causal consistency~\cite{bolton} are closest to providing the
+maximal sticky HAT semantics we have considered. Accordingly, it is
+possible to implement many guarantees weaker than
+serializability---including guarantees that are achievable with high
+availability---and still not achieve high availability. We view high
+availability as a core design consideration in future concurrency
+control designs.
 
 \subsection{Application Requirements}
 
@@ -78,14 +82,10 @@ Thus far, we have largely ignored the question of when HAT semantics
 are useful (or otherwise are too weak). As we showed in
 Section~\ref{sec:hats}, the main cost of high availability and low
 latency comes in the inability to prevent Lost Update, Write Skew, and
-provide recency bounds. In this section, we attempt to understand when
-these guarantees matter in a representative transactional application
-based on the TPC-C benchmark~\cite{tpcc}.
-
-\vspace{.5em}\noindent\textbf{TPC-C} To better understand the impact
-of HAT-compliance in an application context, we consider a concrete
+provide recency bounds. To better understand the impact of
+HAT-compliance in an application context, we consider a concrete
 application: the TPC-C benchmark. In brief, we find that four of five
-transactions can be executed with HATs, while the fifth may require
+transactions can be executed via HATs, while the fifth requires
 unavailability.
 
 TPC-C consists of five transactions, capturing the operation of a
@@ -170,45 +170,43 @@ unavailable properties.
 
 To further understand the performance implications of HAT guarantees
 in a real-world environment, we implemented a HAT database
-prototype. Across a range of deployments on public cloud
-infrastructures, we found that, as Section~\ref{sec:latency}'s
+prototype. Here, we verify that, as Section~\ref{sec:latency}'s
 measurements suggested, ``strongly consistent'' algorithms incur
-substantial latency penalties: over WAN, 10 to 100 times higher than
-their HAT counterparts. We find that HAT
-properties---while more resource-intensive than basic eventual
-consistency---scale well to many servers.
-
+substantial latency penalties (over WAN, 10 to 100 times higher than
+their HAT counterparts) compared to HAT-compliant algorithms, which
+scale linearly.
+x
 \vspace{.5em}\noindent\textit{Implementation.} Our prototype database
-is a partially replicated (hash-based, partitioned) key-value backed
-by LevelDB and implemented in Java using Apache Thrift. It currently
+is a partially replicated (hash-based partitioned) key-value backed by
+LevelDB and implemented in Java using Apache Thrift. It currently
 supports eventual consistency (hereafter, \texttt{eventual};
 last-writer-wins RU with standard all-to-all anti-entropy between
 replicas) and the efficient HAT MAV algorithm as sketched in
-Section~\ref{sec:ta}. (hereafter, \texttt{MAV}). It also supports
-non-HAT operation whereby all operations for a given key are routed to
-a (randomly) designated \texttt{master} replica for each key
+Section~\ref{sec:ta}. (hereafter, \texttt{MAV}). We support non-HAT
+operation whereby all operations for a given key are routed to a
+(randomly) designated \texttt{master} replica for each key
 (guaranteeing single-key linearizability, as in Gilbert and Lynch's
 CAP Theorem proof~\cite{gilbert-cap} and in PNUTS~\cite{pnuts}'s
-\texttt{read-latest} operation; hereafter, \texttt{master}) as well as
+``read latest'' operation; hereafter, \texttt{master}) as well as
 distributed two-phase locking. Servers are durable: they synchronously
 write to LevelDB before responding to client requests, while new
-writes in MAV are sent to a write-ahead log, which is synchronously
-flushed to disk.
+writes in MAV are synchronously flushed to a disk-resident write-ahead
+log.
 
 \vspace{.5em}\noindent\textit{Configuration.} We deploy the database
 in \textit{clusters}---disjoint sets of database servers that each
 contain a single, fully replicated copy of the data---typically across
-datacenters, sticking all clients within a datacenter to their
+datacenters and stick all clients within a datacenter to their
 respective cluster (trivially providing read-your-writes and monotonic
-reads guarantees). By default, we use 5 Amazon EC2 \texttt{m1.xlarge}
-instances as servers in each cluster. For our workload, we link our
-client library to the YCSB benchmark~\cite{ycsb}, which is well-suited
-to LevelDB's key-value schema, grouping every eight YCSB operations
-from the default workload (50\% reads, 50\% writes) to form a
-transaction. We increase the number of keys in the workload from the
-default 1,000 to 100,000 with uniform random key access, keeping
-the default value size of $1KB$, and running YCSB for 180 seconds per
-configuration.
+reads guarantees). By default, we deploy 5 Amazon EC2
+\texttt{m1.xlarge} instances as servers in each cluster. For our
+workload, we link our client library to the YCSB
+benchmark~\cite{ycsb}, which is well-suited to LevelDB's key-value
+schema, grouping every eight YCSB operations from the default workload
+(50\% reads, 50\% writes) to form a transaction. We increase the
+number of keys in the workload from the default 1,000 to 100,000 with
+uniform random key access, keeping the default value size of $1KB$,
+and running YCSB for 180 seconds per configuration.
 
 \begin{figure}[t!]
 \begin{center}
@@ -318,10 +316,10 @@ decreases linearly with increased transaction length: with $1$
 operation per transaction, \texttt{MAV} throughput is within 18\% of
 \texttt{eventual} ($34$ bytes overhead), and with $128$ operations per
 transaction, \texttt{MAV} throughput is within $60\%$ ($1898$ bytes
-overhead). This reflects our \texttt{MAV} algorithm's metadata requirements,
-which are proportional to transaction length and consume IOPS and
-network bandwidth.
-
+overhead). This reflects our \texttt{MAV} algorithm's metadata
+requirements, which are proportional to transaction length and consume
+IOPS and network bandwidth. We are currently investigating alternative
+HAT algorithms that do not incur this overhead.
 
 \vspace{.5em}\noindent\textit{Read proportion.} Our default (equal)
 proportion of reads and writes is fairly pessimistic: for example,
@@ -332,8 +330,6 @@ with all writes, \texttt{MAV} is within $33\%$, and the throughput of
 \texttt{eventual} decreases by $288.8\%$ compared to all reads. At
 $99.8\%$ reads, \texttt{MAV} incurs a $7\%$ overhead ($5.8\%$ for in-memory
 storage).
-
-
 
 \vspace{.5em}\noindent\textit{Scale-out.} One of the key benefits of
 our HAT algorithms is that they are shared-nothing, meaning they
@@ -348,9 +344,11 @@ $260,000$ operations per second. \texttt{MAV} performance is due to
 resource contention---with a memory-backed database (instead of
 LevelDB), \texttt{MAV} scales by $4.25$x (not shown)---and MAV-related
 performance heterogeneity across servers (Calvin's authors report
-similar heterogeneity on EC2~\cite{calvin}). Nevertheless, this linear
-scalability is not typical of traditional database system
-designs~\cite{gray-isolation}.
+similar heterogeneity on EC2~\cite{calvin}). Our early experiments
+with a newer database prototype with more efficient (non-Thrift) RPC
+and connection pooling suggest that this scalability can be
+substantially reduced. Nevertheless, this linear scalability is not
+typical of traditional database system designs~\cite{gray-isolation}.
 
 \vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
 confirms our earlier analytical intuitions. HAT systems can provide

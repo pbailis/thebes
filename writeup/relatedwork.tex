@@ -47,16 +47,16 @@ partitions~\cite{bernstein-book, gray-isolation}. Notably, Google's
 Spanner provides strong one-copy serializable transactions. While
 Spanner is highly specialized for Google's read-heavy workload, it
 relies on two-phase commit and two-phase locking for read/write
-transactions~\cite{spanner}. As we have discussed, the latency
-penalties associated with this design choice are fundamental to
-serializability. For users willing to tolerate these costs, Spanner,
-or similar strongly consistent, unavailable
+transactions~\cite{spanner}. As we have discussed, the penalties
+associated with this design are fundamental to serializability. For
+users willing to tolerate unavailability and increased latency,
+Spanner, or similar ``strongly consistent''
 systems~\cite{kemme-classification}---including Calvin~\cite{calvin},
 G-Store~\cite{gstore}, HBase, HStore~\cite{hstore},
 Orleans~\cite{orleans}, Postgres-R~\cite{kemme-thesis},
 Walter~\cite{walter}, and a range of snapshot isolation
-techniques~\cite{daudjee-session, daudjee-snapshot}---are a reasonable
-choice.
+techniques~\cite{daudjee-session}---reasonable
+choices.
 
 With HATs, we seek an alternative set of transactional semantics that
 are still useful but do not violate requirements for high availability
