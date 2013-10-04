@@ -301,9 +301,9 @@ T_3 &: r_x(2)~r_y(1)
 \label{fig:nta-dsg}
 \end{figure}
 
-\begin{definition}[Read Atomic (RA)]
-A system that provides Read Atomic isolation prohibits phenomenon
-OTV in addition to providing Read Committed isolation.
+\begin{definition}[Monotonic Atomic View (MAV)]
+A system that provides Monotonic Atomic View isolation prohibits
+phenomenon OTV in addition to providing Read Committed isolation.
 \end{definition}
 
 The following session guarantees are directly adapted from Terry et
@@ -511,10 +511,15 @@ G0, G1a, G1b, G1c, and Write Skew.
 For definitions of safe, regular, and linearizable register semantics,
 we refer the reader to Herlihy's textbook~\cite{herlihy-art}.
 
-\section{Read Atomic Isolation}
+\section{Monotonic Atomic View Isolation}
 
 In this section, we provide additional information on our two-phase
-algorithm for providing Read Atomic isolation.
+algorithm for providing Monotonic Atomic View isolation. This section
+is effectively a work-in-progress; we are actively investgating
+alternative algorithms (particularly with respect to metadata
+overheads) and stronger (but still HAT) semantics that complement the
+techniques presented here. The interested reader (or would-be systems
+implementer) should contact Peter Bailis for more details.
 
 The below pseudocode describes a straightforward implementation of the
 algorithm from Section~\ref{sec:ta}. Replicas maintain two sets of
@@ -539,7 +544,7 @@ data items (not processes, as is standard).
 T_1 &: w_x(1)~w_y(1)
 \\T_2 &: r_x(1)~r_y(a)
 \end{align*}
-For RA, the system must ensure that $a=1$. Consider a system with one
+For MAV, the system must ensure that $a=1$. Consider a system with one
 replica for each of $x$ and $y$ (denoted $R_x$ and $R_y$). Say client
 $c_1$ executes $T_1$ and commits. The client chooses timestamp $10001$
 (whereby the last $4$ digits are reserved for client ID to ensure
@@ -557,7 +562,7 @@ $ts=10001$ and $R_y$ will not find a suitable write
 in \texttt{good}. $R_y$ will instead return $y=1$
 from \texttt{pending}.
 
-\vspace{1em}\noindent\textbf{Overheads.} RA requires overhead both on client and server. First, clients must store a vector (\texttt{required}) for the duration of a transaction in order to determine what values to read. Second, each write contains metadata ($tx\_keys$) linear in the number of writes in the transaction. (Note that we could have stored a different timestamp with every write, but a single timestamp suffices and is more efficient) These overheads are modest for short transaction lengths but they increase value sizes on disk, in memory, and over the network. Third, on the server side, each client \textsc{put} incurs two back-ends \texttt{put}s: one into \texttt{pending} and \texttt{good}. If keeping a single value for \texttt{good}, the second \texttt{put} into \texttt{good} (as is the case with normal, single-valued eventually consistent operation) is really a \texttt{get} then a possible \texttt{put}: the server first checks if a higher-timestamped value has been written and, if not, it overwrites the current value. The \texttt{put} into \texttt{pending} is simpler: if message delivery is exactly-once, then \texttt{put}s can be made unconditionally.
+\vspace{1em}\noindent\textbf{Overheads.} MAV requires overhead both on client and server. First, clients must store a vector (\texttt{required}) for the duration of a transaction in order to determine what values to read. Second, each write contains metadata ($tx\_keys$) linear in the number of writes in the transaction. (Note that we could have stored a different timestamp with every write, but a single timestamp suffices and is more efficient) These overheads are modest for short transaction lengths but they increase value sizes on disk, in memory, and over the network. Third, on the server side, each client \textsc{put} incurs two back-ends \texttt{put}s: one into \texttt{pending} and \texttt{good}. If keeping a single value for \texttt{good}, the second \texttt{put} into \texttt{good} (as is the case with normal, single-valued eventually consistent operation) is really a \texttt{get} then a possible \texttt{put}: the server first checks if a higher-timestamped value has been written and, if not, it overwrites the current value. The \texttt{put} into \texttt{pending} is simpler: if message delivery is exactly-once, then \texttt{put}s can be made unconditionally.
 
 \vspace{1em}\noindent\textbf{Optimizations.} The use of \texttt{pending} and \texttt{required} is effectively to
 handle the above race condition, where some but not all replicas have
@@ -608,10 +613,6 @@ anti-entropy) allows for more efficient compression---especially
 important in network-constrained environments.
 
 \vspace{1em}\noindent\textbf{Implementation note.} Our implementation from Section~\ref{sec:evaluation} implements the below pseudocode, with batching between \textrm{notify} operations and a single-item \texttt{good}. We have not yet investigated the efficiency of a pull-based approach (mostly due to our choice of RPC library, which unfortunately does not currently handle multiple outstanding requests per socket). We have also not experimentally determined the visibility effect of the side-channel pending stable notifications as in the first optimization.
-
-\vspace{1em}\noindent\textbf{Algorithmic improvements.} We are actively investigating more efficient alternatives to the algorithm presented here. In particular, a lower-overhead (but still highly available) implementation that used less metadata would be appealing. A system using server-side vector clocks is feasible but does not necessarily reduce overhead because the number of items written per transaction is likely smaller than the number of servers in a system. Similarly, we have observed an algorithm trade-off between the size of $ts_{required}$ and write metadata. While it is certainly possible to reduce overheads by reducing availability~\cite{eiger}, we believe high availability is a worthwhile goal for future exploration.
-
-
 
 \begin{algorithm}[t!]
 \newcommand{\myindent}{\hspace{-1em}}

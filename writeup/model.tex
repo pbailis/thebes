@@ -53,27 +53,29 @@ item.\footnote{There is a further distinction between a \textit{fully
 
 In addition to high availability, which allows operations on any
 replica, distributed algorithms often assume a model in which clients
-always contact the same logical (sets of) replica(s) across subsequent
-operations. As we will discuss in Section~\ref{sec:hats}, clients can
-ensure continuity between operations (e.g., reading their prior
-updates to a data item) by maintaining affinity or ``stickiness'' with
-a server or set of servers~\cite{vogels-defs}. In a fully-replicated
-system, where all servers are replicas for all data items, stickiness
-is simple: a client can maintain stickiness by contacting the same
-server for each of its requests. However, to stay ``sticky'' in a
-partially-replicated system, where servers are replicas for subsets of
-the set of data items (which we consider in this paper), a client must
-maintain stickiness with a single \textit{logical} server that may
-consist of multiple physical servers. We say that a system provides
-\textbf{sticky availability} if, whenever a client's operation on an
-item is executed against a logical server that has observed all of its
-prior operations, it eventually receives a response, even in the
-presence of indefinitely long partitions. A client may choose to
-become sticky available by acting as a server itself; for example, a
-client might cache its reads and writes~\cite{bolton,
-  sessionguarantees, swift}. Any guarantee achievable in a highly
-available system is achievable in a sticky high availability system
-but not vice-versa.
+always contact the same logical replica(s) across subsequent
+operations, whereby each of the client's prior operations (but not
+necessarily other clients' operations) are reflected in the database
+state that they observe. As we will discuss in Section~\ref{sec:hats},
+clients can ensure continuity between operations (e.g., reading their
+prior updates to a data item) by maintaining affinity or
+``stickiness'' with a server or set of servers~\cite{vogels-defs}. In
+a fully-replicated system, where all servers are replicas for all data
+items, stickiness is simple: a client can maintain stickiness by
+contacting the same server for each of its requests. However, to stay
+``sticky'' in a partially-replicated system, where servers are
+replicas for subsets of the set of data items (which we consider in
+this paper), a client must maintain stickiness with a single
+\textit{logical} copy of the database, which may consist of multiple
+physical servers. We say that a system provides \textbf{sticky
+  availability} if, whenever a client's transactions is executed
+against a copy of database state that reflects all of the client's prior
+transactions, it eventually receives a response, even in the presence
+of indefinitely long partitions. A client may choose to become sticky
+available by acting as a server itself; for example, a client might
+cache its reads and writes~\cite{bolton, sessionguarantees,
+  swift}. Any guarantee achievable in a highly available system is
+achievable in a sticky high availability system but not vice-versa.
 
 %% \begin{figure}
 %% \centering

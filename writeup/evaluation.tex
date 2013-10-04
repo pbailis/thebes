@@ -168,14 +168,16 @@ unavailable properties.
 \subsection{Experimental Costs}
 \label{sec:prototype}
 
-To further understand the performance implications of HAT guarantees
-in a real-world environment, we implemented a HAT database
-prototype. Here, we verify that, as Section~\ref{sec:latency}'s
-measurements suggested, ``strongly consistent'' algorithms incur
-substantial latency penalties (over WAN, 10 to 100 times higher than
-their HAT counterparts) compared to HAT-compliant algorithms, which
-scale linearly.
-x
+To demonstrate the performance implications of HAT guarantees in a
+real-world environment, we implemented a HAT database prototype. We
+verify that, as Section~\ref{sec:latency}'s measurements suggested,
+``strongly consistent'' algorithms incur substantial latency penalties
+(over WAN, 10 to 100 times higher than their HAT counterparts)
+compared to HAT-compliant algorithms, which scale linearly. Our goal
+is \textit{not} a complete performance analysis of HAT semantics but
+instead a proof-of-concept demonstration of a small subset of the HAT
+space on real-world infrastructure.
+
 \vspace{.5em}\noindent\textit{Implementation.} Our prototype database
 is a partially replicated (hash-based partitioned) key-value backed by
 LevelDB and implemented in Java using Apache Thrift. It currently

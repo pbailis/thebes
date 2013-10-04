@@ -140,13 +140,14 @@ T_1 &: w_x(1)
 \\T_3 &: r_x(1)~r_x(a)
 \end{align*}
 It is possible to satisfy Item Cut Isolation with high availability by
-having transactions cache their reads at the client such that the
-values that they read for each item never changes unless they
-overwrite it themselves. The cache can be cleared at the end of each
-transaction and can alternatively be accomplished on (sticky) replicas
-via multi-versioning. Predicate Cut Isolation is also achievable in
-HAT systems via similar caching or multi-versioning that track entire
-logical ranges of predicates in addition to item-based reads.
+having transactions store a copy of any read data at the client such
+that the values that they read for each item never changes unless they
+overwrite it themselves. These stored values can be discarded at the
+end of each transaction and can alternatively be accomplished on
+(sticky) replicas via multi-versioning. Predicate Cut Isolation is
+also achievable in HAT systems via similar caching middleware or
+multi-versioning that track entire logical ranges of predicates in
+addition to item-based reads.
 
 \subsubsection{ACID Atomicity Guarantees}
 \label{sec:ta}
@@ -537,15 +538,15 @@ differ from implementation-agnostic definitions in the literature),
 users of single-site database are subject to the same (worst-case)
 application-level anomalies as a HAT implementation. The necessary
 (indefinite) visibility penalties (i.e., the right side of
-Figure~\ref{fig:hat-order}) and lack of support for preventing
+Figure~\ref{fig:hatcompared}) and lack of support for preventing
 concurrent updates (via the upper left half of
-Figure~\ref{fig:hat-order}) mean HATs are \textit{not} well-suited for
-all applications (see Section~\ref{sec:evaluation}): these limitations
-are fundamental. However, common practices such as ad-hoc, user-level
-compensation and per-statement isolation ``upgrades'' (e.g.,
-\texttt{SELECT FOR UPDATE} under weak isolation)--commonly used to
-augment weak isolation--are also applicable in HAT systems (although
-they may in turn compromise availability).
+Figure~\ref{fig:hatcompared}) mean HATs are \textit{not} well-suited
+for all applications (see Section~\ref{sec:evaluation}): these
+limitations are fundamental. However, common practices such as ad-hoc,
+user-level compensation and per-statement isolation ``upgrades''
+(e.g., \texttt{SELECT FOR UPDATE} under weak isolation)--commonly used
+to augment weak isolation--are also applicable in HAT systems
+(although they may in turn compromise availability).
 
  \newcommand{\lostupdate}{$^\dagger$}
  \newcommand{\rwskew}{$^\ddagger$}
