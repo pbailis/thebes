@@ -41,12 +41,11 @@ different data items; a server that can handle an operation for a
 given data item is called a \textit{replica} for that
 item.\footnote{There is a further distinction between a \textit{fully
     replicated} system, in which all servers are replicas for all data
-  items, and a \textit{partially replicated} system, in which at least
-  one server acts as a replica for only a subset of all data
-  items. For generality, and, for applicability to many modern
-  ``sharded'' or ``partitioned'' data storage systems~\cite{ bigtable,
-    pnuts, spanner, dynamo, hstore}, we consider partially replicated
-  systems.}
+  items and a \textit{partially replicated} system, in which at least
+  one server acts as a replica for a proper subset of all data
+  items. For generality, and, given the prevalence of these
+  ``sharded'' or ``partitioned'' systems~\cite{ bigtable, pnuts,
+    spanner, dynamo, hstore}, we consider partial replication here.}
 
 \subsection{Sticky Availability}
 \label{sec:sticky}

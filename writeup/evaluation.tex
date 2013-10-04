@@ -30,14 +30,14 @@ availability.
 \vspace{.5em}\noindent\textbf{Serializability} To establish a serial
 order on transactions, algorithms for achieving serializability of
 general-purpose read-write transactions in a distributed
-setting~\cite{bernstein-book, davidson-survey}
-require at least one RTT before committing. As an
-example, traditional two-phase locking for a transaction of length $T$
-may require $T$ \texttt{lock} operations and will require at least one
-\texttt{lock} and one \texttt{unlock} operation.  In a distributed
-environment, each of these lock operations requires coordination,
-either with other database servers or with a lock service. If this
-coordination mechanism is unavailable, transactions cannot safely
+setting~\cite{bernstein-book, davidson-survey} require at least one
+RTT before committing. As an example, traditional two-phase locking
+for a transaction of length $T$ may require $T$ \texttt{lock}
+operations and will require at least one \texttt{lock} and one
+\texttt{unlock} operation.  In a distributed environment, each of
+these lock operations requires coordination, either with other
+database servers or with a lock service. If this coordination
+mechanism is unavailable, transactions cannot safely
 commit. Similarly, optimistic concurrency control requires
 coordinating via a validation step, while deterministic transaction
 scheduling~\cite{deterministic-scheduling} requires contacting a
@@ -45,10 +45,9 @@ scheduler. Serializability under multi-version concurrency control
 requires checking for update conflicts. All told, the reliance on a
 globally agreed total order necessitates a minimum of one round-trip
 to a designated master or coordination service for each of these
-classic algorithms.  The cost of round trips will be determined by the
-deployment environment, as we saw in Section~\ref{sec:motivation}; we
-will demonstrate this cost on public cloud infrastructure in
-Section~\ref{sec:prototype}.
+classic algorithms.  As we saw in Section~\ref{sec:motivation}, is
+will be determined by the deployment environment; we will further
+demonstrate this in Section~\ref{sec:prototype}.
 
 \vspace{.5em}\noindent\textbf{Non-serializability} Most existing
 distributed implementations of weak isolation are not highly
@@ -346,8 +345,7 @@ performance heterogeneity across servers (Calvin's authors report
 similar heterogeneity on EC2~\cite{calvin}). Our early experiments
 with a newer database prototype with more efficient (non-Thrift) RPC
 and connection pooling suggest that this scalability can be
-substantially reduced. Nevertheless, this linear scalability is not
-typical of traditional database system designs~\cite{gray-isolation}.
+substantially reduced.
 
 \vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
 confirms our earlier analytical intuitions. HAT systems can provide

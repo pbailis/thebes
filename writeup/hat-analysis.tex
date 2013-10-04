@@ -219,13 +219,8 @@ literature~\cite{readonly, swift}: bounds can be represented by vector
 clocks, and older versions can be asynchronously garbage collected.
 
 We have developed a more efficient MAV algorithm, which we sketch here
-and provide greater detail in
-\iftechreport
- Appendix B.
-\else
- our extended Technical Report~\cite{hat-tr}.
-\fi
-We begin with our Read
+and provide greater detail in \iftechreport Appendix B.  \else our
+extended Technical Report~\cite{hat-tr}.  \fi We begin with our Read
 Committed algorithm, but replicas wait to reveal new writes to readers
 until all of the replicas for the final writes in the transaction have
 received their respective writes (are \textit{pending
@@ -241,8 +236,7 @@ pending stable write with a higher timestamp. Servers keep two sets of
 writes for each data item: the write with the highest timestamp that
 is pending stable and a set of writes that are not yet pending
 stable. This is entirely master-less and operations never block due to
-replica coordination. Moreover, there are several possible
-optimizations that, for brevity, we do not describe here.
+replica coordination.
 
 
 
@@ -295,10 +289,10 @@ availability, a system must handle the possibility that, under a
 partition, an unfortunate client will be forced to issue its next
 requests against a partitioned, out-of-date server.
 
-The solution to this conundrum is to give up high availability and
-settle for sticky availability. Sticky availability permits three
-additional guarantees, which we first define and then prove are
-unachievable in a generic highly available system:
+A solution to this conundrum is to forgo high availability and settle
+for sticky availability. Sticky availability permits three additional
+guarantees, which we first define and then prove are unachievable in a
+generic highly available system:
 
 \vspace{.5em}\noindent\textbf{{Read your writes}} requires that
 whenever a client reads a given data item after updating it, the read
@@ -341,7 +335,7 @@ provided by default in a sticky system. Causality and PRAM guarantees
 can be accomplished with well-known variants~\cite{causalmemory,
   bolton, eiger, sessionguarantees, swift} of the prior session
 guarantee algorithms we presented earlier: only reveal new writes to
-clients when their dependencies have been revealed.
+clients when their (respective, model-specific) dependencies have been revealed.
 
 \subsubsection{Additional HAT Guarantees}
 

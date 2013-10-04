@@ -4,7 +4,7 @@
 % SIG-ALTERNATE.CLS - VERSION 1.8
 % "COMPATIBLE" WITH THE "ACM_PROC_ARTICLE-SP.CLS" V2.7SP
 % Gerald Murray July 26th. 2005
-% 
+%
 % ---- Start of 'updates'  ----
 %
 % Allowance made to switch default fonts between those systems using
@@ -501,7 +501,7 @@
   \hrule width .4\columnwidth
   \kern 2.6\p@}                 % The \hrule has default height of .4pt .
 % ------
-\long\def\@makefntext#1{\noindent 
+\long\def\@makefntext#1{\noindent
 %\hbox to .5em{\hss$^{\@thefnmark}$}#1}   % original
 \hbox to .5em{\hss\textsuperscript{\@thefnmark}}#1}  % C. Clifton / GM Oct. 2nd. 2002
 % -------
@@ -703,7 +703,7 @@
     \vskip 1.5em               % Vertical space after author.
    \end{center}}
  \dimen0=\ht\@acmtitlebox
- \advance\dimen0 by -8.75pc\relax % Increased space for title box -- KBT
+ \advance\dimen0 by -7.75pc\relax % Increased space for title box -- KBT
  \unvbox\@acmtitlebox
  \ifdim\dimen0<0.0pt\relax\vskip-\dimen0\fi}
 
@@ -822,15 +822,14 @@
 \newtoks\copyrightnotice
 \def\ftype@copyrightbox{8}
 \def\@copyrightspace{
-%\@float{copyrightbox}[b]
-%\begin{center}
-%\setlength{\unitlength}{1pc}
-%\begin{picture}(20,0) %Space for copyright notice
-%\put(0,-0.95){\crnotice{\@toappear}}
-%\end{picture}
-%\end{center}
-%\end@float
-}
+\@float{copyrightbox}[b]
+\begin{center}
+\setlength{\unitlength}{1pc}
+\begin{picture}(20,6) %Space for copyright notice
+\put(0,-0.95){\crnotice{\@toappear}}
+\end{picture}
+\end{center}
+\end@float}
 
 \def\@toappear{} % Default setting blank - commands below change this.
 \long\def\toappear#1{\def\@toappear{\parbox[b]{20pc}{\baselineskip 9pt#1}}}
@@ -1253,11 +1252,11 @@
 \newdimen\bibindent
 \setcounter{enumi}{1}
 \bibindent=0em
-\def\thebibliography#1{% 
+\def\thebibliography#1{%
 \ifnum\addauflag=0\addauthorsection\global\addauflag=1\fi
      \section[References]{%    <=== OPTIONAL ARGUMENT ADDED HERE
         {References} % was uppercased but this affects pdf bookmarks (SP/GM October 2004)
-          \vskip -12pt  % GM July 2000 (for tighter spacing)
+          \vskip -9pt  % GM July 2000 (for tighter spacing)
          \@mkboth{{\refname}}{{\refname}}%
      }%
      \list{[\arabic{enumi}]}{%
@@ -1383,18 +1382,19 @@
 %\newtoks\copyrightetc
 %\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$5.00}
 
-\global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.  Articles from this volume were invited to present their results at The 38th International Conference on Very Large Data Bases, August 26th - 31st 2013, Riva del Garda, Trento, Italy. }
+% Future proceedings chair, please update the following: 1) conference sequence number, 2) date,
+% 3) location, 4) volume number, 5) Copyright year.
+\global\boilerplate={This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/3.0/.  Obtain permission prior to any use beyond those covered by the license.  Contact copyright holder by emailing info@vldb.org.  Articles from this volume were invited to present their results at the 40th International Conference on Very Large Data Bases, September 1st - 5th 2014, Hangzhou, China.}
 
 \global\conf{Proceedings of the VLDB Endowment,}
-\global\confinfo{Vol. 6, No. XXX}
+\global\confinfo{Vol. 7, No. 3}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright 2011 VLDB Endowment 2150-8097/11/11... \$ 10.00}
-		
-%ahmetsacan, 20111024: disabled showing conference name and Vol/Issue/Month. We now stamp this on the papers ourselves.
-%\toappear{\the\boilerplate\par
-%{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.
-%}
-%
+\global\copyrightetc{Copyright 2013 VLDB Endowment 2150-8097/13/11}
+
+%% Uncomment for camera ready
+\toappear{\the\boilerplate\par
+{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.}
+
 %% End of vldb.cls -- V1.8c - 05/15/2011 --
 %% Ahmet Sacan  -- December 2011 (volume, issue, and dates are dynamically updated)
 %% Uwe Roehm    -- Oct-Dec 2010 & Jan-Apr 2011

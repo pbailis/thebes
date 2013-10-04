@@ -108,9 +108,8 @@ provide acceptable semantics for a wide range of programs, especially
 those with monotonic logic and commutative updates~\cite{calm,
   crdt}. HAT systems can also enforce arbitrary foreign key
 constraints for multi-item updates and, in some cases, provide limited
-uniqueness guarantees. However, particularly for programs with
-non-monotonic logic or that are otherwise concurrency-sensitive, HATs
-can fall short, requiring non-HA coordination.
+uniqueness guarantees. However, HATs can fall short for applications
+with concurrency-sensitive operations, requiring non-HA coordination.
 
 We recognize that the large variety of ACID isolation levels and
 distributed consistency models (and therefore in our taxonomization)
