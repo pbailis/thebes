@@ -7,7 +7,7 @@
 \documentclass{vldb}
 \let\proof\relax
 \let\endproof\relax
-\usepackage{draftwatermarkbottom, draftwatermarktop}
+%\usepackage{draftwatermarkbottom, draftwatermarktop}
 \usepackage{scrextend, MnSymbol}
 \usepackage[hyphens]{url}
 
@@ -21,6 +21,7 @@
 \newif\iftechreport
 %\techreporttrue
 \techreportfalse
+
 
 
 \interfootnotelinepenalty=10000
@@ -139,6 +140,15 @@
 \begin{document}
 
 
+
+
+\setlength{\abovedisplayskip}{4pt}
+\setlength{\abovedisplayshortskip}{4pt}
+\setlength{\belowdisplayskip}{4pt}
+\setlength{\belowdisplayshortskip}{4pt}
+
+
+
 % ****************** TITLE ****************************************
 
 \title{Highly Available Transactions: Virtues and Limitations\iftechreport\\(Extended Version)\fi}
@@ -181,17 +191,17 @@ networks---and discuss their necessary semantic compromises.
 
 \section*{Acknowledgments}
 We would like to thank Peter Alvaro, Neil Conway, Evan Jones, Adam
-Oliner, Aurojit Panda, and Shivaram Venkataraman for their helpful
-feedback on this work. This research was supported in part by the Air
-Force Office of Scientiﬁc Research (grant FA95500810352), DARPA XData
-Award FA8750-12-2-0331, the Natural Sciences and Engineering Research
-Council of Canada, the National Science Foundation (grants
-CNS-0722077, IIS-0713661, and IIS-0803690), NSF CISE Expeditions award
-CCF-1139158, the National Science Foundation Graduate Research
-Fellowship (grant DGE-1106400), and gifts from Amazon Web Services,
-Google, SAP, Cisco, Clearstory Data, Cloudera, Ericsson, Facebook,
-FitWave, General Electric, Hortonworks, Huawei, Intel, Microsoft,
-NetApp, Oracle, Samsung, Splunk, VMware, WANdisco, and Yahoo!.
+Oliner, Aurojit Panda, Shivaram Venkataraman, and the HotOS and VLDB
+reviewers for their helpful feedback on earlier revisions of this
+work. This research was supported in part by the Air Force Office of
+Scientiﬁc Research (grant FA95500810352), DARPA XData Award
+FA8750-12-2-0331, the National Science Foundation (grants CNS-0722077,
+IIS-0713661, and IIS-0803690), NSF CISE Expeditions award CCF-1139158,
+the National Science Foundation Graduate Research Fellowship (grant
+DGE-1106400), and by gifts from Amazon Web Services, Google, SAP,
+Cisco, Clearstory Data, Cloudera, Ericsson, Facebook, FitWave, General
+Electric, Hortonworks, Huawei, Intel, Microsoft, NetApp, Oracle,
+Samsung, Splunk, VMware, WANdisco, and Yahoo!.
 
 % The following two commands are all you need in the
 % initial runs of your .tex file to

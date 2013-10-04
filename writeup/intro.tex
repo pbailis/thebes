@@ -77,7 +77,7 @@ Isolation and Repeatable Read isolation are not HAT-compliant because
 they require detecting conflicts between concurrent updates (as needed
 for preventing Lost Updates or Write Skew phenomena), which we show is
 unavailable. However, Read Committed isolation, transactional
-atomicity (Read Atomic isolation), and many of the weak consistency
+atomicity (``Monotonic Atomic View'' isolation), and many other consistency
 models from database and distributed systems are achievable via
 algorithms that rely on multi-versioning and limited client-side
 caching. For several guarantees, such as causal consistency with
@@ -114,9 +114,9 @@ can fall short, requiring non-HA coordination.
 
 We recognize that the large variety of ACID isolation levels and
 distributed consistency models (and therefore in our taxonomization)
-can be confusing and that the subtle distinctions between them may
-appear to be primarily of academic concern. Accordingly, we offer the
-following pragmatic takeaways:
+can be confusing and that the subtle distinctions between them can
+often appear to be primarily of academic concern. Accordingly, we
+offer the following pragmatic takeaways:
 \begin{introenumerate}
 \item The default (and sometimes strongest) configurations of most
   widely-deployed database systems expose a range of anomalies that
@@ -127,8 +127,8 @@ following pragmatic takeaways:
   none of these models prevents concurrent modifications.
 
 \item In addition to providing a guaranteed response and horizontal
-  scale-out, these HAT models allow for one to three order of
-  magnitude lower latencies on current infrastructure.
+  scale-out, these highly available HAT models allow one to three
+  order of magnitude lower latencies on current infrastructure.
 
 \item For correct behavior, applications may require a combination of
   HAT and (ideally sparing use of) non-HAT isolation levels; future

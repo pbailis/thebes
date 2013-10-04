@@ -207,15 +207,16 @@ to achieve with high availability.
 As a straw-man, replicas can store all versions ever written to each
 data item. Replicas can gossip information about versions they have
 observed and construct a lower bound on the versions that can be found
-on each replica. At the start of each transaction, clients choose a
-bound that is guaranteed to be lower than or equal to the this global
-lower bound, and, during transaction execution, replicas return the
-latest version of each item that is not greater than the client's
-chosen bound. If the lower bound is advanced along transactional
-boundaries, clients will observe MAV. This algorithm has several
-variants in the literature~\cite{readonly, swift}: bounds can be
-represented by vector clocks, and older versions can be asynchronously
-garbage collected.
+on every replica (which can be represented by either a list of
+versions, or, more realistically, a vector clock). At the start of
+each transaction, clients can choose a \textit{read timestamp} that is
+lower than or equal to the this global lower bound, and, during
+transaction execution, replicas return the latest version of each item
+that is not greater than the client's chosen timestamp. If this lower
+bound is advanced along transactional boundaries, clients will observe
+MAV. This algorithm has several variants in the
+literature~\cite{readonly, swift}: bounds can be represented by vector
+clocks, and older versions can be asynchronously garbage collected.
 
 We have developed a more efficient MAV algorithm, which we sketch here
 and provide greater detail in
@@ -316,13 +317,12 @@ session guarantees~\cite{sessiontocausal} (alternatively, PRAM with
 writes-follow-reads) and is also referred to by Adya as \textit{PL-2L}
 isolation~\cite{adya}).\vspace{.5em}
 
-
 Read your writes is not achievable in a highly available
 system. Consider a client that executes the following two transactions:
 \begin{align*}
-\small\vspace{-1em}
+\small
 T_1 &: w_x(1)
-\\T_2 &: r_x(a)\vspace{-1em}
+\\T_2 &: r_x(a)
 \end{align*}
 If the client executes $T_1$ against a server that is partitioned from
 the rest of the other servers, then, for transactional availability,
@@ -359,16 +359,16 @@ properties that are achievable (see Section~\ref{sec:relatedwork}) but
 we specifically evaluate TPC-C transaction semantics with HAT
 guarantees in Section~\ref{sec:evaluation}.
 
-\vspace{.5em}\noindent{\textbf{Convergence}} To require that the
-system propagates writes between replicas, we can require convergence,
-or \textit{eventual consistency}: in the absence of new mutations to a
-data item, in the absence of partitions, all servers should eventually
-agree on the value for each item~\cite{cac, vogels-defs}. This is
-typically accomplished by any number of anti-entropy protocols, which
-periodically update neighboring servers with the latest value for each
-data item~\cite{antientropy}. Establishing a final convergent value is
-related to determining a total order on transaction updates to each
-item, as in Read Uncommitted.
+\vspace{.5em}\noindent{\textbf{Convergence} Under arbitrary (but not
+  infinite delays), HAT systems can ensure convergence, or
+  \textit{eventual consistency}: in the absence of new mutations to a
+  data item, all servers should eventually agree on the value for each
+  item~\cite{cac, vogels-defs}. This is typically accomplished by any
+  number of anti-entropy protocols, which periodically update
+  neighboring servers with the latest value for each data
+  item~\cite{antientropy}. Establishing a final convergent value is
+  related to determining a total order on transaction updates to each
+  item, as in Read Uncommitted.
 
 \subsection{Unachievable HAT Semantics}
 \label{sec:unachievable-hat}

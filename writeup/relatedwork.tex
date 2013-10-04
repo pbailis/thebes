@@ -23,16 +23,12 @@ current practice and the proliferation of ``eventually consistent''
 stores~\cite{bailis-ec, bernstein-survey} (notably, Bernstein and
 Das~\cite{bernstein-survey} specifically highlight the importance of
 stickiness~\cite{sessionguarantees, vogels-defs}---which we formalize
-in Section~\ref{sec:sticky}).  However, as we have discussed, the
-connection between weak, multi-object consistency models in a
-distributed setting and high availability is relatively
-unexplored. With the exception of our preliminary workshop paper
+in Section~\ref{sec:sticky}).  Aside from our earlier workshop paper
 discussing transactional availability, real-world ACID, and HAT RC and
-I-CI~\cite{hat-hotos}---which this work expands, providing additional
-algorithms and impossibility results, a full taxonomization,
-experimental and application analysis, and a greater discussion of
-implications and related work---we believe this paper is the first to
-explore this area.
+I-CI~\cite{hat-hotos}---which this work expands with additional
+semantics, algorithms, and analysis---we believe this paper is the
+first to explore the connections between transactional semantics, data
+consistency, and (Gilbert and Lynch~\cite{gilbert-cap}) availability.
 
 %, linearizability, consistent snapshots, and recency
 %bounds~\cite{ceri-mechanism, chen-mechanism}.

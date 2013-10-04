@@ -67,14 +67,11 @@ write-only transactions more recently proposed by Eiger~\cite{eiger}.
 Brantner's S3 database~\cite{kraska-s3} and
 Bayou~\cite{sessionguarantees} can all provide variants of session
 \textit{PL-2L} with high availability, but none provide this HAT
-functionality without substantial modification. Swift~\cite{swift} and
-bolt-on causal consistency~\cite{bolton} are closest to providing the
-maximal sticky HAT semantics we have considered. Accordingly, it is
+functionality without substantial modification. Accordingly, it is
 possible to implement many guarantees weaker than
-serializability---including guarantees that are achievable with high
-availability---and still not achieve high availability. We view high
-availability as a core design consideration in future concurrency
-control designs.
+serializability---including HAT semantics---and still not achieve high
+availability. We view high availability as a core design consideration
+in future concurrency control designs.
 
 \subsection{Application Requirements}
 
