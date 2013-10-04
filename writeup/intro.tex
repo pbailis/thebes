@@ -111,17 +111,17 @@ constraints for multi-item updates and, in some cases, provide limited
 uniqueness guarantees. However, HATs can fall short for applications
 with concurrency-sensitive operations, requiring non-HA coordination.
 
-We recognize that the large variety of ACID isolation levels and
-distributed consistency models (and therefore in our taxonomization)
-can be confusing and that the subtle distinctions between them can
-often appear to be primarily of academic concern. Accordingly, we
+Finally, we recognize that the large variety of ACID isolation levels
+and distributed consistency models (and therefore those in our
+taxonomization) can be confusing; the subtle distinctions between
+models can appear to be of primarily academic concern. Accordingly, we
 offer the following pragmatic takeaways:
 \begin{introenumerate}
 \item The default (and sometimes strongest) configurations of most
   widely-deployed database systems expose a range of anomalies that
   can compromise application-level consistency.
 
-\item Most of these ``weak isolation'' models are achievable without
+\item Many of these ``weak isolation'' models are achievable without
   sacrificing high availability if implemented correctly. However,
   none of these models prevents concurrent modifications.
 
