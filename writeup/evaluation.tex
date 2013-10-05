@@ -150,7 +150,7 @@ tests (i.e., simultaneously modifying a product description and its
 thumbnail) are also achievable using HATs.
 
 \vspace{.5em}\noindent\textit{Summary.} Many---but not all---TPC-C
-transactions are well-served by HATs. The two problematic
+transactions are well served by HATs. The two problematic
 transactions, New-Order and Payment, rely on non-monotonic state
 update. The former can be modified to ensure ID uniqueness but not
 sequential ID ordering, while the latter is inherently non-monotonic,
@@ -199,7 +199,7 @@ respective cluster (trivially providing read-your-writes and monotonic
 reads guarantees). By default, we deploy 5 Amazon EC2
 \texttt{m1.xlarge} instances as servers in each cluster. For our
 workload, we link our client library to the YCSB
-benchmark~\cite{ycsb}, which is well-suited to LevelDB's key-value
+benchmark~\cite{ycsb}, which is well suited to LevelDB's key-value
 schema, grouping every eight YCSB operations from the default workload
 (50\% reads, 50\% writes) to form a transaction. We increase the
 number of keys in the workload from the default 1,000 to 100,000 with
@@ -249,7 +249,7 @@ clients \textit{does} increase the throughput of \texttt{master}, but
 our Thrift-based server-side connection processing did not gracefully
 handle more than several thousand concurrent connections. In contrast,
 across two datacenters, the performance of eventual, RC, and MAV are
-near-identical to a single-datacenter deployment.
+near identical to a single-datacenter deployment.
 
 When five clusters (as opposed to two, as before) are deployed across
 the five EC2 datacenters with lowest communication cost
@@ -335,17 +335,17 @@ should not compromise scalability. Figure~\ref{fig:scaleout} shows
 that varying the number of servers across two clusters in Virginia and
 Oregon (with $15$ YCSB clients per server) results in linear scale-out
 for \texttt{eventual}, \texttt{RC}, and \texttt{MAV}. \texttt{RC} and
-\texttt{eventual} scale perfectly with an approximately $5$x
-throughput increase moving from $5$ to $25$ servers per cluster. For
-the same configuration, \texttt{MAV} scales by $3.8$x, achieving over
-$260,000$ operations per second. \texttt{MAV} performance is due to
-resource contention---with a memory-backed database (instead of
-LevelDB), \texttt{MAV} scales by $4.25$x (not shown)---and MAV-related
+\texttt{eventual} scale linearly: increasing the number of servers per
+cluster from $5$ to $25$ yields an approximately $5$x throughput
+increase. For the same configurations, \texttt{MAV} scales by $3.8$x,
+achieving over $260,000$ operations per second. \texttt{MAV} suffers
+from contention in LevelDB---with a memory-backed database,
+\texttt{MAV} scales by $4.25$x (not shown)---and MAV-related
 performance heterogeneity across servers (Calvin's authors report
-similar heterogeneity on EC2~\cite{calvin}). Our early experiments
-with a newer database prototype with more efficient (non-Thrift) RPC
-and connection pooling suggest that this scalability can be
-substantially reduced.
+similar heterogeneity on EC2~\cite{calvin}). Initial experiments with
+a newer prototype including more efficient (non-Thrift) RPC and
+connection pooling suggest that this scalability can be substantially
+improved.
 
 \vspace{.5em}\noindent\textit{Summary.} Our experimental prototype
 confirms our earlier analytical intuitions. HAT systems can provide

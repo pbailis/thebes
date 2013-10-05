@@ -93,7 +93,7 @@ availability.
 
 At a high level, the virtues of HATs are guaranteed responses from any
 replica, low latency, and a range of semantic guarantees including
-several whose usefulness is widely acepted such as Read
+several whose usefulness is widely accepted such as Read
 Committed. However, highly available systems are fundamentally unable
 to prevent concurrent updates to shared data items and cannot provide
 recency guarantees for reads. To understand when these virtues and
@@ -113,17 +113,17 @@ with concurrency-sensitive operations, requiring non-HA coordination.
 
 Finally, we recognize that the large variety of ACID isolation levels
 and distributed consistency models (and therefore those in our
-taxonomization) can be confusing; the subtle distinctions between
-models may appear to be of academic concern. Accordingly, we offer the
-following pragmatic takeaways:
+taxonomy) can be confusing; the subtle distinctions between models may
+appear to be of academic concern. Accordingly, we offer the following
+pragmatic takeaways:
 \begin{introenumerate}
 \item The default (and sometimes strongest) configurations of most
-  widely-deployed database systems expose a range of anomalies that
+  widely deployed database systems expose a range of anomalies that
   can compromise application-level consistency.
 
 \item Many of these ``weak isolation'' models are achievable without
   sacrificing high availability if implemented correctly. However,
-  none of these models prevents concurrent modifications.
+  none of the achievable models prevents concurrent modifications.
 
 \item In addition to providing a guaranteed response and horizontal
   scale-out, these highly available HAT models allow one to three

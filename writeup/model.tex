@@ -35,7 +35,7 @@ servers~\cite{gilbert-cap}.\footnote{Under this definition from the
   assumptions made in the CAP Theorem~\cite{gilbert-cap} and
   guarantees low latency~\cite{abadi-pacelc}.} As in a standard
 distributed database, designated servers might perform operations for
-different data items; a server that can handle an operation for a
+different data items. A server that can handle an operation for a
 given data item is called a \textit{replica} for that
 item.\footnote{There is a further distinction between a \textit{fully
     replicated} system, in which all servers are replicas for all data
@@ -57,7 +57,7 @@ state that they observe. As we will discuss in Section~\ref{sec:hats},
 clients can ensure continuity between operations (e.g., reading their
 prior updates to a data item) by maintaining affinity or
 ``stickiness'' with a server or set of servers~\cite{vogels-defs}. In
-a fully-replicated system, where all servers are replicas for all data
+a fully replicated system, where all servers are replicas for all data
 items, stickiness is simple: a client can maintain stickiness by
 contacting the same server for each of its requests. However, to stay
 ``sticky'' in a partially-replicated system, where servers are

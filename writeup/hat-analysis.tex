@@ -55,7 +55,7 @@ implications in Section~\ref{sec:evaluation}.
 \subsubsection{ACID Isolation Guarantees}
 \label{sec:isolation}
 
-To begin, \textbf{Read Uncommitted} isolation is captured by Adya as
+To begin, Adya captures \textbf{Read Uncommitted} isolation as
 \textit{PL-1}. In this model, writes to each object are totally
 ordered, corresponding to the order in which they are installed in the
 database. In a distributed database, different replicas may receive
@@ -77,28 +77,27 @@ T_1 &: w_x(1)~w_y(1)
 In this example, under Read Uncommitted, it is impossible for the
 database to order $T_1$'s $w_x(1)$ before $T_2$'s $w_x(2)$ but order
 $T_2$'s $w_y(2)$ before $T_1$'s $w_y(1)$. Read Uncommitted is easily
-achieved by marking each of a transactions' writes with the same
+achieved by marking each of a transaction's writes with the same
 timestamp (unique across transactions; e.g., combining a client's ID
 with a sequence number) and applying a ``last writer wins'' conflict
 reconciliation policy at each replica. Later properties will
 strengthen Read Uncommitted.
 
 \textbf{Read Committed} isolation is particularly important in
-practice as it is the default of many DBMSs (as in
-Section~\ref{sec:modernacid}). Centralized implementations differ,
+practice as it is the default isolation level of many DBMSs
+(Section~\ref{sec:modernacid}). Centralized implementations differ,
 with some based on long-duration exclusive locks and short-duration
 read locks~\cite{gray-isolation} and others based on multiple
 versions. These implementations often provide recency and monotonicity
 properties beyond what is implied by the name ``Read Committed'' and
-what is captured by the implementation-agnostic definition: under
-Read Committed, transactions should not access uncommitted or
-intermediate versions of data items. This prohibits both ``Dirty
-Writes'', as above, and also ``Dirty Reads'' phenomena.  This
-isolation is Adya's \textit{PL-2} and is formalized by prohibiting
-Adya's \textit{G1\{a-c\}} (or ANSI's $P1$, or ``broad'' $P1$ [2.2]
-from Berenson et al.). For instance, in the example below, $T_3$
-should never see $a=1$, and, if $T_2$ aborts, $T_3$ should not read
-$a=3$:
+what is captured by the implementation-agnostic definition: under Read
+Committed, transactions should not access uncommitted or intermediate
+versions of data items. This prohibits both ``Dirty Writes'', as
+above, and also ``Dirty Reads'' phenomena.  This isolation is Adya's
+\textit{PL-2} and is formalized by prohibiting Adya's
+\textit{G1\{a-c\}} (or ANSI's $P1$, or ``broad'' $P1$ [2.2] from
+Berenson et al.). For instance, in the example below, $T_3$ should
+never see $a=1$, and, if $T_2$ aborts, $T_3$ should not read $a=3$:
 \begin{align*}
 \small\vspace{-1em}
 T_1 &: w_x(1)~w_x(2)
@@ -147,7 +146,7 @@ end of each transaction and can alternatively be accomplished on
 (sticky) replicas via multi-versioning. Predicate Cut Isolation is
 also achievable in HAT systems via similar caching middleware or
 multi-versioning that track entire logical ranges of predicates in
-addition to item-based reads.
+addition to item based reads.
 
 \subsubsection{ACID Atomicity Guarantees}
 \label{sec:ta}
@@ -189,7 +188,7 @@ in which prior work was developed: on a single server (or a fully
 replicated database), MAV is achievable via lightweight locking and/or
 local concurrency control over data items~\cite{gstore,
   kemme-thesis}. In contrast, in a distributed environment, MAV over
-arbitrary groups of non-colocated items is considerably more difficult
+arbitrary groups of non-co-located items is considerably more difficult
 to achieve with high availability.
 
 % MAV can be achieved via multi-versioning. If clients attach vector
@@ -204,7 +203,7 @@ to achieve with high availability.
 % reveal writes until they are present on all replicas, clients do not
 % need to be sticky.
 
-As a straw-man, replicas can store all versions ever written to each
+As a straw man, replicas can store all versions ever written to each
 data item. Replicas can gossip information about versions they have
 observed and construct a lower bound on the versions that can be found
 on every replica (which can be represented by either a list of
@@ -215,8 +214,8 @@ transaction execution, replicas return the latest version of each item
 that is not greater than the client's chosen timestamp. If this lower
 bound is advanced along transactional boundaries, clients will observe
 MAV. This algorithm has several variants in the
-literature~\cite{readonly, swift}: bounds can be represented by vector
-clocks, and older versions can be asynchronously garbage collected.
+literature~\cite{readonly, swift}, and older versions can be
+asynchronously garbage collected.
 
 We have developed a more efficient MAV algorithm, which we sketch here
 and provide greater detail in \iftechreport Appendix B.  \else our
@@ -262,9 +261,9 @@ previous values''; reads from each item progress according to a total
 order (e.g., the order from Read Uncommitted).
 
 \vspace{.5em}\noindent\textbf{{Monotonic writes}} requires that each
-session's writes become visible in the order they were submitted by
-the client. Any order on transactions should also be consistent with
-any precedence that a global observer would see.
+session's writes become visible in the order they were submitted. Any
+order on transactions should also be consistent with any precedence
+that a global observer would see.
 
 \vspace{.5em}\noindent\textbf{{Writes Follow Reads}} requires that, if
 a session observes an effect of transaction $T_1$ and subsequently
@@ -280,8 +279,8 @@ reveal new writes (say, by buffering them in separate local storage)
 until each write's respective dependencies are visible on all
 replicas. This mechanism effectively ensures that all clients read
 from a globally agreed upon lower bound on the versions written. This
-is highly available as a client will never block due to inability to
-find a server with a sufficiently up-to-date version of a data
+is highly available because a client will never block due to inability
+to find a server with a sufficiently up-to-date version of a data
 item. However, it does not imply that transactions will read their own
 writes or, in the presence of partitions, make forward progress
 through the version history. The problem is that under non-sticky
