@@ -23,8 +23,6 @@ system is highly available, we need to describe what servers a client
 must contact as well as what kinds of responses a server can provide,
 especially given the possibility of aborts.
 
-\subsection{Replica Availability}
-
 Traditionally, a system provides {\textbf{high availability}} if every
 user that can contact a correct (non-failing) server eventually
 receives a response from that server, even in the presence of
@@ -139,26 +137,29 @@ and \textit{abort} responses---which signal transaction success or
 failure to a client---we must take care in defining transactional
 availability.
 
-If a client wishes to execute a transaction that performs operations
-on multiple data items, then the client must be able to contact and
-receive a response from at least one replica for each data item. We
-say that a transaction has \textbf{replica availability} if it can
-contact at least one replica for every item it attempts to
-access. This may result in ``lower availability'' than a
-non-transactional requirement. Additionally, given the possibility of
-system-initiated aborts, we need to ensure useful forward progress: a
-system can trivially guarantee clients a response by always aborting
-all transactions. However, this is an unsatisfactory system because
+We say that a transaction has \textbf{replica availability} if it can
+contact at least one replica for every item it attempts to access;
+this may result in ``lower availability'' than a non-transactional
+availability requirement (e.g., single-item
+availability). Additionally, given the possibility of system-initiated
+aborts, we need to ensure useful forward progress: a system can
+trivially guarantee clients a response by always aborting all
+transactions. However, this is an unsatisfactory system because
 nothing good (transaction commit) ever happens; we should require a
-\textit{liveness} property~\cite{transaction-liveness}. We cannot
-guarantee that every transaction will commit---transactions may choose
-to abort themselves---but we need to make sure that the system will
-not indefinitely abort transactions on its own volition. We call a
-transaction abort due to a transaction's own choosing (e.g., as an
-operation of the transaction itself or due to a would-be violation of a declared integrity constraint) an \textit{internal abort} and an
-abort due to system implementation or operation an \textit{external
-  abort}. We say that a system provides \textbf{transactional
-  availability} if, given replica availability for every data item in
-a transaction, the transaction eventually commits (possibly after
-multiple client retries) or internally aborts~\cite{hat-hotos}.
+\textit{liveness} property~\cite{transaction-liveness}.
+
+A system cannot guarantee that every transaction will
+commit---transactions may choose to abort themselves---but we need to
+make sure that the system will not indefinitely abort transactions on
+its own volition. We call a transaction abort due to a transaction's
+own choosing (e.g., as an operation of the transaction itself or due
+to a would-be violation of a declared integrity constraint) an
+\textit{internal abort} and an abort due to system implementation or
+operation an \textit{external abort}. We say that a system provides
+\textbf{transactional availability} if, given replica availability for
+every data item in a transaction, the transaction eventually commits
+(possibly after multiple client retries) or internally
+aborts~\cite{hat-hotos}. A system provides \textbf{sticky
+  transactional availability} if, given sticky availability, a
+transaction eventually commits or internally aborts.
 

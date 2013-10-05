@@ -57,9 +57,9 @@ multiple data items in a highly available distributed environment.
 
 Our main contributions in this paper are as follows. We relate the
 many previously proposed isolation and consistency models to the goal
-high availability, which guarantees a response from every data replica
-in the presence of arbitrary partitions between them.  We classify
-which among the wide array of models are achievable with high
+of high availability, which guarantees a response from each non-failed
+data replica in the presence of arbitrary partitions between them.  We
+classify which among the wide array of models are achievable with high
 availability, denoting them as {\em Highly Available Transactions}
 (HATs). In doing so, we demonstrate that although many implementations
 of HAT semantics are not highly available, this is an artifact of the
@@ -77,18 +77,18 @@ Isolation and Repeatable Read isolation are not HAT-compliant because
 they require detecting conflicts between concurrent updates (as needed
 for preventing Lost Updates or Write Skew phenomena), which we show is
 unavailable. However, Read Committed isolation, transactional
-atomicity (``Monotonic Atomic View'' isolation), and many other consistency
-models from database and distributed systems are achievable via
-algorithms that rely on multi-versioning and limited client-side
-caching. For several guarantees, such as causal consistency with
-phantom prevention and ANSI Repeatable Read, we consider a modified
-form of high availability in which clients ``stick to'' (i.e., have
-affinity with) at least one server---a property which is often
-implicit in the distributed systems literature~\cite{herlihy-art,
-  eiger, cac} but which requires explicit consideration in a
-client-server replicated database context. This sticky availability is
-widely employed~\cite{eiger, vogels-defs} but is a less restrictive
-model (and therefore more easily achievable) than traditional high
+atomicity (Section~\ref{sec:ta}), and many other consistency models
+from database and distributed systems are achievable via algorithms
+that rely on multi-versioning and limited client-side caching. For
+several guarantees, such as causal consistency with phantom prevention
+and ANSI Repeatable Read, we consider a modified form of high
+availability in which clients ``stick to'' (i.e., have affinity with)
+at least one server---a property which is often implicit in the
+distributed systems literature~\cite{herlihy-art, eiger, cac} but
+which requires explicit consideration in a client-server replicated
+database context. This sticky availability is widely
+employed~\cite{eiger, vogels-defs} but is a less restrictive model
+(and therefore more easily achievable) than traditional high
 availability.
 
 At a high level, the virtues of HATs are guaranteed responses from any
@@ -114,8 +114,8 @@ with concurrency-sensitive operations, requiring non-HA coordination.
 Finally, we recognize that the large variety of ACID isolation levels
 and distributed consistency models (and therefore those in our
 taxonomization) can be confusing; the subtle distinctions between
-models can appear to be of primarily academic concern. Accordingly, we
-offer the following pragmatic takeaways:
+models may appear to be of academic concern. Accordingly, we offer the
+following pragmatic takeaways:
 \begin{introenumerate}
 \item The default (and sometimes strongest) configurations of most
   widely-deployed database systems expose a range of anomalies that
