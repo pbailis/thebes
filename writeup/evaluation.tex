@@ -108,21 +108,22 @@ represents the fulfillment of a New-Order: it deletes the order from
 the pending list, updates the customer's balance, updates the order's
 carrier ID and delivery time, and updates the customer balance.
 
-\vspace{.5em}\noindent\textit{IDs and decrements.} The New-Order transaction presents two challenges: ID assignment and
-stock maintenance. First, each New-Order transaction requires a unique
-ID number for the order. We can create a unique number by, say,
+\vspace{.5em}\noindent\textit{IDs and decrements.} The New-Order
+transaction presents two challenges: ID assignment and stock
+maintenance. First, each New-Order transaction requires a unique ID
+number for the order. We can create a unique number by, say,
 concatenating the client ID and a timestamp. However, the TPC-C
 specification requires order numbers to be \textit{sequentially}
 assigned within a district, which requires preventing Lost
 Update. Accordingly, HATs cannot provide compliant TPC-C execution but
-can maintain uniqueness constraints. Second, the New-Order
-transaction decrements inventory counts: what if the count becomes
-negative?  Fortunately, New-Order restocks each item's inventory
-count (increments by 91) if it would become negative as the result of
+can maintain uniqueness constraints. Second, the New-Order transaction
+decrements inventory counts: what if the count becomes negative?
+Fortunately, New-Order restocks each item's inventory count
+(increments by 91) if it would become negative as the result of
 placing an order. This means that, even in the presence of concurrent
 New-Orders, an item's stock will never fall below zero. This is TPC-C
-compliant, but a HAT system might end up with more stock than in a
-non-HAT-compliant implementation.
+compliant, but a HAT system might end up with more stock than in an
+unavailable implementation with synchronous coordination.
 
 \vspace{.5em}\noindent\textit{TPC-C Non-monotonicity.} The Delivery
 transaction is challenging due to non-monotonicity. Each Delivery

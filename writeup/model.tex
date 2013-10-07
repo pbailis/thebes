@@ -66,9 +66,10 @@ this paper), a client must maintain stickiness with a single
 \textit{logical} copy of the database, which may consist of multiple
 physical servers. We say that a system provides \textbf{sticky
   availability} if, whenever a client's transactions is executed
-against a copy of database state that reflects all of the client's prior
-transactions, it eventually receives a response, even in the presence
-of indefinitely long partitions. A client may choose to become sticky
+against a copy of database state that reflects all of the client's
+prior operations, it eventually receives a response, even in the
+presence of indefinitely long partitions (where ``reflects'' is
+dependent on semantics). A client may choose to become sticky
 available by acting as a server itself; for example, a client might
 cache its reads and writes~\cite{bolton, sessionguarantees,
   swift}. Any guarantee achievable in a highly available system is

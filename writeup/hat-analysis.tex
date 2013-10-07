@@ -2,15 +2,15 @@
 \section{Highly Available Transactions}
 \label{sec:hats}
 
-HAT systems provide transactions with transactional availability and
-either high availability or sticky availability. They offer latency
-and availability benefits over traditional distributed databases, yet
-they cannot achieve all possible semantics. In this section, we
-delineate ACID, distributed replica consistency, and session
-consistency levels which can be achieved with high availability (Read
-Committed isolation, variants of Repeatable Read, atomic reads, and
-many session guarantees), those with sticky availability (read your
-writes, PRAM and causal consistency), and properties that cannot be
+HAT systems provide transactions with transactional availability or
+sticky transactional availability. They offer latency and availability
+benefits over traditional distributed databases, yet they cannot
+achieve all possible semantics. In this section, we describe ACID,
+distributed replica consistency, and session consistency levels which
+can be achieved with high availability (Read Committed isolation,
+variants of Repeatable Read, atomic reads, and many session
+guarantees), those with sticky availability (read your writes, PRAM
+and causal consistency). We also discuss properties that cannot be
 provided in a HAT system (those preventing Lost Update and Write Skew
 or guaranteeing recency).  We present a full summary of these results
 in Section~\ref{sec:hat-summary}.
@@ -262,8 +262,8 @@ order (e.g., the order from Read Uncommitted).
 
 \vspace{.5em}\noindent\textbf{{Monotonic writes}} requires that each
 session's writes become visible in the order they were submitted. Any
-order on transactions should also be consistent with any precedence
-that a global observer would see.
+order on transactions (as in Read Uncommitted isolation) should also
+be consistent with any precedence that a global observer would see.
 
 \vspace{.5em}\noindent\textbf{{Writes Follow Reads}} requires that, if
 a session observes an effect of transaction $T_1$ and subsequently
@@ -271,8 +271,7 @@ commits transaction $T_2$, then another session can only observe
 effects of $T_2$ if it can also observe $T_1$'s effects (or later
 values that supersede $T_1$'s); this corresponds to Lamport's
 ``happens-before'' relation~\cite{lamportclocks}.  Any order on
-transactions should respect the transitive reads-from
-order.\vspace{.5em}
+transactions should respect this transitive order.\vspace{.5em}
 
 The above guarantees can be achieved by forcing servers to wait to
 reveal new writes (say, by buffering them in separate local storage)
@@ -491,16 +490,16 @@ We illustrate the hierarchy of available, sticky available, and
 unavailable consistency models we have discussed in
 Figure~\ref{fig:hatcompared}. Many models are simultaneously
 achievable, but we find several particularly compelling. If we combine
-all HAT and sticky guarantees, we have transactional, causal snapshot
-reads (i.e., Causal Transactional Predicate Cut Isolation). If we
-combine MAV and P-CI, we have transactional snapshot reads. We can
-achieve RC, MR, and RYW by simply sticking clients to servers. We can
-also combine unavailable models---for example, an unavailable system
-might provide PRAM and One-Copy
+all HAT and sticky guarantees, we have transactional, causally
+consistent snapshot reads (i.e., Causal Transactional Predicate Cut
+Isolation). If we combine MAV and P-CI, we have transactional snapshot
+reads. We can achieve RC, MR, and RYW by simply sticking clients to
+servers. We can also combine unavailable models---for example, an
+unavailable system might provide PRAM and One-Copy
 Serializability~\cite{daudjee-session}.
 
 To the best of our knowledge, this is the first unification of
-database ACID transactions, distributed consistency, and session
+transactional isolation, distributed consistency, and session
 guarantee models. Interestingly, strong one-copy serializability
 entails all other models, while considering the (large) power set of
 all compatible models (e.g., the diagram depicts 144 possible HAT
@@ -537,8 +536,8 @@ Figure~\ref{fig:hatcompared}) mean HATs are \textit{not} well-suited
 for all applications (see Section~\ref{sec:evaluation}): these
 limitations are fundamental. However, common practices such as ad-hoc,
 user-level compensation and per-statement isolation ``upgrades''
-(e.g., \texttt{SELECT FOR UPDATE} under weak isolation)--commonly used
-to augment weak isolation--are also applicable in HAT systems
+(e.g., \texttt{SELECT FOR UPDATE} under weak isolation)---commonly used
+to augment weak isolation---are also applicable in HAT systems
 (although they may in turn compromise availability).
 
  \newcommand{\lostupdate}{$^\dagger$}

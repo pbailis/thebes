@@ -19,14 +19,14 @@ availability~\cite{hat-hotos,brewer-slides, foundation-article}; this
 misunderstanding has led to substantial confusion regarding replica
 consistency, transactional isolation, and high availability. The
 recent resurgence of transactional systems suggests that programmers
-value transactional semantics, but, unfortunately, existing
-transactional data stores do not provide availability in the presence
-of partitions~\cite{orleans,foundation-article, hstore,spanner,eiger,
+value transactional semantics, but most existing transactional data
+stores do not provide availability in the presence of
+partitions~\cite{orleans,foundation-article, hstore,spanner,eiger,
   walter,calvin}.
 
 Indeed, serializable transactions---the gold standard of traditional
 ACID databases---are not achievable with high availability in the
-presence of partitions~\cite{davidson-survey}. However, database
+presence of network partitions~\cite{davidson-survey}. However, database
 systems have a long tradition of providing weaker isolation and
 consistency guarantees~\cite{adya, ansicritique, gray-virtues,
   gray-isolation, kemme-thesis}. Today's ACID and NewSQL databases
@@ -56,20 +56,21 @@ providing semantic guarantees for multiple operations operating on
 multiple data items in a highly available distributed environment.
 
 Our main contributions in this paper are as follows. We relate the
-many previously proposed isolation and consistency models to the goal
-of high availability, which guarantees a response from each non-failed
-data replica in the presence of arbitrary partitions between them.  We
-classify which among the wide array of models are achievable with high
-availability, denoting them as {\em Highly Available Transactions}
-(HATs). In doing so, we demonstrate that although many implementations
-of HAT semantics are not highly available, this is an artifact of the
-implementations rather than an inherent property of the semantics. Our
-investigation shows that, besides serializability, Snapshot Isolation
-and Repeatable Read isolation are not HAT-compliant, while most other
-isolation levels are achievable with high availability. We also
-demonstrate that many weak replica consistency models from distributed
-systems are both HAT-compliant and simultaneously achievable with
-several ACID properties.
+many previously proposed database isolation and data consistency
+models to the goal of high availability, which guarantees a response
+from each non-failing server in the presence of arbitrary network
+partitions between them.  We classify which among the wide array of
+models are achievable with high availability, denoting them as {\em
+  Highly Available Transactions} (HATs). In doing so, we demonstrate
+that although many implementations of HAT semantics are not highly
+available, this is an artifact of the implementations rather than an
+inherent property of the semantics. Our investigation shows that,
+besides serializability, Snapshot Isolation and Repeatable Read
+isolation are not HAT-compliant, while most other isolation levels are
+achievable with high availability. We also demonstrate that many weak
+replica consistency models from distributed systems are both
+HAT-compliant and simultaneously achievable with several ACID
+properties.
 
 Our investigation is based on both impossibility results and several
 constructive, proof-of-concept algorithms. For example, Snapshot
@@ -109,7 +110,8 @@ those with monotonic logic and commutative updates~\cite{calm,
   crdt}. HAT systems can also enforce arbitrary foreign key
 constraints for multi-item updates and, in some cases, provide limited
 uniqueness guarantees. However, HATs can fall short for applications
-with concurrency-sensitive operations, requiring non-HA coordination.
+with concurrency-sensitive operations, requiring unavailable,
+synchronous coordination.
 
 Finally, we recognize that the large variety of ACID isolation levels
 and distributed consistency models (and therefore those in our
@@ -131,7 +133,7 @@ pragmatic takeaways:
 
 \item For correct behavior, applications may require a combination of
   HAT and (ideally sparing use of) non-HAT isolation levels; future
-  database designers should act accordingly.
+  database designers should plan accordingly.
 \end{introenumerate}
 
 %% In this paper, we make the following contributions:

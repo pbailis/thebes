@@ -6,12 +6,12 @@ Why does high availability matter? Peter Deutsch starts his classic
 list of ``Fallacies of Distributed Computing'' with two concerns
 fundamental to distributed database systems: ``\textit{1.)}  The
 network is reliable. \textit{2.)} Latency is
-zero''~\cite{fallacies-deutsch}; in a distributed setting, network
+zero''~\cite{fallacies-deutsch}. In a distributed setting, network
 failures may prevent database servers from communicating, and, in the
 absence of failures, communication is slowed by factors like physical
 distance, network congestion, and routing. As we will see
-(Section~\ref{sec:availability}), highly available system design
-mitigates the effects of network \textit{partitions} and
+(Section~\ref{sec:availability}), highly available system designs
+mitigate the effects of network \textit{partitions} and
 \textit{latency}. In this section, we draw on a range of evidence that
 indicates that partitions occur with frequency in real-world
 deployments and latencies between datacenters are substantial, often
@@ -68,11 +68,11 @@ tickets~\cite{turner2012failure}. Other studies confirm these results,
 showing median time between connectivity failures over a WAN network
 of approximately 3000 seconds with a median time to repair between 2
 and 1000 seconds~\cite{ip-backbone-failures} as well as frequent path
-routing failures on the Internet~\cite{labovitz-failures}. Finally,
-Kingsbury and Bailis have recently collected an informal survey of
-network failures~\cite{aphyr-post}. Isolating, quantifying, and
-accounting for these network failures is an area of active research in
-networking community~\cite{uw-failure-networks}.
+routing failures on the Internet~\cite{labovitz-failures}. A recent,
+informal report by Kingsbury and Bailis catalogs a host of additional
+practitioner reports~\cite{aphyr-post}. Not surprisingly, isolating,
+quantifying, and accounting for these network failures is an area of
+active research in networking community~\cite{uw-failure-networks}.
 
 These studies indicate that network partitions \textit{do} occur
 within and across modern datacenters. We observe that these partitions
@@ -155,9 +155,10 @@ measured one week of ping times (i.e., round-trip times, or RTTs)
 between all seven EC2 geographic ``regions,'' across three
 ``availability zones'' (closely co-located datacenters), and within a
 single ``availability zone'' (datacenter), at a granularity of
-1s\footnote{Data available at
-  \url{http://bailis.org/blog/communication-costs-in-real-world-networks/}}. We
-summarize the results of our network measurement study in
+1s\footnote{Data available at {\scriptsize
+    \url{http://bailis.org/blog/communication-costs-in-real-world-networks/},
+    \url{https://github.com/pbailis/aws-ping-traces}}}. We summarize
+the results of our network measurement study in
 Table~\ref{table:rtt}. On average, intra-datacenter communication
 (Table 1a) is between 1.82 and 6.38 times faster than across
 geographically co-located datacenters (Table 1b) and between 40 and
@@ -167,9 +168,9 @@ light: for example, while a speed-of-light RTT from S\~{a}o Paulo to
 Singapore RTT is 106.7ms, ping packets incur an average 362.8ms RTT
 (95th percentile: 649ms). As shown in Figure~\ref{fig:rtt}, the
 distribution of latencies varies between links, but the trend is
-clear: remote communication has a substantial cost. As with network
-failures, quantifying and minimizing communication delays is an active
-area of research in the networking community~\cite{bobtail}.
+clear: remote communication has a substantial cost. Quantifying and
+minimizing communication delays is also an active area of research in
+the networking community~\cite{bobtail}.
 
 \section{ACID in the Wild}
 \label{sec:modernacid}
@@ -182,17 +183,17 @@ system~\cite{davidson-survey}, meaning that, in environments like
 those in Section~\ref{sec:motivation}, database designs face a choice
 between availability and strong semantics. However, even in a
 single-node database, the coordination penalties associated with
-serializability can be severe, manifesting themselves in the form of
+serializability can be severe and are manifested in the form of
 decreased concurrency (and, subsequently, performance degradation,
-scalability limitations, and, often, external aborts like
-deadlocks)~\cite{gray-isolation}. Accordingly, to increase
+scalability limitations, and, often, aborts due to deadlock or
+contention)~\cite{gray-isolation}. Accordingly, to increase
 concurrency, database systems offer a range of ACID properties weaker
 than serializability: the host of so-called \textit{weak isolation}
 models describe varying restrictions on the space of schedules that
 are allowable by the system~\cite{adya, ansi-sql, ansicritique}. None
-of these weak isolation models guarantees serializability, but, as we see below,
-their benefits are often considered to outweigh costs of possible
-consistency anomalies that might arise from their use.
+of these weak isolation models guarantees serializability, but, as we
+see below, their benefits are often considered to outweigh costs of
+possible consistency anomalies that might arise from their use.
 
 To understand the prevalence of weak isolation, we
 recently surveyed the default and maximum isolation guarantees provided by
